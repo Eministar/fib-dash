@@ -1,2 +1,0 @@
-ALTER TABLE `SruDocument`
-  ADD COLUMN `externalUrl` VARCHAR(2048) NULL;
