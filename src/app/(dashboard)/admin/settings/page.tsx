@@ -52,6 +52,7 @@ interface DiscordConfigResponse {
     announcementsChannelId: string
     updateChannelId: string
     sanctionsChannelId: string
+    investigationsChannelId: string
     dutyStatusChannelId: string
     dutyAdminLogChannelId: string
     dutyStatusMessageId: string
@@ -131,6 +132,7 @@ export default function SettingsPage() {
     announcementsChannelId: '',
     updateChannelId: '',
     sanctionsChannelId: '',
+    investigationsChannelId: '',
     dutyStatusChannelId: '',
     dutyAdminLogChannelId: '',
     dutyStatusMessageId: '',
@@ -638,6 +640,18 @@ export default function SettingsPage() {
                 />
                 <p className="text-[11px] text-[#6f6f6f] mt-1.5">
                   Channel für neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Ermittlungs-Channel"
+                    value={discordForm.investigationsChannelId}
+                    onValueChange={(investigationsChannelId) => setDiscordForm({ ...discordForm, investigationsChannelId })}
+                    options={channelOptions}
+                />
+                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                  Meldungen zu Einsatzakten und neuen Bodycam-Clips. Verschlusssachen werden nie gepostet.
+                  Leer lassen, um die Meldungen abzuschalten.
                 </p>
               </div>
               <div className="sm:col-span-2">

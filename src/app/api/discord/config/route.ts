@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
       announcementsChannelId: canManageSettings && typeof body.announcementsChannelId === 'string' ? body.announcementsChannelId : undefined,
       updateChannelId: canManageSettings && typeof body.updateChannelId === 'string' ? body.updateChannelId : undefined,
       sanctionsChannelId: canManageSettings && typeof body.sanctionsChannelId === 'string' ? body.sanctionsChannelId : undefined,
+      investigationsChannelId: canManageSettings && typeof body.investigationsChannelId === 'string' ? body.investigationsChannelId : undefined,
       dutyStatusChannelId: canManageSettings && typeof body.dutyStatusChannelId === 'string' ? body.dutyStatusChannelId : undefined,
       dutyAdminLogChannelId: canManageSettings && typeof body.dutyAdminLogChannelId === 'string' ? body.dutyAdminLogChannelId : undefined,
       absenceStatusChannelId: canManageSettings && typeof body.absenceStatusChannelId === 'string' ? body.absenceStatusChannelId : undefined,

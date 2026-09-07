@@ -11,6 +11,7 @@ import {
   linkButton,
   markdownHeader,
   markdownMeta,
+  markdownQuote,
   markdownRows,
   markdownTextDisplays,
 } from './discord-components'
@@ -72,6 +73,9 @@ export type DiscordConfig = {
   dutyAdminLogChannelId: string
   /// Fallback-Channel für Vertragsnachrichten, wenn die DM nicht zustellbar ist.
   contractsChannelId: string
+  /// Channel für Meldungen des Ermittlungssystems. Verschlusssachen werden
+  /// grundsätzlich nicht gepostet.
+  investigationsChannelId: string
   dutyStatusMessageId: string
   absenceStatusChannelId: string
   absenceStatusMessageId: string
@@ -188,6 +192,7 @@ export const DISCORD_SETTING_KEYS = {
   dutyStatusChannelId: 'discord.dutyStatusChannelId',
   dutyAdminLogChannelId: 'discord.dutyAdminLogChannelId',
   contractsChannelId: 'discord.contractsChannelId',
+  investigationsChannelId: 'discord.investigationsChannelId',
   dutyStatusMessageId: 'discord.dutyStatusMessageId',
   absenceStatusChannelId: 'discord.absenceStatusChannelId',
   absenceStatusMessageId: 'discord.absenceStatusMessageId',
@@ -432,6 +437,14 @@ function envContractsChannelId() {
   return (
     process.env.DISCORD_CONTRACTS_CHANNEL_ID?.trim() ||
     process.env.FIB_DISCORD_CONTRACTS_CHANNEL_ID?.trim() ||
+    ''
+  )
+}
+
+function envInvestigationsChannelId() {
+  return (
+    process.env.DISCORD_INVESTIGATIONS_CHANNEL_ID?.trim() ||
+    process.env.FIB_DISCORD_INVESTIGATIONS_CHANNEL_ID?.trim() ||
     ''
   )
 }
@@ -793,6 +806,10 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
     dutyStatusChannelId: envFirst(envDutyStatusChannelId(), map[DISCORD_SETTING_KEYS.dutyStatusChannelId]),
     dutyAdminLogChannelId: envFirst(envDutyAdminLogChannelId(), map[DISCORD_SETTING_KEYS.dutyAdminLogChannelId]),
     contractsChannelId: envFirst(envContractsChannelId(), map[DISCORD_SETTING_KEYS.contractsChannelId]),
+    investigationsChannelId: envFirst(
+      envInvestigationsChannelId(),
+      map[DISCORD_SETTING_KEYS.investigationsChannelId],
+    ),
     dutyStatusMessageId: map[DISCORD_SETTING_KEYS.dutyStatusMessageId] || '',
     absenceStatusChannelId: envFirst(envAbsenceStatusChannelId(), map[DISCORD_SETTING_KEYS.absenceStatusChannelId]),
     absenceStatusMessageId: map[DISCORD_SETTING_KEYS.absenceStatusMessageId] || '',
@@ -827,6 +844,7 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.dutyStatusChannelId !== undefined) data[DISCORD_SETTING_KEYS.dutyStatusChannelId] = input.dutyStatusChannelId.trim()
   if (input.dutyAdminLogChannelId !== undefined) data[DISCORD_SETTING_KEYS.dutyAdminLogChannelId] = input.dutyAdminLogChannelId.trim()
   if (input.contractsChannelId !== undefined) data[DISCORD_SETTING_KEYS.contractsChannelId] = input.contractsChannelId.trim()
+  if (input.investigationsChannelId !== undefined) data[DISCORD_SETTING_KEYS.investigationsChannelId] = input.investigationsChannelId.trim()
   if (input.dutyStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.dutyStatusMessageId] = input.dutyStatusMessageId.trim()
   if (input.absenceStatusChannelId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusChannelId] = input.absenceStatusChannelId.trim()
   if (input.absenceStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusMessageId] = input.absenceStatusMessageId.trim()
@@ -2087,6 +2105,69 @@ export function queueDiscordHrEvent(event: Parameters<typeof sendDiscordHrEvent>
       severity: 'error',
       source: 'discord-integration',
       fields: [{ name: 'Event', value: event.title, inline: true }],
+      error,
+    })
+  })
+}
+
+/* ── Ermittlungssystem ────────────────────────────────────────────── */
+
+export type DiscordInvestigationEventInput = {
+  type: 'created' | 'status' | 'clip' | 'closed'
+  caseNumber: string
+  title: string
+  /// Verschlusssachen werden nie gepostet – der Aufrufer muss das Flag setzen.
+  classified: boolean
+  leadAgentName?: string | null
+  actorName?: string | null
+  rows?: Array<{ label: string; value: string | null | undefined }>
+  note?: string | null
+}
+
+const INVESTIGATION_EVENT_META = {
+  created: { icon: '🗂️', label: 'Neue Ermittlungsakte' },
+  status: { icon: '🔄', label: 'Aktenstatus geändert' },
+  clip: { icon: '🎥', label: 'Neuer Bodycam-Clip' },
+  closed: { icon: '📕', label: 'Ermittlung abgeschlossen' },
+} as const
+
+export async function sendDiscordInvestigationEvent(event: DiscordInvestigationEventInput) {
+  // Vertrauliche Akten verlassen das Dashboard grundsätzlich nicht.
+  if (event.classified) return null
+
+  const config = await getDiscordConfig()
+  const channelId = config.investigationsChannelId
+  if (!channelId || !botToken()) return null
+
+  const meta = INVESTIGATION_EVENT_META[event.type]
+  const rows = [
+    { label: 'Aktenzeichen', value: event.caseNumber },
+    { label: 'Fallführung', value: event.leadAgentName || null },
+    ...(event.rows ?? []),
+    { label: 'Erfasst von', value: event.actorName || null },
+  ].filter((row) => Boolean(row.value))
+
+  const payload = componentMessage(
+    markdownTextDisplays([
+      markdownHeader(meta.icon, meta.label, event.title),
+      event.note ? markdownQuote(event.note) : null,
+      rows.length ? `### Details\n${markdownRows(rows)}` : null,
+      markdownMeta([discordTimestamp(new Date(), 'f')]),
+    ]),
+  )
+
+  const message = await postChannelMessage(channelId, payload)
+  return { channelId, messageId: message.id }
+}
+
+export function queueDiscordInvestigationEvent(event: DiscordInvestigationEventInput) {
+  void sendDiscordInvestigationEvent(event).catch((error) => {
+    console.error('[DiscordIntegration] Ermittlungs-Meldung fehlgeschlagen:', error)
+    queueDiscordWebhookEvent({
+      title: 'Discord-Ermittlungsmeldung fehlgeschlagen',
+      severity: 'error',
+      source: 'discord-integration',
+      fields: [{ name: 'Akte', value: event.caseNumber, inline: true }],
       error,
     })
   })

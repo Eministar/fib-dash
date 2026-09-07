@@ -224,7 +224,7 @@ model User {
   contractTemplatesCreated   ContractTemplate[]        @relation("ContractTemplateCreator")
   contractsCreated           Contract[]                @relation("ContractCreator")
   contractsSigned            Contract[]                @relation("ContractSigner")
-  agentSearchesCreated     AgentSearch[]           @relation("AgentSearchCreator")
+  agentSearchesCreated       AgentSearch[]             @relation("AgentSearchCreator")
   internalAffairsDawsCreated InternalAffairsDaw[]      @relation("IaDawCreator")
   legalCasesCreated          LegalCase[]               @relation("LegalCaseCreator")
   legalCaseBatchesCreated    LegalCaseBatch[]          @relation("LegalCaseBatchCreator")
@@ -232,6 +232,12 @@ model User {
   transferRequestsSignedHr   TransferRequest[]         @relation("TransferRequestHrSigner")
   transferRequestsSignedOf   TransferRequest[]         @relation("TransferRequestAgentSigner")
   changeSets                 ChangeSet[]
+
+  investigationsCreated       Investigation[]         @relation("InvestigationCreator")
+  investigationAssignments    InvestigationAssignee[] @relation("InvestigationAssigneeUser")
+  investigationEntriesCreated InvestigationEntry[]    @relation("InvestigationEntryCreator")
+  investigationClipsUploaded  BodycamClip[]           @relation("BodycamClipUploader")
+  personsCreated              Person[]                @relation("PersonCreator")
 }
 
 model UserGroupMembership {
@@ -330,7 +336,7 @@ model Rank {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  agents            Agent[]
+  agents              Agent[]
   minimumForTrainings Training[]            @relation("TrainingMinimumRank")
   oldRankLogs         PromotionLog[]        @relation("OldRank")
   newRankLogs         PromotionLog[]        @relation("NewRank")
@@ -374,7 +380,7 @@ model Training {
   minRank   Rank?    @relation("TrainingMinimumRank", fields: [minRankId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 
-  agentTrainings AgentTraining[]
+  agentTrainings   AgentTraining[]
   academyResources AcademyResource[]
 
   @@index([minRankId])
@@ -529,8 +535,8 @@ model JobApplication {
   reviewedBy           User?                @relation("JobApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   /// Agent, der aus dieser Bewerbung eingestellt wurde. Wird beim Anlegen des
   /// Agents gesetzt und macht Bewerbung ↔ Personalakte gegenseitig auffindbar.
-  agentId            String?              @unique
-  agent              Agent?             @relation("AgentJobApplication", fields: [agentId], references: [id], onDelete: SetNull)
+  agentId              String?              @unique
+  agent                Agent?               @relation("AgentJobApplication", fields: [agentId], references: [id], onDelete: SetNull)
   updatedAt            DateTime             @updatedAt
 
   answers   JobApplicationAnswer[]
@@ -581,31 +587,31 @@ model PressRelease {
 }
 
 model Agent {
-  id               String        @id @default(cuid())
+  id               String      @id @default(cuid())
   badgeNumber      String
   /// Discord-Snowflake (nur Dashboard / Verknüpfung; ohne Bot-Anbindung)
-  discordId        String?       @unique
+  discordId        String?     @unique
   firstName        String
   lastName         String
   rankId           String
-  rank             Rank          @relation(fields: [rankId], references: [id])
+  rank             Rank        @relation(fields: [rankId], references: [id])
   status           AgentStatus @default(ACTIVE)
   unit             String?
   units            Json?
   flag             AgentFlag?
   /// Uprank-Sperre: blockiert Beförderungen (Aufstieg). Degradierungen bleiben erlaubt.
-  promotionBlocked Boolean       @default(false)
+  promotionBlocked Boolean     @default(false)
   notes            String?
-  hireDate         DateTime      @default(now())
+  hireDate         DateTime    @default(now())
   lastOnline       DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   trainings           AgentTraining[]
   promotionLogs       PromotionLog[]
   terminations        Termination[]
   sanctions           Sanction[]
-  agentNotes        Note[]                @relation("AgentNotes")
+  agentNotes          Note[]                @relation("AgentNotes")
   auditLogs           AuditLog[]            @relation("AuditAgent")
   rankChangeEntries   RankChangeListEntry[]
   taskAssignments     TaskAssignment[]      @relation("TaskAssigned")
@@ -619,7 +625,9 @@ model Agent {
   transferRequests    TransferRequest[]     @relation("AgentTransferRequests")
   searches            AgentSearch[]
   internalAffairsDaws InternalAffairsDaw[]
-  legalCases          LegalCase[]          @relation("AgentLegalCases")
+  legalCases          LegalCase[]           @relation("AgentLegalCases")
+  investigationsLed   Investigation[]       @relation("InvestigationLeadAgent")
+  bodycamClips        BodycamClip[]         @relation("BodycamClipRecorder")
 
   @@index([badgeNumber])
 }
@@ -628,8 +636,8 @@ model Agent {
 /// Agent-Durchsuchung. Der erfassende Benutzer wird automatisch gespeichert.
 model AgentSearch {
   id                   String   @id @default(cuid())
-  agentId            String
-  agent              Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId              String
+  agent                Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   conductedAt          DateTime
   prohibitedItemsFound Boolean  @default(false)
   foundItems           String   @db.Text
@@ -648,8 +656,8 @@ model InternalAffairsDaw {
   caseNumber          String?
   title               String
   category            String    @default("DAW") // DAW, DISCIPLINARY, INSTRUCTION, INVESTIGATION, OTHER
-  agentId           String?
-  agent             Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  agentId             String?
+  agent               Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
   allegation          String?   @db.Text
   statement           String?   @db.Text
   penalGrade          String?
@@ -685,8 +693,8 @@ model CalendarEvent {
   startsAt            DateTime
   endsAt              DateTime?
   location            String?
-  agentId           String?
-  agent             Agent?          @relation("CalendarEventAgent", fields: [agentId], references: [id], onDelete: SetNull)
+  agentId             String?
+  agent               Agent?            @relation("CalendarEventAgent", fields: [agentId], references: [id], onDelete: SetNull)
   createdById         String?
   createdBy           User?             @relation("CalendarEventCreator", fields: [createdById], references: [id], onDelete: SetNull)
   discordAnnouncement Boolean           @default(false)
@@ -743,8 +751,8 @@ model SruDocument {
 
 model Probation {
   id          String          @id @default(cuid())
-  agentId   String
-  agent     Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId     String
+  agent       Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
   type        ProbationType   @default(ROOKIE)
   startsAt    DateTime        @default(now())
   endsAt      DateTime
@@ -783,8 +791,8 @@ model ProbationEntry {
 
 model AbsenceNotice {
   id             String   @id @default(cuid())
-  agentId      String
-  agent        Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   startsAt       DateTime @default(now())
   endsAt         DateTime
   reason         String   @db.Text
@@ -799,8 +807,8 @@ model AbsenceNotice {
 
 model DutyTimeSession {
   id                     String    @id @default(cuid())
-  agentId              String
-  agent                Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId                String
+  agent                  Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
   clockInAt              DateTime  @default(now())
   clockOutAt             DateTime?
   clockInSource          String    @default("dashboard")
@@ -820,8 +828,8 @@ model DutyTimeSession {
 
 model PlaytimeSession {
   id             String    @id @default(cuid())
-  agentId      String?
-  agent        Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  agentId        String?
+  agent          Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
   discordId      String?
   license        String?
   playerName     String
@@ -840,8 +848,8 @@ model PlaytimeSession {
 
 model AgentTraining {
   id         String   @id @default(cuid())
-  agentId  String
-  agent    Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId    String
+  agent      Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   trainingId String
   training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   completed  Boolean  @default(false)
@@ -853,8 +861,8 @@ model AgentTraining {
 
 model PromotionLog {
   id                String   @id @default(cuid())
-  agentId         String
-  agent           Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId           String
+  agent             Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   oldRankId         String
   oldRank           Rank     @relation("OldRank", fields: [oldRankId], references: [id])
   newRankId         String
@@ -870,8 +878,8 @@ model PromotionLog {
 model Termination {
   id                  String   @id @default(cuid())
   /// Bei Löschen des Agents: null bleibt; Anzeige über previous*-Felder.
-  agentId           String?
-  agent             Agent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  agentId             String?
+  agent               Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
   reason              String
   terminatedByUserId  String?
   terminatedBy        User?    @relation("TerminatedBy", fields: [terminatedByUserId], references: [id], onDelete: SetNull)
@@ -884,8 +892,8 @@ model Termination {
 
 model Sanction {
   id                  String         @id @default(cuid())
-  agentId           String?
-  agent             Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  agentId             String?
+  agent               Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
   reason              String         @db.Text
   penalGrade          String
   measureType         String         @default("FINE")
@@ -923,8 +931,8 @@ model Sanction {
 
 model Note {
   id        String   @id @default(cuid())
-  agentId String?
-  agent   Agent? @relation("AgentNotes", fields: [agentId], references: [id], onDelete: Cascade)
+  agentId   String?
+  agent     Agent?   @relation("AgentNotes", fields: [agentId], references: [id], onDelete: Cascade)
   authorId  String?
   author    User?    @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   title     String?
@@ -937,8 +945,8 @@ model Note {
 model AuditLog {
   id        String   @id @default(cuid())
   action    String
-  agentId String?
-  agent   Agent? @relation("AuditAgent", fields: [agentId], references: [id], onDelete: SetNull)
+  agentId   String?
+  agent     Agent?   @relation("AuditAgent", fields: [agentId], references: [id], onDelete: SetNull)
   userId    String?
   user      User?    @relation("AuditUser", fields: [userId], references: [id], onDelete: SetNull)
   oldValue  String?  @db.Text
@@ -1028,8 +1036,8 @@ model RankChangeListEntry {
   id             String                    @id @default(cuid())
   listId         String
   list           RankChangeList            @relation(fields: [listId], references: [id], onDelete: Cascade)
-  agentId      String
-  agent        Agent                   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          Agent                     @relation(fields: [agentId], references: [id], onDelete: Cascade)
   currentRankId  String
   currentRank    Rank                      @relation("EntryCurrentRank", fields: [currentRankId], references: [id])
   proposedRankId String
@@ -1172,8 +1180,8 @@ model TaskAssignment {
   id         String   @id @default(cuid())
   taskId     String
   task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  agentId  String
-  agent    Agent  @relation("TaskAssigned", fields: [agentId], references: [id], onDelete: Cascade)
+  agentId    String
+  agent      Agent    @relation("TaskAssigned", fields: [agentId], references: [id], onDelete: Cascade)
   assignedAt DateTime @default(now())
 
   @@unique([taskId, agentId])
@@ -1317,8 +1325,8 @@ model Contract {
   id            String            @id @default(cuid())
   templateId    String?
   template      ContractTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  agentId     String
-  agent       Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId       String
+  agent         Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade)
   applicationId String?
   application   JobApplication?   @relation("JobApplicationContracts", fields: [applicationId], references: [id], onDelete: SetNull)
 
@@ -1390,10 +1398,10 @@ model TransferRequest {
   /// Aktenzeichen des Antrags, z. B. "VA-0001".
   requestNumber String @unique @db.VarChar(24)
 
-  agentId       String?
-  agent         Agent? @relation("AgentTransferRequests", fields: [agentId], references: [id], onDelete: SetNull)
+  agentId         String?
+  agent           Agent?  @relation("AgentTransferRequests", fields: [agentId], references: [id], onDelete: SetNull)
   /// Snapshots des Beamten zum Erstellungszeitpunkt.
-  agentName     String
+  agentName       String
   badgeNumber     String?
   rankName        String?
   /// Discord-ID, die als Beamter unterschreiben darf.
@@ -1462,7 +1470,7 @@ model LegalCase {
   /// Beklagter (Agent). Snapshot-Felder bleiben erhalten, wenn der Agent
   /// später gelöscht wird.
   agentId String?
-  agent   Agent? @relation("AgentLegalCases", fields: [agentId], references: [id], onDelete: SetNull)
+  agent   Agent?  @relation("AgentLegalCases", fields: [agentId], references: [id], onDelete: SetNull)
 
   accusedName      String? @db.VarChar(200)
   accusedBadge     String? @db.VarChar(64)
@@ -1480,12 +1488,12 @@ model LegalCase {
   /// `[{ sanctionId, reason, penalGrade, measureType, fineAmount, sgRounds, createdAt, dueAt }]`.
   sanctions Json @default("[]")
 
-  filedAt    DateTime?
-  closedAt   DateTime?
+  filedAt     DateTime?
+  closedAt    DateTime?
   createdById String?
-  createdBy   User?    @relation("LegalCaseCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdBy   User?     @relation("LegalCaseCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   /// Zugehörige Sammelaktion ("Alle offenen Sanktionen gekündigter Mitarbeiter").
   batchId String?
@@ -1512,5 +1520,204 @@ model LegalCaseBatch {
 
   cases LegalCase[] @relation("LegalCaseBatchCases")
 
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Einsatzakten- und Ermittlungssystem
+// ---------------------------------------------------------------------------
+
+enum InvestigationStatus {
+  OPEN
+  ACTIVE
+  SUSPENDED
+  CLOSED
+  ARCHIVED
+}
+
+enum InvestigationPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+/// Art eines Chronologie-Eintrags innerhalb einer Ermittlungsakte.
+enum InvestigationEntryKind {
+  OPERATION
+  INTERROGATION
+  OBSERVATION
+  EVIDENCE
+  NOTE
+  RESULT
+}
+
+enum InvestigationPersonRole {
+  SUSPECT
+  WITNESS
+  VICTIM
+  INFORMANT
+  ACCOMPLICE
+  OTHER
+}
+
+/// Eine Ermittlungsakte. Bündelt die Chronologie der Einsätze, die beteiligten
+/// Personen und die zugehörigen Bodycam-Clips unter einem Aktenzeichen.
+model Investigation {
+  id         String                @id @default(cuid())
+  /// Fortlaufendes Aktenzeichen, z. B. "ERM-0001".
+  caseNumber String                @unique @db.VarChar(24)
+  title      String                @db.VarChar(200)
+  /// Zusammenfassung der Ermittlungslage (Markdown).
+  summary    String?               @db.Text
+  status     InvestigationStatus   @default(OPEN)
+  priority   InvestigationPriority @default(NORMAL)
+
+  /// Verschlusssache: nur Ersteller, Fallführung, zugewiesene Ermittler und
+  /// Inhaber von `investigations:classified` sehen die Akte samt Clips.
+  classified Boolean @default(false)
+
+  /// Fallführender Agent.
+  leadAgentId String?
+  leadAgent   Agent?  @relation("InvestigationLeadAgent", fields: [leadAgentId], references: [id], onDelete: SetNull)
+
+  closedAt    DateTime?
+  createdById String?
+  createdBy   User?     @relation("InvestigationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  assignees InvestigationAssignee[]
+  entries   InvestigationEntry[]
+  persons   InvestigationPerson[]
+  clips     BodycamClip[]
+
+  @@index([status, updatedAt])
+  @@index([priority, updatedAt])
+  @@index([leadAgentId])
+  @@index([createdById])
+}
+
+/// Zusätzlich zugewiesene Ermittler. Sie behalten Zugriff auf Verschlusssachen.
+model InvestigationAssignee {
+  id              String        @id @default(cuid())
+  investigationId String
+  investigation   Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User          @relation("InvestigationAssigneeUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+
+  @@unique([investigationId, userId])
+  @@index([userId])
+}
+
+/// Ein Einsatz oder Ermittlungsschritt in der Chronologie einer Akte.
+model InvestigationEntry {
+  id              String                 @id @default(cuid())
+  investigationId String
+  investigation   Investigation          @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  kind            InvestigationEntryKind @default(OPERATION)
+  title           String                 @db.VarChar(200)
+  /// Hergang / Feststellungen (Markdown).
+  content         String?                @db.Text
+  /// Zeitpunkt des Einsatzes – bewusst getrennt von `createdAt`, weil Akten
+  /// regelmäßig nachträglich gepflegt werden.
+  occurredAt      DateTime
+  location        String?                @db.VarChar(200)
+  /// Snapshot der beteiligten Agents: `[{ agentId, name, badgeNumber, rank }]`.
+  participants    Json                   @default("[]")
+
+  createdById String?
+  createdBy   User?    @relation("InvestigationEntryCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clips BodycamClip[]
+
+  @@index([investigationId, occurredAt])
+  @@index([kind])
+}
+
+/// Fallübergreifendes Personenregister (Zivilisten, keine FIB-Agents).
+model Person {
+  id           String    @id @default(cuid())
+  /// Fortlaufende Personenaktennummer, z. B. "PER-0001".
+  personNumber String    @unique @db.VarChar(24)
+  firstName    String    @db.VarChar(100)
+  lastName     String    @db.VarChar(100)
+  alias        String?   @db.VarChar(100)
+  /// Ausweis-/Spielerkennung.
+  identifier   String?   @db.VarChar(100)
+  dateOfBirth  DateTime?
+  phone        String?   @db.VarChar(64)
+  photoUrl     String?   @db.VarChar(2048)
+  /// Freie Notizen (Markdown).
+  notes        String?   @db.Text
+  wanted       Boolean   @default(false)
+  dangerous    Boolean   @default(false)
+
+  createdById String?
+  createdBy   User?    @relation("PersonCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  investigations InvestigationPerson[]
+
+  @@index([lastName, firstName])
+  @@index([wanted])
+}
+
+/// Verknüpfung Akte ↔ Person mit der Rolle in genau dieser Ermittlung.
+model InvestigationPerson {
+  id              String                  @id @default(cuid())
+  investigationId String
+  investigation   Investigation           @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  personId        String
+  person          Person                  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  role            InvestigationPersonRole @default(SUSPECT)
+  note            String?                 @db.Text
+  createdAt       DateTime                @default(now())
+
+  @@unique([investigationId, personId, role])
+  @@index([personId])
+}
+
+/// Hochgeladener Bodycam-Clip. Die Datei liegt unter `CLIP_DIR`, ausgeliefert
+/// wird sie ausschließlich über die geschützte Streaming-Route.
+model BodycamClip {
+  id              String              @id @default(cuid())
+  investigationId String
+  investigation   Investigation       @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  /// Optionale Zuordnung zu einem Chronologie-Eintrag.
+  entryId         String?
+  entry           InvestigationEntry? @relation(fields: [entryId], references: [id], onDelete: SetNull)
+
+  title       String    @db.VarChar(200)
+  description String?   @db.Text
+  recordedAt  DateTime?
+  location    String?   @db.VarChar(200)
+
+  /// Gespeicherter Dateiname (`<uuid><ext>`), nie der Originalname.
+  filename        String @unique @db.VarChar(80)
+  originalName    String @db.VarChar(255)
+  sizeBytes       BigInt
+  mimeType        String @db.VarChar(120)
+  durationSeconds Int?
+
+  /// Agent, dessen Bodycam die Aufnahme stammt.
+  recordedByAgentId String?
+  recordedByAgent   Agent?  @relation("BodycamClipRecorder", fields: [recordedByAgentId], references: [id], onDelete: SetNull)
+
+  /// Freie Schlagworte: `["Zugriff", "Schusswaffengebrauch"]`.
+  tags Json @default("[]")
+
+  uploadedById String?
+  uploadedBy   User?    @relation("BodycamClipUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([investigationId, recordedAt])
+  @@index([entryId])
+  @@index([recordedByAgentId])
   @@index([createdAt])
 }

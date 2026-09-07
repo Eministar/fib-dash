@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText, ChartNoAxesCombined,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Upload, CalendarDays, Download,
-  FileText, Gavel,
+  FileText, Gavel, FolderSearch,
   History,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -46,6 +46,7 @@ const mainNav: NavItem[] = [
   { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
   // Ohne `permission`: Sanktionen sind für jeden eingeloggten Agent einsehbar.
   { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
+  { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
   { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
   { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
 ]
