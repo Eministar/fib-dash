@@ -260,6 +260,11 @@ const guildMembersCache = new Map<string, CacheEntry<DiscordGuildMember[]>>()
 const guildMembersRequests = new Map<string, Promise<DiscordGuildMember[]>>()
 const memberPermissionBackoff = new Map<string, number>()
 const MEMBER_PERMISSION_BACKOFF_MS = 30 * 60 * 1000
+// Fehlgeschlagene Guild-Member-Abrufe werden NICHT gecacht — ohne Sperre läuft
+// deshalb jeder Dashboard-Poll erneut in denselben Fehler (z. B. 403/50001 bei
+// fehlendem Server-Members-Intent) und flutet Log und Discord-API.
+const guildMembersBackoff = new Map<string, number>()
+const GUILD_MEMBERS_BACKOFF_MS = 10 * 60 * 1000
 
 function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null {
   const entry = cache.get(key)
@@ -279,6 +284,7 @@ export function invalidateDiscordCache() {
   guildMembersCache.clear()
   guildMembersRequests.clear()
   memberPermissionBackoff.clear()
+  guildMembersBackoff.clear()
 }
 
 function memberPermissionBlocked(memberId: string) {
@@ -909,6 +915,9 @@ export async function getDiscordGuildMembers(guildId?: string) {
   const cached = getCached(guildMembersCache, id)
   if (cached) return cached
 
+  // Nach einem Fehlschlag für eine Weile gar nicht erst anfragen.
+  if (Date.now() < (guildMembersBackoff.get(id) ?? 0)) return []
+
   const existingRequest = guildMembersRequests.get(id)
   if (existingRequest) return existingRequest
 
@@ -916,15 +925,24 @@ export async function getDiscordGuildMembers(guildId?: string) {
     const members: DiscordGuildMember[] = []
     let after = '0'
 
-    while (true) {
-      const page = await discordFetchRaw<DiscordGuildMember[]>(`/guilds/${id}/members?limit=1000&after=${after}`)
-      if (page.length === 0) break
-      members.push(...page)
-      const lastId = page[page.length - 1]?.user?.id
-      if (!lastId || page.length < 1000) break
-      after = lastId
+    try {
+      while (true) {
+        const page = await discordFetchRaw<DiscordGuildMember[]>(`/guilds/${id}/members?limit=1000&after=${after}`)
+        if (page.length === 0) break
+        members.push(...page)
+        const lastId = page[page.length - 1]?.user?.id
+        if (!lastId || page.length < 1000) break
+        after = lastId
+      }
+    } catch (error) {
+      // Bewusst kein Rethrow: der Abruf ist für alle Aufrufer optional und ein
+      // Fehler darf weder den Request killen noch bei jedem Poll neu auflaufen.
+      guildMembersBackoff.set(id, Date.now() + GUILD_MEMBERS_BACKOFF_MS)
+      logGuildMembersFailure(id, error)
+      return []
     }
 
+    guildMembersBackoff.delete(id)
     setCache(guildMembersCache, id, members)
     return members
   })().finally(() => {
@@ -935,15 +953,37 @@ export async function getDiscordGuildMembers(guildId?: string) {
   return request
 }
 
+/**
+ * Loggt einen fehlgeschlagenen Guild-Member-Abruf genau einmal pro Backoff-
+ * Fenster. Bei 403/50001 fehlt praktisch immer der privilegierte Intent —
+ * Server-Rollenrechte des Bots ändern daran nichts, deshalb der explizite Hinweis.
+ */
+function logGuildMembersFailure(guildId: string, error: unknown) {
+  const minutes = Math.round(GUILD_MEMBERS_BACKOFF_MS / 60000)
+  if (error instanceof DiscordApiError && error.status === 403 && error.code === 50001) {
+    console.error(
+      `[DiscordIntegration] Mitgliederliste für Guild ${guildId} nicht abrufbar (403 Missing Access). ` +
+      'Ursache ist fast immer der fehlende "Server Members Intent": Discord Developer Portal → ' +
+      'Applications → Bot → Privileged Gateway Intents → SERVER MEMBERS INTENT aktivieren. ' +
+      `Prüfe sonst, ob DISCORD_GUILD_ID stimmt und der Bot auf diesem Server ist. Nächster Versuch in ${minutes} Minuten.`,
+    )
+    return
+  }
+  console.error(
+    `[DiscordIntegration] Mitgliederliste für Guild ${guildId} nicht abrufbar. Nächster Versuch in ${minutes} Minuten:`,
+    error,
+  )
+}
+
 export function getCachedDiscordGuildMembers(guildId: string) {
   return getCached(guildMembersCache, guildId)
 }
 
 export function refreshDiscordGuildMembers(guildId: string) {
   if (!guildId || !botToken() || guildMembersRequests.has(guildId)) return
-  void getDiscordGuildMembers(guildId).catch((error) => {
-    console.error('[DiscordIntegration] Discord-Mitglieder konnten nicht aktualisiert werden:', error)
-  })
+  // Fehler werden bereits in getDiscordGuildMembers einmal pro Backoff-Fenster
+  // geloggt — hier nur noch abfangen, damit kein unhandled rejection entsteht.
+  void getDiscordGuildMembers(guildId).catch(() => {})
 }
 
 async function getAgentForDiscord(agentId: string) {
