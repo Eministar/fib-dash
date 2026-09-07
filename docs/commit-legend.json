@@ -1,5 +1,15 @@
 {
-  "repository": "",
-  "generatedAt": "2026-09-07T00:00:00.000Z",
-  "entries": []
+  "repository": "Eministar/fib-dash",
+  "generatedAt": "2026-09-07T13:56:25.161Z",
+  "entries": [
+    {
+      "buildId": "build-f955695957",
+      "commit": "f955695957e2438e4b59ef91d4dc67c95d8d664d",
+      "shortCommit": "f955695957",
+      "subject": "Initiales Panel: Agents-Umbenennung, Modul-Bereinigung, Arbeitsvertrag",
+      "author": "Eministar",
+      "date": "2026-09-07T13:55:32Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/f955695957e2438e4b59ef91d4dc67c95d8d664d"
+    }
+  ]
 }
