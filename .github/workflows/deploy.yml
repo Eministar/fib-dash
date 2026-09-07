@@ -1,0 +1,63 @@
+# Auto-Deploy: bei Push nach main per SSH auf den Server, dort scripts/deploy-server.sh ausführen.
+#
+# EINRICHTUNG (einmalig) — GitHub → Settings → Secrets and variables → Actions:
+#   SSH_HOST   Server-IP/Hostname (z.B. 77.90.61.40 oder pd.nero-v.cc)
+#   SSH_USER   SSH-Benutzer
+#   SSH_KEY    PRIVATER SSH-Key (kompletter Inhalt, inkl. BEGIN/END-Zeilen)
+#   APP_DIR    Pfad zum Anwendungsstamm auf dem Server (z.B. /var/www/fib oder ~/fib-hr)
+#   SSH_PORT   (optional) SSH-Port, Default 22
+#
+# Der zugehörige ÖFFENTLICHE Key muss auf dem Server in ~/.ssh/authorized_keys stehen.
+# Ohne gesetzte Secrets überspringt der Job sich selbst (kein Fehlschlag-Spam).
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Nie zwei Deploys gleichzeitig; laufende nicht abbrechen (halbe Deploys vermeiden).
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (für aktuelles Deploy-Skript)
+        uses: actions/checkout@v4
+
+      - name: Prüfen, ob Deploy-Secrets gesetzt sind
+        id: guard
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          if [ -z "$SSH_HOST" ]; then
+            echo "SSH_HOST nicht gesetzt — Deploy wird übersprungen. Secrets in den Repo-Settings hinterlegen."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy über SSH
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          APP_DIR: ${{ secrets.APP_DIR }}
+        run: |
+          set -euo pipefail
+          PORT="${SSH_PORT:-22}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Skript über stdin pipen → immer die aktuelle Version aus diesem Checkout.
+          ssh -i ~/.ssh/id_deploy -p "$PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            "$SSH_USER@$SSH_HOST" \
+            "APP_DIR='$APP_DIR' bash -s" < scripts/deploy-server.sh

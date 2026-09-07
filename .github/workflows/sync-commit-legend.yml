@@ -1,0 +1,44 @@
+name: Commit-Legende synchronisieren
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - docs/commit-legend.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Commit-Legende abrufen
+        run: npm run release:sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Änderungen zurückschreiben
+        run: |
+          if git diff --quiet -- docs/commit-legend.json; then
+            echo "Commit-Legende ist bereits aktuell."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/commit-legend.json
+          git commit -m "chore: sync commit legend [skip ci]"
+          git push

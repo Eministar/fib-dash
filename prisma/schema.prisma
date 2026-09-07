@@ -1,0 +1,1516 @@
+generator client {
+  // prisma-client-js emits a ready-to-require JavaScript client (client.js +
+  // client.d.ts). The newer "prisma-client" generator emits TypeScript only,
+  // which the production entry (start.js) cannot require without a TS loader.
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum AgentStatus {
+  ACTIVE
+  AWAY
+  INACTIVE
+  TERMINATED
+}
+
+enum UserRole {
+  ADMIN
+  HR
+  LEADERSHIP
+  READONLY
+}
+
+enum TaskModule {
+  ACADEMY
+  HR
+  SRU
+  AIR_SUPPORT
+  DETECTIVE
+  INTERNAL_AFFAIRS
+  LAD
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AgentFlag {
+  RED
+  ORANGE
+  YELLOW
+  BLUE
+}
+
+enum SanctionStatus {
+  OPEN
+  PAID
+  ESCALATED
+  IN_COURT
+}
+
+enum CalendarEventType {
+  TRAINING
+  MEETING
+  ACADEMY
+  EXAM
+  HR_DEADLINE
+  SRU_TRAINING
+  SRU_OPERATION
+  AIR_SUPPORT_TRAINING
+  AIR_SUPPORT_OPERATION
+  OTHER
+}
+
+enum ProbationStatus {
+  ACTIVE
+  PASSED
+  EXTENDED
+  FAILED
+}
+
+enum ProbationType {
+  ROOKIE
+  SERGEANT_SUPERVISOR
+  LEADERSHIP
+  CHIEF
+}
+
+enum ProbationEntryRating {
+  POSITIVE
+  NEGATIVE
+}
+
+enum AcademyResourceType {
+  FILE
+  LINK
+}
+
+enum AcademyResourceScope {
+  GENERAL
+  TRAINING
+}
+
+enum FormTestStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum FormTestKind {
+  TEST
+  SURVEY
+}
+
+enum FormQuestionType {
+  SHORT_TEXT
+  LONG_TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SCALE
+}
+
+enum JobApplicationStatus {
+  SUBMITTED
+  IN_REVIEW
+  HR_INTERVIEW
+  ACCEPTED
+  REJECTED
+}
+
+enum PressReleaseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  DECLINED
+  CANCELLED
+}
+
+enum LegalCaseKind {
+  SANCTION
+  CUSTOM
+}
+
+enum LegalCaseStatus {
+  DRAFT
+  FILED
+  CLOSED
+}
+
+model UserGroup {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  permissions Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  memberships UserGroupMembership[]
+}
+
+model User {
+  id                   String     @id @default(cuid())
+  username             String     @unique
+  passwordHash         String?
+  displayName          String
+  discordId            String?
+  discordUsername      String?
+  discordGlobalName    String?
+  discordAvatar        String?
+  discordDiscriminator String?
+  lastLoginAt          DateTime?
+  role                 UserRole   @default(READONLY)
+  groupId              String?
+  group                UserGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  permissions          Json?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  groupMemberships           UserGroupMembership[]
+  promotionsPerformed        PromotionLog[]            @relation("PerformedBy")
+  terminationsPerformed      Termination[]             @relation("TerminatedBy")
+  sanctionsIssued            Sanction[]                @relation("SanctionIssuedBy")
+  notesAuthored              Note[]                    @relation("NoteAuthor")
+  auditLogs                  AuditLog[]                @relation("AuditUser")
+  createdLists               RankChangeList[]          @relation("ListCreator")
+  rankChangeEntriesCreated   RankChangeListEntry[]     @relation("EntryCreator")
+  rankChangeEntriesExecuted  RankChangeListEntry[]     @relation("EntryExecutor")
+  rankChangeVotes            RankChangeVote[]
+  rankChangeComments         RankChangeEntryComment[]  @relation("RankChangeCommentAuthor")
+  rankChangeProposals        RankChangeEntryProposal[] @relation("RankChangeProposalAuthor")
+  rankChangeReviews          RankChangeEntryProposal[] @relation("RankChangeProposalReviewer")
+  rankChangeHistory          RankChangeEntryHistory[]  @relation("RankChangeHistoryActor")
+  taskListsCreated           TaskList[]                @relation("TaskListCreator")
+  tasksCreated               Task[]                    @relation("TaskCreator")
+  calendarEventsCreated      CalendarEvent[]           @relation("CalendarEventCreator")
+  sruFoldersCreated          SruFolder[]               @relation("SruFolderCreator")
+  sruDocumentsCreated        SruDocument[]             @relation("SruDocumentCreator")
+  sruDocumentsUpdated        SruDocument[]             @relation("SruDocumentUpdater")
+  probationsCreated          Probation[]               @relation("ProbationCreator")
+  probationsDecided          Probation[]               @relation("ProbationDecider")
+  probationEntriesCreated    ProbationEntry[]          @relation("ProbationEntryCreator")
+  apiTokensOwned             ApiToken[]                @relation("ApiTokenOwner")
+  apiTokensCreated           ApiToken[]                @relation("ApiTokenCreator")
+  academyResourcesCreated    AcademyResource[]         @relation("AcademyResourceCreator")
+  formTestsCreated           FormTest[]                @relation("FormTestCreator")
+  formResponsesSubmitted     FormResponse[]            @relation("FormResponseRespondent")
+  formResponsesReviewed      FormResponse[]            @relation("FormResponseReviewer")
+  formTestSessions           FormTestSession[]         @relation("FormTestSessionUser")
+  jobApplicationsSubmitted   JobApplication[]          @relation("JobApplicationApplicant")
+  jobApplicationsReviewed    JobApplication[]          @relation("JobApplicationReviewer")
+  pressReleasesCreated       PressRelease[]            @relation("PressReleaseCreator")
+  pressReleasesUpdated       PressRelease[]            @relation("PressReleaseUpdater")
+  ordnungenCreated           Ordnung[]                 @relation("OrdnungCreator")
+  unitAssignments            UserUnitAssignment[]
+  contractTemplatesCreated   ContractTemplate[]        @relation("ContractTemplateCreator")
+  contractsCreated           Contract[]                @relation("ContractCreator")
+  contractsSigned            Contract[]                @relation("ContractSigner")
+  agentSearchesCreated     AgentSearch[]           @relation("AgentSearchCreator")
+  internalAffairsDawsCreated InternalAffairsDaw[]      @relation("IaDawCreator")
+  legalCasesCreated          LegalCase[]               @relation("LegalCaseCreator")
+  legalCaseBatchesCreated    LegalCaseBatch[]          @relation("LegalCaseBatchCreator")
+  transferRequestsCreated    TransferRequest[]         @relation("TransferRequestCreator")
+  transferRequestsSignedHr   TransferRequest[]         @relation("TransferRequestHrSigner")
+  transferRequestsSignedOf   TransferRequest[]         @relation("TransferRequestAgentSigner")
+  changeSets                 ChangeSet[]
+}
+
+model UserGroupMembership {
+  userId    String
+  groupId   String
+  source    String   @default("discord") // 'discord' | 'manual'
+  createdAt DateTime @default(now())
+
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+  @@index([groupId])
+  @@index([userId, source])
+}
+
+model Unit {
+  id               String   @id @default(cuid())
+  key              String   @unique
+  name             String
+  description      String?  @db.Text
+  color            String   @default("#d4af37")
+  icon             String   @default("briefcase")
+  sortOrder        Int      @default(0)
+  active           Boolean  @default(true)
+  showInNavigation Boolean  @default(false)
+  /// Auswählbare Funktionsbereiche inkl. Zugriffsstufe, z. B. {"academy":"manage"}.
+  /// Nullable, damit additive MariaDB-Updates bestehende Zeilen nicht mit leerem, ungültigem JSON füllen.
+  modules          Json?
+  /// Zusätzliche Rechte, die diese Unit ihren Mitgliedern gewährt (analog UserGroup.permissions).
+  permissions      Json     @default("[]")
+  /// Optionaler Discord-Rang dieser konkreten Unterunit (z. B. "HR Senior Officer").
+  discordRoleId    String?
+  /// Zugehörige Unitgruppe. Gruppierte Units erben Module, Rechte und Navigation von der Gruppe.
+  groupId          String?
+  /// Leitungs-Unterunits erhalten automatisch Leitungsrecht und die gemeinsame Leitungsrolle der Gruppe.
+  isLeadership     Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  userAssignments UserUnitAssignment[]
+  group           UnitGroup?           @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([groupId, sortOrder])
+}
+
+/// Übergeordnete fachliche Unit. Sie bündelt beliebig viele Unterunits/Ränge
+/// und steuert deren gemeinsame Module, Navigation und Discord-Rollen.
+model UnitGroup {
+  id                      String   @id @default(cuid())
+  key                     String   @unique
+  name                    String
+  description             String?  @db.Text
+  color                   String   @default("#d4af37")
+  icon                    String   @default("briefcase")
+  sortOrder               Int      @default(0)
+  active                  Boolean  @default(true)
+  showInNavigation        Boolean  @default(false)
+  modules                 Json?
+  permissions             Json     @default("[]")
+  /// Gemeinsame Discord-Rolle für alle Mitglieder eines Unterrangs dieser Gruppe.
+  memberDiscordRoleId     String?
+  /// Gemeinsame Discord-Rolle für Mitglieder aller als Leitung markierten Unterränge.
+  leadershipDiscordRoleId String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  units Unit[]
+
+  @@index([active, sortOrder])
+}
+
+/// Direkte Zuweisung einer Unit an einen Login-User (unabhängig vom Agent-Status).
+model UserUnitAssignment {
+  userId    String
+  unitId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([userId, unitId])
+  @@index([unitId])
+}
+
+model Rank {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  sortOrder      Int
+  /// Interne, sichtbare Rangnummer (z. B. Chief of Police = Rang 19). Unabhängig von der Sortierung.
+  internalNumber Int?     @unique
+  color          String   @default("#3B82F6")
+  /// Inklusiver Zahlenbereich für Dienstnummern (nur Ziffern / Prefix+Ziffern). Null = kein autom. Bereich.
+  badgeMin       Int?
+  badgeMax       Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  agents            Agent[]
+  minimumForTrainings Training[]            @relation("TrainingMinimumRank")
+  oldRankLogs         PromotionLog[]        @relation("OldRank")
+  newRankLogs         PromotionLog[]        @relation("NewRank")
+  entryCurrentRanks   RankChangeListEntry[] @relation("EntryCurrentRank")
+  entryProposedRanks  RankChangeListEntry[] @relation("EntryProposedRank")
+  tierRanks           TierRank[]
+}
+
+/// Eine "Ebene" = eine Discord-Rolle, die Agent automatisch erhalten, wenn ihr
+/// Rang einer der zugewiesenen Ränge ist. Voll gemanaged (add + remove) über den
+/// bestehenden Agent-Discord-Sync.
+model Tier {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  /// Discord-Snowflake der Ebenen-Rolle. Null = (noch) keine Rolle hinterlegt.
+  discordRoleId String?
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ranks TierRank[]
+}
+
+model TierRank {
+  tierId String
+  /// Ein Rang gehört zu genau EINER Ebene (global unique).
+  rankId String @unique
+  tier   Tier   @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  rank   Rank   @relation(fields: [rankId], references: [id], onDelete: Cascade)
+
+  @@id([tierId, rankId])
+  @@index([rankId])
+}
+
+model Training {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  sortOrder Int      @default(0)
+  minRankId String?
+  minRank   Rank?    @relation("TrainingMinimumRank", fields: [minRankId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  agentTrainings AgentTraining[]
+  academyResources AcademyResource[]
+
+  @@index([minRankId])
+}
+
+model AcademyResource {
+  id                 String               @id @default(cuid())
+  scope              AcademyResourceScope
+  type               AcademyResourceType
+  title              String
+  description        String?              @db.Text
+  trainingId         String?
+  training           Training?            @relation(fields: [trainingId], references: [id], onDelete: SetNull)
+  customTrainingName String?
+  url                String?              @db.Text
+  storedFilename     String?
+  originalFilename   String?
+  mimeType           String?
+  size               Int?
+  createdById        String?
+  createdBy          User?                @relation("AcademyResourceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([scope, createdAt])
+  @@index([trainingId, createdAt])
+  @@index([createdById])
+}
+
+model FormTest {
+  id                 String         @id @default(cuid())
+  module             TaskModule
+  kind               FormTestKind   @default(TEST)
+  title              String
+  description        String?        @db.Text
+  status             FormTestStatus @default(DRAFT)
+  timeLimitMinutes   Int?
+  anonymousResponses Boolean        @default(false)
+  shareToken         String         @unique
+  createdById        String?
+  createdBy          User?          @relation("FormTestCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  questions FormQuestion[]
+  responses FormResponse[]
+  sessions  FormTestSession[]
+
+  @@index([module, status, updatedAt])
+  @@index([createdById])
+}
+
+model FormQuestion {
+  id          String           @id @default(cuid())
+  testId      String
+  test        FormTest         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  type        FormQuestionType
+  title       String           @db.Text
+  description String?          @db.Text
+  required    Boolean          @default(true)
+  options     Json?
+  points      Int              @default(0)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  answers FormAnswer[]
+
+  @@index([testId, sortOrder])
+}
+
+model FormResponse {
+  id             String    @id @default(cuid())
+  testId         String
+  test           FormTest  @relation(fields: [testId], references: [id], onDelete: Cascade)
+  respondentId   String?
+  respondent     User?     @relation("FormResponseRespondent", fields: [respondentId], references: [id], onDelete: SetNull)
+  respondentName String
+  submitterHash  String?
+  score          Int?
+  maxScore       Int       @default(0)
+  reviewNote     String?   @db.Text
+  reviewedAt     DateTime?
+  reviewedById   String?
+  reviewedBy     User?     @relation("FormResponseReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  submittedAt    DateTime  @default(now())
+
+  answers FormAnswer[]
+
+  @@unique([testId, respondentId])
+  @@index([testId, submitterHash])
+  @@index([testId, submittedAt])
+  @@index([respondentId, submittedAt])
+  @@index([submitterHash])
+  @@index([reviewedById])
+}
+
+model FormTestSession {
+  id             String    @id @default(cuid())
+  testId         String
+  test           FormTest  @relation(fields: [testId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User      @relation("FormTestSessionUser", fields: [userId], references: [id], onDelete: Cascade)
+  startedAt      DateTime  @default(now())
+  expiresAt      DateTime?
+  completedAt    DateTime?
+  lastSeenAt     DateTime  @default(now())
+  securityEvents Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId, completedAt, expiresAt])
+  @@index([testId, userId, startedAt])
+}
+
+model FormAnswer {
+  id         String       @id @default(cuid())
+  responseId String
+  response   FormResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId String
+  question   FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  value      Json
+  createdAt  DateTime     @default(now())
+
+  @@unique([responseId, questionId])
+  @@index([questionId])
+}
+
+model JobApplication {
+  id                   String               @id @default(cuid())
+  /// Aktenzeichen der Bewerbung (z. B. "BW-0001"). Wird beim Einreichen
+  /// vergeben und ist die Kennung, unter der HR die Bewerbung sucht. Optional,
+  /// weil Bewerbungen aus der Zeit vor dieser Funktion noch keins haben.
+  caseNumber           String?              @unique @db.VarChar(24)
+  /// Zeitpunkt des letzten Umbenennungsversuchs (Anzeigename + Discord-Nickname).
+  /// Gesetzt wird er auch bei einem Fehlschlag — sonst würde der Sammellauf
+  /// ewig an denselben Bewerbern hängen bleiben.
+  nicknameSyncedAt     DateTime?
+  applicantId          String               @unique
+  applicant            User                 @relation("JobApplicationApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  discordId            String
+  discordUsername      String?
+  discordGlobalName    String?
+  discordAvatar        String?
+  applicantDisplayName String
+  status               JobApplicationStatus @default(SUBMITTED)
+  statusText           String               @default("Bewerbung wurde eingereicht") @db.VarChar(500)
+  internalNote         String?              @db.Text
+  submittedAt          DateTime             @default(now())
+  reviewedAt           DateTime?
+  reviewedById         String?
+  reviewedBy           User?                @relation("JobApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  /// Agent, der aus dieser Bewerbung eingestellt wurde. Wird beim Anlegen des
+  /// Agents gesetzt und macht Bewerbung ↔ Personalakte gegenseitig auffindbar.
+  agentId            String?              @unique
+  agent              Agent?             @relation("AgentJobApplication", fields: [agentId], references: [id], onDelete: SetNull)
+  updatedAt            DateTime             @updatedAt
+
+  answers   JobApplicationAnswer[]
+  contracts Contract[]             @relation("JobApplicationContracts")
+
+  @@index([status, updatedAt])
+  @@index([submittedAt])
+  @@index([discordId])
+  @@index([reviewedById])
+}
+
+model JobApplicationAnswer {
+  id            String           @id @default(cuid())
+  applicationId String
+  application   JobApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  questionId    String
+  questionTitle String           @db.Text
+  questionType  FormQuestionType
+  value         Json
+  sortOrder     Int              @default(0)
+  createdAt     DateTime         @default(now())
+
+  @@unique([applicationId, questionId])
+  @@index([applicationId, sortOrder])
+}
+
+model PressRelease {
+  id          String             @id @default(cuid())
+  title       String
+  slug        String             @unique
+  summary     String?            @db.Text
+  content     String             @db.Text
+  imageUrl    String?            @db.Text
+  imageAlt    String?
+  status      PressReleaseStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdById String?
+  createdBy   User?              @relation("PressReleaseCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy   User?              @relation("PressReleaseUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([createdAt])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model Agent {
+  id               String        @id @default(cuid())
+  badgeNumber      String
+  /// Discord-Snowflake (nur Dashboard / Verknüpfung; ohne Bot-Anbindung)
+  discordId        String?       @unique
+  firstName        String
+  lastName         String
+  rankId           String
+  rank             Rank          @relation(fields: [rankId], references: [id])
+  status           AgentStatus @default(ACTIVE)
+  unit             String?
+  units            Json?
+  flag             AgentFlag?
+  /// Uprank-Sperre: blockiert Beförderungen (Aufstieg). Degradierungen bleiben erlaubt.
+  promotionBlocked Boolean       @default(false)
+  notes            String?
+  hireDate         DateTime      @default(now())
+  lastOnline       DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  trainings           AgentTraining[]
+  promotionLogs       PromotionLog[]
+  terminations        Termination[]
+  sanctions           Sanction[]
+  agentNotes        Note[]                @relation("AgentNotes")
+  auditLogs           AuditLog[]            @relation("AuditAgent")
+  rankChangeEntries   RankChangeListEntry[]
+  taskAssignments     TaskAssignment[]      @relation("TaskAssigned")
+  dutySessions        DutyTimeSession[]
+  playtimeSessions    PlaytimeSession[]
+  absenceNotices      AbsenceNotice[]
+  probations          Probation[]
+  calendarEvents      CalendarEvent[]       @relation("CalendarEventAgent")
+  contracts           Contract[]
+  jobApplication      JobApplication?       @relation("AgentJobApplication")
+  transferRequests    TransferRequest[]     @relation("AgentTransferRequests")
+  searches            AgentSearch[]
+  internalAffairsDaws InternalAffairsDaw[]
+  legalCases          LegalCase[]          @relation("AgentLegalCases")
+
+  @@index([badgeNumber])
+}
+
+/// Chronologischer Internal-Affairs-Eintrag zu einer durchgeführten
+/// Agent-Durchsuchung. Der erfassende Benutzer wird automatisch gespeichert.
+model AgentSearch {
+  id                   String   @id @default(cuid())
+  agentId            String
+  agent              Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  conductedAt          DateTime
+  prohibitedItemsFound Boolean  @default(false)
+  foundItems           String   @db.Text
+  notes                String?  @db.Text
+  createdById          String?
+  createdBy            User?    @relation("AgentSearchCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt            DateTime @default(now())
+
+  @@index([agentId, conductedAt])
+  @@index([createdById])
+}
+
+/// Dienstaufsichtswarnungen, Disziplinarakten und Ermittlungen von Internal Affairs
+model InternalAffairsDaw {
+  id                  String    @id @default(cuid())
+  caseNumber          String?
+  title               String
+  category            String    @default("DAW") // DAW, DISCIPLINARY, INSTRUCTION, INVESTIGATION, OTHER
+  agentId           String?
+  agent             Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  allegation          String?   @db.Text
+  statement           String?   @db.Text
+  penalGrade          String?
+  sanctionSummary     String?   @db.Text
+  fineAmount          Int?
+  sgRounds            Int?
+  suspensionHours     Int?
+  status              String    @default("OPEN") // OPEN, IN_REVIEW, SANCTIONED, RESOLVED, DISMISSED
+  evidence            Json?
+  incidentAt          DateTime?
+  deadlineAt          DateTime?
+  resolutionNote      String?   @db.Text
+  createdById         String?
+  createdBy           User?     @relation("IaDawCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  previousRank        String?
+  previousBadgeNumber String?
+  previousFirstName   String?
+  previousLastName    String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([agentId, createdAt])
+  @@index([createdById])
+  @@index([status, createdAt])
+}
+
+model CalendarEvent {
+  id                  String            @id @default(cuid())
+  module              TaskModule?
+  title               String
+  description         String?           @db.Text
+  type                CalendarEventType @default(OTHER)
+  startsAt            DateTime
+  endsAt              DateTime?
+  location            String?
+  agentId           String?
+  agent             Agent?          @relation("CalendarEventAgent", fields: [agentId], references: [id], onDelete: SetNull)
+  createdById         String?
+  createdBy           User?             @relation("CalendarEventCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  discordAnnouncement Boolean           @default(false)
+  discordChannelId    String?
+  discordMessageId    String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([startsAt])
+  @@index([module, startsAt])
+  @@index([type, startsAt])
+  @@index([agentId, startsAt])
+}
+
+model SruFolder {
+  id          String     @id @default(cuid())
+  module      TaskModule @default(SRU)
+  name        String
+  description String?    @db.Text
+  color       String     @default("#d4af37")
+  sortOrder   Int        @default(0)
+  createdById String?
+  createdBy   User?      @relation("SruFolderCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  documents SruDocument[]
+
+  @@index([module, sortOrder, createdAt])
+}
+
+model SruDocument {
+  id          String     @id @default(cuid())
+  module      TaskModule @default(SRU)
+  folderId    String?
+  folder      SruFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  title       String
+  content     String     @db.Text
+  /// Optionaler externer Dokument-Link. Wird direkt im Browser geöffnet;
+  /// Markdown bleibt für interne Notizen und bestehende Dokumente verfügbar.
+  externalUrl String?    @db.VarChar(2048)
+  sortOrder   Int        @default(0)
+  createdById String?
+  createdBy   User?      @relation("SruDocumentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy   User?      @relation("SruDocumentUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([folderId, sortOrder])
+  @@index([module, updatedAt])
+  @@index([updatedAt])
+}
+
+model Probation {
+  id          String          @id @default(cuid())
+  agentId   String
+  agent     Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  type        ProbationType   @default(ROOKIE)
+  startsAt    DateTime        @default(now())
+  endsAt      DateTime
+  status      ProbationStatus @default(ACTIVE)
+  checklist   Json?
+  resultNote  String?         @db.Text
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   User?           @relation("ProbationDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?           @relation("ProbationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  entries ProbationEntry[]
+
+  @@index([status, endsAt])
+  @@index([agentId, startsAt])
+  @@index([type, status])
+}
+
+model ProbationEntry {
+  id          String               @id @default(cuid())
+  probationId String
+  probation   Probation            @relation(fields: [probationId], references: [id], onDelete: Cascade)
+  rating      ProbationEntryRating
+  comment     String               @db.Text
+  createdById String?
+  createdBy   User?                @relation("ProbationEntryCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([probationId, createdAt])
+  @@index([createdById, createdAt])
+}
+
+model AbsenceNotice {
+  id             String   @id @default(cuid())
+  agentId      String
+  agent        Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  startsAt       DateTime @default(now())
+  endsAt         DateTime
+  reason         String   @db.Text
+  source         String   @default("discord")
+  actorDiscordId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([agentId, startsAt])
+  @@index([endsAt])
+}
+
+model DutyTimeSession {
+  id                     String    @id @default(cuid())
+  agentId              String
+  agent                Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  clockInAt              DateTime  @default(now())
+  clockOutAt             DateTime?
+  clockInSource          String    @default("dashboard")
+  clockOutSource         String?
+  actorDiscordId         String?
+  activityCheckSentAt    DateTime?
+  activityCheckMessageId String?
+  activityCheckChannelId String?
+  activityConfirmedAt    DateTime?
+  autoClockedOut         Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([agentId, clockInAt])
+  @@index([clockOutAt])
+}
+
+model PlaytimeSession {
+  id             String    @id @default(cuid())
+  agentId      String?
+  agent        Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  discordId      String?
+  license        String?
+  playerName     String
+  sourceServerId Int?
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+  lastSeenAt     DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([agentId, startedAt])
+  @@index([discordId])
+  @@index([license])
+  @@index([endedAt])
+}
+
+model AgentTraining {
+  id         String   @id @default(cuid())
+  agentId  String
+  agent    Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  trainingId String
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  completed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([agentId, trainingId])
+}
+
+model PromotionLog {
+  id                String   @id @default(cuid())
+  agentId         String
+  agent           Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  oldRankId         String
+  oldRank           Rank     @relation("OldRank", fields: [oldRankId], references: [id])
+  newRankId         String
+  newRank           Rank     @relation("NewRank", fields: [newRankId], references: [id])
+  oldBadgeNumber    String?
+  newBadgeNumber    String?
+  performedByUserId String?
+  performedBy       User?    @relation("PerformedBy", fields: [performedByUserId], references: [id], onDelete: SetNull)
+  note              String?
+  createdAt         DateTime @default(now())
+}
+
+model Termination {
+  id                  String   @id @default(cuid())
+  /// Bei Löschen des Agents: null bleibt; Anzeige über previous*-Felder.
+  agentId           String?
+  agent             Agent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  reason              String
+  terminatedByUserId  String?
+  terminatedBy        User?    @relation("TerminatedBy", fields: [terminatedByUserId], references: [id], onDelete: SetNull)
+  terminatedAt        DateTime @default(now())
+  previousRank        String?
+  previousBadgeNumber String?
+  previousFirstName   String?
+  previousLastName    String?
+}
+
+model Sanction {
+  id                  String         @id @default(cuid())
+  agentId           String?
+  agent             Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  reason              String         @db.Text
+  penalGrade          String
+  measureType         String         @default("FINE")
+  fineAmount          Int?
+  sgRounds            Int?
+  penalty             String?        @db.Text
+  status              SanctionStatus @default(OPEN)
+  dueAt               DateTime?
+  paidAt              DateTime?
+  resolvedAt          DateTime?
+  escalatedAt         DateTime?
+  parentSanctionId    String?
+  parentSanction      Sanction?      @relation("SanctionEscalation", fields: [parentSanctionId], references: [id], onDelete: SetNull)
+  escalatedSanctions  Sanction[]     @relation("SanctionEscalation")
+  discordChannelId    String?
+  discordMessageId    String?
+  issuedByUserId      String?
+  issuedBy            User?          @relation("SanctionIssuedBy", fields: [issuedByUserId], references: [id], onDelete: SetNull)
+  /// Zuordnung zu einer Klage der Legal Affairs Division (Sanktionsklage).
+  legalCaseId         String?
+  legalCase           LegalCase?     @relation("SanctionLegalCase", fields: [legalCaseId], references: [id], onDelete: SetNull)
+  previousRank        String?
+  previousBadgeNumber String?
+  previousFirstName   String?
+  previousLastName    String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([agentId, createdAt])
+  @@index([issuedByUserId, createdAt])
+  @@index([status, dueAt])
+  @@index([parentSanctionId])
+  @@index([legalCaseId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  agentId String?
+  agent   Agent? @relation("AgentNotes", fields: [agentId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  title     String?
+  content   String   @db.LongText
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  agentId String?
+  agent   Agent? @relation("AuditAgent", fields: [agentId], references: [id], onDelete: SetNull)
+  userId    String?
+  user      User?    @relation("AuditUser", fields: [userId], references: [id], onDelete: SetNull)
+  oldValue  String?  @db.Text
+  newValue  String?  @db.Text
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model ChangeSet {
+  id                     String    @id
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label                  String
+  method                 String
+  path                   String    @db.Text
+  status                 String    @default("PENDING") // PENDING, APPLIED, UNDONE
+  hasExternalSideEffects Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  committedAt            DateTime?
+  undoneAt               DateTime?
+
+  snapshots ChangeSetSnapshot[]
+  targets   ChangeSetTarget[]
+  entries   ChangeSetEntry[]
+
+  @@index([userId, status, createdAt])
+}
+
+model ChangeSetSnapshot {
+  changeSetId String
+  changeSet   ChangeSet @relation(fields: [changeSetId], references: [id], onDelete: Cascade)
+  model       String
+  before      Json
+
+  @@id([changeSetId, model])
+}
+
+model ChangeSetTarget {
+  changeSetId String
+  changeSet   ChangeSet @relation(fields: [changeSetId], references: [id], onDelete: Cascade)
+  model       String
+  keyHash     String
+  recordKey   Json
+  before      Json
+
+  @@id([changeSetId, model, keyHash])
+}
+
+model ChangeSetEntry {
+  id          String    @id @default(cuid())
+  changeSetId String
+  changeSet   ChangeSet @relation(fields: [changeSetId], references: [id], onDelete: Cascade)
+  model       String
+  keyHash     String
+  recordKey   Json
+  before      Json
+  after       Json
+  sortOrder   Int
+
+  @@unique([changeSetId, model, keyHash])
+  @@index([changeSetId, sortOrder])
+}
+
+model RankChangeList {
+  id                String    @id @default(cuid())
+  name              String
+  description       String?
+  /// Legacy: Listen sind seit der Zusammenlegung gemischt ("MIXED"). Alte Listen behalten
+  /// PROMOTION/DEMOTION, der Typ wird aber nur noch pro Eintrag aus der Rangrichtung abgeleitet.
+  type              String    @default("MIXED")
+  status            String    @default("DRAFT") // DRAFT, COMPLETED
+  /// Gesperrte Liste: keine neuen Einreichungen mehr, offene Einträge bleiben durchführbar.
+  /// Bewusst getrennt von `status`, damit eine Rücknahme (status -> DRAFT) die Sperre nicht aufhebt.
+  submissionsClosed Boolean   @default(false)
+  closedAt          DateTime?
+  createdById       String?
+  createdBy         User?     @relation("ListCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  entries RankChangeListEntry[]
+}
+
+model RankChangeListEntry {
+  id             String                    @id @default(cuid())
+  listId         String
+  list           RankChangeList            @relation(fields: [listId], references: [id], onDelete: Cascade)
+  agentId      String
+  agent        Agent                   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  currentRankId  String
+  currentRank    Rank                      @relation("EntryCurrentRank", fields: [currentRankId], references: [id])
+  proposedRankId String
+  proposedRank   Rank                      @relation("EntryProposedRank", fields: [proposedRankId], references: [id])
+  newBadgeNumber String?
+  note           String?
+  executed       Boolean                   @default(false)
+  executedAt     DateTime?
+  executedById   String?
+  executedBy     User?                     @relation("EntryExecutor", fields: [executedById], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?                     @relation("EntryCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @default(now()) @updatedAt
+  revision       Int                       @default(1)
+  votes          RankChangeVote[]
+  comments       RankChangeEntryComment[]
+  proposals      RankChangeEntryProposal[]
+  history        RankChangeEntryHistory[]
+
+  @@unique([listId, agentId])
+}
+
+model RankChangeVote {
+  id        String              @id @default(cuid())
+  entryId   String
+  entry     RankChangeListEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  value     String
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([entryId, userId])
+  @@index([userId])
+}
+
+model RankChangeEntryComment {
+  id        String              @id @default(cuid())
+  entryId   String
+  entry     RankChangeListEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?               @relation("RankChangeCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  content   String              @db.Text
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@index([entryId, createdAt])
+  @@index([authorId])
+}
+
+model RankChangeEntryProposal {
+  id           String              @id @default(cuid())
+  entryId      String
+  entry        RankChangeListEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  authorId     String?
+  author       User?               @relation("RankChangeProposalAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  baseRevision Int
+  beforeState  Json
+  afterState   Json
+  reason       String?             @db.Text
+  status       String              @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  reviewedById String?
+  reviewedBy   User?               @relation("RankChangeProposalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewNote   String?             @db.Text
+  reviewedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([entryId, status, createdAt])
+  @@index([authorId])
+  @@index([reviewedById])
+}
+
+model RankChangeEntryHistory {
+  id          String              @id @default(cuid())
+  entryId     String
+  entry       RankChangeListEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  revision    Int
+  actorId     String?
+  actor       User?               @relation("RankChangeHistoryActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action      String // CREATED, DIRECT_EDIT, PROPOSAL_ACCEPTED
+  beforeState Json
+  afterState  Json
+  proposalId  String?
+  createdAt   DateTime            @default(now())
+
+  @@unique([entryId, revision])
+  @@index([actorId])
+  @@index([proposalId])
+}
+
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  /// JSON payloads (Discord role maps, etc.) exceed MySQL DEFAULT VARCHAR limits.
+  value String @db.Text
+}
+
+model TaskList {
+  id          String     @id @default(cuid())
+  module      TaskModule
+  title       String
+  description String?    @db.Text
+  color       String     @default("#d4af37")
+  archived    Boolean    @default(false)
+  sortOrder   Int        @default(0)
+  createdById String?
+  createdBy   User?      @relation("TaskListCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tasks Task[]
+
+  @@index([module, archived])
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  listId      String
+  list        TaskList     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  title       String
+  description String?      @db.Text
+  status      TaskStatus   @default(OPEN)
+  priority    TaskPriority @default(NORMAL)
+  dueDate     DateTime?
+  completedAt DateTime?
+  sortOrder   Int          @default(0)
+  createdById String?
+  createdBy   User?        @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  assignments TaskAssignment[]
+
+  @@index([listId, status])
+}
+
+model TaskAssignment {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  agentId  String
+  agent    Agent  @relation("TaskAssigned", fields: [agentId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([taskId, agentId])
+  @@index([agentId])
+}
+
+model BadgeBlacklist {
+  id          String   @id @default(cuid())
+  badgeNumber String   @unique
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ApiToken {
+  id            String    @id @default(cuid())
+  name          String
+  /// Erste Zeichen des Tokens (z. B. "fib_p4A8xKz…") — wird in Listen angezeigt,
+  /// damit User Tokens unterscheiden können, ohne das Geheimnis preiszugeben.
+  prefix        String
+  /// SHA-256-Hash des Klartext-Tokens. Der Klartext wird NIE persistiert und nur
+  /// einmalig beim Anlegen zurückgegeben — vergleichbar zu GitHub PATs.
+  tokenHash     String    @unique
+  /// Inhaber des Tokens (Subject — dessen Rechte gelten).
+  userId        String
+  user          User      @relation("ApiTokenOwner", fields: [userId], references: [id], onDelete: Cascade)
+  /// Optional: Admin, der den Token erstellt hat. Leer = self-service.
+  createdById   String?
+  createdBy     User?     @relation("ApiTokenCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  /// Whitelist von Permissions. Leer = alle Rechte des Inhabers.
+  scopes        Json      @default("[]")
+  /// Optional: nur innerhalb dieses Zeitraums gültig. null = unbegrenzt.
+  expiresAt     DateTime?
+  /// Letzter erfolgreicher Auth-Lookup. Wird throttled aktualisiert.
+  lastUsedAt    DateTime?
+  /// Anzahl erfolgreicher Auth-Lookups (für "letzte Aktivität"-Listen).
+  usageCount    Int       @default(0)
+  /// Soft-Revoke: Token bleibt in der DB sichtbar, ist aber nicht mehr gültig.
+  revokedAt     DateTime?
+  revokedReason String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  usages ApiTokenUsage[]
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([revokedAt])
+  @@index([createdById])
+}
+
+model ApiTokenUsage {
+  id         String   @id @default(cuid())
+  tokenId    String
+  token      ApiToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  /// HTTP-Methode (GET, POST, …)
+  method     String
+  /// Aufgerufener Pfad (z. B. "/api/agents")
+  path       String
+  /// Antwort-Statuscode
+  statusCode Int
+  /// Antwortdauer in Millisekunden
+  durationMs Int
+  /// Eingeschränkter User-Agent (erste 200 Zeichen)
+  userAgent  String?  @db.VarChar(200)
+  /// IP-Adresse (aus x-forwarded-for oder remote addr)
+  ip         String?  @db.VarChar(64)
+  createdAt  DateTime @default(now())
+
+  @@index([tokenId, createdAt])
+  @@index([createdAt])
+}
+
+model OrdnungCategory {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  description String?  @db.Text
+  icon        String   @default("Library")
+  color       String   @default("#4a8fd8")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ordnungen Ordnung[]
+}
+
+model Ordnung {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  title       String
+  description String          @db.Text
+  buttonLabel String
+  icon        String          @default("FileText")
+  content     String          @db.Text
+  categoryId  String
+  category    OrdnungCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sortOrder   Int             @default(0)
+  createdById String?
+  createdBy   User?           @relation("OrdnungCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([categoryId])
+}
+
+/// Wiederverwendbare Vertragsvorlage (z. B. Arbeitsvertrag). Der Inhalt ist
+/// Markdown mit Platzhaltern (`{{vorname}}`, `{{dienstnummer}}`, …), die beim
+/// Erstellen eines Vertrags gegen die Agent-Daten aufgelöst werden.
+model ContractTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  /// Präambel des Dokuments (Markdown, oberhalb der Regelungen).
+  content     String   @db.Text
+  /// ContractClause[] — einzeln bearbeitbare Regelungen (§ 1, § 2, …).
+  clauses     Json     @default("[]")
+  /// Abschlusstext unterhalb der Regelungen (Markdown).
+  closing     String?  @db.Text
+  /// ContractField[] — Felder, die der Unterzeichner ausfüllt (inkl. Unterschrift).
+  fields      Json     @default("[]")
+  active      Boolean  @default(true)
+  /// Vorlage, die beim Anlegen eines Agents automatisch verwendet wird.
+  isDefault   Boolean  @default(false)
+  createdById String?
+  createdBy   User?    @relation("ContractTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contracts Contract[]
+
+  @@index([active, updatedAt])
+  @@index([createdById])
+}
+
+/// Ein konkreter Vertrag für genau einen Agent. `content`/`fields` sind
+/// Snapshots der Vorlage zum Erstellungszeitpunkt — spätere Änderungen an der
+/// Vorlage dürfen einen bereits versendeten oder unterschriebenen Vertrag nicht
+/// nachträglich verändern.
+model Contract {
+  id            String            @id @default(cuid())
+  templateId    String?
+  template      ContractTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  agentId     String
+  agent       Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   JobApplication?   @relation("JobApplicationContracts", fields: [applicationId], references: [id], onDelete: SetNull)
+
+  title   String
+  content String  @db.Text
+  clauses Json    @default("[]")
+  closing String? @db.Text
+  fields  Json    @default("[]")
+  /// Vom Unterzeichner eingetragene Werte: `{ [fieldId]: string | boolean }`.
+  values  Json?
+
+  status ContractStatus @default(DRAFT)
+  /// Persönlicher Link-Token — jeder Agent bekommt seinen eigenen Vertragslink.
+  token  String         @unique
+
+  /// Discord-ID, die unterschreiben darf (Snapshot des Agents bei Erstellung).
+  signerDiscordId String?
+
+  sentAt        DateTime?
+  /// 'dm' | 'channel' — wie die letzte Vertragsnachricht zugestellt wurde.
+  sentVia       String?
+  sentChannelId String?
+  sentMessageId String?
+  sendCount     Int       @default(0)
+  lastSendError String?   @db.Text
+
+  signedAt        DateTime?
+  signedName      String?
+  signedByUserId  String?
+  signedBy        User?     @relation("ContractSigner", fields: [signedByUserId], references: [id], onDelete: SetNull)
+  signedIp        String?   @db.VarChar(64)
+  signedUserAgent String?   @db.VarChar(200)
+
+  declinedAt    DateTime?
+  declineReason String?   @db.Text
+
+  createdById String?
+  createdBy   User?    @relation("ContractCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([agentId, createdAt])
+  @@index([status, updatedAt])
+  @@index([applicationId])
+  @@index([templateId])
+  @@index([createdById])
+  @@index([signedByUserId])
+}
+
+// ---------------------------------------------------------------------------
+// Versetzungsanträge
+// ---------------------------------------------------------------------------
+
+enum TransferRequestStatus {
+  DRAFT
+  SENT
+  IN_SIGNING
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
+/// Versetzungsantrag als Dokument mit drei Unterschriften: FIB (HR), der
+/// Beamte selbst und die entgegennehmende Behörde. Wird über einen Link
+/// ausgefüllt, der bewusst auch ohne Login geöffnet werden kann.
+model TransferRequest {
+  id            String @id @default(cuid())
+  token         String @unique
+  /// Aktenzeichen des Antrags, z. B. "VA-0001".
+  requestNumber String @unique @db.VarChar(24)
+
+  agentId       String?
+  agent         Agent? @relation("AgentTransferRequests", fields: [agentId], references: [id], onDelete: SetNull)
+  /// Snapshots des Beamten zum Erstellungszeitpunkt.
+  agentName     String
+  badgeNumber     String?
+  rankName        String?
+  /// Discord-ID, die als Beamter unterschreiben darf.
+  signerDiscordId String?
+
+  title   String
+  content String  @db.Text
+  clauses Json    @default("[]")
+  closing String? @db.Text
+  fields  Json    @default("[]")
+  /// Vom Antragsteller eingetragene Werte: `{ [fieldId]: string | boolean }`.
+  values  Json?
+
+  /// Entgegennehmende Behörde (Ziel der Versetzung).
+  targetAuthority String?
+
+  status TransferRequestStatus @default(DRAFT)
+
+  hrSignedName     String?
+  hrSignedAt       DateTime?
+  hrSignedByUserId String?
+  hrSignedBy       User?     @relation("TransferRequestHrSigner", fields: [hrSignedByUserId], references: [id], onDelete: SetNull)
+
+  agentSignedName     String?
+  agentSignedAt       DateTime?
+  agentSignedByUserId String?
+  agentSignedBy       User?     @relation("TransferRequestAgentSigner", fields: [agentSignedByUserId], references: [id], onDelete: SetNull)
+
+  authoritySignedName String?
+  authoritySignedRole String?
+  authoritySignedAt   DateTime?
+  authoritySignedIp   String?   @db.VarChar(64)
+
+  sentAt        DateTime?
+  declinedAt    DateTime?
+  declineReason String?   @db.Text
+
+  createdById String?
+  createdBy   User?    @relation("TransferRequestCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([agentId])
+  @@index([createdById])
+}
+
+// ---------------------------------------------------------------------------
+// Legal Affairs Division — Klagen
+// ---------------------------------------------------------------------------
+
+/// Eine Klage (Klageschrift) der Legal Affairs Division. Jede Klageschrift
+/// hat einen eigenen Link (`token`), über den sie ohne Anmeldung eingesehen
+/// werden kann. `kind=SANCTION` wird beim Erstellen automatisch aus den
+/// ausgewählten offenen Sanktionen generiert; `kind=CUSTOM` ist frei verfasst.
+model LegalCase {
+  id         String          @id @default(cuid())
+  /// Aktenzeichen der Klage, z. B. "LAD-0001".
+  caseNumber String          @unique @db.VarChar(24)
+  /// Link-Token für die öffentliche Einsicht.
+  token      String          @unique
+  kind       LegalCaseKind   @default(CUSTOM)
+  status     LegalCaseStatus @default(DRAFT)
+  title      String
+
+  /// Beklagter (Agent). Snapshot-Felder bleiben erhalten, wenn der Agent
+  /// später gelöscht wird.
+  agentId String?
+  agent   Agent? @relation("AgentLegalCases", fields: [agentId], references: [id], onDelete: SetNull)
+
+  accusedName      String? @db.VarChar(200)
+  accusedBadge     String? @db.VarChar(64)
+  accusedRank      String? @db.VarChar(120)
+  accusedDiscordId String? @db.VarChar(64)
+
+  /// Betreff der Klageschrift.
+  subject String  @db.Text
+  /// Sachverhalt (Markdown).
+  content String  @db.Text
+  /// Antrag / Schlusstext (Markdown).
+  closing String? @db.Text
+
+  /// Snapshot der als Beweismittel verknüpften Sanktionen:
+  /// `[{ sanctionId, reason, penalGrade, measureType, fineAmount, sgRounds, createdAt, dueAt }]`.
+  sanctions Json @default("[]")
+
+  filedAt    DateTime?
+  closedAt   DateTime?
+  createdById String?
+  createdBy   User?    @relation("LegalCaseCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// Zugehörige Sammelaktion ("Alle offenen Sanktionen gekündigter Mitarbeiter").
+  batchId String?
+  batch   LegalCaseBatch? @relation("LegalCaseBatchCases", fields: [batchId], references: [id], onDelete: SetNull)
+
+  linkedSanctions Sanction[] @relation("SanctionLegalCase")
+
+  @@index([status, updatedAt])
+  @@index([agentId])
+  @@index([createdById])
+  @@index([batchId])
+}
+
+/// Eine Sammelaktion der Legal Affairs Division: erzeugt für jeden gekündigten
+/// Mitarbeiter mit offenen Sanktionen genau eine Sanktionsklage. Der eigene
+/// Link-Token öffnet eine Übersicht aller enthaltenen Klageschriften.
+model LegalCaseBatch {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  title       String   @default("Sammelklagen – Offene Sanktionen gekündigter Mitarbeiter")
+  createdById String?
+  createdBy   User?    @relation("LegalCaseBatchCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  cases LegalCase[] @relation("LegalCaseBatchCases")
+
+  @@index([createdAt])
+}

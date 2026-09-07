@@ -1,0 +1,26 @@
+# Nixpacks build configuration for FIB HR Dashboard
+# Works with Railway, Render, Fly.io, Coolify, and any Nixpacks-compatible host.
+# Docs: https://nixpacks.com/docs/configuration/
+
+[variables]
+    # Tell Next.js the public URL at build time (override in your host if needed)
+    NIXPACKS_NODE_VERSION = "22"
+    NODE_ENV = "production"
+    NEXT_TELEMETRY_DISABLED = "1"
+
+[phases.setup]
+    nixPkgs = ["nodejs_22", "git"]
+
+[phases.install]
+    cmds = [
+        "npm ci --no-audit --no-fund --loglevel=error",
+    ]
+
+[phases.build]
+    cmds = [
+        "npx prisma generate",
+        "npm run build",
+    ]
+
+[start]
+    cmd = "node start.js"

@@ -1,0 +1,1855 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+body {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* ─── Remap generic grays → FIB monochrome brand (dark-only) ─── */
+.bg-\[\#fafafa\],
+.bg-\[\#f9f9f9\],
+.bg-\[\#f5f5f5\] {
+  background-color: #1d1d1d;
+}
+
+.bg-\[\#f0f0f0\],
+.bg-\[\#eee\],
+.bg-\[\#e5e5e5\] {
+  background-color: #232323;
+}
+
+.bg-\[\#111\] {
+  background-color: #1d1d1d;
+}
+
+.hover\:bg-\[\#f9f9f9\]:hover,
+.hover\:bg-\[\#f5f5f5\]:hover,
+.hover\:bg-\[\#f0f0f0\]:hover,
+.hover\:bg-\[\#eee\]:hover,
+.hover\:bg-\[\#e8e8e8\]:hover {
+  background-color: #232323;
+}
+
+.hover\:bg-\[\#f0f0f0\]:hover {
+  background-color: #232323;
+}
+
+.hover\:bg-\[\#ddd\]:hover {
+  background-color: #333333;
+}
+
+.text-\[\#111\],
+.text-\[\#333\] {
+  color: #f4f4f4;
+}
+
+.text-\[\#555\],
+.text-\[\#666\],
+.text-\[\#777\],
+.text-\[\#888\] {
+  color: #a6a6a6;
+}
+
+.text-\[\#999\],
+.text-\[\#aaa\],
+.text-\[\#bbb\] {
+  color: #909090;
+}
+
+.text-\[\#ccc\],
+.text-\[\#ddd\] {
+  color: #808080;
+}
+
+.border-\[\#f0f0f0\],
+.border-\[\#e5e5e5\],
+.border-\[\#ddd\] {
+  border-color: #343434;
+}
+
+.accent-\[\#111\] {
+  accent-color: #d4d4d4;
+}
+
+.bg-white {
+  background-color: #d4d4d4;
+}
+
+/* ─── Dark prefix overrides (still needed since html has .dark class) ─── */
+.dark .dark\:bg-\[\#0a0a0a\] { background-color: #080808; }
+.dark .dark\:bg-\[\#111\] { background-color: #1d1d1d; }
+.dark .dark\:bg-white { background-color: #d4d4d4; }
+
+.dark .dark\:bg-\[\#151515\],
+.dark .dark\:bg-\[\#1a1a1a\],
+.dark .dark\:bg-\[\#1e1e1e\],
+.dark .dark\:bg-\[\#222\],
+.dark .dark\:bg-\[\#2a2a2a\] {
+  background-color: #212121;
+}
+
+.dark .dark\:hover\:bg-\[\#151515\]:hover,
+.dark .dark\:hover\:bg-\[\#111\]:hover,
+.dark .dark\:hover\:bg-\[\#1a1a1a\]:hover,
+.dark .dark\:hover\:bg-\[\#1e1e1e\]:hover,
+.dark .dark\:hover\:bg-\[\#222\]:hover,
+.dark .dark\:hover\:bg-\[\#2a2a2a\]:hover {
+  background-color: #2a2a2a;
+}
+
+.dark .dark\:text-\[\#eee\],
+.dark .dark\:text-\[\#ddd\],
+.dark .dark\:text-white { color: #f4f4f4; }
+
+.dark .dark\:text-\[\#aaa\],
+.dark .dark\:text-\[\#999\],
+.dark .dark\:text-\[\#888\],
+.dark .dark\:text-\[\#777\],
+.dark .dark\:text-\[\#666\],
+.dark .dark\:text-\[\#555\],
+.dark .dark\:text-\[\#444\],
+.dark .dark\:text-\[\#333\] { color: #a6a6a6; }
+
+.dark .dark\:text-\[\#111\] { color: #181818; }
+
+.dark .dark\:border-\[\#333\],
+.dark .dark\:border-\[\#2a2a2a\],
+.dark .dark\:border-\[\#222\],
+.dark .dark\:border-\[\#1a1a1a\] { border-color: #343434; }
+
+/* ─── Scrollbar ─── */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+
+/* ─── Selection ─── */
+::selection {
+  background: rgba(212,212,212, 0.28);
+}
+
+/* ─── Form elements ─── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  opacity: 0.5;
+}
+
+/* ─── Native select/option dark styling ─── */
+select,
+select option {
+  background-color: #1d1d1d;
+  color: #f4f4f4;
+}
+
+select option:checked {
+  background: linear-gradient(0deg, #d4d4d4 0%, #d4d4d4 100%);
+  color: #181818;
+}
+
+select option:hover {
+  background-color: #232323;
+}
+
+/* ─── Glass surfaces ─── */
+.glass-panel {
+  background: rgba(29,29,29, 0.72);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid rgba(212,212,212, 0.1);
+  box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.12),
+          0 4px 16px rgba(0, 0, 0, 0.08),
+          inset 0 1px 0 rgba(212,212,212, 0.04);
+}
+
+.glass-panel-elevated {
+  background: rgba(29,29,29, 0.82);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid rgba(212,212,212, 0.13);
+  box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.18),
+          0 8px 32px rgba(0, 0, 0, 0.12),
+          inset 0 1px 0 rgba(212,212,212, 0.06);
+}
+
+/* ─── Background pattern ─── */
+.bg-pattern {
+  background-image:
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212,212,212, 0.05), transparent),
+          radial-gradient(ellipse 60% 40% at 80% 100%, rgba(212,212,212, 0.02), transparent);
+}
+
+/* ─── Silver accent line ─── */
+.silver-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,212,212, 0.25), transparent);
+}
+
+/* ─── Loading ─── */
+.loading-spinner {
+  border: 2px solid rgba(144,144,144, 0.24);
+  border-top-color: currentColor;
+  animation: loading-spin 0.85s linear infinite;
+}
+
+.loading-spinner::after {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(212,212,212, 0.14);
+  border-radius: inherit;
+  content: "";
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation-duration: 1.6s;
+  }
+}
+
+/* ─── FIB cloud loader (adaptiert nach Uiverse.io / andrew-manzyk) ─── */
+.pd-cloud-loader {
+  --pd-loader-cloud: #d4d4d4;
+  --pd-loader-arrows: #cfcfcf;
+  --pd-loader-time: 1s;
+  position: relative;
+  display: grid;
+  width: 100px;
+  height: 100px;
+  flex: none;
+  place-items: center;
+}
+
+.pd-cloud-loader__glow {
+  position: absolute;
+  inset: 18px;
+  border-radius: 999px;
+  background: rgba(212,212,212, 0.2);
+  filter: blur(22px);
+  animation: pd-loader-glow calc(var(--pd-loader-time) * 2) ease-in-out infinite;
+}
+
+.pd-cloud-loader__svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.28));
+}
+
+.pd-cloud-loader__cloud {
+  fill: var(--pd-loader-cloud);
+}
+
+.pd-cloud-loader__arrows {
+  transform-origin: 50% 72.8938%;
+  fill: var(--pd-loader-arrows);
+  filter: drop-shadow(0 0 6px rgba(24,24,24, 0.9));
+  animation: pd-loader-rotation var(--pd-loader-time) linear infinite;
+}
+
+.pd-cloud-loader__bubbles circle {
+  animation: pd-loader-cloud calc(var(--pd-loader-time) * 2) linear infinite;
+}
+
+.pd-cloud-loader__bubbles circle:nth-child(2) {
+  animation-delay: calc((var(--pd-loader-time) * 2) / -3);
+}
+
+.pd-cloud-loader__bubbles circle:nth-child(3) {
+  animation-delay: calc((var(--pd-loader-time) * 2) / -1.5);
+}
+
+.pd-cloud-loader__lines line {
+  stroke-width: 5;
+  transform-origin: 50% 50%;
+  rotate: -65deg;
+  animation: pd-loader-lines calc(var(--pd-loader-time) / 1.33) linear infinite;
+}
+
+@keyframes pd-loader-rotation {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pd-loader-lines {
+  from { transform: translateY(-10px); }
+  to { transform: translateY(8px); }
+}
+
+@keyframes pd-loader-cloud {
+  0% { cx: 20; cy: 60; r: 15; }
+  50% { cx: 50; cy: 45; r: 20; }
+  100% { cx: 80; cy: 60; r: 15; }
+}
+
+@keyframes pd-loader-glow {
+  0%, 100% { opacity: 0.42; transform: scale(0.88); }
+  50% { opacity: 0.78; transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pd-cloud-loader__glow,
+  .pd-cloud-loader__arrows,
+  .pd-cloud-loader__bubbles circle,
+  .pd-cloud-loader__lines line {
+    animation: none;
+  }
+}
+
+/* ─── Sidebar gradient ─── */
+.sidebar-gradient {
+  background: linear-gradient(180deg, #1b1b1b 0%, #181818 40%, #131313 100%);
+}
+
+/* ─── Icon tile ─── */
+.icon-tile {
+  background: linear-gradient(135deg, #d4d4d4, #b8b8b8);
+  color: #181818;
+  box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ─── KPI / Stat card ─── */
+.stat-card {
+  position: relative;
+  border-radius: 14px;
+  padding: 16px 18px;
+  background:
+          linear-gradient(135deg, rgba(212,212,212,0.06), rgba(29,29,29,0) 55%),
+          rgba(26,26,26, 0.72);
+  border: 1px solid rgba(212,212,212,0.10);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18), inset 0 1px 0 rgba(212,212,212,0.05);
+  overflow: hidden;
+}
+.stat-card::before {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(60% 80% at 100% 0%, rgba(212,212,212,0.10), transparent 60%);
+}
+.stat-card .stat-value {
+  font-size: 24px; font-weight: 650; color: #fff;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.stat-card .stat-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #909090;
+  margin-top: 4px;
+}
+.stat-card .stat-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(212,212,212,0.16), rgba(212,212,212,0.04));
+  color: #d4d4d4;
+  border: 1px solid rgba(212,212,212,0.18);
+}
+
+/* ─── Avatar (initials) ─── */
+.avatar-initials {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, #313131, #1f1f1f);
+  border: 1px solid rgba(212,212,212,0.18);
+  color: #d4d4d4;
+  font-size: 12px; font-weight: 650; letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* ─── Live pulse dot ─── */
+.live-pulse {
+  width: 8px; height: 8px; border-radius: 999px;
+  background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.5);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+/* ─── Capacity dots (patrol seats) ─── */
+.cap-dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(212,212,212,0.18); }
+.cap-dot.is-on { background: #d4d4d4; box-shadow: 0 0 6px rgba(212,212,212,0.45); }
+
+/* ─── Section anchor scroll offset ─── */
+.scroll-mt-section { scroll-margin-top: 96px; }
+
+/* ─── Health pill ─── */
+.health-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px; font-size: 11.5px;
+  border: 1px solid rgba(64,64,64,0.6); background: rgba(24,24,24,0.6); color: #aeaeae;
+}
+.health-pill.ok { color: #86efac; border-color: rgba(34,197,94,0.25); background: rgba(5,46,27,0.55); }
+.health-pill.warn { color: #cacaca; border-color: rgba(212,212,212,0.3); background: rgba(45,30,8,0.55); }
+.health-pill.err { color: #fca5a5; border-color: rgba(239,68,68,0.3); background: rgba(42,17,17,0.6); }
+
+.portal-nav-link {
+  display: inline-flex;
+  height: 34px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(64,64,64, 0.72);
+  border-radius: 9px;
+  background: rgba(24,24,24, 0.58);
+  padding: 0 12px;
+  color: #e5e5e5;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.portal-nav-link:hover {
+  border-color: rgba(212,212,212, 0.34);
+  background: rgba(35,35,35, 0.78);
+  color: #ffffff;
+}
+
+
+/* ─── Markdown document ─── */
+.markdown-document {
+  color: #e5e5e5;
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.markdown-document > * + * {
+  margin-top: 1rem;
+}
+
+.markdown-document h1,
+.markdown-document h2,
+.markdown-document h3,
+.markdown-document h4,
+.markdown-document h5,
+.markdown-document h6 {
+  scroll-margin-top: 96px;
+  color: #ffffff;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.markdown-document h1 {
+  font-size: 1.55rem;
+}
+
+.markdown-document h2 {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(212,212,212, 0.16);
+  font-size: 1.15rem;
+}
+
+.markdown-document h3 {
+  font-size: 1rem;
+}
+
+.markdown-document p,
+.markdown-document li {
+  color: #cecece;
+}
+
+.markdown-document ul,
+.markdown-document ol {
+  padding-left: 1.35rem;
+}
+
+.markdown-document ul {
+  list-style: disc;
+}
+
+.markdown-document ol {
+  list-style: decimal;
+}
+
+.markdown-document li + li {
+  margin-top: 0.35rem;
+}
+
+.markdown-document .markdown-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.markdown-document .markdown-task-list li {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+}
+
+.markdown-document .markdown-task-list input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-top: 0.28rem;
+  accent-color: #d4d4d4;
+}
+
+.markdown-document strong {
+  color: #f4f4f4;
+  font-weight: 650;
+}
+
+.markdown-document .markdown-signature {
+  position: relative;
+  display: inline-block;
+  margin: 0.15rem 0.1rem 0.05rem;
+  padding: 0 0.35rem 0.18rem 0.15rem;
+  color: #dcdcdc;
+  font-family: "Lucida Handwriting", "Segoe Script", "Brush Script MT", cursive;
+  font-size: 1.75em;
+  font-weight: 400;
+  line-height: 1;
+  text-shadow:
+          0 0 12px rgba(212,212,212, 0.2),
+          0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: rotate(-2deg) skewX(-6deg);
+  transform-origin: left bottom;
+}
+
+.markdown-document .markdown-signature::after {
+  position: absolute;
+  right: 0.15rem;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(220,220,220, 0), rgba(220,220,220, 0.8) 22%, rgba(220,220,220, 0.15));
+  content: "";
+}
+
+.markdown-document em {
+  color: #e1e1e1;
+}
+
+.markdown-document del {
+  color: #a6a6a6;
+  text-decoration-color: rgba(212,212,212, 0.55);
+}
+
+.markdown-document ins {
+  color: #dff7e8;
+  text-decoration-color: rgba(79, 191, 138, 0.75);
+  text-underline-offset: 3px;
+}
+
+.markdown-document mark {
+  border-radius: 5px;
+  background: rgba(212,212,212, 0.22);
+  padding: 0.05rem 0.25rem;
+  color: #e6e6e6;
+}
+
+.markdown-document sup,
+.markdown-document sub {
+  line-height: 0;
+}
+
+.markdown-document kbd {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  border: 1px solid rgba(64,64,64, 0.9);
+  border-bottom-color: rgba(212,212,212, 0.35);
+  border-radius: 6px;
+  background: rgba(8,8,8, 0.9);
+  padding: 0.05rem 0.4rem;
+  color: #f4f4f4;
+  font-family: var(--font-sans);
+  font-size: 0.82em;
+  font-weight: 650;
+  line-height: 1;
+  box-shadow: inset 0 -1px 0 rgba(212,212,212, 0.16);
+}
+
+.markdown-document code {
+  border: 1px solid rgba(64,64,64, 0.8);
+  border-radius: 6px;
+  background: rgba(24,24,24, 0.75);
+  padding: 0.1rem 0.35rem;
+  color: #cfcfcf;
+  font-size: 0.92em;
+}
+
+.markdown-document pre {
+  overflow-x: auto;
+  border: 1px solid rgba(64,64,64, 0.8);
+  border-radius: 12px;
+  background: rgba(8,8,8, 0.82);
+  padding: 1rem;
+}
+
+.markdown-document pre code {
+  display: block;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: #e5e5e5;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+.markdown-document a {
+  color: #d4d4d4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.markdown-document img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 520px;
+  border: 1px solid rgba(55,55,55, 0.65);
+  border-radius: 12px;
+  background: rgba(24,24,24, 0.45);
+  object-fit: contain;
+}
+
+.markdown-document a img {
+  transition: border-color 150ms ease, opacity 150ms ease;
+}
+
+.markdown-document a:hover img {
+  border-color: rgba(212,212,212, 0.5);
+  opacity: 0.92;
+}
+
+.markdown-document blockquote {
+  border-left: 3px solid rgba(212,212,212, 0.55);
+  padding: 0.75rem 1rem;
+  border-radius: 0 10px 10px 0;
+  background: rgba(24,24,24, 0.45);
+  color: #e5e5e5;
+}
+
+.markdown-document .markdown-alert {
+  border-left-width: 4px;
+}
+
+.markdown-document .markdown-alert-note {
+  border-left-color: #4a8fd8;
+}
+
+.markdown-document .markdown-alert-tip {
+  border-left-color: #4fbf8a;
+}
+
+.markdown-document .markdown-alert-important {
+  border-left-color: #b48cff;
+}
+
+.markdown-document .markdown-alert-warning {
+  border-left-color: #c4c4c4;
+}
+
+.markdown-document .markdown-alert-caution {
+  border-left-color: #ff7a7a;
+}
+
+.markdown-document hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,212,212, 0.28), transparent);
+}
+
+.markdown-document dl {
+  display: grid;
+  gap: 0.35rem 1rem;
+  border: 1px solid rgba(55,55,55, 0.65);
+  border-radius: 12px;
+  background: rgba(24,24,24, 0.28);
+  padding: 1rem;
+}
+
+.markdown-document dt {
+  color: #f4f4f4;
+  font-weight: 650;
+}
+
+.markdown-document dd {
+  margin-left: 1rem;
+  color: #cecece;
+}
+
+.markdown-footnotes {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(212,212,212, 0.16);
+  font-size: 0.9em;
+}
+
+.markdown-footnotes h2 {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  font-size: 1rem;
+}
+
+.markdown-document sup a,
+.markdown-footnotes a {
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.markdown-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(55,55,55, 0.65);
+  border-radius: 12px;
+}
+
+.markdown-document table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.markdown-document th,
+.markdown-document td {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid rgba(52,52,52, 0.55);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-document th {
+  background: rgba(33,33,33, 0.75);
+  color: #f4f4f4;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.markdown-document tr:last-child td {
+  border-bottom: 0;
+}
+
+.markdown-document tbody tr:hover {
+  background: rgba(35,35,35, 0.45);
+}
+
+/* ─── Arbeitsvertrag: Dokumentenansicht ───
+   Der Vertrag wird bewusst IMMER als helles Papier gerendert – auch im dunklen
+   Dashboard. Ein Vertrag soll wie ein echtes Dokument wirken und nicht wie eine
+   weitere UI-Karte. Deshalb hier feste Farben statt Theme-Variablen. */
+.contract-paper {
+  /* Cambria/Charter sind auf Windows bzw. macOS vorhanden und deutlich
+     bildschirmtauglicher als Times New Roman. Times bleibt letzter Fallback,
+     damit das Dokument nie in einer Systemschrift ohne Serifen landet. */
+  --contract-serif: 'Cambria', 'Charter', 'Georgia', 'Liberation Serif', 'Times New Roman', serif;
+  /* Für Kleinteiliges (Labels, Metazeilen): humanistische Grotesk. */
+  --contract-sans: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --contract-ink: #222222;
+  --contract-ink-soft: #535353;
+  --contract-rule: rgba(34,34,34, 0.17);
+  --contract-accent: #1f4fa3;
+
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  max-width: 860px;
+  border-radius: 4px;
+  border: 1px solid #d3d3d3;
+  background: linear-gradient(180deg, #fcfcfc 0%, #f4f4f4 100%);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.28),
+    0 18px 46px rgba(0, 0, 0, 0.45);
+  color: var(--contract-ink);
+  font-family: var(--contract-serif);
+  font-size: 15px;
+  line-height: 1.68;
+  /* Ohne diese drei Angaben rendern Serifen je nach Browser unterschiedlich
+     dick und wirken „ausgefranst“ — damit bleibt der Grauwert konsistent. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.contract-paper::before {
+  /* Wasserzeichen: großes, sehr blasses Wappen mittig hinter dem Text. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--contract-watermark, none);
+  background-repeat: no-repeat;
+  background-position: center 46%;
+  background-size: min(58%, 420px);
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.contract-paper::after {
+  /* Feiner Rahmen innerhalb des Blattes – typisch für Urkunden und Verträge. */
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 1px solid var(--contract-rule);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.contract-paper > * {
+  position: relative;
+  z-index: 1;
+}
+
+.contract-body {
+  padding: 46px 58px 54px;
+}
+
+@media (max-width: 640px) {
+  .contract-body {
+    padding: 28px 22px 34px;
+  }
+}
+
+/* ── Briefkopf ── */
+.contract-letterhead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 2px solid #222222;
+  padding-bottom: 14px;
+}
+
+.contract-letterhead img {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  object-fit: contain;
+}
+
+.contract-letterhead-title {
+  font-family: var(--contract-sans);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: #222222;
+}
+
+.contract-letterhead-sub {
+  margin-top: 3px;
+  font-family: var(--contract-sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: #6a6a6a;
+}
+
+/* ── Titelblock ── */
+.contract-doc-title {
+  margin-top: 34px;
+  text-align: center;
+  font-family: var(--contract-serif);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: #222222;
+  /* Letterspacing hängt hinter dem letzten Buchstaben — ohne Ausgleich wirkt
+     der zentrierte Titel nach links verschoben. */
+  text-indent: 0.1em;
+}
+
+.contract-doc-subtitle {
+  margin-top: 8px;
+  text-align: center;
+  font-family: var(--contract-sans);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #939393;
+}
+
+/* ── Kopfdaten ── */
+.contract-meta {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 20px;
+  border-top: 1px solid var(--contract-rule);
+  border-bottom: 1px solid var(--contract-rule);
+  padding: 15px 0;
+  font-family: var(--contract-sans);
+}
+
+.contract-meta dt {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #818181;
+}
+
+.contract-meta dd {
+  margin-top: 3px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--contract-ink);
+}
+
+/* ── Fließtext ── */
+.contract-section {
+  margin-top: 26px;
+}
+
+.contract-clause {
+  margin-top: 22px;
+  break-inside: avoid;
+}
+
+.contract-clause-heading {
+  margin-bottom: 5px;
+  font-family: var(--contract-serif);
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #222222;
+}
+
+.contract-prose {
+  font-size: 15px;
+  line-height: 1.68;
+  color: var(--contract-ink);
+  /* Blocksatz NUR zusammen mit Silbentrennung — ohne sie reißt deutscher Text
+     Löcher zwischen die Wörter. Die Trennung greift außerdem nur, wenn am
+     Element eine Sprache hängt; die setzt <article lang="de"> in der Komponente. */
+  text-align: justify;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 7 3 3;
+  /* Verhindert ein einzelnes Wort in der letzten Zeile. */
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+.contract-prose > * + * {
+  margin-top: 10px;
+}
+
+.contract-prose h1,
+.contract-prose h2,
+.contract-prose h3,
+.contract-prose h4,
+.contract-prose h5,
+.contract-prose h6 {
+  margin-top: 16px;
+  font-family: var(--contract-serif);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  color: #222222;
+}
+
+.contract-prose h1 { font-size: 19px; }
+.contract-prose h2 { font-size: 17px; }
+.contract-prose h3 { font-size: 15.5px; }
+.contract-prose h4,
+.contract-prose h5,
+.contract-prose h6 { font-size: 15px; }
+
+.contract-prose strong {
+  font-weight: 700;
+  color: #171717;
+}
+
+.contract-prose em {
+  font-style: italic;
+}
+
+.contract-prose ul,
+.contract-prose ol {
+  margin-left: 1.35em;
+  padding-left: 0;
+  /* Aufzählungen linksbündig: im Blocksatz zerfasern kurze Punkte sonst. */
+  text-align: left;
+}
+
+.contract-prose ul { list-style: disc outside; }
+.contract-prose ol { list-style: decimal outside; }
+
+.contract-prose li + li {
+  margin-top: 5px;
+}
+
+.contract-prose li::marker {
+  color: var(--contract-ink-soft);
+}
+
+.contract-prose blockquote {
+  margin-left: 0;
+  border-left: 2px solid var(--contract-rule);
+  padding-left: 14px;
+  color: var(--contract-ink-soft);
+  font-style: italic;
+  text-align: left;
+}
+
+.contract-prose hr {
+  border: 0;
+  border-top: 1px solid var(--contract-rule);
+  margin: 18px 0;
+}
+
+.contract-prose code {
+  font-family: 'Cascadia Mono', 'Consolas', 'SFMono-Regular', monospace;
+  font-size: 0.85em;
+  background: rgba(34,34,34, 0.06);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.contract-prose a {
+  color: var(--contract-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.contract-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--contract-sans);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.contract-prose th,
+.contract-prose td {
+  border: 1px solid var(--contract-rule);
+  padding: 6px 9px;
+  vertical-align: top;
+}
+
+.contract-prose th {
+  background: rgba(34,34,34, 0.05);
+  font-weight: 600;
+}
+
+/* ── Unterschriftsblock ── */
+.contract-divider {
+  margin-top: 32px;
+  border: 0;
+  border-top: 1px solid var(--contract-rule);
+}
+
+.contract-place-date {
+  margin-top: 30px;
+  font-size: 15px;
+  color: var(--contract-ink);
+}
+
+.contract-signature-grid {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+}
+
+/*
+ * Bewusst KEINE Handschrift-Schriftart: „Brush Script“ & Co. sind nicht überall
+ * installiert, und die generische Familie `cursive` landet je nach System bei
+ * Comic Sans. Eine kursive Antiqua sieht auf jedem Gerät gleich und wertig aus.
+ */
+.contract-signature-name {
+  min-height: 38px;
+  padding-bottom: 3px;
+  font-family: var(--contract-serif);
+  font-size: 25px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  line-height: 1.25;
+  color: #2e2e2e;
+  overflow-wrap: anywhere;
+}
+
+.contract-signature-line {
+  border-top: 1px solid var(--contract-ink);
+  padding-top: 7px;
+  font-family: var(--contract-sans);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--contract-ink-soft);
+}
+
+/* ── Formularfelder auf dem Papier ── */
+.contract-field-label {
+  display: block;
+  font-family: var(--contract-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #818181;
+}
+
+.contract-field-hint {
+  margin-top: 2px;
+  font-family: var(--contract-sans);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--contract-ink-soft);
+}
+
+.contract-field-value {
+  margin-top: 4px;
+  min-height: 22px;
+  border-bottom: 1px solid rgba(34,34,34, 0.3);
+  padding-bottom: 3px;
+  font-size: 15px;
+  color: var(--contract-ink);
+}
+
+.contract-field-input {
+  width: 100%;
+  margin-top: 5px;
+  border: 1px solid #b3b3b3;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 7px 10px;
+  font-family: var(--contract-serif);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--contract-ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.contract-field-input::placeholder {
+  color: #9c9c9c;
+  font-style: italic;
+}
+
+.contract-field-input:focus {
+  border-color: var(--contract-accent);
+  box-shadow: 0 0 0 3px rgba(31, 79, 163, 0.12);
+}
+
+/* Eingabefeld für die Unterschrift – gleiche Anmutung wie die gesetzte Unterschrift. */
+.contract-signature-input {
+  font-size: 21px;
+  font-style: italic;
+  letter-spacing: 0.015em;
+  color: #2e2e2e;
+}
+
+.contract-field-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--contract-ink);
+}
+
+.contract-field-checkbox input {
+  margin-top: 4px;
+  height: 15px;
+  width: 15px;
+  flex: none;
+  accent-color: var(--contract-accent);
+}
+
+.contract-field-required {
+  color: #9e1e1e;
+}
+
+/* ── Stempel und Vermerke ── */
+.contract-stamp {
+  position: absolute;
+  right: 48px;
+  bottom: 76px;
+  z-index: 2;
+  display: flex;
+  height: 140px;
+  width: 140px;
+  transform: rotate(-13deg);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 3px double var(--contract-accent);
+  border-radius: 50%;
+  color: var(--contract-accent);
+  font-family: var(--contract-sans);
+  text-align: center;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.contract-stamp-top {
+  max-width: 108px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.contract-stamp-main {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.contract-stamp-date {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 640px) {
+  .contract-stamp {
+    right: 16px;
+    bottom: 22px;
+    height: 104px;
+    width: 104px;
+  }
+  .contract-stamp-main { font-size: 11px; }
+  .contract-stamp-top { max-width: 82px; font-size: 7px; }
+}
+
+/* Entwurfs-/Ungültig-Hinweis quer über das Blatt. */
+.contract-void-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: var(--contract-sans);
+  font-size: clamp(38px, 9vw, 82px);
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(158, 30, 30, 0.13);
+  transform: rotate(-22deg);
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  .contract-no-print {
+    display: none !important;
+  }
+  .contract-paper {
+    max-width: none;
+    border: 0;
+    box-shadow: none;
+  }
+  .contract-field-input {
+    border-color: transparent transparent rgba(34,34,34, 0.4);
+    background: transparent;
+  }
+}
+
+/* ─── Klageschrift: Dokumentenansicht (Legal Affairs Division) ───────────
+   Wie der Arbeitsvertrag wird auch die Klageschrift immer als helles,
+   amtliches Papier gerendert — unabhängig vom dunklen Dashboard. Die
+   Anmutung folgt einer deutschen Gerichtsschrift: Briefkopf mit Wappen,
+   Anschriftenblock, "In Sachen"-Rubrum, durchnummerierte Beweismittel
+   und ein amtlicher Rundstempel. */
+.lawsuit-paper {
+  --lawsuit-serif: 'Cambria', 'Charter', 'Georgia', 'Liberation Serif', 'Times New Roman', serif;
+  --lawsuit-sans: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --lawsuit-ink: #212121;
+  --lawsuit-ink-soft: #525252;
+  --lawsuit-rule: rgba(33,33,33, 0.16);
+  --lawsuit-accent: #2e2e2e;
+  --lawsuit-silver: #8b8b8b;
+
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  max-width: 800px;
+  border: 1px solid #d2d2d2;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.7), transparent 60%),
+    linear-gradient(180deg, #fcfcfc 0%, #f1f1f1 100%);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.28),
+    0 22px 56px rgba(0, 0, 0, 0.5);
+  color: var(--lawsuit-ink);
+  font-family: var(--lawsuit-serif);
+  font-size: 14.5px;
+  line-height: 1.72;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.lawsuit-paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url(/shield.webp);
+  background-repeat: no-repeat;
+  background-position: center 44%;
+  background-size: min(52%, 360px);
+  opacity: 0.045;
+  pointer-events: none;
+}
+
+.lawsuit-paper::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(139,139,139, 0.4);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.lawsuit-paper > * {
+  position: relative;
+  z-index: 1;
+}
+
+.lawsuit-inner {
+  padding: 40px 48px 34px;
+}
+
+.lawsuit-inner::after {
+  content: '';
+  position: absolute;
+  inset: 27px;
+  border: 1px solid var(--lawsuit-rule);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .lawsuit-inner {
+    padding: 26px 20px 26px;
+  }
+}
+
+.lawsuit-letterhead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 2px solid #212121;
+  padding-bottom: 16px;
+}
+
+.lawsuit-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+}
+
+.lawsuit-brand img {
+  width: 58px;
+  height: 58px;
+  flex: none;
+  object-fit: contain;
+}
+
+.lawsuit-dept {
+  font-family: var(--lawsuit-sans);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: #1f1f1f;
+}
+
+.lawsuit-division {
+  margin-top: 2px;
+  font-family: var(--lawsuit-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lawsuit-silver);
+}
+
+.lawsuit-contact {
+  margin-top: 7px;
+  font-family: var(--lawsuit-sans);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--lawsuit-ink-soft);
+  letter-spacing: 0.02em;
+}
+
+.lawsuit-letterhead-meta {
+  flex: none;
+  text-align: right;
+  font-family: var(--lawsuit-sans);
+}
+
+.lawsuit-meta-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lawsuit-silver);
+}
+
+.lawsuit-meta-value {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--lawsuit-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.lawsuit-letterhead-meta .lawsuit-meta-row + .lawsuit-meta-row {
+  margin-top: 8px;
+}
+
+.lawsuit-court {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.lawsuit-court-box {
+  font-family: var(--lawsuit-sans);
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--lawsuit-ink);
+  text-align: right;
+}
+
+.lawsuit-court-box strong {
+  font-weight: 700;
+}
+
+.lawsuit-title {
+  margin-top: 26px;
+  text-align: center;
+  font-family: var(--lawsuit-serif);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  color: #202020;
+  text-indent: 0.16em;
+}
+
+.lawsuit-title-rule {
+  margin: 12px auto 0;
+  width: 190px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--lawsuit-silver) 22%, var(--lawsuit-silver) 78%, transparent);
+}
+
+.lawsuit-subtitle {
+  margin-top: 8px;
+  text-align: center;
+  font-family: var(--lawsuit-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #717171;
+}
+
+.lawsuit-rubrum {
+  margin-top: 26px;
+  font-family: var(--lawsuit-sans);
+}
+
+.lawsuit-rubrum-lead {
+  font-family: var(--lawsuit-serif);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--lawsuit-ink);
+}
+
+.lawsuit-parties {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--lawsuit-rule);
+  border-bottom: 1px solid var(--lawsuit-rule);
+  padding: 14px 0;
+}
+
+.lawsuit-party + .lawsuit-party {
+  padding-top: 12px;
+  border-top: 1px dashed rgba(33,33,33, 0.16);
+}
+
+.lawsuit-party + .lawsuit-party {
+  margin-top: 12px;
+}
+
+.lawsuit-party-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lawsuit-silver);
+}
+
+.lawsuit-party-name {
+  margin-top: 4px;
+  font-family: var(--lawsuit-serif);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--lawsuit-ink);
+}
+
+.lawsuit-party-line {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--lawsuit-ink-soft);
+}
+
+.lawsuit-section {
+  margin-top: 26px;
+}
+
+.lawsuit-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 9px;
+  font-family: var(--lawsuit-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lawsuit-accent);
+}
+
+.lawsuit-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(46,46,46, 0.4), transparent);
+}
+
+.lawsuit-subject {
+  font-family: var(--lawsuit-serif);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--lawsuit-ink);
+  text-align: justify;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+
+.lawsuit-prose {
+  font-size: 14.5px;
+  line-height: 1.72;
+  color: var(--lawsuit-ink);
+  text-align: justify;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 7 3 3;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+.lawsuit-prose > * + * {
+  margin-top: 9px;
+}
+
+.lawsuit-prose h1,
+.lawsuit-prose h2,
+.lawsuit-prose h3,
+.lawsuit-prose h4,
+.lawsuit-prose h5,
+.lawsuit-prose h6 {
+  margin-top: 14px;
+  font-family: var(--lawsuit-serif);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  color: #202020;
+}
+
+.lawsuit-prose h1 { font-size: 18px; }
+.lawsuit-prose h2 { font-size: 16px; }
+.lawsuit-prose h3,
+.lawsuit-prose h4,
+.lawsuit-prose h5,
+.lawsuit-prose h6 { font-size: 14.5px; }
+
+.lawsuit-prose strong {
+  font-weight: 700;
+  color: #171717;
+}
+
+.lawsuit-prose em {
+  font-style: italic;
+}
+
+.lawsuit-prose ul,
+.lawsuit-prose ol {
+  margin-left: 1.35em;
+  padding-left: 0;
+  text-align: left;
+}
+
+.lawsuit-prose ul { list-style: disc outside; }
+.lawsuit-prose ol { list-style: decimal outside; }
+
+.lawsuit-prose li + li {
+  margin-top: 4px;
+}
+
+.lawsuit-prose li::marker {
+  color: var(--lawsuit-ink-soft);
+}
+
+.lawsuit-evidence {
+  list-style: none;
+  counter-reset: exhibit;
+  padding: 0;
+  margin: 0;
+}
+
+.lawsuit-evidence > li {
+  counter-increment: exhibit;
+  position: relative;
+  padding: 11px 0 11px 86px;
+  border-bottom: 1px solid rgba(33,33,33, 0.12);
+}
+
+.lawsuit-evidence > li::before {
+  content: 'Beweis ' counter(exhibit);
+  position: absolute;
+  left: 0;
+  top: 11px;
+  font-family: var(--lawsuit-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lawsuit-silver);
+}
+
+.lawsuit-evidence-title {
+  font-family: var(--lawsuit-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lawsuit-ink);
+}
+
+.lawsuit-evidence-meta {
+  margin-top: 2px;
+  font-family: var(--lawsuit-sans);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--lawsuit-ink-soft);
+}
+
+.lawsuit-clause-box {
+  margin-top: 16px;
+  border: 1px solid rgba(46,46,46, 0.22);
+  border-left: 4px solid var(--lawsuit-accent);
+  background: rgba(255, 255, 255, 0.55);
+  padding: 14px 18px;
+  break-inside: avoid;
+}
+
+.lawsuit-clause-heading {
+  font-family: var(--lawsuit-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lawsuit-accent);
+  margin-bottom: 6px;
+}
+
+.lawsuit-clause-box .lawsuit-prose {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.lawsuit-divider {
+  margin-top: 30px;
+  border: 0;
+  border-top: 1px solid var(--lawsuit-rule);
+}
+
+.lawsuit-place-date {
+  margin-top: 24px;
+  font-size: 14.5px;
+  color: var(--lawsuit-ink);
+}
+
+.lawsuit-signatures {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 28px;
+}
+
+.lawsuit-signature-name {
+  min-height: 34px;
+  padding-bottom: 3px;
+  font-family: var(--lawsuit-serif);
+  font-size: 23px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  color: var(--lawsuit-accent);
+  overflow-wrap: anywhere;
+}
+
+/* Handschriftliche Unterschrift der Klägervertretung. */
+.lawsuit-signature-script {
+  font-family: 'Great Vibes', 'Segoe Script', 'Brush Script MT', 'Bradley Hand', 'Apple Chancery', cursive;
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  color: var(--lawsuit-accent);
+  transform: rotate(-2.5deg) translateX(-2px);
+  transform-origin: left bottom;
+  min-height: 44px;
+}
+
+.lawsuit-signature-line {
+  border-top: 1px solid var(--lawsuit-ink);
+  padding-top: 7px;
+  font-family: var(--lawsuit-sans);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--lawsuit-ink-soft);
+}
+
+.lawsuit-footer {
+  margin-top: 34px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(33,33,33, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--lawsuit-sans);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #818181;
+}
+
+.lawsuit-seal {
+  position: absolute;
+  right: 40px;
+  bottom: 110px;
+  z-index: 3;
+  display: flex;
+  height: 148px;
+  width: 148px;
+  transform: rotate(-14deg);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 3px double var(--lawsuit-accent);
+  border-radius: 50%;
+  color: var(--lawsuit-accent);
+  font-family: var(--lawsuit-sans);
+  text-align: center;
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.lawsuit-seal::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(46,46,46, 0.65);
+  border-radius: 50%;
+}
+
+.lawsuit-seal-top {
+  max-width: 116px;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.lawsuit-seal-main {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lawsuit-seal-date {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.lawsuit-draft-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: var(--lawsuit-sans);
+  font-size: clamp(36px, 8vw, 74px);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(46,46,46, 0.12);
+  transform: rotate(-24deg);
+}
+
+@media (max-width: 640px) {
+  .lawsuit-seal {
+    right: 18px;
+    bottom: 24px;
+    height: 108px;
+    width: 108px;
+  }
+  .lawsuit-seal-main { font-size: 11px; }
+  .lawsuit-seal-top { max-width: 84px; font-size: 6.5px; }
+  .lawsuit-letterhead { flex-direction: column; }
+  .lawsuit-letterhead-meta { text-align: left; }
+}
+
+@media print {
+  .lawsuit-paper {
+    max-width: none;
+    border: 0;
+    box-shadow: none;
+    background: #ffffff;
+  }
+  .lawsuit-paper::before {
+    opacity: 0.025;
+  }
+}

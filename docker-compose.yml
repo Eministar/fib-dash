@@ -1,0 +1,59 @@
+# docker-compose.yml — FIB HR Dashboard + MySQL
+#
+# Verwendung:
+#   docker compose up -d
+#   docker compose logs -f app
+#
+# Hinweise:
+#   - Daten, Uploads und Setup-Konfiguration liegen in benannten Volumes.
+#   - Erster Start: http://localhost:3000/setup öffnet den Assistenten.
+#   - Für Produktion: Passwörter in .env auslagern (nicht ins Repo committen!)
+
+services:
+  mariadb:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+      MARIADB_DATABASE: ${DB_NAME:-fib_hr}
+      MARIADB_USER: ${DB_USER:-fib}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://${DB_USER:-fib}:${DB_PASSWORD:?Set DB_PASSWORD}@mariadb:3306/${DB_NAME:-fib_hr}
+      JWT_SECRET: ${JWT_SECRET:-}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      FIB_SETUP_ENV_FILE: /app/config/.env.local
+      # Discord-Integration (optional, aus .env)
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_PUBLIC_KEY: ${DISCORD_PUBLIC_KEY:-}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID:-}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - app_uploads:/app/uploads
+      - app_config:/app/config
+
+volumes:
+  mariadb_data:
+  app_uploads:
+  app_config:
