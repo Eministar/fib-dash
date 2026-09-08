@@ -168,8 +168,9 @@ model UserGroup {
 }
 
 model User {
-  id                   String     @id @default(cuid())
-  username             String     @unique
+  corruptionChecks     CorruptionCheck[] @relation("CorruptionCheckCreator")
+  id                   String            @id @default(cuid())
+  username             String            @unique
   passwordHash         String?
   displayName          String
   discordId            String?
@@ -178,12 +179,12 @@ model User {
   discordAvatar        String?
   discordDiscriminator String?
   lastLoginAt          DateTime?
-  role                 UserRole   @default(READONLY)
+  role                 UserRole          @default(READONLY)
   groupId              String?
-  group                UserGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  group                UserGroup?        @relation(fields: [groupId], references: [id], onDelete: SetNull)
   permissions          Json?
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
   codenamesCreated  Codename[]           @relation("CodenameCreator")
   dossiersCreated   Dossier[]            @relation("DossierCreator")
@@ -596,25 +597,26 @@ model PressRelease {
 }
 
 model Agent {
-  id               String      @id @default(cuid())
+  corruptionChecks CorruptionCheckAgent[]
+  id               String                 @id @default(cuid())
   badgeNumber      String
   /// Discord-Snowflake (nur Dashboard / Verknüpfung; ohne Bot-Anbindung)
-  discordId        String?     @unique
+  discordId        String?                @unique
   firstName        String
   lastName         String
   rankId           String
-  rank             Rank        @relation(fields: [rankId], references: [id])
-  status           AgentStatus @default(ACTIVE)
+  rank             Rank                   @relation(fields: [rankId], references: [id])
+  status           AgentStatus            @default(ACTIVE)
   unit             String?
   units            Json?
   flag             AgentFlag?
   /// Uprank-Sperre: blockiert Beförderungen (Aufstieg). Degradierungen bleiben erlaubt.
-  promotionBlocked Boolean     @default(false)
+  promotionBlocked Boolean                @default(false)
   notes            String?
-  hireDate         DateTime    @default(now())
+  hireDate         DateTime               @default(now())
   lastOnline       DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 
   codename            Codename?            @relation("CodenameCurrentHolder")
   codenameAssignments CodenameAssignment[] @relation("CodenameAssignments")
@@ -1987,4 +1989,53 @@ model Dossier {
 
   @@index([parentId, kind])
   @@index([kind, updatedAt])
+}
+
+/// Eigenständige Staatsbeamtenakte; öffentliche Nummer wird als BEA-000001 dargestellt.
+model PublicOfficial {
+  id          Int               @id @default(autoincrement())
+  firstName   String            @db.VarChar(100)
+  lastName    String            @db.VarChar(100)
+  agency      String            @db.VarChar(150)
+  badgeNumber String?           @db.VarChar(100)
+  createdAt   DateTime          @default(now())
+  checks      CorruptionCheck[]
+
+  @@index([lastName, firstName])
+  @@index([agency])
+}
+
+model CorruptionCheck {
+  id          String                 @id @default(cuid())
+  requestId   String                 @unique @db.VarChar(36)
+  officialId  Int
+  official    PublicOfficial         @relation(fields: [officialId], references: [id], onDelete: Restrict)
+  conductedAt DateTime
+  /// CLEAR | FINDINGS
+  result      String                 @db.VarChar(20)
+  findings    String                 @db.LongText
+  location    String?                @db.VarChar(200)
+  notes       String?                @db.LongText
+  createdById String?
+  createdBy   User?                  @relation("CorruptionCheckCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime               @default(now())
+  agents      CorruptionCheckAgent[]
+
+  @@index([officialId, conductedAt])
+  @@index([conductedAt])
+  @@index([result, conductedAt])
+}
+
+/// Snapshot erhält die Namen der Durchführenden auch nach Umbenennung oder Löschung.
+model CorruptionCheckAgent {
+  id          String          @id @default(cuid())
+  checkId     String
+  check       CorruptionCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  agentId     String?
+  agent       Agent?          @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  name        String          @db.VarChar(220)
+  badgeNumber String          @db.VarChar(100)
+
+  @@unique([checkId, agentId])
+  @@index([agentId])
 }

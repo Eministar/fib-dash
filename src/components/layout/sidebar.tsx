@@ -47,6 +47,7 @@ const mainNav: NavItem[] = [
   { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
   // Ohne `permission`: Sanktionen sind für jeden eingeloggten Agent einsehbar.
   { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
+  { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield },
   { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
   { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
   { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
