@@ -1,4 +1,6 @@
 export const PERMISSIONS = [
+  'codenames:view',
+  'codenames:manage',
   'dashboard:view',
   'calendar:view',
   'calendar:manage',
@@ -39,6 +41,10 @@ export const PERMISSIONS = [
   'internal-affairs:manage',
   'lad:view',
   'lad:manage',
+  'investigations:view',
+  'investigations:manage',
+  'investigations:classified',
+  'investigations:delete',
   'notes:view',
   'notes:manage',
   'logs:view',
@@ -61,6 +67,8 @@ export const PERMISSIONS = [
 export type Permission = (typeof PERMISSIONS)[number]
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
+  'codenames:view': 'Decknamen ansehen',
+  'codenames:manage': 'Decknamen verwalten',
   'dashboard:view': 'Dashboard ansehen',
   'calendar:view': 'Kalender ansehen',
   'calendar:manage': 'Kalender verwalten',
@@ -101,6 +109,10 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'internal-affairs:manage': 'Internal Affairs verwalten',
   'lad:view': 'Legal Affairs ansehen',
   'lad:manage': 'Legal Affairs verwalten',
+  'investigations:view': 'Ermittlungsakten ansehen',
+  'investigations:manage': 'Ermittlungsakten verwalten',
+  'investigations:classified': 'Verschlusssachen einsehen',
+  'investigations:delete': 'Ermittlungsakten löschen',
   'notes:view': 'Notizen ansehen',
   'notes:manage': 'Notizen verwalten',
   'logs:view': 'Protokoll ansehen',
@@ -126,6 +138,7 @@ const LEGACY_PERMISSION_MAP: Record<string, Permission[]> = {
 }
 
 const IMPLIED_PERMISSIONS: Partial<Record<Permission, Permission[]>> = {
+  'codenames:manage': ['codenames:view', 'agents:view'],
   'dashboard:view': ['duty-times:view'],
   'calendar:manage': ['calendar:view', 'agents:view'],
   'duty-times:manage': ['duty-times:view', 'agents:view'],
@@ -162,6 +175,11 @@ const IMPLIED_PERMISSIONS: Partial<Record<Permission, Permission[]>> = {
   'detective:manage': ['detective:view', 'agents:view'],
 'internal-affairs:manage': ['internal-affairs:view', 'agents:view'],
   'lad:manage': ['lad:view', 'agents:view'],
+  'investigations:manage': ['investigations:view', 'agents:view'],
+  // Verschlusssachen und Löschen setzen Lesezugriff voraus, gewähren aber
+  // bewusst kein `investigations:manage` – Einsicht ist nicht Bearbeitung.
+  'investigations:classified': ['investigations:view'],
+  'investigations:delete': ['investigations:view'],
   'notes:manage': ['notes:view', 'agents:view'],
   'ranks:manage': ['ranks:view'],
   'trainings:manage': ['trainings:view', 'ranks:view'],

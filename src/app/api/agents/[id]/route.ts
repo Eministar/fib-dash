@@ -1,4 +1,6 @@
 import { NextRequest } from 'next/server'
+import { releaseTerminatedCodename, codenameTransaction } from '@/lib/codenames'
+import { queueCodenameBoardUpdate } from '@/lib/discord-integration'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
@@ -269,16 +271,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (parsed.data.hireDate) data.hireDate = new Date(parsed.data.hireDate)
     if (nextBadgeNumber && nextBadgeNumber !== existing.badgeNumber) data.badgeNumber = nextBadgeNumber
 
-    const updated = await prisma.agent.update({
-      where: { id },
-      data,
-      include: { rank: true },
+    const updated = await codenameTransaction(async (tx) => {
+      const agent = await tx.agent.update({
+        where: { id },
+        data,
+        include: { rank: true },
+      })
+      if (parsed.data.status === 'TERMINATED') {
+        await releaseTerminatedBadgeNumber(agent, tx)
+        await releaseTerminatedCodename(tx, id, user.id)
+      }
+      return agent
     })
+    queueCodenameBoardUpdate()
     await syncLinkedUserDisplayNameForAgent(updated)
-
-    if (parsed.data.status === 'TERMINATED' && existing.status !== 'TERMINATED') {
-      await releaseTerminatedBadgeNumber(updated)
-    }
 
     const changes: string[] = []
     if (parsed.data.firstName && parsed.data.firstName !== existing.firstName) changes.push(`Vorname: ${existing.firstName} → ${parsed.data.firstName}`)
@@ -395,6 +401,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       }),
       prisma.agent.delete({ where: { id } }),
     ])
+    queueCodenameBoardUpdate()
 
     await createAuditLog({
       action: 'AGENT_DELETED',

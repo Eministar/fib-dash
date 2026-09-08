@@ -11,6 +11,7 @@ import {
   managedDiscordRoleIds,
   queueAllAgentRoleSync,
   saveDiscordConfig,
+  queueCodenameBoardUpdate,
 } from '@/lib/discord-integration'
 
 function discordPublicKeyConfigured() {
@@ -100,11 +101,13 @@ export async function POST(req: NextRequest) {
 
     invalidateDiscordCache()
     await saveDiscordConfig({
+      codenameBoardChannelId: canManageSettings && typeof body.codenameBoardChannelId === 'string' ? body.codenameBoardChannelId : undefined,
       guildId: canManageSettings && typeof body.guildId === 'string' ? body.guildId : undefined,
       applicationId: canManageSettings && typeof body.applicationId === 'string' ? body.applicationId : undefined,
       announcementsChannelId: canManageSettings && typeof body.announcementsChannelId === 'string' ? body.announcementsChannelId : undefined,
       updateChannelId: canManageSettings && typeof body.updateChannelId === 'string' ? body.updateChannelId : undefined,
       sanctionsChannelId: canManageSettings && typeof body.sanctionsChannelId === 'string' ? body.sanctionsChannelId : undefined,
+      investigationsChannelId: canManageSettings && typeof body.investigationsChannelId === 'string' ? body.investigationsChannelId : undefined,
       dutyStatusChannelId: canManageSettings && typeof body.dutyStatusChannelId === 'string' ? body.dutyStatusChannelId : undefined,
       dutyAdminLogChannelId: canManageSettings && typeof body.dutyAdminLogChannelId === 'string' ? body.dutyAdminLogChannelId : undefined,
       absenceStatusChannelId: canManageSettings && typeof body.absenceStatusChannelId === 'string' ? body.absenceStatusChannelId : undefined,
@@ -125,6 +128,7 @@ export async function POST(req: NextRequest) {
       unitRoleMap: (hasPermission(user, 'units:manage') || canManageSettings) && body.unitRoleMap && typeof body.unitRoleMap === 'object' ? body.unitRoleMap : undefined,
     })
     const nextConfig = await getDiscordConfig()
+    if (canManageSettings) queueCodenameBoardUpdate()
     const nextManagedRoles = new Set(managedDiscordRoleIds(nextConfig))
     const staleManagedRoles = managedDiscordRoleIds(previousConfig).filter((roleId) => !nextManagedRoles.has(roleId))
     queueAllAgentRoleSync({ extraManagedRoleIds: staleManagedRoles })

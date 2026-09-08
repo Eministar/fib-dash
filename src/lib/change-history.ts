@@ -50,6 +50,8 @@ const PRIMARY_KEYS: Record<string, string[]> = {
 // Deletes verwenden sie umgekehrt. Nicht aufgeführte Modelle besitzen keine
 // für die Historie relevante Pflicht-FK oder werden über ihre normale ID aktualisiert.
 const MODEL_DEPENDENCIES: Record<string, string[]> = {
+  Codename: ['Agent', 'User'],
+  CodenameAssignment: ['Codename', 'Agent', 'User'],
   UserGroupMembership: ['User', 'UserGroup'],
   UserUnitAssignment: ['User', 'Unit'],
   Unit: ['UnitGroup'],

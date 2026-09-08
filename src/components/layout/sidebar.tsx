@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText, ChartNoAxesCombined,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Upload, CalendarDays, Download,
-  FileText, Gavel,
+  FileText, Gavel, FolderSearch,
   History,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -42,10 +42,12 @@ const mainNav: NavItem[] = [
   { name: 'Kalender', href: '/calendar', icon: CalendarDays, permission: 'calendar:view' },
   { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view' },
   { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view' },
+  { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
   { name: 'Up-/D-Rank-Listen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
   { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
   // Ohne `permission`: Sanktionen sind für jeden eingeloggten Agent einsehbar.
   { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
+  { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
   { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
   { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
 ]

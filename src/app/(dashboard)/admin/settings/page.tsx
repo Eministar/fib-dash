@@ -52,7 +52,9 @@ interface DiscordConfigResponse {
     announcementsChannelId: string
     updateChannelId: string
     sanctionsChannelId: string
+    investigationsChannelId: string
     dutyStatusChannelId: string
+    codenameBoardChannelId: string
     dutyAdminLogChannelId: string
     dutyStatusMessageId: string
     absenceStatusChannelId: string
@@ -124,6 +126,7 @@ export default function SettingsPage() {
 
   const [orgName, setOrgName] = useState('FIB')
   const [badgePrefix, setBadgePrefix] = useState('')
+  const [codenamePrefix, setCodenamePrefix] = useState('Agent')
   const [allowDuplicateBadgeNumbers, setAllowDuplicateBadgeNumbers] = useState(false)
   const [discordForm, setDiscordForm] = useState<DiscordConfigResponse['config']>({
     guildId: '',
@@ -131,7 +134,9 @@ export default function SettingsPage() {
     announcementsChannelId: '',
     updateChannelId: '',
     sanctionsChannelId: '',
+    investigationsChannelId: '',
     dutyStatusChannelId: '',
+    codenameBoardChannelId: '',
     dutyAdminLogChannelId: '',
     dutyStatusMessageId: '',
     absenceStatusChannelId: '',
@@ -157,6 +162,7 @@ export default function SettingsPage() {
       settingsInitialized.current = true
       setOrgName(settings['orgName'] || 'FIB')
       setBadgePrefix(settings['badgePrefix'] || '')
+      setCodenamePrefix(settings['codenames.prefix'] ?? 'Agent')
       setAllowDuplicateBadgeNumbers(settings['allowDuplicateBadgeNumbers'] === 'true')
     }
   }, [settings])
@@ -487,6 +493,12 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div className="flex items-end gap-2">
                 <div className="flex-1">
+                  <Input label="Decknamen-Präfix" value={codenamePrefix} onChange={(e) => setCodenamePrefix(e.target.value)} maxLength={40} placeholder="Agent" />
+                </div>
+                <Button aria-label="Decknamen-Präfix speichern" variant="secondary" size="sm" onClick={() => saveSetting('codenames.prefix', codenamePrefix)}><Save size={13} /></Button>
+              </div>
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
                   <Input label="Dienstnummer-Prefix" value={badgePrefix} onChange={(e) => setBadgePrefix(e.target.value)} placeholder="z.B. FIB-" />
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => saveSetting('badgePrefix', badgePrefix)}><Save size={13} /></Button>
@@ -639,6 +651,27 @@ export default function SettingsPage() {
                 <p className="text-[11px] text-[#6f6f6f] mt-1.5">
                   Channel für neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
                 </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Ermittlungs-Channel"
+                    value={discordForm.investigationsChannelId}
+                    onValueChange={(investigationsChannelId) => setDiscordForm({ ...discordForm, investigationsChannelId })}
+                    options={channelOptions}
+                />
+                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                  Meldungen zu Einsatzakten und neuen Bodycam-Clips. Verschlusssachen werden nie gepostet.
+                  Leer lassen, um die Meldungen abzuschalten.
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Decknamen-Board"
+                    value={discordForm.codenameBoardChannelId}
+                    onValueChange={(codenameBoardChannelId) => setDiscordForm({ ...discordForm, codenameBoardChannelId })}
+                    options={channelOptions}
+                />
+                <p className="mt-1.5 text-[11px] text-[#909090]">Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select

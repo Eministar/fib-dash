@@ -5,6 +5,8 @@ import { success, error, unauthorized } from '@/lib/api-response'
 import { createAuditLog } from '@/lib/audit'
 import { queueDiscordHrEvent, queueAgentRoleSync } from '@/lib/discord-integration'
 import { releaseTerminatedBadgeNumber } from '@/lib/badge-blacklist'
+import { releaseTerminatedCodename, codenameTransaction } from '@/lib/codenames'
+import { queueCodenameBoardUpdate } from '@/lib/discord-integration'
 
 export async function GET() {
   try {
@@ -39,25 +41,25 @@ export async function POST(req: NextRequest) {
     if (!agent) return error('Agent nicht gefunden')
     if (agent.status === 'TERMINATED') return error('Agent ist bereits gekündigt')
 
-    const termination = await prisma.termination.create({
-      data: {
-        agentId,
-        reason,
-        terminatedByUserId: user.id,
-        previousRank: agent.rank.name,
-        previousBadgeNumber: agent.badgeNumber,
-        previousFirstName: agent.firstName,
-        previousLastName: agent.lastName,
-      },
-    })
-
-    await prisma.$transaction(async (tx) => {
-      await tx.agent.update({
-        where: { id: agentId },
-        data: { status: 'TERMINATED' },
+    const termination = await codenameTransaction(async (tx) => {
+      await tx.agent.update({ where: { id: agentId }, data: { status: 'TERMINATED' } })
+      const record = await tx.termination.create({
+        data: {
+          agentId,
+          reason,
+          terminatedByUserId: user.id,
+          previousRank: agent.rank.name,
+          previousBadgeNumber: agent.badgeNumber,
+          previousFirstName: agent.firstName,
+          previousLastName: agent.lastName,
+        },
       })
+
       await releaseTerminatedBadgeNumber(agent, tx)
+      await releaseTerminatedCodename(tx, agentId, user.id)
+      return record
     })
+    queueCodenameBoardUpdate()
 
     await createAuditLog({
       action: 'AGENT_TERMINATED',
