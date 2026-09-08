@@ -16,13 +16,18 @@ import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
   investigationAccessInclude,
-  investigationVisibilityWhere,
   sanitizeTags,
   serializeBigInts,
 } from '@/lib/investigations'
 import { agentDisplayName, cleanText, parseDate, routeError } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
 import { queueClipCompression } from '@/lib/clip-compression'
+import { bodycamAccess } from '@/lib/bodycam-access'
+import { uploadCors, uploadOptions } from '@/lib/upload-cors'
+
+export const OPTIONS = uploadOptions
+export async function POST(req: NextRequest) { return uploadCors(req, await uploadClip(req)) }
+export async function GET(req: NextRequest) { return uploadCors(req, await listClips(req)) }
 
 export const dynamic = 'force-dynamic'
 
@@ -61,9 +66,9 @@ function parseClipMeta(header: string | null): Record<string, unknown> {
   }
 }
 
-export async function GET(req: NextRequest) {
+async function listClips(req: NextRequest) {
   try {
-    const user = await requirePermission('investigations:view')
+    const access = await bodycamAccess()
     const { searchParams } = req.nextUrl
 
     const investigationId = searchParams.get('investigationId')?.trim()
@@ -73,7 +78,7 @@ export async function GET(req: NextRequest) {
     const to = searchParams.get('to')?.trim()
 
     const filters: Prisma.BodycamClipWhereInput[] = [
-      { investigation: investigationVisibilityWhere(user) },
+      { investigation: access.where },
     ]
 
     if (investigationId) filters.push({ investigationId })
@@ -115,7 +120,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function uploadClip(req: NextRequest) {
   let storedFilename: string | null = null
 
   try {
@@ -175,7 +180,8 @@ export async function POST(req: NextRequest) {
 
     if (!req.body) return error('Es wurden keine Videodaten übertragen')
 
-    const { filename, sizeBytes } = await saveClipStream(req.body, mimeType)
+    const expectedSize = req.headers.get('x-upload-size') ?? req.headers.get('content-length')
+    const { filename, sizeBytes } = await saveClipStream(req.body, mimeType, expectedSize === null ? undefined : Number(expectedSize))
     storedFilename = filename
 
     const durationRaw = Number(meta.durationSeconds)

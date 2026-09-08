@@ -865,6 +865,7 @@ async function startWithIisnodePipe(pipePath) {
       }
     })
 
+    server.requestTimeout = 30 * 60 * 1000
     server.once('error', reject)
     server.listen(pipePath, () => resolve(undefined))
   })

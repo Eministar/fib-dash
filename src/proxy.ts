@@ -50,5 +50,7 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  // Binary uploads must reach their streaming handlers without Next cloning
+  // and truncating their bodies at the proxy's default 10 MB buffer limit.
+  matcher: '/api/((?!investigations/clips/?$|corruption-checks/[^/]+/evidence/?$).*)',
 }

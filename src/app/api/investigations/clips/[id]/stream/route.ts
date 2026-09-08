@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 
 import { forbidden, notFound } from '@/lib/api-response'
-import { requirePermission } from '@/lib/auth'
+import { bodycamAccess } from '@/lib/bodycam-access'
 import { clipFileResponse } from '@/lib/clips'
 import { prisma } from '@/lib/prisma'
 import { canAccessInvestigation } from '@/lib/investigations'
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requirePermission('investigations:view')
+    const { user, full } = await bodycamAccess()
     const { id } = await params
 
     const clip = await prisma.bodycamClip.findUnique({
@@ -35,9 +35,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     })
     if (!clip) return notFound('Clip')
-    if (!canAccessInvestigation(user, clip.investigation)) return forbidden()
+    if ((!full && clip.investigation.classified) || !canAccessInvestigation(user, clip.investigation)) return forbidden()
 
-    return await clipFileResponse(clip.filename, clip.mimeType, req.headers.get('range'))
+    const response = await clipFileResponse(clip.filename, clip.mimeType, req.headers.get('range'))
+    response.headers.set('Cache-Control', 'private, no-store')
+    return response
   } catch (cause: unknown) {
     if (cause instanceof Error && 'code' in cause && (cause as { code?: string }).code === 'ENOENT') {
       return notFound('Videodatei')

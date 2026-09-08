@@ -168,6 +168,7 @@ model UserGroup {
 }
 
 model User {
+  recordShares         RecordShare[]
   corruptionChecks     CorruptionCheck[] @relation("CorruptionCheckCreator")
   id                   String            @id @default(cuid())
   username             String            @unique
@@ -1993,19 +1994,25 @@ model Dossier {
 
 /// Eigenständige Staatsbeamtenakte; öffentliche Nummer wird als BEA-000001 dargestellt.
 model PublicOfficial {
-  id          Int               @id @default(autoincrement())
-  firstName   String            @db.VarChar(100)
-  lastName    String            @db.VarChar(100)
-  agency      String            @db.VarChar(150)
-  badgeNumber String?           @db.VarChar(100)
-  createdAt   DateTime          @default(now())
-  checks      CorruptionCheck[]
+  mergedIntoId Int?
+  mergedInto   PublicOfficial?   @relation("OfficialMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  mergedFrom   PublicOfficial[]  @relation("OfficialMerge")
+  id           Int               @id @default(autoincrement())
+  firstName    String            @db.VarChar(100)
+  lastName     String            @db.VarChar(100)
+  agency       String            @db.VarChar(150)
+  badgeNumber  String?           @db.VarChar(100)
+  createdAt    DateTime          @default(now())
+  checks       CorruptionCheck[]
 
   @@index([lastName, firstName])
   @@index([agency])
 }
 
 model CorruptionCheck {
+  version     Int                    @default(1)
+  revisions   CorruptionRevision[]
+  evidence    CorruptionEvidence[]
   id          String                 @id @default(cuid())
   requestId   String                 @unique @db.VarChar(36)
   officialId  Int
@@ -2038,4 +2045,65 @@ model CorruptionCheckAgent {
 
   @@unique([checkId, agentId])
   @@index([agentId])
+}
+
+model CorruptionRevision {
+  id        String          @id @default(cuid())
+  checkId   String
+  check     CorruptionCheck @relation(fields: [checkId], references: [id], onDelete: Restrict)
+  version   Int
+  before    Json
+  after     Json
+  reason    String          @db.VarChar(1000)
+  actorId   String          @db.VarChar(191)
+  actorName String          @db.VarChar(220)
+  createdAt DateTime        @default(now())
+
+  @@unique([checkId, version])
+}
+
+model CorruptionEvidence {
+  id             String          @id @default(cuid())
+  checkId        String
+  check          CorruptionCheck @relation(fields: [checkId], references: [id], onDelete: Restrict)
+  title          String          @db.VarChar(200)
+  filename       String?         @unique @db.VarChar(80)
+  mimeType       String?         @db.VarChar(100)
+  sizeBytes      Int?
+  clipId         String?         @db.VarChar(191)
+  uploadedById   String          @db.VarChar(191)
+  uploadedByName String          @db.VarChar(220)
+  createdAt      DateTime        @default(now())
+
+  @@index([checkId, createdAt])
+}
+
+model RecordShare {
+  id          String            @id @default(cuid())
+  title       String            @db.VarChar(200)
+  tokenHash   String            @unique @db.VarChar(64)
+  enabled     Boolean           @default(true)
+  expiresAt   DateTime?
+  version     Int               @default(1)
+  createdById String
+  createdBy   User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  items       RecordShareItem[]
+
+  @@index([createdById, createdAt])
+}
+
+model RecordShareItem {
+  id                String      @id @default(cuid())
+  shareId           String
+  share             RecordShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  /// DOSSIER | CASE | PERSON | VEHICLE | CLIP
+  kind              String      @db.VarChar(20)
+  recordId          String      @db.VarChar(191)
+  title             String      @db.VarChar(300)
+  classifiedAtGrant Boolean     @default(false)
+
+  @@unique([shareId, kind, recordId])
+  @@index([kind, recordId])
 }

@@ -61,6 +61,9 @@ interface DiscordConfigResponse {
     absenceStatusChannelId: string
     absenceStatusMessageId: string
     humanResourcesRoleId: string
+    bodycamViewerRoleId: string
+    hirePingRoleId: string
+    hirePingChannelId: string
     promotionBlockRoleId: string
     employeeRoleIds: string[]
     commandRoleIds: string[]
@@ -144,6 +147,9 @@ export default function SettingsPage() {
     absenceStatusChannelId: '',
     absenceStatusMessageId: '',
     humanResourcesRoleId: '',
+    bodycamViewerRoleId: '',
+    hirePingRoleId: '',
+    hirePingChannelId: '',
     promotionBlockRoleId: '',
     employeeRoleIds: [],
     commandRoleIds: [],
@@ -665,6 +671,30 @@ export default function SettingsPage() {
                   Meldungen zu Einsatzakten und neuen Bodycam-Clips. Verschlusssachen werden nie gepostet.
                   Leer lassen, um die Meldungen abzuschalten.
                 </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Neueinstellung: Kurz-Ping an Rolle"
+                    value={discordForm.hirePingRoleId}
+                    onValueChange={(hirePingRoleId) => setDiscordForm({ ...discordForm, hirePingRoleId })}
+                    options={roleOptions}
+                />
+                <Select
+                    label="Neueinstellung: Channel für Kurz-Ping"
+                    value={discordForm.hirePingChannelId}
+                    onValueChange={(hirePingChannelId) => setDiscordForm({ ...discordForm, hirePingChannelId })}
+                    options={channelOptions}
+                />
+                <p className="mt-1.5 text-[11px] text-[#909090]">Bei einem neu angelegten Agent einmal die Rolle erwähnen und die Nachricht nach etwa einer Sekunde löschen. Beide Felder auswählen; leer bedeutet deaktiviert.</p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Bodycam-Katalog: Discord-Rolle für Lesezugriff"
+                    value={discordForm.bodycamViewerRoleId}
+                    onValueChange={(bodycamViewerRoleId) => setDiscordForm({ ...discordForm, bodycamViewerRoleId })}
+                    options={roleOptions}
+                />
+                <p className="mt-1.5 text-[11px] text-[#909090]">Gewährt angemeldeten Rollenmitgliedern Zugriff auf nicht vertrauliche Bodycam-Clips. Bestehende Ermittlungsrechte gelten weiterhin.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select
