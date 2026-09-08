@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { FolderInput, FolderOpen, Plus, Pencil, MapPin } from 'lucide-react'
+import { EyeOff, FolderInput, FolderOpen, FolderSearch, ImageOff, Plus, Pencil, MapPin } from 'lucide-react'
 import { DOSSIER_KINDS, type DossierKind } from '@/lib/dossiers'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
@@ -19,12 +19,18 @@ import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { InvestigationsNavigation } from './investigations-navigation'
 import { PhotoField } from './photo-catalog'
+import { PriorityBadge, StatusBadge } from './investigation-badges'
+import { Badge } from '@/components/ui/badge'
+import { formatDate } from '@/lib/utils'
+import type { InvestigationPriorityKey, InvestigationStatusKey } from '@/lib/investigations'
+
 
 type Dossier = {
   id: string; title: string; kind: DossierKind; description: string | null; address: string | null;
   photoId: string | null; parentId: string | null; parent?: { id: string; title: string } | null;
+  updatedAt?: string; createdBy?: { displayName: string } | null;
   persons?: { id: string; firstName: string; lastName: string; personNumber: string }[];
-  investigations?: { id: string; title: string; caseNumber: string }[];
+  investigations?: { id: string; title: string; caseNumber: string; status: InvestigationStatusKey; priority: InvestigationPriorityKey; classified: boolean; updatedAt: string; createdBy?: { displayName: string } | null }[];
   vehicles?: { id: string; vehicleNumber: string; plate: string | null; model: string | null }[];
   clips?: { id: string; title: string; recordedAt: string | null }[];
   _count?: { children: number; persons: number; investigations: number; vehicles: number; clips: number };
@@ -64,12 +70,23 @@ function DossierView({ id }: { id: string | null }) {
   const list = useFetch<List>(`/api/investigations/dossiers?${query}`)
   const current = detail.data
   const refresh = () => { setEditor(null); void list.refetch(); void detail.refetch() }
-  const detailCards = id && current
+  const detailCards: RegisterCardData[] = id && current
     // Unterakten und Einsatzakten stehen gleichberechtigt nebeneinander - aus
     // Sicht der Dauerakte ist beides schlicht eine Akte ueber diese Familie.
     ? [
-        ...(list.data?.items ?? []).map(item => ({ key: `d-${item.id}`, href: href(item.id), kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId, note: item.address, meta: `${item._count?.children ?? 0} Akten · ${item._count?.persons ?? 0} Personen` })),
-        ...(current.investigations ?? []).map(item => ({ key: `i-${item.id}`, href: `/investigations/${item.id}`, kind: 'Einsatzakte', title: item.title, photoId: null, note: item.caseNumber, meta: undefined as string | undefined })),
+        ...(list.data?.items ?? []).map(item => ({
+          key: `d-${item.id}`, href: href(item.id), variant: 'dossier' as const,
+          kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId,
+          code: item.address ?? undefined,
+          facts: [`${item._count?.children ?? 0} Akten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
+          author: item.createdBy?.displayName, date: item.updatedAt,
+        })),
+        ...(current.investigations ?? []).map(item => ({
+          key: `i-${item.id}`, href: `/investigations/${item.id}`, variant: 'investigation' as const,
+          kind: 'Einsatzakte', title: item.title, photoId: null,
+          code: item.caseNumber, status: item.status, priority: item.priority, classified: item.classified,
+          author: item.createdBy?.displayName, date: item.updatedAt,
+        })),
       ]
     : []
 
@@ -95,9 +112,9 @@ function DossierView({ id }: { id: string | null }) {
       <h2 className="mb-1 text-base font-semibold text-white">Register</h2>
       <p className="mb-4 text-xs text-[#808080]">Alle Akten, Personen, Fahrzeuge und Aufnahmen zu dieser Akte.</p>
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h3 className="text-sm font-semibold text-white">Akten{detailCards.length ? <span className="ml-2 font-mono text-xs text-[#808080]">{detailCards.length}</span> : null}</h3>
-        {manage && current && <div className="flex flex-wrap gap-2">
+        {manage && current && <div className="flex min-w-0 flex-wrap gap-2">
           <Button size="sm" variant="ghost" onClick={() => setQuick('investigations')}><Plus size={13} />Einsatzakte verknüpfen</Button>
           <Button size="sm" variant="ghost" onClick={() => setAttaching(true)}><FolderInput size={13} />Bestehende Akte einhängen</Button>
           <Button size="sm" variant="ghost" onClick={() => setEditor('new')}><Plus size={13} />Neue Akte</Button>
@@ -105,10 +122,7 @@ function DossierView({ id }: { id: string | null }) {
       </div>
       {list.loading ? <p className="py-6 text-sm text-[#808080]">Akten werden geladen …</p>
         : !detailCards.length ? <p className="py-6 text-sm text-[#808080]">Noch keine Akten zugeordnet.</p>
-        : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{detailCards.map(card => <Link key={card.key} href={card.href} className="overflow-hidden rounded-xl border border-[#343434] bg-[#141414] hover:border-[#a78bfa]">
-            {card.photoId && <Image unoptimized src={photoUrl(card.photoId)} alt={card.title} width={500} height={280} className="aspect-video w-full object-cover" />}
-            <div className="space-y-2 p-4"><p className="text-xs text-[#c4b5fd]">{card.kind}</p><h3 className="flex items-center gap-2 font-medium text-white"><FolderOpen size={17} />{card.title}</h3>{card.note && <p className="text-xs text-[#a6a6a6]">{card.note}</p>}{card.meta && <p className="text-xs text-[#808080]">{card.meta}</p>}</div>
-          </Link>)}</div>}
+        : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{detailCards.map(card => <RegisterCard key={card.key} card={card} />)}</div>}
       {(list.data?.total ?? 0) > 30 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
 
       {current && <div className="mt-7 grid gap-5 sm:grid-cols-3">
@@ -122,10 +136,14 @@ function DossierView({ id }: { id: string | null }) {
     </> : <>
       <h2 className="mb-3 text-base font-semibold text-white">Aktenübersicht</h2>
       <div className="mb-4 grid gap-3 sm:grid-cols-2"><Input aria-label="Akten suchen" placeholder="Akte suchen …" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} /><Select value={kind} onValueChange={value => { setKind(value); setPage(1) }} options={[{ value: '', label: 'Alle Kategorien' }, ...Object.entries(DOSSIER_KINDS).map(([value, label]) => ({ value, label }))]} /></div>
-      {list.loading ? <p className="py-8 text-sm text-[#808080]">Akten werden geladen …</p> : !list.data?.items.length ? <p className="py-8 text-sm text-[#808080]">Noch keine passenden Akten vorhanden.</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{list.data.items.map(item => <Link key={item.id} href={href(item.id)} className="overflow-hidden rounded-xl border border-[#343434] bg-[#141414] hover:border-[#a78bfa]">
-        {item.photoId && <Image unoptimized src={photoUrl(item.photoId)} alt={item.title} width={500} height={280} className="aspect-video w-full object-cover" />}
-        <div className="space-y-2 p-4"><p className="text-xs text-[#c4b5fd]">{DOSSIER_KINDS[item.kind]}</p><h3 className="flex items-center gap-2 font-medium text-white"><FolderOpen size={17} />{item.title}</h3>{item.address && <p className="text-xs text-[#a6a6a6]">{item.address}</p>}{item.parent && <p className="text-xs text-[#808080]">In {item.parent.title}</p>}<p className="text-xs text-[#808080]">{item._count?.children ?? 0} Akten · {item._count?.persons ?? 0} Personen · {item._count?.investigations ?? 0} Einsatzakten · {item._count?.vehicles ?? 0} Fahrzeuge · {item._count?.clips ?? 0} Bodycams</p></div>
-      </Link>)}</div>}
+      {list.loading ? <p className="py-8 text-sm text-[#808080]">Akten werden geladen …</p>
+        : !list.data?.items.length ? <p className="py-8 text-sm text-[#808080]">Noch keine passenden Akten vorhanden.</p>
+        : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{list.data.items.map(item => <RegisterCard key={item.id} card={{
+            key: item.id, href: href(item.id), variant: 'dossier', kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId,
+            code: item.address ?? undefined, parentTitle: item.parent?.title,
+            facts: [`${item._count?.children ?? 0} Akten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
+            author: item.createdBy?.displayName, date: item.updatedAt,
+          }} />)}</div>}
       <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>
     </>}
 
@@ -134,6 +152,55 @@ function DossierView({ id }: { id: string | null }) {
     {attaching && current && <AttachExistingDossier dossier={current} onClose={() => setAttaching(false)} onSaved={() => { setAttaching(false); refresh() }} />}
     <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen, Einsatzakten, Fahrzeuge und Bodycams bleiben bestehen. Akten, unter denen weitere Akten hängen, können nicht gelöscht werden.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push(current?.parentId ? href(current.parentId) : '/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
   </div>
+}
+
+type RegisterCardData = {
+  key: string; href: string; variant: 'dossier' | 'investigation'
+  kind: string; title: string; photoId: string | null
+  /** Aktenzeichen bei Einsatzakten, Adresse bei Dauerakten. */
+  code?: string
+  parentTitle?: string
+  status?: InvestigationStatusKey; priority?: InvestigationPriorityKey; classified?: boolean
+  facts?: string[]
+  author?: string; date?: string
+}
+
+/**
+ * Einheitliche Kachel fuer beide Aktenarten. Feste Bildhoehe und eine an den
+ * unteren Rand gedrueckte Fusszeile halten alle Kacheln gleich hoch – sonst
+ * reisst eine einzige Akte mit Bild die ganze Zeile auseinander.
+ */
+function RegisterCard({ card }: { card: RegisterCardData }) {
+  const Icon = card.variant === 'investigation' ? FolderSearch : FolderOpen
+  return <Link href={card.href} className="group flex flex-col overflow-hidden rounded-xl border border-[#343434] bg-[#141414] transition-colors hover:border-[#a78bfa]">
+    <div className="relative h-28 shrink-0 overflow-hidden border-b border-[#232323] bg-[#111111]">
+      {card.photoId
+        ? <Image unoptimized src={photoUrl(card.photoId)} alt="" width={480} height={224} className="h-full w-full object-cover opacity-90 transition-opacity group-hover:opacity-100" />
+        : <span className="flex h-full w-full items-center justify-center text-[#2f2f2f]"><ImageOff size={22} /></span>}
+      <span className="absolute left-2 top-2 rounded-md bg-[#0b0b0b]/85 px-2 py-0.5 text-[10.5px] font-medium text-[#c4b5fd] backdrop-blur">{card.kind}</span>
+    </div>
+
+    <div className="flex min-w-0 flex-1 flex-col gap-2 p-3.5">
+      <h3 className="flex items-start gap-2 text-[13.5px] font-medium leading-snug text-white">
+        <Icon size={15} className="mt-0.5 shrink-0 text-[#808080]" />
+        <span className="line-clamp-2">{card.title}</span>
+      </h3>
+
+      {(card.status || card.classified) && <div className="flex flex-wrap gap-1.5">
+        {card.status && <StatusBadge status={card.status} />}
+        {card.priority && <PriorityBadge priority={card.priority} />}
+        {card.classified && <Badge variant="danger" className="gap-1"><EyeOff className="h-3 w-3" />Verschluss</Badge>}
+      </div>}
+
+      {card.code && <p className="truncate font-mono text-[11px] text-[#d4af37]">{card.code}</p>}
+      {card.parentTitle && <p className="truncate text-[11px] text-[#808080]">In {card.parentTitle}</p>}
+      {card.facts?.length ? <p className="truncate text-[11px] text-[#808080]">{card.facts.join(' · ')}</p> : null}
+
+      {(card.author || card.date) && <p className="mt-auto truncate border-t border-[#232323] pt-2 text-[10.5px] text-[#6a6a6a]">
+        {[card.author, card.date ? formatDate(card.date) : null].filter(Boolean).join(' · ')}
+      </p>}
+    </div>
+  </Link>
 }
 
 /** Eine Rubrik des Registers: Überschrift, Hinzufügen-Knopf, Einträge. */

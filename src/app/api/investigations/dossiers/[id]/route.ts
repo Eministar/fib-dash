@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: Context) {
     const item = await prisma.dossier.findUnique({ where: { id: (await params).id }, include: {
       photo: { select: { id: true, title: true } }, parent: { select: { id: true, title: true } },
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
-      investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true } },
+      investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, classified: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
       vehicles: { select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' } },
       clips: { where: { investigation: investigationVisibilityWhere(user) }, select: { id: true, title: true, recordedAt: true }, orderBy: { createdAt: 'desc' } },
     } })
