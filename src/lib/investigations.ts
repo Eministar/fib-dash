@@ -6,6 +6,8 @@ import type { Prisma } from '@/generated/prisma'
 
 export const INVESTIGATION_CASE_PREFIX = 'ERM-'
 export const PERSON_NUMBER_PREFIX = 'PER-'
+export const EVIDENCE_NUMBER_PREFIX = 'ASV-'
+export const VEHICLE_NUMBER_PREFIX = 'FZG-'
 
 export const INVESTIGATION_STATUS_LABELS = {
   OPEN: 'Offen',
@@ -40,6 +42,53 @@ export const INVESTIGATION_PERSON_ROLE_LABELS = {
   OTHER: 'Sonstiges',
 } as const
 
+export const EVIDENCE_KIND_LABELS = {
+  WEAPON: 'Waffe',
+  DRUGS: 'Betäubungsmittel',
+  MONEY: 'Bargeld',
+  DOCUMENT: 'Dokument',
+  ELECTRONICS: 'Elektronik',
+  CLOTHING: 'Kleidung',
+  BIOLOGICAL: 'Biologische Spur',
+  VEHICLE_PART: 'Fahrzeugteil',
+  OTHER: 'Sonstiges',
+} as const
+
+export const EVIDENCE_STATUS_LABELS = {
+  SECURED: 'Sichergestellt',
+  IN_ANALYSIS: 'In Auswertung',
+  RELEASED: 'Herausgegeben',
+  DESTROYED: 'Vernichtet',
+  LOST: 'Abhanden',
+} as const
+
+export const PERSON_LINK_TYPE_LABELS = {
+  FAMILY: 'Familie',
+  ASSOCIATE: 'Umfeld',
+  EMPLOYER: 'Arbeitgeber von',
+  RIVAL: 'Rivale',
+  PARTNER: 'Partner',
+  MEMBER_OF: 'Mitglied bei',
+  CONTACT: 'Kontakt',
+  OTHER: 'Sonstiges',
+} as const
+
+export type EvidenceKindKey = keyof typeof EVIDENCE_KIND_LABELS
+export type EvidenceStatusKey = keyof typeof EVIDENCE_STATUS_LABELS
+export type PersonLinkTypeKey = keyof typeof PERSON_LINK_TYPE_LABELS
+
+export function isEvidenceKind(value: unknown): value is EvidenceKindKey {
+  return typeof value === 'string' && value in EVIDENCE_KIND_LABELS
+}
+
+export function isEvidenceStatus(value: unknown): value is EvidenceStatusKey {
+  return typeof value === 'string' && value in EVIDENCE_STATUS_LABELS
+}
+
+export function isPersonLinkType(value: unknown): value is PersonLinkTypeKey {
+  return typeof value === 'string' && value in PERSON_LINK_TYPE_LABELS
+}
+
 export type InvestigationStatusKey = keyof typeof INVESTIGATION_STATUS_LABELS
 export type InvestigationPriorityKey = keyof typeof INVESTIGATION_PRIORITY_LABELS
 export type InvestigationEntryKindKey = keyof typeof INVESTIGATION_ENTRY_KIND_LABELS
@@ -72,17 +121,37 @@ const agentSelect = {
 
 const userSelect = { id: true, displayName: true } as const
 
+/// Kopf einer querverwiesenen Akte – bewusst ohne Inhalte, die Verweisliste
+/// soll keine Details einer fremden Akte durchreichen.
+const linkedCaseSelect = {
+  id: true,
+  caseNumber: true,
+  title: true,
+  status: true,
+  priority: true,
+  classified: true,
+} as const
+
 export const investigationListInclude = {
   leadAgent: { select: agentSelect },
   createdBy: { select: userSelect },
-  assignees: { select: { id: true, user: { select: userSelect } } },
+  assignees: { select: { id: true, agent: { select: agentSelect } } },
   _count: { select: { entries: true, clips: true, persons: true } },
 } as const
 
 export const investigationDetailInclude = {
   leadAgent: { select: agentSelect },
   createdBy: { select: userSelect },
-  assignees: { select: { id: true, userId: true, user: { select: userSelect } } },
+  assignees: {
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      agentId: true,
+      createdAt: true,
+      agent: { select: agentSelect },
+      addedBy: { select: userSelect },
+    },
+  },
   entries: {
     orderBy: [{ occurredAt: 'desc' }],
     include: {
@@ -101,6 +170,42 @@ export const investigationDetailInclude = {
       uploadedBy: { select: userSelect },
     },
   },
+  evidence: {
+    orderBy: [{ createdAt: 'asc' }],
+    include: {
+      seizedByAgent: { select: agentSelect },
+      entry: { select: { id: true, title: true } },
+    },
+  },
+  vehicles: {
+    orderBy: [{ createdAt: 'asc' }],
+    include: { vehicle: { include: { ownerPerson: true } } },
+  },
+  linksFrom: {
+    orderBy: [{ createdAt: 'asc' }],
+    include: { to: { select: linkedCaseSelect } },
+  },
+  linksTo: {
+    orderBy: [{ createdAt: 'asc' }],
+    include: { from: { select: linkedCaseSelect } },
+  },
+} as const satisfies Prisma.InvestigationInclude
+
+/// Standard-Include fuer Asservate; ueberall identisch, damit die Clients
+/// dieselbe Form bekommen.
+export const evidenceInclude = {
+  seizedByAgent: { select: agentSelect },
+  entry: { select: { id: true, title: true } },
+} as const satisfies Prisma.EvidenceInclude
+
+/**
+ * Genau die Felder, die `canAccessInvestigation` liest. Als `include` an einer
+ * Akte oder – über `investigation` – an Eintrag, Clip und Personenverknüpfung
+ * verwendbar, damit die Zugriffsprüfung überall dieselbe Grundlage hat.
+ */
+export const investigationAccessInclude = {
+  leadAgent: { select: { discordId: true } },
+  assignees: { select: { agent: { select: { discordId: true } } } },
 } as const satisfies Prisma.InvestigationInclude
 
 /// Minimale Felder, die `canAccessInvestigation` benötigt.
@@ -108,7 +213,7 @@ export interface InvestigationAccessShape {
   classified: boolean
   createdById: string | null
   leadAgent?: { discordId: string | null } | null
-  assignees?: { userId?: string; user?: { id: string } | null }[] | null
+  assignees?: { agent?: { discordId: string | null } | null }[] | null
 }
 
 /**
@@ -116,20 +221,18 @@ export interface InvestigationAccessShape {
  * und Inhaber von `investigations:classified` sichtbar. Die Prüfung gilt für
  * Akte, Einträge, Clip-Metadaten und die Streaming-Route gleichermaßen – sonst
  * wären Clips vertraulicher Akten über die URL abgreifbar.
+ *
+ * Zugewiesen werden Agents, angemeldet sind Benutzerkonten – die Brücke ist
+ * wie überall im Dashboard die Discord-ID.
  */
 export function canAccessInvestigation(user: CurrentUser, investigation: InvestigationAccessShape) {
   if (!investigation.classified) return true
   if (hasPermission(user, 'investigations:classified')) return true
   if (investigation.createdById && investigation.createdById === user.id) return true
-  if (
-    investigation.leadAgent?.discordId &&
-    user.discordId &&
-    investigation.leadAgent.discordId === user.discordId
-  ) {
-    return true
-  }
+  if (!user.discordId) return false
+  if (investigation.leadAgent?.discordId === user.discordId) return true
   return (investigation.assignees ?? []).some(
-    (assignee) => (assignee.userId ?? assignee.user?.id) === user.id,
+    (assignee) => assignee.agent?.discordId === user.discordId,
   )
 }
 
@@ -144,11 +247,11 @@ export function investigationVisibilityWhere(user: CurrentUser): Prisma.Investig
   const openings: Prisma.InvestigationWhereInput[] = [
     { classified: false },
     { createdById: user.id },
-    { assignees: { some: { userId: user.id } } },
   ]
 
   if (user.discordId) {
     openings.push({ leadAgent: { discordId: user.discordId } })
+    openings.push({ assignees: { some: { agent: { discordId: user.discordId } } } })
   }
 
   return { OR: openings }

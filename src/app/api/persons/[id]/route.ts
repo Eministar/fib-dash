@@ -19,6 +19,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: { id },
       include: {
         createdBy: { select: { id: true, displayName: true } },
+        vehiclesOwned: { orderBy: { createdAt: 'desc' } },
+        // Verbindungen in beide Richtungen: gespeichert wird nur eine Zeile,
+        // die Personenakte zeigt trotzdem das vollständige Umfeld.
+        linksFrom: { orderBy: { createdAt: 'asc' }, include: { toPerson: true } },
+        linksTo: { orderBy: { createdAt: 'asc' }, include: { fromPerson: true } },
         investigations: {
           // Verschlusssachen tauchen in der Personenakte nicht auf, wenn der
           // Benutzer sie nicht ohnehin sehen dürfte.

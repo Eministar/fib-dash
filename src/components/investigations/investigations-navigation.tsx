@@ -1,16 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { FolderOpen, UserSearch, Video } from 'lucide-react'
+import { Car, FolderOpen, UserSearch, Video } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-export type InvestigationsSection = 'cases' | 'clips' | 'persons'
+export type InvestigationsSection = 'cases' | 'clips' | 'persons' | 'vehicles'
 
 const sections: { id: InvestigationsSection; label: string; href: string; icon: typeof FolderOpen }[] = [
   { id: 'cases', label: 'Einsatzakten', href: '/investigations', icon: FolderOpen },
   { id: 'clips', label: 'Bodycam-Katalog', href: '/investigations/clips', icon: Video },
   { id: 'persons', label: 'Personenregister', href: '/investigations/persons', icon: UserSearch },
+  { id: 'vehicles', label: 'Fahrzeugregister', href: '/investigations/vehicles', icon: Car },
 ]
 
 export function InvestigationsNavigation({ active }: { active: InvestigationsSection }) {

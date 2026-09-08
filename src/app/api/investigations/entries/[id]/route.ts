@@ -6,6 +6,7 @@ import { createAuditLog } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
+  investigationAccessInclude,
   isInvestigationEntryKind,
   sanitizeParticipants,
   serializeBigInts,
@@ -16,12 +17,7 @@ import type { Prisma } from '@/generated/prisma'
 export const dynamic = 'force-dynamic'
 
 const accessInclude = {
-  investigation: {
-    include: {
-      leadAgent: { select: { discordId: true } },
-      assignees: { select: { userId: true } },
-    },
-  },
+  investigation: { include: investigationAccessInclude },
 } as const
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

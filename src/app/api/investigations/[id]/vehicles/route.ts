@@ -4,12 +4,7 @@ import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
-import {
-  INVESTIGATION_PERSON_ROLE_LABELS,
-  canAccessInvestigation,
-  investigationAccessInclude,
-  isInvestigationPersonRole,
-} from '@/lib/investigations'
+import { canAccessInvestigation, investigationAccessInclude } from '@/lib/investigations'
 import { cleanText, routeError } from '@/lib/investigations-server'
 import { isUniqueConstraintError } from '@/lib/prisma-errors'
 
@@ -28,36 +23,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!investigation) return notFound('Ermittlungsakte')
     if (!canAccessInvestigation(user, investigation)) return forbidden()
 
-    const personId = cleanText(body.personId)
-    if (!personId) return error('Person ist erforderlich')
+    const vehicleId = cleanText(body.vehicleId)
+    if (!vehicleId) return error('Fahrzeug ist erforderlich')
 
-    const role = cleanText(body.role) || 'SUSPECT'
-    if (!isInvestigationPersonRole(role)) return error('Unbekannte Rolle')
-
-    const person = await prisma.person.findUnique({ where: { id: personId } })
-    if (!person) return notFound('Person')
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: vehicleId } })
+    if (!vehicle) return notFound('Fahrzeug')
 
     try {
-      const link = await prisma.investigationPerson.create({
-        data: {
-          investigationId: id,
-          personId,
-          role,
-          note: cleanText(body.note) || null,
-        },
-        include: { person: true },
+      const link = await prisma.investigationVehicle.create({
+        data: { investigationId: id, vehicleId, note: cleanText(body.note) || null },
+        include: { vehicle: { include: { ownerPerson: true } } },
       })
 
       await createAuditLog({
-        action: 'INVESTIGATION_PERSON_LINKED',
+        action: 'INVESTIGATION_VEHICLE_LINKED',
         userId: user.id,
-        details: `Akte ${investigation.caseNumber}: ${person.firstName} ${person.lastName} als ${INVESTIGATION_PERSON_ROLE_LABELS[role]} verknüpft`,
+        details: `Akte ${investigation.caseNumber}: Fahrzeug ${vehicle.vehicleNumber} (${vehicle.plate ?? vehicle.model}) verknüpft`,
       })
 
       return success(link, 201)
     } catch (cause: unknown) {
       if (isUniqueConstraintError(cause)) {
-        return error('Diese Person ist bereits in dieser Rolle verknüpft', 409)
+        return error('Dieses Fahrzeug ist bereits mit der Akte verknüpft', 409)
       }
       throw cause
     }

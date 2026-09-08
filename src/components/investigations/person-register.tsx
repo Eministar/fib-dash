@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { AlertTriangle, Plus, Search, UserSearch } from 'lucide-react'
+import { AlertTriangle, Car, Plus, Search, UserSearch } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -22,8 +22,14 @@ import { hasPermission } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { PriorityBadge, StatusBadge } from '@/components/investigations/investigation-badges'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
+import { PersonLinks } from '@/components/investigations/person-links'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
-import type { InvestigationListItem, Person } from '@/components/investigations/types'
+import type {
+  InvestigationListItem,
+  Person,
+  PersonLink,
+  Vehicle,
+} from '@/components/investigations/types'
 
 type PersonForm = {
   firstName: string
@@ -54,6 +60,9 @@ function emptyForm(): PersonForm {
 }
 
 type PersonDetail = Person & {
+  vehiclesOwned: Vehicle[]
+  linksFrom: (PersonLink & { toPerson: Person })[]
+  linksTo: (PersonLink & { fromPerson: Person })[]
   investigations: {
     id: string
     role: string
@@ -95,9 +104,11 @@ export function PersonRegister() {
   }, [search, wantedOnly])
 
   const { data, loading, refetch } = useFetch<Person[]>(canView ? query : null)
-  const { data: detail, loading: detailLoading } = useFetch<PersonDetail>(
-    selectedId ? `/api/persons/${selectedId}` : null,
-  )
+  const {
+    data: detail,
+    loading: detailLoading,
+    refetch: refetchDetail,
+  } = useFetch<PersonDetail>(selectedId ? `/api/persons/${selectedId}` : null)
 
   if (!canView) return <UnauthorizedContent />
 
@@ -246,6 +257,37 @@ export function PersonRegister() {
                 <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c4c4c4]">
                   {detail.notes}
                 </p>
+              </div>
+            )}
+
+            <PersonLinks
+              personId={detail.id}
+              linksFrom={detail.linksFrom}
+              linksTo={detail.linksTo}
+              persons={persons}
+              canManage={canManage}
+              onChanged={refetchDetail}
+            />
+
+            {detail.vehiclesOwned.length > 0 && (
+              <div>
+                <p className="mb-2 text-[12px] font-medium text-[#a6a6a6]">
+                  Fahrzeuge ({detail.vehiclesOwned.length})
+                </p>
+                <ul className="space-y-1.5">
+                  {detail.vehiclesOwned.map((vehicle) => (
+                    <li
+                      key={vehicle.id}
+                      className="flex flex-wrap items-center gap-2 rounded-[9px] border border-[#232323] bg-[#111111] px-2.5 py-2 text-[12.5px] text-white"
+                    >
+                      <Car className="h-3.5 w-3.5 shrink-0 text-[#6a6a6a]" />
+                      {[vehicle.plate, vehicle.model].filter(Boolean).join(' · ') || vehicle.vehicleNumber}
+                      <span className="font-mono text-[11px] text-[#6a6a6a]">{vehicle.vehicleNumber}</span>
+                      {vehicle.stolen && <Badge variant="danger">Gestohlen</Badge>}
+                      {vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 

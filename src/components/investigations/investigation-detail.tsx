@@ -36,6 +36,10 @@ import {
 import { formatDateTime } from '@/lib/utils'
 import { ClipCard, ClipPlayer } from '@/components/investigations/clip-player'
 import { ClipUploadDialog } from '@/components/investigations/clip-upload-dialog'
+import { InvestigationAssignees } from '@/components/investigations/investigation-assignees'
+import { InvestigationEvidence } from '@/components/investigations/investigation-evidence'
+import { InvestigationLinks } from '@/components/investigations/investigation-links'
+import { InvestigationVehicles } from '@/components/investigations/investigation-vehicles'
 import {
   ClassifiedBadge,
   EntryKindBadge,
@@ -283,6 +287,16 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         )}
       </div>
 
+      <InvestigationAssignees
+        investigationId={investigationId}
+        assignees={investigation.assignees}
+        leadAgent={investigation.leadAgent}
+        classified={investigation.classified}
+        agents={agents ?? []}
+        canManage={canManage}
+        onChanged={refetch}
+      />
+
       {/* Beteiligte Personen */}
       <Card className="mb-5">
         <div className="mb-3 flex items-center justify-between">
@@ -418,6 +432,32 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           </div>
         )}
       </Card>
+
+      <div className="mt-5">
+        <InvestigationEvidence
+          investigationId={investigationId}
+          evidence={investigation.evidence}
+          entries={investigation.entries}
+          agents={agents ?? []}
+          canManage={canManage}
+          onChanged={refetch}
+        />
+
+        <InvestigationVehicles
+          investigationId={investigationId}
+          vehicles={investigation.vehicles}
+          canManage={canManage}
+          onChanged={refetch}
+        />
+
+        <InvestigationLinks
+          investigationId={investigationId}
+          linksFrom={investigation.linksFrom}
+          linksTo={investigation.linksTo}
+          canManage={canManage}
+          onChanged={refetch}
+        />
+      </div>
 
       {canDelete && (
         <div className="mt-6 flex justify-end">

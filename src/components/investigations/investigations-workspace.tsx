@@ -29,6 +29,7 @@ import {
   StatusBadge,
   labelOptions,
 } from '@/components/investigations/investigation-badges'
+import { AgentPicker } from '@/components/investigations/agent-picker'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
 import type { AgentLite, InvestigationListItem } from '@/components/investigations/types'
@@ -51,10 +52,19 @@ type CreateForm = {
   priority: string
   classified: boolean
   leadAgentId: string
+  assigneeIds: string[]
 }
 
 function emptyForm(): CreateForm {
-  return { title: '', summary: '', status: 'OPEN', priority: 'NORMAL', classified: false, leadAgentId: '' }
+  return {
+    title: '',
+    summary: '',
+    status: 'OPEN',
+    priority: 'NORMAL',
+    classified: false,
+    leadAgentId: '',
+    assigneeIds: [],
+  }
 }
 
 export function InvestigationsWorkspace() {
@@ -112,6 +122,7 @@ export function InvestigationsWorkspace() {
           priority: form.priority,
           classified: form.classified,
           leadAgentId: form.leadAgentId || null,
+          assigneeIds: form.assigneeIds,
         }),
       })
       toastSuccess('Akte angelegt', 'Die Ermittlungsakte wurde erstellt.')
@@ -262,6 +273,13 @@ export function InvestigationsWorkspace() {
             value={form.leadAgentId}
             onValueChange={(value) => setForm((prev) => ({ ...prev, leadAgentId: value }))}
           />
+          <AgentPicker
+            agents={agents ?? []}
+            value={form.assigneeIds}
+            onChange={(assigneeIds) => setForm((prev) => ({ ...prev, assigneeIds }))}
+            description="Zugewiesene Ermittler sehen die Akte auch dann, wenn sie als Verschlusssache geführt wird."
+          />
+
           <Checkbox
             checked={form.classified}
             onCheckedChange={(checked) => setForm((prev) => ({ ...prev, classified: checked }))}

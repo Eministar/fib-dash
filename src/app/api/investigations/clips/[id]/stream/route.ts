@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             classified: true,
             createdById: true,
             leadAgent: { select: { discordId: true } },
-            assignees: { select: { userId: true } },
+            assignees: { select: { agent: { select: { discordId: true } } } },
           },
         },
       },

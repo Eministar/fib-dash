@@ -15,6 +15,7 @@ import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
 import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
+  investigationAccessInclude,
   investigationVisibilityWhere,
   sanitizeTags,
   serializeBigInts,
@@ -143,8 +144,8 @@ export async function POST(req: NextRequest) {
     const investigation = await prisma.investigation.findUnique({
       where: { id: investigationId },
       include: {
+        ...investigationAccessInclude,
         leadAgent: { select: { discordId: true, firstName: true, lastName: true, badgeNumber: true } },
-        assignees: { select: { userId: true } },
       },
     })
     if (!investigation) return notFound('Ermittlungsakte')

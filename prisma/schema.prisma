@@ -233,11 +233,15 @@ model User {
   transferRequestsSignedOf   TransferRequest[]         @relation("TransferRequestAgentSigner")
   changeSets                 ChangeSet[]
 
-  investigationsCreated       Investigation[]         @relation("InvestigationCreator")
-  investigationAssignments    InvestigationAssignee[] @relation("InvestigationAssigneeUser")
-  investigationEntriesCreated InvestigationEntry[]    @relation("InvestigationEntryCreator")
-  investigationClipsUploaded  BodycamClip[]           @relation("BodycamClipUploader")
-  personsCreated              Person[]                @relation("PersonCreator")
+  investigationsCreated        Investigation[]         @relation("InvestigationCreator")
+  investigationAssignmentsMade InvestigationAssignee[] @relation("InvestigationAssigneeCreator")
+  investigationEntriesCreated  InvestigationEntry[]    @relation("InvestigationEntryCreator")
+  investigationClipsUploaded   BodycamClip[]           @relation("BodycamClipUploader")
+  personsCreated               Person[]                @relation("PersonCreator")
+  evidenceCreated              Evidence[]              @relation("EvidenceCreator")
+  vehiclesCreated              Vehicle[]               @relation("VehicleCreator")
+  personLinksCreated           PersonLink[]            @relation("PersonLinkCreator")
+  investigationLinksCreated    InvestigationLink[]     @relation("InvestigationLinkCreator")
 }
 
 model UserGroupMembership {
@@ -607,27 +611,29 @@ model Agent {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
-  trainings           AgentTraining[]
-  promotionLogs       PromotionLog[]
-  terminations        Termination[]
-  sanctions           Sanction[]
-  agentNotes          Note[]                @relation("AgentNotes")
-  auditLogs           AuditLog[]            @relation("AuditAgent")
-  rankChangeEntries   RankChangeListEntry[]
-  taskAssignments     TaskAssignment[]      @relation("TaskAssigned")
-  dutySessions        DutyTimeSession[]
-  playtimeSessions    PlaytimeSession[]
-  absenceNotices      AbsenceNotice[]
-  probations          Probation[]
-  calendarEvents      CalendarEvent[]       @relation("CalendarEventAgent")
-  contracts           Contract[]
-  jobApplication      JobApplication?       @relation("AgentJobApplication")
-  transferRequests    TransferRequest[]     @relation("AgentTransferRequests")
-  searches            AgentSearch[]
-  internalAffairsDaws InternalAffairsDaw[]
-  legalCases          LegalCase[]           @relation("AgentLegalCases")
-  investigationsLed   Investigation[]       @relation("InvestigationLeadAgent")
-  bodycamClips        BodycamClip[]         @relation("BodycamClipRecorder")
+  trainings                AgentTraining[]
+  promotionLogs            PromotionLog[]
+  terminations             Termination[]
+  sanctions                Sanction[]
+  agentNotes               Note[]                  @relation("AgentNotes")
+  auditLogs                AuditLog[]              @relation("AuditAgent")
+  rankChangeEntries        RankChangeListEntry[]
+  taskAssignments          TaskAssignment[]        @relation("TaskAssigned")
+  dutySessions             DutyTimeSession[]
+  playtimeSessions         PlaytimeSession[]
+  absenceNotices           AbsenceNotice[]
+  probations               Probation[]
+  calendarEvents           CalendarEvent[]         @relation("CalendarEventAgent")
+  contracts                Contract[]
+  jobApplication           JobApplication?         @relation("AgentJobApplication")
+  transferRequests         TransferRequest[]       @relation("AgentTransferRequests")
+  searches                 AgentSearch[]
+  internalAffairsDaws      InternalAffairsDaw[]
+  legalCases               LegalCase[]             @relation("AgentLegalCases")
+  investigationsLed        Investigation[]         @relation("InvestigationLeadAgent")
+  investigationAssignments InvestigationAssignee[] @relation("InvestigationAssigneeAgent")
+  bodycamClips             BodycamClip[]           @relation("BodycamClipRecorder")
+  evidenceSeized           Evidence[]              @relation("EvidenceSeizedBy")
 
   @@index([badgeNumber])
 }
@@ -1591,6 +1597,10 @@ model Investigation {
   entries   InvestigationEntry[]
   persons   InvestigationPerson[]
   clips     BodycamClip[]
+  evidence  Evidence[]
+  vehicles  InvestigationVehicle[]
+  linksFrom InvestigationLink[]     @relation("InvestigationLinkFrom")
+  linksTo   InvestigationLink[]     @relation("InvestigationLinkTo")
 
   @@index([status, updatedAt])
   @@index([priority, updatedAt])
@@ -1603,12 +1613,18 @@ model InvestigationAssignee {
   id              String        @id @default(cuid())
   investigationId String
   investigation   Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User          @relation("InvestigationAssigneeUser", fields: [userId], references: [id], onDelete: Cascade)
+  /// Zugewiesener Ermittler. Der Zugriff wird – wie bei der Fallfuehrung –
+  /// ueber die Discord-ID auf das Dashboard-Konto aufgeloest.
+  agentId         String
+  agent           Agent         @relation("InvestigationAssigneeAgent", fields: [agentId], references: [id], onDelete: Cascade)
+  /// Wer die Zuweisung vorgenommen hat.
+  addedById       String?
+  addedBy         User?         @relation("InvestigationAssigneeCreator", fields: [addedById], references: [id], onDelete: SetNull)
   createdAt       DateTime      @default(now())
 
-  @@unique([investigationId, userId])
-  @@index([userId])
+  @@unique([investigationId, agentId])
+  @@index([agentId])
+  @@index([addedById])
 }
 
 /// Ein Einsatz oder Ermittlungsschritt in der Chronologie einer Akte.
@@ -1632,7 +1648,8 @@ model InvestigationEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  clips BodycamClip[]
+  clips    BodycamClip[]
+  evidence Evidence[]
 
   @@index([investigationId, occurredAt])
   @@index([kind])
@@ -1662,6 +1679,9 @@ model Person {
   updatedAt   DateTime @updatedAt
 
   investigations InvestigationPerson[]
+  vehiclesOwned  Vehicle[]             @relation("VehicleOwner")
+  linksFrom      PersonLink[]          @relation("PersonLinkFrom")
+  linksTo        PersonLink[]          @relation("PersonLinkTo")
 
   @@index([lastName, firstName])
   @@index([wanted])
@@ -1720,4 +1740,153 @@ model BodycamClip {
   @@index([entryId])
   @@index([recordedByAgentId])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Ermittlungswerkzeuge: Asservate, Fahrzeuge, Verbindungen
+// ---------------------------------------------------------------------------
+
+enum EvidenceKind {
+  WEAPON
+  DRUGS
+  MONEY
+  DOCUMENT
+  ELECTRONICS
+  CLOTHING
+  BIOLOGICAL
+  VEHICLE_PART
+  OTHER
+}
+
+enum EvidenceStatus {
+  SECURED
+  IN_ANALYSIS
+  RELEASED
+  DESTROYED
+  LOST
+}
+
+/// Ein sichergestelltes Asservat. Haengt an der Akte und optional am Einsatz,
+/// bei dem es sichergestellt wurde.
+model Evidence {
+  id              String              @id @default(cuid())
+  investigationId String
+  investigation   Investigation       @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  entryId         String?
+  entry           InvestigationEntry? @relation(fields: [entryId], references: [id], onDelete: SetNull)
+
+  /// Fortlaufende Asservatennummer, z. B. "ASV-0001".
+  itemNumber String         @unique @db.VarChar(24)
+  kind       EvidenceKind   @default(OTHER)
+  status     EvidenceStatus @default(SECURED)
+
+  title       String  @db.VarChar(200)
+  description String? @db.Text
+  /// Stueckzahl bzw. Menge; die Einheit steht im Titel ("120 g Kokain").
+  quantity    Int?
+
+  seizedAt        DateTime?
+  seizedLocation  String?   @db.VarChar(200)
+  seizedByAgentId String?
+  seizedByAgent   Agent?    @relation("EvidenceSeizedBy", fields: [seizedByAgentId], references: [id], onDelete: SetNull)
+  /// Aktueller Verwahrort (Asservatenkammer, Labor, …).
+  storageLocation String?   @db.VarChar(200)
+  photoUrl        String?   @db.VarChar(2048)
+
+  createdById String?
+  createdBy   User?    @relation("EvidenceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([investigationId, seizedAt])
+  @@index([entryId])
+  @@index([status])
+}
+
+/// Fallübergreifendes Fahrzeugregister.
+model Vehicle {
+  id            String  @id @default(cuid())
+  /// Fortlaufende Registernummer, z. B. "FZG-0001".
+  vehicleNumber String  @unique @db.VarChar(24)
+  plate         String? @db.VarChar(32)
+  model         String? @db.VarChar(120)
+  color         String? @db.VarChar(60)
+  notes         String? @db.Text
+  stolen        Boolean @default(false)
+  wanted        Boolean @default(false)
+
+  /// Halter aus dem Personenregister.
+  ownerPersonId String?
+  ownerPerson   Person? @relation("VehicleOwner", fields: [ownerPersonId], references: [id], onDelete: SetNull)
+
+  createdById String?
+  createdBy   User?    @relation("VehicleCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  investigations InvestigationVehicle[]
+
+  @@index([plate])
+  @@index([ownerPersonId])
+}
+
+/// Verknuepfung Akte ↔ Fahrzeug.
+model InvestigationVehicle {
+  id              String        @id @default(cuid())
+  investigationId String
+  investigation   Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  vehicleId       String
+  vehicle         Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  note            String?       @db.Text
+  createdAt       DateTime      @default(now())
+
+  @@unique([investigationId, vehicleId])
+  @@index([vehicleId])
+}
+
+enum PersonLinkType {
+  FAMILY
+  ASSOCIATE
+  EMPLOYER
+  RIVAL
+  PARTNER
+  MEMBER_OF
+  CONTACT
+  OTHER
+}
+
+/// Gerichtete Verbindung zwischen zwei Personen ("A ist Arbeitgeber von B").
+/// Die Gegenrichtung wird beim Lesen mitgeladen, nicht doppelt gespeichert.
+model PersonLink {
+  id           String         @id @default(cuid())
+  fromPersonId String
+  fromPerson   Person         @relation("PersonLinkFrom", fields: [fromPersonId], references: [id], onDelete: Cascade)
+  toPersonId   String
+  toPerson     Person         @relation("PersonLinkTo", fields: [toPersonId], references: [id], onDelete: Cascade)
+  type         PersonLinkType @default(ASSOCIATE)
+  note         String?        @db.Text
+
+  createdById String?
+  createdBy   User?    @relation("PersonLinkCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([fromPersonId, toPersonId, type])
+  @@index([toPersonId])
+}
+
+/// Querverweis zwischen zwei Ermittlungsakten.
+model InvestigationLink {
+  id     String        @id @default(cuid())
+  fromId String
+  from   Investigation @relation("InvestigationLinkFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId   String
+  to     Investigation @relation("InvestigationLinkTo", fields: [toId], references: [id], onDelete: Cascade)
+  note   String?       @db.Text
+
+  createdById String?
+  createdBy   User?    @relation("InvestigationLinkCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([fromId, toId])
+  @@index([toId])
 }

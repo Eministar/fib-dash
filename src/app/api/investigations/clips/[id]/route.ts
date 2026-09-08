@@ -5,19 +5,19 @@ import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { deleteClipFile } from '@/lib/clips'
 import { prisma } from '@/lib/prisma'
-import { canAccessInvestigation, sanitizeTags, serializeBigInts } from '@/lib/investigations'
+import {
+  canAccessInvestigation,
+  investigationAccessInclude,
+  sanitizeTags,
+  serializeBigInts,
+} from '@/lib/investigations'
 import { cleanText, parseDate, routeError } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
 
 export const dynamic = 'force-dynamic'
 
 const accessInclude = {
-  investigation: {
-    include: {
-      leadAgent: { select: { discordId: true } },
-      assignees: { select: { userId: true } },
-    },
-  },
+  investigation: { include: investigationAccessInclude },
 } as const
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

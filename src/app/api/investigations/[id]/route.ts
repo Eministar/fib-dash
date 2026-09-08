@@ -10,12 +10,18 @@ import {
   INVESTIGATION_PRIORITY_LABELS,
   INVESTIGATION_STATUS_LABELS,
   canAccessInvestigation,
+  investigationAccessInclude,
   investigationDetailInclude,
   isInvestigationPriority,
   isInvestigationStatus,
   serializeBigInts,
 } from '@/lib/investigations'
-import { agentDisplayName, cleanText, routeError } from '@/lib/investigations-server'
+import {
+  agentDisplayName,
+  cleanText,
+  routeError,
+  validateAgentIds,
+} from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -46,10 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const existing = await prisma.investigation.findUnique({
       where: { id },
-      include: {
-        leadAgent: { select: { discordId: true } },
-        assignees: { select: { userId: true } },
-      },
+      include: investigationAccessInclude,
     })
     if (!existing) return notFound('Ermittlungsakte')
     if (!canAccessInvestigation(user, existing)) return forbidden()
@@ -98,21 +101,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     if (body.assigneeIds !== undefined) {
-      if (!Array.isArray(body.assigneeIds)) return error('Ermittlerliste ist ungültig')
-      const assigneeIds = Array.from(
-        new Set(
-          (body.assigneeIds as unknown[])
-            .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-            .map((value) => value.trim()),
-        ),
-      )
-      if (assigneeIds.length > 0) {
-        const known = await prisma.user.count({ where: { id: { in: assigneeIds } } })
-        if (known !== assigneeIds.length) return error('Mindestens ein Ermittler wurde nicht gefunden', 404)
-      }
+      // Ersetzt die komplette Liste. Einzelne Ermittler laufen ueber
+      // /api/investigations/[id]/assignees, damit gleichzeitige Zuweisungen
+      // sich nicht gegenseitig ueberschreiben.
+      const assigneeIds = await validateAgentIds(body.assigneeIds)
       data.assignees = {
         deleteMany: {},
-        create: assigneeIds.map((userId) => ({ userId })),
+        create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })),
       }
     }
 
@@ -158,11 +153,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     const existing = await prisma.investigation.findUnique({
       where: { id },
-      include: {
-        leadAgent: { select: { discordId: true } },
-        assignees: { select: { userId: true } },
-        clips: { select: { filename: true } },
-      },
+      include: { ...investigationAccessInclude, clips: { select: { filename: true } } },
     })
     if (!existing) return notFound('Ermittlungsakte')
     if (!canAccessInvestigation(user, existing)) return forbidden()

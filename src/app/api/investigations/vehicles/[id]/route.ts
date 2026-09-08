@@ -14,22 +14,22 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const user = await requirePermission('investigations:manage')
     const { id } = await params
 
-    const link = await prisma.investigationPerson.findUnique({
+    const link = await prisma.investigationVehicle.findUnique({
       where: { id },
       include: {
-        person: { select: { firstName: true, lastName: true } },
+        vehicle: { select: { vehicleNumber: true, plate: true, model: true } },
         investigation: { include: investigationAccessInclude },
       },
     })
     if (!link) return notFound('Verknüpfung')
     if (!canAccessInvestigation(user, link.investigation)) return forbidden()
 
-    await prisma.investigationPerson.delete({ where: { id } })
+    await prisma.investigationVehicle.delete({ where: { id } })
 
     await createAuditLog({
-      action: 'INVESTIGATION_PERSON_UNLINKED',
+      action: 'INVESTIGATION_VEHICLE_UNLINKED',
       userId: user.id,
-      details: `Akte ${link.investigation.caseNumber}: ${link.person.firstName} ${link.person.lastName} entfernt`,
+      details: `Akte ${link.investigation.caseNumber}: Fahrzeug ${link.vehicle.vehicleNumber} entfernt`,
     })
 
     return success({ id })

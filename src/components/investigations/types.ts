@@ -1,8 +1,11 @@
 import type {
+  EvidenceKindKey,
+  EvidenceStatusKey,
   InvestigationEntryKindKey,
   InvestigationPersonRoleKey,
   InvestigationPriorityKey,
   InvestigationStatusKey,
+  PersonLinkTypeKey,
 } from '@/lib/investigations'
 
 export type RankLite = { id: string; name: string; color: string }
@@ -79,6 +82,78 @@ export type BodycamClip = {
   entry?: { id: string; title: string; kind: InvestigationEntryKindKey } | null
 }
 
+export type Evidence = {
+  id: string
+  itemNumber: string
+  kind: EvidenceKindKey
+  status: EvidenceStatusKey
+  title: string
+  description: string | null
+  quantity: number | null
+  seizedAt: string | null
+  seizedLocation: string | null
+  storageLocation: string | null
+  photoUrl: string | null
+  createdAt: string
+  seizedByAgent?: AgentLite | null
+  entry?: { id: string; title: string } | null
+}
+
+export type Vehicle = {
+  id: string
+  vehicleNumber: string
+  plate: string | null
+  model: string | null
+  color: string | null
+  notes: string | null
+  stolen: boolean
+  wanted: boolean
+  ownerPersonId: string | null
+  ownerPerson?: Person | null
+  createdAt: string
+  _count?: { investigations: number }
+}
+
+export type InvestigationVehicleLink = {
+  id: string
+  vehicleId: string
+  note: string | null
+  vehicle: Vehicle
+}
+
+export type PersonLink = {
+  id: string
+  type: PersonLinkTypeKey
+  note: string | null
+  toPerson?: Person
+  fromPerson?: Person
+}
+
+export type LinkedCase = {
+  id: string
+  caseNumber: string
+  title: string
+  status: InvestigationStatusKey
+  priority: InvestigationPriorityKey
+  classified: boolean
+}
+
+export type InvestigationCrossLink = {
+  id: string
+  note: string | null
+  /// Bei `linksFrom` gesetzt, bei `linksTo` steht die Gegenseite in `from`.
+  to?: LinkedCase
+  from?: LinkedCase
+}
+
+export type InvestigationAssignee = {
+  id: string
+  agentId: string
+  createdAt: string
+  agent: AgentLite
+  addedBy?: UserLite | null
+}
+
 export type InvestigationEntry = {
   id: string
   kind: InvestigationEntryKindKey
@@ -105,13 +180,17 @@ export type InvestigationListItem = {
   updatedAt: string
   leadAgent: AgentLite | null
   createdBy: UserLite | null
-  assignees: { id: string; user: UserLite }[]
+  assignees: { id: string; agent: AgentLite }[]
   _count: { entries: number; clips: number; persons: number }
 }
 
 export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assignees'> & {
-  assignees: { id: string; userId: string; user: UserLite }[]
+  assignees: InvestigationAssignee[]
   entries: InvestigationEntry[]
   persons: InvestigationPersonLink[]
   clips: BodycamClip[]
+  evidence: Evidence[]
+  vehicles: InvestigationVehicleLink[]
+  linksFrom: InvestigationCrossLink[]
+  linksTo: InvestigationCrossLink[]
 }

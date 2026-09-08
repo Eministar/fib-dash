@@ -19,6 +19,7 @@ import {
   cleanText,
   nextInvestigationCaseNumber,
   routeError,
+  validateAgentIds,
 } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
 
@@ -110,20 +111,9 @@ export async function POST(req: NextRequest) {
       if (!leadAgent) return error('Fallführender Agent wurde nicht gefunden', 404)
     }
 
-    const assigneeIds = Array.isArray(body.assigneeIds)
-      ? Array.from(
-          new Set(
-            (body.assigneeIds as unknown[])
-              .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
-              .map((id) => id.trim()),
-          ),
-        )
-      : []
-
-    if (assigneeIds.length > 0) {
-      const known = await prisma.user.count({ where: { id: { in: assigneeIds } } })
-      if (known !== assigneeIds.length) return error('Mindestens ein Ermittler wurde nicht gefunden', 404)
-    }
+    // Zugewiesene Ermittler duerfen die Akte auch dann sehen, wenn sie als
+    // Verschlusssache angelegt wird.
+    const assigneeIds = await validateAgentIds(body.assigneeIds)
 
     const caseNumber = await nextInvestigationCaseNumber()
 
@@ -137,7 +127,7 @@ export async function POST(req: NextRequest) {
         classified,
         leadAgentId,
         createdById: user.id,
-        assignees: { create: assigneeIds.map((userId) => ({ userId })) },
+        assignees: { create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })) },
       },
       include: investigationListInclude,
     })
@@ -159,6 +149,7 @@ export async function POST(req: NextRequest) {
       rows: [
         { label: 'Status', value: INVESTIGATION_STATUS_LABELS[status] },
         { label: 'Priorität', value: INVESTIGATION_PRIORITY_LABELS[priority] },
+        { label: 'Zugewiesen', value: assigneeIds.length ? `${assigneeIds.length} Ermittler` : null },
       ],
     })
 

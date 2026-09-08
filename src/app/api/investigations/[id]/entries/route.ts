@@ -6,6 +6,7 @@ import { createAuditLog } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
+  investigationAccessInclude,
   isInvestigationEntryKind,
   sanitizeParticipants,
   serializeBigInts,
@@ -22,10 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const investigation = await prisma.investigation.findUnique({
       where: { id },
-      include: {
-        leadAgent: { select: { discordId: true } },
-        assignees: { select: { userId: true } },
-      },
+      include: investigationAccessInclude,
     })
     if (!investigation) return notFound('Ermittlungsakte')
     if (!canAccessInvestigation(user, investigation)) return forbidden()

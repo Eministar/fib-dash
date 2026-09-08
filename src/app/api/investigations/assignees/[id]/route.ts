@@ -5,7 +5,7 @@ import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
 import { canAccessInvestigation, investigationAccessInclude } from '@/lib/investigations'
-import { routeError } from '@/lib/investigations-server'
+import { agentDisplayName, routeError } from '@/lib/investigations-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,22 +14,23 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const user = await requirePermission('investigations:manage')
     const { id } = await params
 
-    const link = await prisma.investigationPerson.findUnique({
+    const assignee = await prisma.investigationAssignee.findUnique({
       where: { id },
       include: {
-        person: { select: { firstName: true, lastName: true } },
+        agent: { select: { firstName: true, lastName: true, badgeNumber: true } },
         investigation: { include: investigationAccessInclude },
       },
     })
-    if (!link) return notFound('Verknüpfung')
-    if (!canAccessInvestigation(user, link.investigation)) return forbidden()
+    if (!assignee) return notFound('Zuweisung')
+    if (!canAccessInvestigation(user, assignee.investigation)) return forbidden()
 
-    await prisma.investigationPerson.delete({ where: { id } })
+    await prisma.investigationAssignee.delete({ where: { id } })
 
     await createAuditLog({
-      action: 'INVESTIGATION_PERSON_UNLINKED',
+      action: 'INVESTIGATION_ASSIGNEE_REMOVED',
       userId: user.id,
-      details: `Akte ${link.investigation.caseNumber}: ${link.person.firstName} ${link.person.lastName} entfernt`,
+      agentId: assignee.agentId,
+      details: `Akte ${assignee.investigation.caseNumber}: ${agentDisplayName(assignee.agent)} als Ermittler entfernt`,
     })
 
     return success({ id })
