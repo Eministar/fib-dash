@@ -64,43 +64,75 @@ function DossierView({ id }: { id: string | null }) {
   const list = useFetch<List>(`/api/investigations/dossiers?${query}`)
   const current = detail.data
   const refresh = () => { setEditor(null); void list.refetch(); void detail.refetch() }
+  const detailCards = id && current
+    // Unterakten und Einsatzakten stehen gleichberechtigt nebeneinander - aus
+    // Sicht der Dauerakte ist beides schlicht eine Akte ueber diese Familie.
+    ? [
+        ...(list.data?.items ?? []).map(item => ({ key: `d-${item.id}`, href: href(item.id), kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId, note: item.address, meta: `${item._count?.children ?? 0} Akten · ${item._count?.persons ?? 0} Personen` })),
+        ...(current.investigations ?? []).map(item => ({ key: `i-${item.id}`, href: `/investigations/${item.id}`, kind: 'Einsatzakte', title: item.title, photoId: null, note: item.caseNumber, meta: undefined as string | undefined })),
+      ]
+    : []
+
   return <div>
-    <PageHeader title={current?.title ?? (id ? 'Akte wird geladen …' : 'Dauerakten')} description={id ? 'Informationen, Verknüpfungen und Unterakten an einem Ort.' : 'Familienakten, Sammelakten und Anwesen dauerhaft dokumentieren.'} action={manage && <>
+    <PageHeader title={current?.title ?? (id ? 'Akte wird geladen …' : 'Dauerakten')} description={id ? 'Stammdaten oben, darunter das Register aller Akten zu dieser Akte.' : 'Familienakten, Sammelakten und Anwesen dauerhaft dokumentieren.'} action={manage && <>
       {current && <Button variant="outline" onClick={() => setEditor('edit')}><Pencil size={14} />Bearbeiten</Button>}
-      {current && <Button variant="outline" onClick={() => setAttaching(true)}><FolderInput size={14} />Bestehende Akte einhängen</Button>}
-      <Button disabled={!!id && !current} onClick={() => setEditor('new')}><Plus size={14} />{id ? 'Neue Unterakte' : 'Akte anlegen'}</Button>
+      {!id && <Button onClick={() => setEditor('new')}><Plus size={14} />Akte anlegen</Button>}
     </>} />
     <InvestigationsNavigation active="dossiers" />
     {id && <nav className="mb-4 flex flex-wrap gap-2 text-sm text-[#c4b5fd]" aria-label="Aktenpfad"><Link href="/investigations/dossiers">Dauerakten</Link>{current?.parent && <><span>/</span><Link href={href(current.parent.id)}>{current.parent.title}</Link></>}<span>/</span><span className="text-[#a6a6a6]">{current?.title ?? '…'}</span></nav>}
     {(message || detail.error || list.error) && <p role="alert" className="mb-4 text-sm text-red-300">{message || detail.error || list.error}</p>}
+
+    {/* Oben ausschliesslich die Stammdaten der Akte selbst. */}
     {current && <section className="mb-6 space-y-4 rounded-xl border border-[#343434] bg-[#141414] p-5">
       <span className="rounded-md bg-[#a78bfa]/10 px-2 py-1 text-xs text-[#c4b5fd]">{DOSSIER_KINDS[current.kind]}</span>
       {current.photoId && <Image unoptimized src={photoUrl(current.photoId)} alt={current.title} width={1000} height={560} className="max-h-80 w-full rounded-lg object-contain" />}
       {current.address && <p className="flex items-center gap-2 text-sm text-[#d4d4d4]"><MapPin size={15} />{current.address}</p>}
       {current.description && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#c4c4c4]">{current.description}</p>}
-      <div className="grid gap-5 sm:grid-cols-2">
+      {hasPermission(user, 'investigations:delete') && <Button variant="danger" size="sm" onClick={() => setDeleting(true)}>Akte löschen</Button>}
+    </section>}
+
+    {id ? <>
+      <h2 className="mb-1 text-base font-semibold text-white">Register</h2>
+      <p className="mb-4 text-xs text-[#808080]">Alle Akten, Personen, Fahrzeuge und Aufnahmen zu dieser Akte.</p>
+
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-white">Akten{detailCards.length ? <span className="ml-2 font-mono text-xs text-[#808080]">{detailCards.length}</span> : null}</h3>
+        {manage && current && <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="ghost" onClick={() => setQuick('investigations')}><Plus size={13} />Einsatzakte verknüpfen</Button>
+          <Button size="sm" variant="ghost" onClick={() => setAttaching(true)}><FolderInput size={13} />Bestehende Akte einhängen</Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditor('new')}><Plus size={13} />Neue Akte</Button>
+        </div>}
+      </div>
+      {list.loading ? <p className="py-6 text-sm text-[#808080]">Akten werden geladen …</p>
+        : !detailCards.length ? <p className="py-6 text-sm text-[#808080]">Noch keine Akten zugeordnet.</p>
+        : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{detailCards.map(card => <Link key={card.key} href={card.href} className="overflow-hidden rounded-xl border border-[#343434] bg-[#141414] hover:border-[#a78bfa]">
+            {card.photoId && <Image unoptimized src={photoUrl(card.photoId)} alt={card.title} width={500} height={280} className="aspect-video w-full object-cover" />}
+            <div className="space-y-2 p-4"><p className="text-xs text-[#c4b5fd]">{card.kind}</p><h3 className="flex items-center gap-2 font-medium text-white"><FolderOpen size={17} />{card.title}</h3>{card.note && <p className="text-xs text-[#a6a6a6]">{card.note}</p>}{card.meta && <p className="text-xs text-[#808080]">{card.meta}</p>}</div>
+          </Link>)}</div>}
+      {(list.data?.total ?? 0) > 30 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
+
+      {current && <div className="mt-7 grid gap-5 sm:grid-cols-3">
         <RegisterSection title="Personen / Familienmitglieder" empty="Keine Personen verknüpft." manage={manage} onAdd={() => setQuick('persons')}
           entries={current.persons?.map(person => ({ id: person.id, href: `/investigations/persons?person=${person.id}`, label: `${person.firstName} ${person.lastName} · ${person.personNumber}` }))} />
-        <RegisterSection title="Einsatzakten" empty="Keine sichtbaren Einsatzakten verknüpft." manage={manage} onAdd={() => setQuick('investigations')}
-          entries={current.investigations?.map(item => ({ id: item.id, href: `/investigations/${item.id}`, label: `${item.caseNumber} · ${item.title}` }))} />
         <RegisterSection title="Fahrzeugakten" empty="Keine Fahrzeuge verknüpft." manage={manage} onAdd={() => setQuick('vehicles')}
           entries={current.vehicles?.map(vehicle => ({ id: vehicle.id, href: '/investigations/vehicles', label: [vehicle.plate, vehicle.model].filter(Boolean).join(' · ') || vehicle.vehicleNumber, hint: vehicle.vehicleNumber }))} />
         <RegisterSection title="Bodycams" empty="Keine sichtbaren Bodycams verknüpft." manage={manage} onAdd={() => setQuick('clips')}
           entries={current.clips?.map(clip => ({ id: clip.id, href: '/investigations/clips', label: clip.title, hint: clip.recordedAt ? new Date(clip.recordedAt).toLocaleDateString('de-DE') : undefined }))} />
-      </div>
-      {hasPermission(user, 'investigations:delete') && <Button variant="danger" size="sm" onClick={() => setDeleting(true)}>Akte löschen</Button>}
-    </section>}
-    <h2 className="mb-3 text-base font-semibold text-white">{id ? 'Unterakten' : 'Aktenübersicht'}</h2>
-    <div className="mb-4 grid gap-3 sm:grid-cols-2"><Input aria-label="Akten suchen" placeholder="Akte suchen …" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} /><Select value={kind} onValueChange={value => { setKind(value); setPage(1) }} options={[{ value: '', label: 'Alle Kategorien' }, ...Object.entries(DOSSIER_KINDS).map(([value, label]) => ({ value, label }))]} /></div>
-    {list.loading ? <p className="py-8 text-sm text-[#808080]">Akten werden geladen …</p> : !list.data?.items.length ? <p className="py-8 text-sm text-[#808080]">Noch keine passenden Akten vorhanden.</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{list.data.items.map(item => <Link key={item.id} href={href(item.id)} className="overflow-hidden rounded-xl border border-[#343434] bg-[#141414] hover:border-[#a78bfa]">
-      {item.photoId && <Image unoptimized src={photoUrl(item.photoId)} alt={item.title} width={500} height={280} className="aspect-video w-full object-cover" />}
-      <div className="space-y-2 p-4"><p className="text-xs text-[#c4b5fd]">{DOSSIER_KINDS[item.kind]}</p><h3 className="flex items-center gap-2 font-medium text-white"><FolderOpen size={17} />{item.title}</h3>{item.address && <p className="text-xs text-[#a6a6a6]">{item.address}</p>}{item.parent && !id && <p className="text-xs text-[#808080]">In {item.parent.title}</p>}<p className="text-xs text-[#808080]">{item._count?.children ?? 0} Unterakten · {item._count?.persons ?? 0} Personen · {item._count?.investigations ?? 0} Einsatzakten · {item._count?.vehicles ?? 0} Fahrzeuge · {item._count?.clips ?? 0} Bodycams</p></div>
-    </Link>)}</div>}
-    <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>
+      </div>}
+    </> : <>
+      <h2 className="mb-3 text-base font-semibold text-white">Aktenübersicht</h2>
+      <div className="mb-4 grid gap-3 sm:grid-cols-2"><Input aria-label="Akten suchen" placeholder="Akte suchen …" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} /><Select value={kind} onValueChange={value => { setKind(value); setPage(1) }} options={[{ value: '', label: 'Alle Kategorien' }, ...Object.entries(DOSSIER_KINDS).map(([value, label]) => ({ value, label }))]} /></div>
+      {list.loading ? <p className="py-8 text-sm text-[#808080]">Akten werden geladen …</p> : !list.data?.items.length ? <p className="py-8 text-sm text-[#808080]">Noch keine passenden Akten vorhanden.</p> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{list.data.items.map(item => <Link key={item.id} href={href(item.id)} className="overflow-hidden rounded-xl border border-[#343434] bg-[#141414] hover:border-[#a78bfa]">
+        {item.photoId && <Image unoptimized src={photoUrl(item.photoId)} alt={item.title} width={500} height={280} className="aspect-video w-full object-cover" />}
+        <div className="space-y-2 p-4"><p className="text-xs text-[#c4b5fd]">{DOSSIER_KINDS[item.kind]}</p><h3 className="flex items-center gap-2 font-medium text-white"><FolderOpen size={17} />{item.title}</h3>{item.address && <p className="text-xs text-[#a6a6a6]">{item.address}</p>}{item.parent && <p className="text-xs text-[#808080]">In {item.parent.title}</p>}<p className="text-xs text-[#808080]">{item._count?.children ?? 0} Akten · {item._count?.persons ?? 0} Personen · {item._count?.investigations ?? 0} Einsatzakten · {item._count?.vehicles ?? 0} Fahrzeuge · {item._count?.clips ?? 0} Bodycams</p></div>
+      </Link>)}</div>}
+      <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>
+    </>}
+
     {editor && <DossierEditor existing={editor === 'edit' ? current ?? undefined : undefined} parent={editor === 'new' && current ? { id: current.id, title: current.title } : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
     {quick && current && <QuickRelationEditor dossier={current} field={quick} onClose={() => setQuick(null)} onSaved={refresh} />}
     {attaching && current && <AttachExistingDossier dossier={current} onClose={() => setAttaching(false)} onSaved={() => { setAttaching(false); refresh() }} />}
-    <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen, Einsatzakten, Fahrzeuge und Bodycams bleiben bestehen. Akten mit Unterakten können nicht gelöscht werden.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push(current?.parentId ? href(current.parentId) : '/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
+    <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen, Einsatzakten, Fahrzeuge und Bodycams bleiben bestehen. Akten, unter denen weitere Akten hängen, können nicht gelöscht werden.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push(current?.parentId ? href(current.parentId) : '/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
   </div>
 }
 
