@@ -64,6 +64,9 @@ type DiscordGuildMember = {
 }
 
 export type DiscordConfig = {
+  hirePingRoleId: string
+  hirePingChannelId: string
+  bodycamViewerRoleId: string
   photoCatalogChannelId: string
   codenameBoardChannelId: string
   codenameBoardMessageIds: string[]
@@ -144,6 +147,7 @@ type DiscordHrEventInput = {
   title: string
   description?: string
   agent?: Pick<AgentForDiscord, 'firstName' | 'lastName' | 'badgeNumber' | 'discordId'> & {
+    id?: string
     rankId?: string
     hireDate?: Date
     rank?: { name: string; color?: string | null } | null
@@ -187,6 +191,9 @@ export type DiscordHrEventMessage = {
 const API_BASE = 'https://discord.com/api/v10'
 
 export const DISCORD_SETTING_KEYS = {
+  hirePingRoleId: 'discord.hirePingRoleId',
+  hirePingChannelId: 'discord.hirePingChannelId',
+  bodycamViewerRoleId: 'discord.bodycamViewerRoleId',
   photoCatalogChannelId: 'discord.photoCatalogChannelId',
   codenameBoardChannelId: 'discord.codenameBoardChannelId',
   codenameBoardMessageIds: 'discord.codenameBoardMessageIds',
@@ -816,6 +823,9 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
       envInvestigationsChannelId(),
       map[DISCORD_SETTING_KEYS.investigationsChannelId],
     ),
+    bodycamViewerRoleId: envFirst(process.env.DISCORD_BODYCAM_VIEWER_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.bodycamViewerRoleId]),
+    hirePingRoleId: envFirst(process.env.DISCORD_HIRE_PING_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.hirePingRoleId]),
+    hirePingChannelId: envFirst(process.env.DISCORD_HIRE_PING_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.hirePingChannelId]),
     photoCatalogChannelId: envFirst(process.env.DISCORD_PHOTO_CATALOG_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.photoCatalogChannelId]),
     codenameBoardChannelId: envFirst(process.env.DISCORD_CODENAME_BOARD_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.codenameBoardChannelId]),
     codenameBoardMessageIds: cleanRoleIds(parseJson(map[DISCORD_SETTING_KEYS.codenameBoardMessageIds], [])),
@@ -847,6 +857,9 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
 
   if (input.codenameBoardChannelId !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardChannelId] = input.codenameBoardChannelId.trim()
   if (input.photoCatalogChannelId !== undefined) data[DISCORD_SETTING_KEYS.photoCatalogChannelId] = input.photoCatalogChannelId.trim()
+  if (input.bodycamViewerRoleId !== undefined) data[DISCORD_SETTING_KEYS.bodycamViewerRoleId] = input.bodycamViewerRoleId.trim()
+  if (input.hirePingRoleId !== undefined) data[DISCORD_SETTING_KEYS.hirePingRoleId] = input.hirePingRoleId.trim()
+  if (input.hirePingChannelId !== undefined) data[DISCORD_SETTING_KEYS.hirePingChannelId] = input.hirePingChannelId.trim()
   if (input.codenameBoardMessageIds !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardMessageIds] = JSON.stringify(cleanRoleIds(input.codenameBoardMessageIds))
   if (input.guildId !== undefined) data[DISCORD_SETTING_KEYS.guildId] = input.guildId.trim()
   if (input.applicationId !== undefined) data[DISCORD_SETTING_KEYS.applicationId] = input.applicationId.trim()
@@ -1884,6 +1897,13 @@ export async function editDiscordHrEventMessage(
   })
 }
 
+export async function postHireRolePing(channelId: string, roleId: string, nonce: string) {
+  return discordFetch<{ id: string }>(`/channels/${channelId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content: `<@&${roleId}>`, allowed_mentions: { parse: [], roles: [roleId], users: [] }, nonce, enforce_nonce: true }),
+  })
+}
+
 export async function deleteDiscordHrEventMessage(
   channelId: string | null | undefined,
   messageId: string | null | undefined,
@@ -2111,6 +2131,10 @@ export function queueAllAgentRoleSync(options?: { extraManagedRoleIds?: string[]
 }
 
 export function queueDiscordHrEvent(event: Parameters<typeof sendDiscordHrEvent>[0]) {
+  if (event.type === 'hire' && event.agent?.id) {
+    const agentId = event.agent.id
+    void import('./hire-ping').then(({ queueHirePing }) => queueHirePing(agentId)).catch(error => console.error('[HirePing]', error))
+  }
   void sendDiscordHrEvent(event).catch((error) => {
     console.error('[DiscordIntegration] Event-Versand fehlgeschlagen:', error)
     queueDiscordWebhookEvent({

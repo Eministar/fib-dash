@@ -177,12 +177,17 @@ export function ClipUploadDialog({
         request.withCredentials = true
         request.setRequestHeader('Content-Type', file.type || 'video/mp4')
         request.setRequestHeader('x-clip-meta', meta)
+        request.setRequestHeader('x-upload-size', String(file.size))
 
         request.upload.onprogress = (event) => {
           if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100))
         }
 
         request.onload = () => {
+          if (request.status === 413 || request.status === 404 && request.responseText.includes('404.13')) {
+            reject(new Error('Der vorgeschaltete Webserver lehnt die Dateigröße ab. Upload-Limit auf dem Server prüfen (HTTP ' + request.status + ').'))
+            return
+          }
           try {
             const parsed = JSON.parse(request.responseText) as {
               success?: boolean

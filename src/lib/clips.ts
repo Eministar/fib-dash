@@ -73,11 +73,14 @@ export function clipExtensionFor(mimeType: string) {
 export async function saveClipStream(
   body: ReadableStream<Uint8Array>,
   mimeType: string,
+  expectedSize?: number,
 ): Promise<{ filename: string; sizeBytes: number }> {
   const extension = clipExtensionFor(mimeType)
   if (!extension) throw new Error('Nicht unterstütztes Videoformat')
 
   const maxBytes = clipMaxBytes()
+  if (expectedSize !== undefined && (!Number.isSafeInteger(expectedSize) || expectedSize <= 0)) throw new Error('Ungültige Dateigröße')
+  if (expectedSize !== undefined && expectedSize > maxBytes) throw new ClipTooLargeError(maxBytes)
   const filename = `${randomUUID()}${extension}`
   const target = resolveClipPath(filename)
 
@@ -103,9 +106,9 @@ export async function saveClipStream(
     throw cause
   }
 
-  if (sizeBytes === 0) {
+  if (sizeBytes === 0 || (expectedSize !== undefined && sizeBytes !== expectedSize)) {
     await unlink(target).catch(() => {})
-    throw new Error('Clip ist leer')
+    throw new Error('Upload unvollständig. Bitte erneut hochladen; der Clip wurde nicht gespeichert.')
   }
 
   return { filename, sizeBytes }

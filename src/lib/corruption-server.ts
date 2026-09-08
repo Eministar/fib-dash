@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { Prisma } from '@/generated/prisma'
 import { prisma } from './prisma'
 import { createAuditLog } from './audit'
-import { error, unauthorized } from './api-response'
+import { error, unauthorized, forbidden } from './api-response'
 import { officialNumber, parseOfficialNumber, type CorruptionInput } from './corruption-validation'
 
 export const corruptionInclude = {
@@ -15,6 +15,8 @@ export class CorruptionError extends Error {
   constructor(message: string, readonly status = 400) { super(message) }
 }
 export function corruptionError(cause: unknown) {
+  if (cause instanceof Error && cause.message === 'Forbidden') return forbidden()
+  if (cause instanceof Prisma.PrismaClientKnownRequestError && cause.code === 'P2034') return error('Gleichzeitig geändert. Bitte neu laden und erneut versuchen.', 409)
   if (cause instanceof Error && cause.message === 'Unauthorized') return unauthorized()
   if (cause instanceof CorruptionError) return error(cause.message, cause.status)
   if (cause instanceof z.ZodError) return error(cause.issues.map(i => i.message).join('; '))
@@ -41,7 +43,7 @@ export async function createCorruptionCheck(tx: Prisma.TransactionClient, input:
   const agents = await tx.agent.findMany({ where: { id: { in: input.agentIds } }, select: { id: true, firstName: true, lastName: true, badgeNumber: true } })
   if (agents.length !== input.agentIds.length) throw new CorruptionError('Ein ausgewählter Agent existiert nicht mehr. Bitte Auswahl aktualisieren.')
   const official = input.officialId
-    ? await tx.publicOfficial.findUnique({ where: { id: input.officialId } })
+    ? await resolveOfficial(tx, input.officialId)
     : await tx.publicOfficial.create({ data: input.official! })
   if (!official) throw new CorruptionError('Beamtenakte nicht gefunden', 404)
   const check = await tx.corruptionCheck.create({ data: {
@@ -55,7 +57,7 @@ export async function createCorruptionCheck(tx: Prisma.TransactionClient, input:
 }
 
 export async function saveCorruptionCheck(input: CorruptionInput, userId: string) {
-  try { return await prisma.$transaction(tx => createCorruptionCheck(tx, input, userId)) }
+  try { return await prisma.$transaction(tx => createCorruptionCheck(tx, input, userId), { isolationLevel: 'Serializable' }) }
   catch (cause) {
     // Concurrent retries roll back their new official before returning the first result.
     if (cause instanceof Prisma.PrismaClientKnownRequestError && cause.code === 'P2002') {
@@ -64,4 +66,15 @@ export async function saveCorruptionCheck(input: CorruptionInput, userId: string
     }
     throw cause
   }
+}
+
+export async function resolveOfficial(tx: Pick<Prisma.TransactionClient, 'publicOfficial'>, id: number) {
+  const visited = new Set<number>()
+  let person = await tx.publicOfficial.findUnique({ where: { id } })
+  while (person?.mergedIntoId) {
+    if (visited.has(person.id)) throw new CorruptionError('Ungültiger Aktenverweis', 409)
+    visited.add(person.id)
+    person = await tx.publicOfficial.findUnique({ where: { id: person.mergedIntoId } })
+  }
+  return person
 }

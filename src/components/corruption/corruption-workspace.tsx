@@ -14,16 +14,18 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { formatDateTime, cn } from '@/lib/utils'
 import { officialNumber } from '@/lib/corruption-validation'
+import { ReportDetail, MergeOfficial } from './report-tools'
 
-type Agent = { id: string; firstName: string; lastName: string; badgeNumber: string; status: string }
-type Official = {
+export type Agent = { id: string; firstName: string; lastName: string; badgeNumber: string; status: string }
+export type Official = {
+  mergedFrom?: { id: number; firstName: string; lastName: string }[];
   id: number; firstName: string; lastName: string; agency: string; badgeNumber: string | null;
   _count?: { checks: number }; checks?: { conductedAt: string; result: string }[];
 }
-type Check = {
+export type Check = {
   id: string; official: Official; conductedAt: string; result: 'CLEAR' | 'FINDINGS'; findings: string;
   location: string | null; notes: string | null; createdAt: string;
-  agents: { id: string; name: string; badgeNumber: string }[];
+  agents: { id: string; agentId?: string | null; name: string; badgeNumber: string }[];
   createdBy: { displayName: string } | null;
 }
 type List<T> = { items: T[]; total: number }
@@ -87,6 +89,8 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
     </nav>
     {saved && <div role="status" className="mb-5 rounded-lg border border-emerald-400/20 bg-emerald-400/5 p-4 text-sm text-emerald-200">Kontrolle gespeichert. Beamtennummer: <Link className="font-semibold underline" href={officialHref(saved.official.id)}>{officialNumber(saved.official.id)} · {saved.official.firstName} {saved.official.lastName}</Link></div>}
     {officialId && <section className="mb-5 rounded-xl border border-[#343434] bg-[#141414] p-5">
+      {official.data && <MergeOfficial source={official.data} />}
+      {!!official.data?.mergedFrom?.length && <p className="mb-3 text-xs text-[#909090]">Zusammengeführte Nummern: {official.data.mergedFrom.map(p => officialNumber(p.id)).join(', ')}</p>}
       <Link href="/corruption-checks?tab=officials" className="mb-3 inline-flex items-center gap-1 text-xs text-[#a6a6a6]"><ArrowLeft size={13} />Alle Beamtenakten</Link>
       {official.data ? <><p className="font-mono text-xs text-[#a6a6a6]">{officialNumber(official.data.id)}</p><h2 className="mt-1 text-xl font-semibold text-white">{official.data.firstName} {official.data.lastName}</h2><p className="mt-2 text-sm text-[#a6a6a6]">{official.data.agency}{official.data.badgeNumber ? ` · Dienstnummer ${official.data.badgeNumber}` : ''} · {official.data._count?.checks ?? 0} Kontrollen</p></> : <p className="text-sm text-[#909090]">{official.loading ? 'Beamtenakte wird geladen …' : 'Beamtenakte nicht verfügbar.'}</p>}
     </section>}
@@ -119,14 +123,7 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
       <Pagination page={page} total={officials.data?.total ?? 0} loading={officials.loading} onChange={setPage} />
     </>}
     {creating && <CheckForm initialOfficial={official.data ?? undefined} agents={agents.data ?? []} agentsError={agents.error} onClose={() => setCreating(false)} onSaved={check => { setCreating(false); setSaved(check); void controls.refetch(); void officials.refetch(); void official.refetch() }} />}
-    {selected && <Modal open onClose={() => setSelected(null)} title="Kontrollbericht" size="xl"><div className="space-y-5">
-      <div><Link href={officialHref(selected.official.id)} className="font-semibold text-white underline">{officialLabel(selected.official)}</Link><p className="mt-2 text-sm text-[#a6a6a6]">{formatDateTime(selected.conductedAt)}{selected.location ? ` · ${selected.location}` : ''}</p></div>
-      <ResultBadge result={selected.result} />
-      <div><h3 className="mb-2 text-sm font-semibold text-white">Befund / Gefundene Gegenstände</h3><p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#c4c4c4]">{selected.findings}</p></div>
-      <div><h3 className="mb-2 text-sm font-semibold text-white">Durchführende Agents</h3><ul className="space-y-1 text-sm text-[#c4c4c4]">{selected.agents.map(agent => <li key={agent.id}>{agent.name} · {agent.badgeNumber}</li>)}</ul></div>
-      {selected.notes && <div><h3 className="mb-2 text-sm font-semibold text-white">Weitere Informationen</h3><p className="whitespace-pre-wrap break-words text-sm text-[#c4c4c4]">{selected.notes}</p></div>}
-      <p className="border-t border-[#343434] pt-3 text-xs text-[#909090]">Erfasst von {selected.createdBy?.displayName ?? 'Gelöschtem Benutzer'} am {formatDateTime(selected.createdAt)}</p>
-    </div></Modal>}
+    {selected && <ReportDetail id={selected.id} agents={agents.data ?? []} onClose={() => setSelected(null)} onChanged={() => { void controls.refetch() }} />}
   </div>
 }
 

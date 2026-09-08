@@ -125,6 +125,7 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
 }
 
 function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
+  const { data: bodycamAccess } = useFetch<{ allowed: boolean }>(user ? '/api/investigations/clips/access' : null)
   const { data: navigationUnits } = useFetch<NavigationUnit[]>(user ? '/api/navigation/units' : null)
   const unitNav: NavItem[] = (navigationUnits ?? []).map((unit) => ({
     name: unit.name,
@@ -162,9 +163,10 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
 
       <nav className="flex-1 space-y-[2px] overflow-y-auto px-2.5 lg:pb-12">
         <SectionLabel>Navigation</SectionLabel>
-        {mainNav
+          {mainNav
           .filter((item) => !item.permission || hasPermission(user, item.permission))
-          .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+            .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+          {bodycamAccess?.allowed && <NavLink item={{ name: 'Bodycam-Katalog', href: '/investigations/clips', icon: FolderSearch }} pathname={pathname} onNavigate={onNavigate} />}
 
         {unitNav.length > 0 && (
           <>

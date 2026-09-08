@@ -4,10 +4,13 @@ import Link from 'next/link'
 import { Car, FolderOpen, UserSearch, Video, Images, Folders } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/auth-context'
+import { hasPermission } from '@/lib/permissions'
 
-export type InvestigationsSection = 'cases' | 'clips' | 'persons' | 'vehicles' | 'photos' | 'dossiers'
+export type InvestigationsSection = 'cases' | 'clips' | 'persons' | 'vehicles' | 'photos' | 'dossiers' | 'shares'
 
 const sections: { id: InvestigationsSection; label: string; href: string; icon: typeof FolderOpen }[] = [
+  { id: 'shares', label: 'Freigabelinks', href: '/investigations/shares', icon: FolderOpen },
   { id: 'cases', label: 'Einsatzakten', href: '/investigations', icon: FolderOpen },
   { id: 'clips', label: 'Bodycam-Katalog', href: '/investigations/clips', icon: Video },
   { id: 'persons', label: 'Personenregister', href: '/investigations/persons', icon: UserSearch },
@@ -17,9 +20,10 @@ const sections: { id: InvestigationsSection; label: string; href: string; icon: 
 ]
 
 export function InvestigationsNavigation({ active }: { active: InvestigationsSection }) {
+  const { user } = useAuth()
   return (
     <nav className="mb-5 flex flex-wrap gap-2" aria-label="Ermittlungsbereiche">
-      {sections.map((section) => {
+      {sections.filter(section => section.id !== 'shares' || hasPermission(user, 'investigations:manage')).map((section) => {
         const Icon = section.icon
         const isActive = active === section.id
 

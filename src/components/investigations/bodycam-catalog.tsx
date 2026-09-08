@@ -16,14 +16,15 @@ import { hasPermission } from '@/lib/permissions'
 import { ClipCard, ClipPlayer } from '@/components/investigations/clip-player'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
-import type { AgentLite, BodycamClip } from '@/components/investigations/types'
+import type { BodycamClip } from '@/components/investigations/types'
 
 export function BodycamCatalog() {
   const { user } = useAuth()
   const { toastSuccess, toastError } = useInvestigationToast()
   const { execute } = useApi()
 
-  const canView = hasPermission(user, 'investigations:view')
+  const { data: access, loading: checkingAccess } = useFetch<{ allowed: boolean; full: boolean }>('/api/investigations/clips/access')
+  const canView = access?.allowed === true
   const canManage = hasPermission(user, 'investigations:manage')
 
   const [search, setSearch] = useState('')
@@ -43,8 +44,8 @@ export function BodycamCatalog() {
     return `/api/investigations/clips${suffix ? `?${suffix}` : ''}`
   }, [search, agentId, from, to])
 
-  const { data, loading, refetch } = useFetch<BodycamClip[]>(canView ? query : null)
-  const { data: agents } = useFetch<AgentLite[]>(canView ? '/api/agents' : null)
+  const { data, loading, refetch, error } = useFetch<BodycamClip[]>(canView ? query : null)
+  const agents = useMemo(() => [...new Map((data ?? []).flatMap(clip => clip.recordedByAgent ? [[clip.recordedByAgent.id, clip.recordedByAgent] as const] : [])).values()], [data])
 
   const agentOptions = useMemo(
     () => [
@@ -57,6 +58,7 @@ export function BodycamCatalog() {
     [agents],
   )
 
+  if (checkingAccess) return <PageLoader />
   if (!canView) return <UnauthorizedContent />
 
   const handleDelete = async (clip: BodycamClip) => {
@@ -76,7 +78,7 @@ export function BodycamCatalog() {
 
   return (
     <div className="mx-auto max-w-6xl pb-2">
-      <InvestigationsNavigation active="clips" />
+      {access?.full && <InvestigationsNavigation active="clips" />}
 
       <PageHeader
         eyebrow="Ermittlungen"
@@ -99,6 +101,7 @@ export function BodycamCatalog() {
         <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
       </div>
 
+      {error && <p role="alert" className="mb-4 text-sm text-red-300">{error}</p>}
       {loading ? (
         <PageLoader />
       ) : clips.length === 0 ? (
@@ -118,7 +121,7 @@ export function BodycamCatalog() {
         clip={activeClip}
         onClose={() => setActiveClip(null)}
         onDelete={canManage ? handleDelete : undefined}
-        showCaseLink
+        showCaseLink={access?.full}
       />
     </div>
   )

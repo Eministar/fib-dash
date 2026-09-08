@@ -13,7 +13,22 @@ Eigenständiger Hauptmenüpunkt **Korruptionskontrollen** unter `/corruption-che
 
 Beamtenakte, Kontrolle, Agent-Snapshots und Audit-Eintrag werden in einer Transaktion gespeichert. Nummern entstehen über den Datenbank-Auto-Inkrementzähler, nicht über die Anzahl vorhandener Akten; Lücken nach abgebrochenen Transaktionen sind möglich. Wiederholte Übertragungen desselben Formulars verwenden eine eindeutige Anfragekennung und erzeugen keine Doppelkontrolle. Verschiedene Nutzer können bewusst separate Akten für gleichnamige Personen anlegen.
 
-Namen und Dienstnummern der durchführenden Agents bleiben als Momentaufnahme erhalten, auch wenn der Agent später umbenannt oder gelöscht wird. Das Modul bietet kein Löschen oder nachträgliches Überschreiben der Kontrollberichte.
+Namen und Dienstnummern der durchführenden Agents bleiben als Momentaufnahme erhalten, auch wenn der Agent später umbenannt oder gelöscht wird. Das Modul bietet kein Löschen von Kontrollberichten.
+
+## Zusammenführen, Korrigieren und Beweise
+
+- In einer Beamtenakte **Doppelte Akte zusammenführen** wählen, Zielakte suchen und eine Begründung eintragen. Die Vorschau zeigt Quelle und Ziel. Die Stammdaten des Ziels bleiben bestehen; sämtliche Kontrollen werden übernommen. Alte Nummern und Namen sind weiterhin suchbar und führen zur gemeinsamen Akte. Die Zusammenführung wird im Audit protokolliert. Gleichzeitige Änderungen werden durch eine serialisierbare Transaktion geschützt.
+- Im Bericht **Bericht korrigieren** öffnen. Datum/Uhrzeit, Ort, Agents, Befund und weitere Informationen können mit Begründung korrigiert werden. Jede Korrektur speichert eine neue Version mit vollständiger Vorher-/Nachher-Fassung, Bearbeitername und Zeitpunkt. Veraltete Bearbeitungsstände werden mit einem Konflikt abgewiesen. Historische Agent-Namen bleiben erhalten.
+- Im Bericht unter **Beweise** Bilder (JPG, PNG, GIF, WebP), PDFs oder Videos (MP4, WebM, MOV) hochladen, maximal 500 MB je Datei. Beweisanlagen liegen privat unter `<UPLOAD_DIR>/corruption-evidence`; sie sind für angemeldete Dashboard-Nutzer sichtbar. PDFs werden heruntergeladen. Diese Original-Beweisanlagen werden nicht automatisch neu komprimiert.
+- Nutzer mit Bodycam-Zugriff können vorhandene Clips direkt verknüpfen. Die Rechte der ursprünglichen Aufnahme werden bei jedem Aufruf erneut geprüft; die Verknüpfung gibt keine zusätzlichen Rechte. Wird der ursprüngliche Clip gelöscht, ist die Verknüpfung nicht mehr abspielbar.
+
+Die Erweiterung benötigt den zusätzlichen Patch `prisma/patches/2026-09-08-corruption-extensions.sql` oder einen Schema-Abgleich mit `npm run db:push` (vorher sichern). Patches nicht zusätzlich zu einem bereits ausgeführten Schema-Abgleich anwenden.
+
+## Bodycam-Zugriff über Discord
+
+Unter **Einstellungen → Discord → Bodycam-Katalog: Discord-Rolle für Lesezugriff** die gewünschte Rolle auswählen. Alternativ `DISCORD_BODYCAM_VIEWER_ROLE_ID` setzen; die Umgebungsvariable hat Vorrang. Die Rolle wird serverseitig anhand des Discord-Kontos der angemeldeten Person geprüft. Bei fehlender Mitgliedschaft oder fehlgeschlagener Rollenprüfung wird kein zusätzlicher Zugriff gewährt.
+
+Die Rolle schaltet den **Bodycam-Katalog** in der Hauptnavigation frei und erlaubt Lesen/Abspielen nicht vertraulicher Clips. Sie gewährt keine Bearbeitungsrechte und keinen allgemeinen Zugriff auf Ermittlungsakten. Bestehende Ermittlungsrechte gelten weiterhin. API-Token erhalten über diese Rolle keine erweiterten Rechte. Es werden weder eine Discord-Rolle erstellt noch Mitglieder automatisch hinzugefügt.
 
 ## Datenbank und Bereitstellung
 

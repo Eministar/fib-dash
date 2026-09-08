@@ -4,5 +4,7 @@ export async function register() {
     ensureClipCompressionWorker()
     const { ensurePhotoCatalogSync } = await import('./lib/investigation-photos')
     ensurePhotoCatalogSync()
+    const { ensureHirePingCleanup } = await import('./lib/hire-ping')
+    ensureHirePingCleanup()
   }
 }
