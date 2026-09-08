@@ -62,7 +62,6 @@ interface DiscordConfigResponse {
     absenceStatusMessageId: string
     humanResourcesRoleId: string
     bodycamViewerRoleId: string
-    hirePingRoleId: string
     hirePingChannelId: string
     promotionBlockRoleId: string
     employeeRoleIds: string[]
@@ -148,7 +147,6 @@ export default function SettingsPage() {
     absenceStatusMessageId: '',
     humanResourcesRoleId: '',
     bodycamViewerRoleId: '',
-    hirePingRoleId: '',
     hirePingChannelId: '',
     promotionBlockRoleId: '',
     employeeRoleIds: [],
@@ -674,18 +672,12 @@ export default function SettingsPage() {
               </div>
               <div className="sm:col-span-2">
                 <Select
-                    label="Neueinstellung: Kurz-Ping an Rolle"
-                    value={discordForm.hirePingRoleId}
-                    onValueChange={(hirePingRoleId) => setDiscordForm({ ...discordForm, hirePingRoleId })}
-                    options={roleOptions}
-                />
-                <Select
                     label="Neueinstellung: Channel für Kurz-Ping"
                     value={discordForm.hirePingChannelId}
                     onValueChange={(hirePingChannelId) => setDiscordForm({ ...discordForm, hirePingChannelId })}
                     options={channelOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#909090]">Bei einem neu angelegten Agent einmal die Rolle erwähnen und die Nachricht nach etwa einer Sekunde löschen. Beide Felder auswählen; leer bedeutet deaktiviert.</p>
+                <p className="mt-1.5 text-[11px] text-[#909090]">Bei einem neu angelegten Agent wird er selbst einmal kurz erwähnt; die Nachricht wird nach etwa einer Sekunde wieder gelöscht. Ohne hinterlegte Discord-ID des Agents passiert nichts. Leer bedeutet deaktiviert.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select

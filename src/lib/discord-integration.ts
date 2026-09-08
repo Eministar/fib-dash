@@ -64,7 +64,6 @@ type DiscordGuildMember = {
 }
 
 export type DiscordConfig = {
-  hirePingRoleId: string
   hirePingChannelId: string
   bodycamViewerRoleId: string
   photoCatalogChannelId: string
@@ -191,7 +190,6 @@ export type DiscordHrEventMessage = {
 const API_BASE = 'https://discord.com/api/v10'
 
 export const DISCORD_SETTING_KEYS = {
-  hirePingRoleId: 'discord.hirePingRoleId',
   hirePingChannelId: 'discord.hirePingChannelId',
   bodycamViewerRoleId: 'discord.bodycamViewerRoleId',
   photoCatalogChannelId: 'discord.photoCatalogChannelId',
@@ -824,7 +822,6 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
       map[DISCORD_SETTING_KEYS.investigationsChannelId],
     ),
     bodycamViewerRoleId: envFirst(process.env.DISCORD_BODYCAM_VIEWER_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.bodycamViewerRoleId]),
-    hirePingRoleId: envFirst(process.env.DISCORD_HIRE_PING_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.hirePingRoleId]),
     hirePingChannelId: envFirst(process.env.DISCORD_HIRE_PING_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.hirePingChannelId]),
     photoCatalogChannelId: envFirst(process.env.DISCORD_PHOTO_CATALOG_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.photoCatalogChannelId]),
     codenameBoardChannelId: envFirst(process.env.DISCORD_CODENAME_BOARD_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.codenameBoardChannelId]),
@@ -858,7 +855,6 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.codenameBoardChannelId !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardChannelId] = input.codenameBoardChannelId.trim()
   if (input.photoCatalogChannelId !== undefined) data[DISCORD_SETTING_KEYS.photoCatalogChannelId] = input.photoCatalogChannelId.trim()
   if (input.bodycamViewerRoleId !== undefined) data[DISCORD_SETTING_KEYS.bodycamViewerRoleId] = input.bodycamViewerRoleId.trim()
-  if (input.hirePingRoleId !== undefined) data[DISCORD_SETTING_KEYS.hirePingRoleId] = input.hirePingRoleId.trim()
   if (input.hirePingChannelId !== undefined) data[DISCORD_SETTING_KEYS.hirePingChannelId] = input.hirePingChannelId.trim()
   if (input.codenameBoardMessageIds !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardMessageIds] = JSON.stringify(cleanRoleIds(input.codenameBoardMessageIds))
   if (input.guildId !== undefined) data[DISCORD_SETTING_KEYS.guildId] = input.guildId.trim()
@@ -1897,10 +1893,15 @@ export async function editDiscordHrEventMessage(
   })
 }
 
-export async function postHireRolePing(channelId: string, roleId: string, nonce: string) {
+/**
+ * Kurzer Ghost-Ping an den frisch eingestellten Agent. `allowed_mentions`
+ * erlaubt bewusst nur genau diese eine Benutzer-ID – selbst wenn im Text je
+ * eine Rolle landen sollte, wird niemand sonst benachrichtigt.
+ */
+export async function postHireUserPing(channelId: string, userId: string, nonce: string) {
   return discordFetch<{ id: string }>(`/channels/${channelId}/messages`, {
     method: 'POST',
-    body: JSON.stringify({ content: `<@&${roleId}>`, allowed_mentions: { parse: [], roles: [roleId], users: [] }, nonce, enforce_nonce: true }),
+    body: JSON.stringify({ content: `<@${userId}>`, allowed_mentions: { parse: [], roles: [], users: [userId] }, nonce, enforce_nonce: true }),
   })
 }
 
@@ -2311,6 +2312,22 @@ export type DiscordPhotoMessage = {
   id: string
   content?: string
   attachments?: { id: string; filename: string; url: string; content_type?: string; size?: number }[]
+}
+
+/** Neueste Nachricht eines Channels – für die Frage, ob eine Sticky-Nachricht noch unten steht. */
+export async function getDiscordLatestMessageId(channelId: string) {
+  if (!/^\d{17,22}$/.test(channelId)) throw new Error('Ungültige Discord-Channel-ID')
+  const messages = await discordFetch<{ id: string }[]>(`/channels/${channelId}/messages?limit=1`)
+  return messages[0]?.id ?? null
+}
+
+/** Reine Textnachricht ohne jede Erwähnung. */
+export async function postDiscordChannelMessage(channelId: string, content: string) {
+  if (!/^\d{17,22}$/.test(channelId)) throw new Error('Ungültige Discord-Channel-ID')
+  return discordFetch<{ id: string }>(`/channels/${channelId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content, allowed_mentions: { parse: [], roles: [], users: [] } }),
+  })
 }
 
 export async function getDiscordPhotoMessages(channelId: string, before?: string) {

@@ -5,7 +5,7 @@ import { Prisma } from '@/generated/prisma'
 import { prisma } from './prisma'
 import { uploadDir } from './uploads'
 import { withoutChangeTracking } from './change-history-context'
-import { getDiscordConfig, getDiscordPhotoMessages, type DiscordPhotoMessage } from './discord-integration'
+import { deleteDiscordHrEventMessage, getDiscordConfig, getDiscordLatestMessageId, getDiscordPhotoMessages, postDiscordChannelMessage, type DiscordPhotoMessage } from './discord-integration'
 
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024
 export function photoPath(filename: string) {
@@ -70,6 +70,37 @@ async function importMessage(channelId: string, message: DiscordPhotoMessage) {
   return imported
 }
 
+/**
+ * Hinweistext, der im Bilder-Channel immer als letzte Nachricht stehen soll.
+ * Die Basis-URL kommt aus `NEXT_PUBLIC_SITE_URL`; im Hintergrundlauf gibt es
+ * keinen Request, aus dem sie sich sonst ableiten ließe.
+ */
+const PHOTO_CATALOG_URL = `${(process.env.NEXT_PUBLIC_SITE_URL || 'https://nerovfib.de').replace(/\/$/, '')}/investigations/photos`
+const STICKY_TEXT = [
+  '📸 **Bildkatalog**',
+  'Jede Nachricht in diesem Channel wird automatisch als Bild in den Bildkatalog hochgeladen.',
+  `Alle Bilder findest du unter ${PHOTO_CATALOG_URL}`,
+].join('\n')
+
+/**
+ * Hält den Hinweis als letzte Nachricht im Channel. Steht er bereits unten,
+ * passiert nichts – sonst wird die alte Nachricht gelöscht und neu gepostet.
+ * Fehler bleiben folgenlos: der Bildimport ist wichtiger als der Hinweis.
+ */
+async function ensureStickyNotice(channel: string) {
+  const key = `discord.photoCatalogSticky.${channel}`
+  try {
+    const stored = await prisma.systemSetting.findUnique({ where: { key } })
+    const newest = await getDiscordLatestMessageId(channel)
+    if (stored?.value && stored.value === newest) return
+    if (stored?.value) await deleteDiscordHrEventMessage(channel, stored.value)
+    const message = await postDiscordChannelMessage(channel, STICKY_TEXT)
+    await prisma.systemSetting.upsert({ where: { key }, create: { key, value: message.id }, update: { value: message.id } })
+  } catch (cause) {
+    console.error('[PhotoCatalog] Sticky-Hinweis konnte nicht aktualisiert werden:', cause)
+  }
+}
+
 type SyncState = { latest: string; before?: string; newest?: string; backfillBefore?: string; backfillDone?: boolean }
 const runtime = globalThis as typeof globalThis & { photoSync?: Promise<{ imported: number; configured: boolean }>; photoSyncTimer?: ReturnType<typeof setInterval> }
 
@@ -108,6 +139,8 @@ async function runPhotoSync() {
   }
   const value = JSON.stringify(state)
   await prisma.systemSetting.upsert({ where: { key }, create: { key, value }, update: { value } })
+  // Zum Schluss, damit der Hinweis nicht zwischen den gerade importierten Bildern landet.
+  await ensureStickyNotice(channel)
   return { imported, configured: true }
 }
 

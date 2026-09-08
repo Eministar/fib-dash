@@ -23,12 +23,12 @@ Diese externen Servereinstellungen wurden nicht auf dem Live-Host geändert. Ein
 
 ## Kurz-Ping bei Neueinstellung
 
-Unter **Einstellungen → Discord** die Felder **Neueinstellung: Kurz-Ping an Rolle** und **Neueinstellung: Channel für Kurz-Ping** auswählen. Alternativ `DISCORD_HIRE_PING_ROLE_ID` und `DISCORD_HIRE_PING_CHANNEL_ID` verwenden; Umgebungsvariablen haben Vorrang. Ohne beide Werte bleibt die Funktion aus. `HIRE_PING_ENABLED=false` deaktiviert sie ebenfalls.
+Unter **Einstellungen → Discord** das Feld **Neueinstellung: Channel für Kurz-Ping** auswählen. Alternativ `DISCORD_HIRE_PING_CHANNEL_ID` verwenden; Umgebungsvariablen haben Vorrang. Ohne Channel bleibt die Funktion aus. `HIRE_PING_ENABLED=false` deaktiviert sie ebenfalls.
 
-Bei der Neuanlage eines Agents über das Dashboard oder den bestehenden Discord-Einstellungsbefehl wird die konfigurierte Rolle einmal erwähnt. Etwa eine Sekunde nach erfolgreichem Versand wird genau diese Nachricht gelöscht. Auslöser ist die Agent-Neuanlage, nicht das spätere Unterschreiben des Arbeitsvertrags. Bestehende Agents lösen beim Serverstart keinen nachträglichen Ping aus.
+Bei der Neuanlage eines Agents über das Dashboard oder den bestehenden Discord-Einstellungsbefehl wird genau dieser Agent einmal erwähnt – über die im Dashboard hinterlegte Discord-ID. Ohne hinterlegte Discord-ID unterbleibt der Ping stillschweigend. Rollen werden nicht mehr erwähnt. Etwa eine Sekunde nach erfolgreichem Versand wird genau diese Nachricht gelöscht. Auslöser ist die Agent-Neuanlage, nicht das spätere Unterschreiben des Arbeitsvertrags. Bestehende Agents lösen beim Serverstart keinen nachträglichen Ping aus.
 
 Eine eindeutige Datenbank-Markierung pro Agent verhindert wiederholte Auslösung. Discord erhält für kurzzeitige Transport-Wiederholungen eine feste Nonce. Bestätigte Nachrichten werden vor dem Löschversuch zur Bereinigung vorgemerkt; fehlgeschlagene Löschungen werden minütlich und nach Neustart erneut versucht. Nach einem unbestätigten Versand wird kein zusätzlicher Einstellungs-Ping gestartet; Fehler erscheinen im Serverlog unter `[HirePing]`. Bei einem Prozessabbruch unmittelbar nach Versand kann die Bestätigung fehlen – eine absolute Zustell-/Löschgarantie über die externe API gibt es nicht.
 
-Der Bot muss den gewählten Channel sehen und darin Nachrichten senden können; die gewählte Rolle muss für den Bot erwähnbar sein. Nachrichten werden mit einer expliziten Rollenliste gesendet, ohne andere Rollen oder `@everyone` zu erwähnen. Grundlage: [Discord-Nachrichten-API](https://docs.discord.com/developers/resources/message).
+Der Bot muss den gewählten Channel sehen und darin Nachrichten senden können. Nachrichten werden mit einer expliziten Benutzerliste gesendet, die ausschließlich die Discord-ID des eingestellten Agents enthält – ohne Rollen und ohne `@everyone`. Grundlage: [Discord-Nachrichten-API](https://docs.discord.com/developers/resources/message).
 
 `npx tsx --test tests/hire-ping.test.ts` prüft Reihenfolge, Vermeidung doppelter Pings und das Beibehalten des Löschauftrags bei Discord-Fehlern. Es wurden keine echten Pings zum Testen versendet.

@@ -101,7 +101,6 @@ export async function POST(req: NextRequest) {
 
     invalidateDiscordCache()
     await saveDiscordConfig({
-      hirePingRoleId: canManageSettings && typeof body.hirePingRoleId === 'string' ? body.hirePingRoleId : undefined,
       hirePingChannelId: canManageSettings && typeof body.hirePingChannelId === 'string' ? body.hirePingChannelId : undefined,
       bodycamViewerRoleId: canManageSettings && typeof body.bodycamViewerRoleId === 'string' ? body.bodycamViewerRoleId : undefined,
       photoCatalogChannelId: canManageSettings && typeof body.photoCatalogChannelId === 'string' ? body.photoCatalogChannelId : undefined,

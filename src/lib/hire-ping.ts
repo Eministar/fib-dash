@@ -1,22 +1,27 @@
 import { createHash } from 'node:crypto'
 import { prisma } from './prisma'
-import { getDiscordConfig, postHireRolePing, deleteDiscordHrEventMessage } from './discord-integration'
+import { getDiscordConfig, postHireUserPing, deleteDiscordHrEventMessage } from './discord-integration'
 import { withoutChangeTracking } from './change-history-context'
 
 export type HirePingDependencies = {
   claim: (agentId: string) => Promise<boolean>
-  post: (channelId: string, roleId: string, nonce: string) => Promise<{ id: string }>
+  post: (channelId: string, userId: string, nonce: string) => Promise<{ id: string }>
   rememberDelete: (channelId: string, messageId: string) => Promise<void>
   remove: (channelId: string, messageId: string) => Promise<void>
   forgetDelete: (messageId: string) => Promise<void>
   pause: () => Promise<void>
 }
 
-export async function performHirePing(agentId: string, channelId: string, roleId: string, deps: HirePingDependencies) {
-  if (!/^\d{17,22}$/.test(channelId) || !/^\d{17,22}$/.test(roleId)) return
+/**
+ * Erwähnt den frisch eingestellten Agent einmal kurz im Einstellungs-Channel
+ * und löscht die Nachricht sofort wieder – der Ping bleibt, die Nachricht nicht.
+ * `userId` ist die Discord-ID genau dieses Agents; niemand sonst wird erwähnt.
+ */
+export async function performHirePing(agentId: string, channelId: string, userId: string, deps: HirePingDependencies) {
+  if (!/^\d{17,22}$/.test(channelId) || !/^\d{17,22}$/.test(userId)) return
   if (!await deps.claim(agentId)) return
   const nonce = createHash('sha256').update(`hire:${agentId}`).digest('hex').slice(0, 24)
-  const message = await deps.post(channelId, roleId, nonce)
+  const message = await deps.post(channelId, userId, nonce)
   try { await deps.rememberDelete(channelId, message.id) }
   finally {
     await deps.pause()
@@ -30,7 +35,7 @@ const dependencies: HirePingDependencies = {
     try { await prisma.systemSetting.create({ data: { key: `discord.hirePing.claim.${agentId}`, value: new Date().toISOString() } }); return true }
     catch (cause) { if ((cause as { code?: string }).code === 'P2002') return false; throw cause }
   },
-  post: postHireRolePing,
+  post: postHireUserPing,
   rememberDelete: async (channelId, messageId) => { const value = JSON.stringify({ channelId, messageId }); await prisma.systemSetting.upsert({ where: { key: `discord.hirePing.delete.${messageId}` }, create: { key: `discord.hirePing.delete.${messageId}`, value }, update: { value } }) },
   remove: async (channelId, messageId) => {
     if (!process.env.DISCORD_BOT_TOKEN?.trim() && !process.env.FIB_DISCORD_BOT_TOKEN?.trim()) throw new Error('Discord-Bot-Token fehlt; Löschung bleibt vorgemerkt')
@@ -45,7 +50,10 @@ export function queueHirePing(agentId: string) {
     if (process.env.HIRE_PING_ENABLED === 'false') return
     if (!process.env.DISCORD_BOT_TOKEN?.trim() && !process.env.FIB_DISCORD_BOT_TOKEN?.trim()) return
     const config = await getDiscordConfig()
-    await performHirePing(agentId, config.hirePingChannelId, config.hirePingRoleId, dependencies)
+    // Ohne hinterlegte Discord-ID gibt es niemanden zu erwähnen – dann bleibt es still.
+    const agent = await prisma.agent.findUnique({ where: { id: agentId }, select: { discordId: true } })
+    if (!agent?.discordId) return
+    await performHirePing(agentId, config.hirePingChannelId, agent.discordId, dependencies)
   })
 }
 
