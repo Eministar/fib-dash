@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { FolderOpen, Plus, Pencil, MapPin } from 'lucide-react'
+import { FolderInput, FolderOpen, Plus, Pencil, MapPin } from 'lucide-react'
 import { DOSSIER_KINDS, type DossierKind } from '@/lib/dossiers'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
@@ -48,6 +48,8 @@ function DossierView({ id }: { id: string | null }) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [editor, setEditor] = useState<'new' | 'edit' | null>(null)
+  const [quick, setQuick] = useState<'persons' | 'investigations' | null>(null)
+  const [attaching, setAttaching] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [message, setMessage] = useState('')
   const { execute, loading: saving } = useApi()
@@ -61,7 +63,8 @@ function DossierView({ id }: { id: string | null }) {
   return <div>
     <PageHeader title={current?.title ?? (id ? 'Akte wird geladen …' : 'Dauerakten')} description={id ? 'Informationen, Verknüpfungen und Unterakten an einem Ort.' : 'Familienakten, Sammelakten und Anwesen dauerhaft dokumentieren.'} action={manage && <>
       {current && <Button variant="outline" onClick={() => setEditor('edit')}><Pencil size={14} />Bearbeiten</Button>}
-      <Button disabled={!!id && !current} onClick={() => setEditor('new')}><Plus size={14} />{id ? 'Unterakte hinzufügen' : 'Akte anlegen'}</Button>
+      {current && <Button variant="outline" onClick={() => setAttaching(true)}><FolderInput size={14} />Bestehende Akte einhängen</Button>}
+      <Button disabled={!!id && !current} onClick={() => setEditor('new')}><Plus size={14} />{id ? 'Neue Unterakte' : 'Akte anlegen'}</Button>
     </>} />
     <InvestigationsNavigation active="dossiers" />
     {id && <nav className="mb-4 flex flex-wrap gap-2 text-sm text-[#c4b5fd]" aria-label="Aktenpfad"><Link href="/investigations/dossiers">Dauerakten</Link>{current?.parent && <><span>/</span><Link href={href(current.parent.id)}>{current.parent.title}</Link></>}<span>/</span><span className="text-[#a6a6a6]">{current?.title ?? '…'}</span></nav>}
@@ -71,7 +74,7 @@ function DossierView({ id }: { id: string | null }) {
       {current.photoId && <Image unoptimized src={photoUrl(current.photoId)} alt={current.title} width={1000} height={560} className="max-h-80 w-full rounded-lg object-contain" />}
       {current.address && <p className="flex items-center gap-2 text-sm text-[#d4d4d4]"><MapPin size={15} />{current.address}</p>}
       {current.description && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#c4c4c4]">{current.description}</p>}
-      <div className="grid gap-4 sm:grid-cols-2"><div><h2 className="mb-2 text-sm font-semibold text-white">Personen / Familienmitglieder</h2>{current.persons?.length ? <ul className="space-y-1 text-sm text-[#c4b5fd]">{current.persons.map(person => <li key={person.id}><Link href={`/investigations/persons?person=${person.id}`}>{person.firstName} {person.lastName} · {person.personNumber}</Link></li>)}</ul> : <p className="text-xs text-[#808080]">Keine Personen verknüpft.</p>}</div><div><h2 className="mb-2 text-sm font-semibold text-white">Verknüpfte Einsatzakten</h2>{current.investigations?.length ? <ul className="space-y-1 text-sm text-[#c4b5fd]">{current.investigations.map(investigation => <li key={investigation.id}><Link href={`/investigations/${investigation.id}`}>{investigation.caseNumber} · {investigation.title}</Link></li>)}</ul> : <p className="text-xs text-[#808080]">Keine sichtbaren Einsatzakten verknüpft.</p>}</div></div>
+      <div className="grid gap-4 sm:grid-cols-2"><div><div className="mb-2 flex items-center justify-between gap-2"><h2 className="text-sm font-semibold text-white">Personen / Familienmitglieder</h2>{manage && <Button type="button" size="sm" variant="ghost" onClick={() => setQuick('persons')}><Plus size={13} />Hinzufügen</Button>}</div>{current.persons?.length ? <ul className="space-y-1 text-sm text-[#c4b5fd]">{current.persons.map(person => <li key={person.id}><Link href={`/investigations/persons?person=${person.id}`}>{person.firstName} {person.lastName} · {person.personNumber}</Link></li>)}</ul> : <p className="text-xs text-[#808080]">Keine Personen verknüpft.</p>}</div><div><div className="mb-2 flex items-center justify-between gap-2"><h2 className="text-sm font-semibold text-white">Verknüpfte Einsatzakten</h2>{manage && <Button type="button" size="sm" variant="ghost" onClick={() => setQuick('investigations')}><Plus size={13} />Hinzufügen</Button>}</div>{current.investigations?.length ? <ul className="space-y-1 text-sm text-[#c4b5fd]">{current.investigations.map(investigation => <li key={investigation.id}><Link href={`/investigations/${investigation.id}`}>{investigation.caseNumber} · {investigation.title}</Link></li>)}</ul> : <p className="text-xs text-[#808080]">Keine sichtbaren Einsatzakten verknüpft.</p>}</div></div>
       {hasPermission(user, 'investigations:delete') && <Button variant="danger" size="sm" onClick={() => setDeleting(true)}>Akte löschen</Button>}
     </section>}
     <h2 className="mb-3 text-base font-semibold text-white">{id ? 'Unterakten' : 'Aktenübersicht'}</h2>
@@ -82,6 +85,8 @@ function DossierView({ id }: { id: string | null }) {
     </Link>)}</div>}
     <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>
     {editor && <DossierEditor existing={editor === 'edit' ? current ?? undefined : undefined} parent={editor === 'new' && current ? { id: current.id, title: current.title } : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
+    {quick && current && <QuickRelationEditor dossier={current} field={quick} onClose={() => setQuick(null)} onSaved={refresh} />}
+    {attaching && current && <AttachExistingDossier dossier={current} onClose={() => setAttaching(false)} onSaved={() => { setAttaching(false); refresh() }} />}
     <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen und Einsatzakten bleiben bestehen. Akten mit Unterakten können nicht gelöscht werden.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push(current?.parentId ? href(current.parentId) : '/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
   </div>
 }
@@ -122,7 +127,100 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
   </form></Modal>
 }
 
+/** Auswahl einer bestehenden Dauerakte. Ohne Suchbegriff liefert die API nur
+ *  Hauptakten – deshalb der Hinweis im Platzhalter. */
+function DossierPicker({ title, excludeIds, busy, failure, onPick, onClose }: { title: string; excludeIds: string[]; busy: boolean; failure?: string; onPick: (dossier: Dossier) => void; onClose: () => void }) {
+  const [search, setSearch] = useState('')
+  const list = useFetch<List>(`/api/investigations/dossiers?search=${encodeURIComponent(search)}`)
+  const options = (list.data?.items ?? []).filter(item => !excludeIds.includes(item.id))
+  return <Modal open onClose={busy ? () => {} : onClose} title={title} size="lg">
+    <div className="space-y-3">
+      <Input aria-label="Dauerakte suchen" placeholder="Akte suchen … (leer = nur Hauptakten)" value={search} onChange={e => setSearch(e.target.value)} />
+      {(failure || list.error) && <p role="alert" className="text-sm text-red-300">{failure || list.error}</p>}
+      {list.loading ? <p className="text-sm text-[#808080]">Akten werden geladen …</p> : !options.length ? <p className="text-sm text-[#808080]">Keine passende Akte gefunden.</p> : <ul className="max-h-72 space-y-1 overflow-y-auto">{options.map(item => <li key={item.id}><button type="button" disabled={busy} className="block w-full rounded px-2 py-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323] disabled:opacity-50" onClick={() => onPick(item)}>{DOSSIER_KINDS[item.kind]} · {item.title}{item.parent ? <span className="text-[#808080]"> · in {item.parent.title}</span> : null}</button></li>)}</ul>}
+    </div>
+  </Modal>
+}
+
+/** Dauerakten, in denen dieser Datensatz steckt – inklusive Hinzufügen/Entfernen.
+ *  Die Dossier-API ersetzt Relationen als Ganzes, deshalb wird die Zielakte vor
+ *  dem Speichern gelesen und die Liste nur um diesen einen Eintrag verändert. */
+function LinkedDossiers({ relation, recordId, heading }: { relation: 'person' | 'investigation'; recordId: string; heading: string }) {
+  const { user } = useAuth()
+  const manage = hasPermission(user, 'investigations:manage')
+  const filter = relation === 'person' ? 'personId' : 'investigationId'
+  const { data, error, refetch } = useFetch<List>(`/api/investigations/dossiers?${filter}=${encodeURIComponent(recordId)}`)
+  const [picking, setPicking] = useState(false)
+  const [failure, setFailure] = useState('')
+  const { execute, loading } = useApi<Dossier>()
+  const linked = data?.items ?? []
+
+  const setMembership = async (dossierId: string, member: boolean) => {
+    setFailure('')
+    try {
+      const target = await execute(`/api/investigations/dossiers/${dossierId}`)
+      const current = (relation === 'person' ? target?.persons : target?.investigations)?.map(entry => entry.id) ?? []
+      const next = member ? [...new Set([...current, recordId])] : current.filter(entry => entry !== recordId)
+      await execute(`/api/investigations/dossiers/${dossierId}`, { method: 'PATCH', body: JSON.stringify(relation === 'person' ? { personIds: next } : { investigationIds: next }) })
+      setPicking(false)
+      await refetch()
+    } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Verknüpfung fehlgeschlagen') }
+  }
+
+  return <section className="space-y-2">
+    <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold text-white">{heading}</h3>{manage && <Button type="button" size="sm" variant="outline" onClick={() => setPicking(true)}><Plus size={13} />Zu Dauerakte hinzufügen</Button>}</div>
+    {(error || failure) && <p role="alert" className="text-xs text-red-300">{failure || error}</p>}
+    {linked.length ? <ul className="space-y-1">{linked.map(item => <li key={item.id} className="flex items-center gap-2">
+      <Link className="text-sm text-[#c4b5fd] hover:underline" href={href(item.id)}>{DOSSIER_KINDS[item.kind]} · {item.title}</Link>
+      {manage && <button type="button" disabled={loading} className="text-xs text-[#808080] hover:text-red-300 disabled:opacity-50" aria-label={`${item.title} entfernen`} onClick={() => setMembership(item.id, false)}>Entfernen</button>}
+    </li>)}</ul> : <p className="text-xs text-[#808080]">Keine Dauerakten verknüpft.</p>}
+    <Link className="inline-block text-xs text-[#a6a6a6] hover:text-white" href="/investigations/dossiers">Dauerakten öffnen →</Link>
+    {picking && <DossierPicker title="Zu welcher Dauerakte hinzufügen?" excludeIds={linked.map(item => item.id)} busy={loading} failure={failure} onPick={dossier => setMembership(dossier.id, true)} onClose={() => setPicking(false)} />}
+  </section>
+}
+
+/** Ergänzt Personen bzw. Einsatzakten einer Dauerakte, ohne den vollen Editor
+ *  zu öffnen. Es wird ausschließlich das jeweilige Feld gepatcht. */
+function QuickRelationEditor({ dossier, field, onClose, onSaved }: { dossier: Dossier; field: 'persons' | 'investigations'; onClose: () => void; onSaved: () => void }) {
+  const isPersons = field === 'persons'
+  const [ids, setIds] = useState(isPersons ? dossier.persons?.map(person => person.id) ?? [] : dossier.investigations?.map(item => item.id) ?? [])
+  const [failure, setFailure] = useState('')
+  const persons = useFetch<Person[]>(isPersons ? '/api/persons' : null)
+  const cases = useFetch<InvestigationListItem[]>(isPersons ? null : '/api/investigations')
+  const { execute, loading } = useApi()
+  const options = isPersons
+    ? (persons.data ?? []).map(person => ({ id: person.id, label: `${person.firstName} ${person.lastName} (${person.personNumber})` }))
+    : (cases.data ?? []).map(item => ({ id: item.id, label: `${item.caseNumber} · ${item.title}` }))
+  const loadError = isPersons ? persons.error : cases.error
+  return <Modal open onClose={loading ? () => {} : onClose} title={isPersons ? 'Personen verknüpfen' : 'Einsatzakten verknüpfen'} size="lg">
+    <form className="space-y-4" onSubmit={async event => { event.preventDefault(); setFailure(''); try { await execute(`/api/investigations/dossiers/${dossier.id}`, { method: 'PATCH', body: JSON.stringify(isPersons ? { personIds: ids } : { investigationIds: ids }) }); onSaved() } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen') } }}>
+      {loadError && <p role="alert" className="text-sm text-red-300">{loadError}</p>}
+      <RelationPicker label={isPersons ? 'Personen / Familienmitglieder' : 'Einsatzakten'} options={options} value={ids} onChange={setIds} />
+      {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
+      <div className="flex justify-end gap-2"><Button type="button" variant="ghost" disabled={loading} onClick={onClose}>Abbrechen</Button><Button type="submit" loading={loading} disabled={persons.loading || cases.loading || !!loadError}>Speichern</Button></div>
+    </form>
+  </Modal>
+}
+
+/** Hängt eine bereits bestehende Dauerakte unter die aktuelle. Zyklen und
+ *  Tiefenlimit prüft `validateDossierParent` serverseitig. */
+function AttachExistingDossier({ dossier, onClose, onSaved }: { dossier: Dossier; onClose: () => void; onSaved: () => void }) {
+  const [failure, setFailure] = useState('')
+  const { execute, loading } = useApi()
+  return <DossierPicker
+    title={`Bestehende Akte unter „${dossier.title}“ einhängen`}
+    excludeIds={[dossier.id]}
+    busy={loading}
+    failure={failure}
+    onClose={onClose}
+    onPick={async child => { setFailure(''); try { await execute(`/api/investigations/dossiers/${child.id}`, { method: 'PATCH', body: JSON.stringify({ parentId: dossier.id }) }); onSaved() } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Einhängen fehlgeschlagen') } }}
+  />
+}
+
 export function PersonDossiers({ personId }: { personId: string }) {
-  const { data, error } = useFetch<List>(`/api/investigations/dossiers?personId=${personId}`)
-  return <section className="space-y-2"><h3 className="text-sm font-semibold text-white">Familien-, Sammel- und Anwesenakten</h3>{error && <p className="text-xs text-red-300">{error}</p>}{data?.items.length ? <ul className="space-y-1">{data.items.map(item => <li key={item.id}><Link className="text-sm text-[#c4b5fd] hover:underline" href={href(item.id)}>{DOSSIER_KINDS[item.kind]} · {item.title}</Link></li>)}</ul> : <p className="text-xs text-[#808080]">Keine Dauerakten verknüpft.</p>}<Link className="inline-block text-xs text-[#a6a6a6] hover:text-white" href="/investigations/dossiers">Dauerakten öffnen →</Link></section>
+  return <LinkedDossiers relation="person" recordId={personId} heading="Familien-, Sammel- und Anwesenakten" />
+}
+
+export function InvestigationDossiers({ investigationId }: { investigationId: string }) {
+  return <LinkedDossiers relation="investigation" recordId={investigationId} heading="Dauerakten" />
 }

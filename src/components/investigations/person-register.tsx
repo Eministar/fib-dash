@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { AlertTriangle, Car, Plus, Search, UserSearch } from 'lucide-react'
+import { AlertTriangle, Car, Pencil, Plus, Search, Trash2, UserSearch } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -46,6 +46,22 @@ type PersonForm = {
   dangerous: boolean
 }
 
+function formFromPerson(person: PersonDetail): PersonForm {
+  return {
+    firstName: person.firstName,
+    lastName: person.lastName,
+    alias: person.alias ?? '',
+    identifier: person.identifier ?? '',
+    // Das native Date-Input akzeptiert ausschließlich `YYYY-MM-DD`.
+    dateOfBirth: person.dateOfBirth ? new Date(person.dateOfBirth).toISOString().slice(0, 10) : '',
+    phone: person.phone ?? '',
+    photoUrl: person.photoUrl ?? '',
+    notes: person.notes ?? '',
+    wanted: person.wanted,
+    dangerous: person.dangerous,
+  }
+}
+
 function emptyForm(): PersonForm {
   return {
     firstName: '',
@@ -84,10 +100,13 @@ export function PersonRegister() {
 
   const canView = hasPermission(user, 'investigations:view')
   const canManage = hasPermission(user, 'investigations:manage')
+  const canDelete = hasPermission(user, 'investigations:delete')
 
   const [search, setSearch] = useState('')
   const [wantedOnly, setWantedOnly] = useState(false)
-  const [createOpen, setCreateOpen] = useState(false)
+  // `null` = Editor geschlossen, sonst der Modus. Anlegen und Bearbeiten teilen
+  // sich dasselbe Formular, damit die Felder nicht auseinanderlaufen.
+  const [editor, setEditor] = useState<'create' | 'edit' | null>(null)
   const [form, setForm] = useState<PersonForm>(emptyForm)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -114,26 +133,61 @@ export function PersonRegister() {
 
   if (!canView) return <UnauthorizedContent />
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim()) {
       toastError('Name fehlt', 'Vor- und Nachname sind erforderlich.')
       return
     }
 
+    const editing = editor === 'edit' && detail
     try {
-      await execute('/api/persons', {
-        method: 'POST',
+      await execute(editing ? `/api/persons/${detail.id}` : '/api/persons', {
+        method: editing ? 'PATCH' : 'POST',
         body: JSON.stringify({
           ...form,
+          alias: form.alias.trim() || null,
+          identifier: form.identifier.trim() || null,
+          phone: form.phone.trim() || null,
+          photoUrl: form.photoUrl.trim() || null,
+          notes: form.notes.trim() || null,
           dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
         }),
       })
-      toastSuccess('Person angelegt', 'Die Personenakte wurde erstellt.')
-      setCreateOpen(false)
+      toastSuccess(
+        editing ? 'Personenakte gespeichert' : 'Person angelegt',
+        editing ? 'Die Änderungen wurden übernommen.' : 'Die Personenakte wurde erstellt.',
+      )
+      setEditor(null)
       setForm(emptyForm())
       await refetch()
+      if (editing) await refetchDetail()
     } catch (cause) {
-      toastError('Anlegen fehlgeschlagen', cause instanceof Error ? cause.message : 'Unbekannter Fehler')
+      toastError(
+        editing ? 'Speichern fehlgeschlagen' : 'Anlegen fehlgeschlagen',
+        cause instanceof Error ? cause.message : 'Unbekannter Fehler',
+      )
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!detail) return
+    if (
+      !window.confirm(
+        `Personenakte ${detail.personNumber} (${detail.firstName} ${detail.lastName}) endgültig löschen?`,
+      )
+    ) {
+      return
+    }
+
+    try {
+      await execute(`/api/persons/${detail.id}`, { method: 'DELETE' })
+      toastSuccess('Personenakte gelöscht', `${detail.personNumber} wurde entfernt.`)
+      setSelectedId(null)
+      await refetch()
+    } catch (cause) {
+      // Die API blockt das Löschen, solange die Person noch an Akten hängt –
+      // diese Begründung ist für den Benutzer die eigentliche Information.
+      toastError('Löschen fehlgeschlagen', cause instanceof Error ? cause.message : 'Unbekannter Fehler')
     }
   }
 
@@ -149,7 +203,12 @@ export function PersonRegister() {
         description="Fallübergreifende Personenakten. Eine Person kann in mehreren Ermittlungen auftauchen."
         action={
           canManage ? (
-            <Button onClick={() => setCreateOpen(true)}>
+            <Button
+              onClick={() => {
+                setForm(emptyForm())
+                setEditor('create')
+              }}
+            >
               <Plus className="h-4 w-4" />
               Neue Person
             </Button>
@@ -211,7 +270,9 @@ export function PersonRegister() {
 
       {/* Personenakte */}
       <Modal
-        open={Boolean(selectedId)}
+        // Solange der Editor offen ist, tritt die Akte zurück – zwei
+        // gestapelte Dialoge würden sich um den Fokus streiten.
+        open={Boolean(selectedId) && editor !== 'edit'}
         onClose={() => setSelectedId(null)}
         title={detail ? `${detail.firstName} ${detail.lastName}` : 'Personenakte'}
         description={detail?.personNumber}
@@ -221,9 +282,30 @@ export function PersonRegister() {
           <PageLoader />
         ) : (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {detail.wanted && <Badge variant="danger">Zur Fahndung ausgeschrieben</Badge>}
               {detail.dangerous && <Badge variant="warning">Als gefährlich eingestuft</Badge>}
+              <div className="ml-auto flex gap-2">
+                {canManage && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm(formFromPerson(detail))
+                      setEditor('edit')
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Bearbeiten
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button variant="danger" size="sm" loading={saving} onClick={handleDelete}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Akte löschen
+                  </Button>
+                )}
+              </div>
             </div>
 
             <dl className="grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
@@ -334,12 +416,14 @@ export function PersonRegister() {
         )}
       </Modal>
 
-      {/* Person anlegen */}
+      {/* Person anlegen / bearbeiten */}
       <Modal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title="Neue Person"
-        description="Die Personenaktennummer wird automatisch vergeben."
+        open={editor !== null}
+        onClose={() => setEditor(null)}
+        title={editor === 'edit' ? 'Personenakte bearbeiten' : 'Neue Person'}
+        description={
+          editor === 'edit' ? detail?.personNumber : 'Die Personenaktennummer wird automatisch vergeben.'
+        }
         size="lg"
       >
         <div className="space-y-4">
@@ -401,11 +485,11 @@ export function PersonRegister() {
           </div>
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+            <Button variant="ghost" onClick={() => setEditor(null)}>
               Abbrechen
             </Button>
-            <Button onClick={handleCreate} loading={saving}>
-              Person anlegen
+            <Button onClick={handleSave} loading={saving}>
+              {editor === 'edit' ? 'Änderungen speichern' : 'Person anlegen'}
             </Button>
           </div>
         </div>

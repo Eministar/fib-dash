@@ -40,6 +40,7 @@ import { InvestigationAssignees } from '@/components/investigations/investigatio
 import { InvestigationEvidence } from '@/components/investigations/investigation-evidence'
 import { InvestigationLinks } from '@/components/investigations/investigation-links'
 import { InvestigationVehicles } from '@/components/investigations/investigation-vehicles'
+import { InvestigationDossiers } from '@/components/investigations/dossiers-workspace'
 import {
   ClassifiedBadge,
   EntryKindBadge,
@@ -449,6 +450,10 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           canManage={canManage}
           onChanged={refetch}
         />
+
+        <div className="rounded-xl border border-[#343434] bg-[#141414] p-5">
+          <InvestigationDossiers investigationId={investigationId} />
+        </div>
 
         <InvestigationLinks
           investigationId={investigationId}
