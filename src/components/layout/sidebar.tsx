@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText, ChartNoAxesCombined,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Upload, CalendarDays, Download,
-  FileText, Gavel, FolderSearch,
+  FileText, Gavel, FolderSearch, Map,
   History,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -49,6 +49,7 @@ const mainNav: NavItem[] = [
   { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
   { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield },
   { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
+  { name: 'Karte', href: '/map', icon: Map, permission: 'map:view' },
   { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
   { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
 ]

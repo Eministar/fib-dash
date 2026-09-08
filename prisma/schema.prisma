@@ -187,6 +187,7 @@ model User {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
+  mapSpotsCreated   MapSpot[]            @relation("MapSpotCreator")
   codenamesCreated  Codename[]           @relation("CodenameCreator")
   dossiersCreated   Dossier[]            @relation("DossierCreator")
   codenamesAssigned CodenameAssignment[] @relation("CodenameAssigner")
@@ -1760,6 +1761,8 @@ model BodycamClip {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  dossiers Dossier[] @relation("DossierClips")
+
   @@index([investigationId, recordedAt])
   @@index([compressionStatus, createdAt])
   @@index([entryId])
@@ -1850,6 +1853,7 @@ model Vehicle {
   updatedAt   DateTime @updatedAt
 
   investigations InvestigationVehicle[]
+  dossiers       Dossier[]             @relation("DossierVehicles")
 
   @@index([plate])
   @@index([ownerPersonId])
@@ -1983,6 +1987,8 @@ model Dossier {
   children       Dossier[]           @relation("DossierTree")
   persons        Person[]            @relation("DossierPersons")
   investigations Investigation[]     @relation("DossierInvestigations")
+  vehicles       Vehicle[]           @relation("DossierVehicles")
+  clips          BodycamClip[]       @relation("DossierClips")
   createdById    String?
   createdBy      User?               @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt      DateTime            @default(now())
@@ -2106,4 +2112,27 @@ model RecordShareItem {
 
   @@unique([shareId, kind, recordId])
   @@index([kind, recordId])
+}
+
+/// Frei platzierbare Markierung auf der Stadtkarte (Routen, Schwarzmarkt, Orte).
+model MapSpot {
+  id          String  @id @default(cuid())
+  title       String  @db.VarChar(80)
+  description String  @default("") @db.Text
+  /// Kategorie-Id aus `MAP_CATEGORIES` (src/lib/map-spots.ts).
+  category    String  @db.VarChar(32)
+  /// Emoji auf dem Nadelkopf. Leer = schlichter Punkt.
+  icon        String? @db.VarChar(16)
+  /// Position in Prozent der Kartenbreite bzw. -höhe (0–100). Prozent statt
+  /// Pixel, damit die Punkte unabhängig von der Auflösung des Kartenbilds sind.
+  x           Float
+  y           Float
+
+  createdById String?
+  createdBy   User?    @relation("MapSpotCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([createdById])
 }

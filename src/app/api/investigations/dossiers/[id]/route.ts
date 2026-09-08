@@ -13,6 +13,8 @@ export async function GET(_req: Request, { params }: Context) {
       photo: { select: { id: true, title: true } }, parent: { select: { id: true, title: true } },
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
       investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true } },
+      vehicles: { select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' } },
+      clips: { where: { investigation: investigationVisibilityWhere(user) }, select: { id: true, title: true, recordedAt: true }, orderBy: { createdAt: 'desc' } },
     } })
     return item ? success(item) : notFound('Akte')
   } catch (cause) { return dossierRouteError(cause) }

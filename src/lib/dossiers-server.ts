@@ -16,6 +16,8 @@ export const dossierSchema = z.object({
   parentId: id.nullable().optional(),
   personIds: z.array(id).max(200).optional(),
   investigationIds: z.array(id).max(200).optional(),
+  vehicleIds: z.array(id).max(200).optional(),
+  clipIds: z.array(id).max(200).optional(),
 }).strict()
 
 export class DossierError extends Error {
@@ -59,13 +61,23 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
     if (personIds && await tx.person.count({ where: { id: { in: personIds } } }) !== personIds.length) throw new DossierError('Person nicht gefunden', 404)
     const investigationIds = input.investigationIds ? [...new Set(input.investigationIds)] : undefined
     if (investigationIds && await tx.investigation.count({ where: { AND: [investigationVisibilityWhere(user), { id: { in: investigationIds } }] } }) !== investigationIds.length) throw new DossierError('Einsatzakte nicht verfügbar', 404)
+    const vehicleIds = input.vehicleIds ? [...new Set(input.vehicleIds)] : undefined
+    if (vehicleIds && await tx.vehicle.count({ where: { id: { in: vehicleIds } } }) !== vehicleIds.length) throw new DossierError('Fahrzeugakte nicht gefunden', 404)
+    // Clips erben die Sichtbarkeit ihrer Einsatzakte – ein Clip an einer
+    // Verschlusssache darf für Unbefugte weder auftauchen noch verknüpfbar sein.
+    const clipVisibility = { investigation: investigationVisibilityWhere(user) }
+    const clipIds = input.clipIds ? [...new Set(input.clipIds)] : undefined
+    if (clipIds && await tx.bodycamClip.count({ where: { AND: [clipVisibility, { id: { in: clipIds } }] } }) !== clipIds.length) throw new DossierError('Bodycam nicht verfügbar', 404)
     // Updating visible links must not disconnect classified cases hidden from this user.
     const visibleLinks = id && investigationIds ? await tx.investigation.findMany({ where: { AND: [investigationVisibilityWhere(user), { dossiers: { some: { id } } }] }, select: { id: true } }) : []
-    const { personIds: _persons, investigationIds: _investigations, ...fields } = input
-    void _persons; void _investigations
+    const visibleClipLinks = id && clipIds ? await tx.bodycamClip.findMany({ where: { AND: [clipVisibility, { dossiers: { some: { id } } }] }, select: { id: true } }) : []
+    const { personIds: _persons, investigationIds: _investigations, vehicleIds: _vehicles, clipIds: _clips, ...fields } = input
+    void _persons; void _investigations; void _vehicles; void _clips
     const relations = {
       ...(personIds ? { persons: { set: personIds.map(id => ({ id })) } } : {}),
       ...(investigationIds ? { investigations: { disconnect: visibleLinks, connect: investigationIds.map(id => ({ id })) } } : {}),
+      ...(vehicleIds ? { vehicles: { set: vehicleIds.map(id => ({ id })) } } : {}),
+      ...(clipIds ? { clips: { disconnect: visibleClipLinks, connect: clipIds.map(id => ({ id })) } } : {}),
     }
     const dossier = id
       ? await tx.dossier.update({ where: { id }, data: { ...fields, ...relations } })
@@ -73,6 +85,8 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
           ...fields, title: input.title!, kind: input.kind!, createdById: user.id,
           persons: { connect: (personIds ?? []).map(id => ({ id })) },
           investigations: { connect: (investigationIds ?? []).map(id => ({ id })) },
+          vehicles: { connect: (vehicleIds ?? []).map(id => ({ id })) },
+          clips: { connect: (clipIds ?? []).map(id => ({ id })) },
         } })
     await createAuditLog({ action: id ? 'DOSSIER_UPDATED' : 'DOSSIER_CREATED', userId: user.id, oldValue: existing ? JSON.stringify(existing) : undefined, newValue: JSON.stringify(dossier) }, tx)
     return dossier
