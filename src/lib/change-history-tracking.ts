@@ -53,6 +53,7 @@ const PRIMARY_KEYS: Record<string, string[]> = {
 
 const DELETE_AFFECTED_MODELS: Record<string, string[]> = {
   User: [
+    'Codename', 'CodenameAssignment',
     'UserGroupMembership', 'UserUnitAssignment', 'FormTestSession', 'JobApplication', 'RankChangeVote', 'ApiToken',
     'RankChangeEntryComment', 'RankChangeEntryProposal', 'RankChangeEntryHistory',
     'AcademyResource', 'FormTest', 'FormResponse', 'PressRelease', 'CalendarEvent', 'SruFolder', 'SruDocument',
@@ -70,11 +71,13 @@ const DELETE_AFFECTED_MODELS: Record<string, string[]> = {
   FormQuestion: ['FormAnswer'],
   FormResponse: ['FormAnswer'],
   Agent: [
+    'Codename', 'CodenameAssignment',
     'Probation', 'AbsenceNotice', 'DutyTimeSession', 'PlaytimeSession', 'AgentTraining', 'PromotionLog',
     'Termination', 'Sanction', 'Note', 'RankChangeListEntry', 'TaskAssignment',
     'CalendarEvent', 'JobApplication', 'Contract', 'TransferRequest',
   ],
   Probation: ['ProbationEntry'],
+  Codename: ['CodenameAssignment'],
   RankChangeList: ['RankChangeListEntry'],
   RankChangeListEntry: ['RankChangeVote', 'RankChangeEntryComment', 'RankChangeEntryProposal', 'RankChangeEntryHistory'],
   TaskList: ['Task'],

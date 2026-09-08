@@ -18,6 +18,8 @@ function matches(agent: AgentLite, needle: string) {
 }
 
 interface AgentPickerProps {
+  single?: boolean
+  warnUnlinked?: boolean
   label?: string
   description?: string
   agents: AgentLite[]
@@ -31,6 +33,8 @@ interface AgentPickerProps {
  * hier nicht – die Agent-Tabelle hat schnell dreistellig viele Einträge.
  */
 export function AgentPicker({
+  single = false,
+  warnUnlinked = true,
   label = 'Zugewiesene Ermittler',
   description,
   agents,
@@ -54,7 +58,7 @@ export function AgentPicker({
 
   const toggle = (agentId: string) => {
     if (disabled) return
-    onChange(selected.has(agentId) ? value.filter((id) => id !== agentId) : [...value, agentId])
+    onChange(selected.has(agentId) ? value.filter((id) => id !== agentId) : single ? [agentId] : [...value, agentId])
   }
 
   // Ohne Discord-Verknüpfung lässt sich der Agent keinem Dashboard-Konto
@@ -128,7 +132,7 @@ export function AgentPicker({
         </div>
       </div>
 
-      {unlinked.length > 0 && (
+      {warnUnlinked && unlinked.length > 0 && (
         <p className="mt-2 flex items-start gap-1.5 text-[11.5px] text-[#d4a017]">
           <AlertTriangle className="mt-[1px] h-3.5 w-3.5 shrink-0" />
           <span>

@@ -185,6 +185,10 @@ model User {
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
 
+  codenamesCreated  Codename[]           @relation("CodenameCreator")
+  codenamesAssigned CodenameAssignment[] @relation("CodenameAssigner")
+  codenamesReleased CodenameAssignment[] @relation("CodenameReleaser")
+
   groupMemberships           UserGroupMembership[]
   promotionsPerformed        PromotionLog[]            @relation("PerformedBy")
   terminationsPerformed      Termination[]             @relation("TerminatedBy")
@@ -610,6 +614,9 @@ model Agent {
   lastOnline       DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+
+  codename            Codename?            @relation("CodenameCurrentHolder")
+  codenameAssignments CodenameAssignment[] @relation("CodenameAssignments")
 
   trainings                AgentTraining[]
   promotionLogs            PromotionLog[]
@@ -1889,4 +1896,42 @@ model InvestigationLink {
 
   @@unique([fromId, toId])
   @@index([toId])
+}
+
+model Codename {
+  id             String               @id @default(cuid())
+  name           String               @unique @db.VarChar(80)
+  category       String?              @db.VarChar(40)
+  retired        Boolean              @default(false)
+  retiredReason  String?              @db.VarChar(200)
+  currentAgentId String?              @unique
+  currentAgent   Agent?               @relation("CodenameCurrentHolder", fields: [currentAgentId], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?                @relation("CodenameCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  assignments    CodenameAssignment[]
+
+  @@index([category])
+  @@index([retired])
+}
+
+model CodenameAssignment {
+  id            String    @id @default(cuid())
+  codenameId    String
+  codename      Codename  @relation(fields: [codenameId], references: [id], onDelete: Cascade)
+  agentId       String
+  agent         Agent     @relation("CodenameAssignments", fields: [agentId], references: [id], onDelete: Cascade)
+  assignedAt    DateTime  @default(now())
+  releasedAt    DateTime?
+  releaseReason String?   @db.VarChar(40)
+  note          String?   @db.Text
+  assignedById  String?
+  assignedBy    User?     @relation("CodenameAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  releasedById  String?
+  releasedBy    User?     @relation("CodenameReleaser", fields: [releasedById], references: [id], onDelete: SetNull)
+
+  @@index([codenameId, assignedAt])
+  @@index([agentId, assignedAt])
+  @@index([releasedAt])
 }

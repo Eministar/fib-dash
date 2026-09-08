@@ -17,6 +17,8 @@
     "db:push": "npm run db:backup && npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx tsx prisma/seed.ts",
+    "db:seed-codenames": "tsx prisma/seed-codenames.ts",
+    "test:codenames": "tsx --test tests/codenames.test.ts",
     "db:initialize": "node scripts/initialize-database.js",
     "db:normalize-badges": "node scripts/normalize-badge-numbers.js",
     "db:backfill-case-numbers": "node scripts/backfill-application-case-numbers.js",

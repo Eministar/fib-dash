@@ -1,6 +1,8 @@
 # Decknamen-System
 
-Stand: 2026-09-08 · Status: Spezifikation, noch nicht implementiert
+Stand: 2026-09-08 · Status: implementiert; Datenbankbereitstellung und Namensfreigabe ausstehend.
+
+Einrichtung und Verifikation: [Decknamen-System](../../codenames-setup.md).
 
 ## Ziel
 

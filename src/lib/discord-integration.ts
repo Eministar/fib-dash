@@ -64,6 +64,8 @@ type DiscordGuildMember = {
 }
 
 export type DiscordConfig = {
+  codenameBoardChannelId: string
+  codenameBoardMessageIds: string[]
   guildId: string
   applicationId: string
   announcementsChannelId: string
@@ -184,6 +186,8 @@ export type DiscordHrEventMessage = {
 const API_BASE = 'https://discord.com/api/v10'
 
 export const DISCORD_SETTING_KEYS = {
+  codenameBoardChannelId: 'discord.codenameBoardChannelId',
+  codenameBoardMessageIds: 'discord.codenameBoardMessageIds',
   guildId: 'discord.guildId',
   applicationId: 'discord.applicationId',
   announcementsChannelId: 'discord.announcementsChannelId',
@@ -810,6 +814,8 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
       envInvestigationsChannelId(),
       map[DISCORD_SETTING_KEYS.investigationsChannelId],
     ),
+    codenameBoardChannelId: envFirst(process.env.DISCORD_CODENAME_BOARD_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.codenameBoardChannelId]),
+    codenameBoardMessageIds: cleanRoleIds(parseJson(map[DISCORD_SETTING_KEYS.codenameBoardMessageIds], [])),
     dutyStatusMessageId: map[DISCORD_SETTING_KEYS.dutyStatusMessageId] || '',
     absenceStatusChannelId: envFirst(envAbsenceStatusChannelId(), map[DISCORD_SETTING_KEYS.absenceStatusChannelId]),
     absenceStatusMessageId: map[DISCORD_SETTING_KEYS.absenceStatusMessageId] || '',
@@ -836,6 +842,8 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
 export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   const data: Record<string, string> = {}
 
+  if (input.codenameBoardChannelId !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardChannelId] = input.codenameBoardChannelId.trim()
+  if (input.codenameBoardMessageIds !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardMessageIds] = JSON.stringify(cleanRoleIds(input.codenameBoardMessageIds))
   if (input.guildId !== undefined) data[DISCORD_SETTING_KEYS.guildId] = input.guildId.trim()
   if (input.applicationId !== undefined) data[DISCORD_SETTING_KEYS.applicationId] = input.applicationId.trim()
   if (input.announcementsChannelId !== undefined) data[DISCORD_SETTING_KEYS.announcementsChannelId] = input.announcementsChannelId.trim()
@@ -1551,6 +1559,7 @@ export function ensureAbsenceExpiryChecker() {
 }
 
 export function ensureDiscordSyncScheduler() {
+  ensureCodenameBoardScheduler()
   if (syncSchedulerStarted || typeof setInterval !== 'function') return
   const intervalMs = Number.parseInt(process.env.DISCORD_ROLE_SYNC_INTERVAL_MS || '0', 10)
   if (!Number.isFinite(intervalMs) || intervalMs < 300000) return
@@ -2197,4 +2206,75 @@ export function queueDiscordAbsenceStatusUpdate() {
       error,
     })
   })
+}
+
+// A single queue serializes automatic and manual runs. Each queued run reads a
+// fresh roster, so a change arriving during a PATCH is not lost.
+let codenameBoardTail: Promise<unknown> = Promise.resolve()
+let codenameBoardSchedulerStarted = false
+
+function ensureCodenameBoardScheduler() {
+  if (codenameBoardSchedulerStarted) return
+  codenameBoardSchedulerStarted = true
+  setInterval(queueCodenameBoardUpdate, 300_000).unref?.()
+}
+
+export function syncDiscordCodenameBoard() {
+  const next = codenameBoardTail.then(runCodenameBoardSync)
+  codenameBoardTail = next.catch(() => undefined)
+  return next
+}
+
+export function queueCodenameBoardUpdate() {
+  ensureCodenameBoardScheduler()
+  void syncDiscordCodenameBoard().catch(cause => {
+    console.error('[DiscordIntegration] Decknamen-Board fehlgeschlagen:', cause)
+  })
+}
+
+async function runCodenameBoardSync() {
+  const config = await getDiscordConfig()
+  if (!botToken()) return { skipped: true, messageIds: [] as string[] }
+  const channelId = config.codenameBoardChannelId
+  const channelKey = 'discord.codenameBoardStoredChannelId'
+  const previousChannel = await prisma.systemSetting.findUnique({ where: { key: channelKey } })
+  let ids = [...config.codenameBoardMessageIds]
+  const saveIds = async () => {
+    const value = JSON.stringify(ids)
+    await prisma.systemSetting.upsert({ where: { key: DISCORD_SETTING_KEYS.codenameBoardMessageIds }, create: { key: DISCORD_SETTING_KEYS.codenameBoardMessageIds, value }, update: { value } })
+  }
+  const remove = async (channel: string, id: string) => {
+    try { await discordFetch(`/channels/${channel}/messages/${id}`, { method: 'DELETE' }) }
+    catch (cause) { if (!(cause instanceof DiscordApiError && cause.status === 404 && cause.code === 10008)) throw cause }
+  }
+  if (previousChannel?.value && previousChannel.value !== channelId) {
+    while (ids.length) {
+      await remove(previousChannel.value, ids[ids.length - 1])
+      ids.pop()
+      await saveIds()
+    }
+  }
+  if (!channelId) return { skipped: true, messageIds: ids }
+  await prisma.systemSetting.upsert({ where: { key: channelKey }, create: { key: channelKey, value: channelId }, update: { value: channelId } })
+  const { codenameBoardPages, reconcileCodenameMessages } = await import('./codename-board')
+  const { formatCodename, codenameAgentSelect } = await import('./codenames')
+  const [rows, prefix] = await Promise.all([
+    prisma.codename.findMany({ where: { currentAgentId: { not: null } }, include: { currentAgent: { select: codenameAgentSelect } }, orderBy: { name: 'asc' } }),
+    formatCodename(''),
+  ])
+  const pages = codenameBoardPages(rows, prefix)
+  const payloads = pages.map((page, index) => componentMessage(markdownTextDisplays([
+      markdownHeader('🎭', 'Decknamen — aktuelle Belegung', `${index + 1}/${pages.length}`),
+      page,
+      markdownMeta([`${rows.length} vergeben`, `zuletzt aktualisiert ${discordTimestamp(new Date(), 'f')}`]),
+    ])))
+  ids = await reconcileCodenameMessages({
+    ids, pages: payloads,
+    patch: async (id, payload) => { await discordFetch(`/channels/${channelId}/messages/${id}`, { method: 'PATCH', body: JSON.stringify({ ...payload, content: null, embeds: [] }) }) },
+    post: async payload => (await postChannelMessage(channelId, payload)).id,
+    remove: id => remove(channelId, id),
+    save: async nextIds => { ids = nextIds; await saveIds() },
+    isMissing: cause => cause instanceof DiscordApiError && cause.status === 404 && cause.code === 10008,
+  })
+  return { skipped: false, messageIds: ids }
 }

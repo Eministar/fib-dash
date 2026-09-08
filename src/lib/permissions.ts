@@ -1,4 +1,6 @@
 export const PERMISSIONS = [
+  'codenames:view',
+  'codenames:manage',
   'dashboard:view',
   'calendar:view',
   'calendar:manage',
@@ -65,6 +67,8 @@ export const PERMISSIONS = [
 export type Permission = (typeof PERMISSIONS)[number]
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
+  'codenames:view': 'Decknamen ansehen',
+  'codenames:manage': 'Decknamen verwalten',
   'dashboard:view': 'Dashboard ansehen',
   'calendar:view': 'Kalender ansehen',
   'calendar:manage': 'Kalender verwalten',
@@ -134,6 +138,7 @@ const LEGACY_PERMISSION_MAP: Record<string, Permission[]> = {
 }
 
 const IMPLIED_PERMISSIONS: Partial<Record<Permission, Permission[]>> = {
+  'codenames:manage': ['codenames:view', 'agents:view'],
   'dashboard:view': ['duty-times:view'],
   'calendar:manage': ['calendar:view', 'agents:view'],
   'duty-times:manage': ['duty-times:view', 'agents:view'],

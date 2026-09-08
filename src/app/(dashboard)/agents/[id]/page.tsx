@@ -47,6 +47,7 @@ import { CONTRACT_STATUS_META, type ContractStatusValue } from '@/lib/contracts'
 import { SanctionCard, type SanctionRecord } from '@/components/sanctions/sanction-card'
 import { Badge } from '@/components/ui/badge'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
+import { CodenameHistory } from '@/components/codenames/codename-history'
 
 interface Rank { id: string; name: string; sortOrder: number; internalNumber: number | null; color: string }
 interface Unit { id: string; key: string; name: string; color: string; active: boolean }
@@ -762,6 +763,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left column: main info */}
         <div className="lg:col-span-2 space-y-4">
+          {hasPermission(user, 'codenames:view') && <div className="glass-panel-elevated rounded-[14px] p-5"><CodenameHistory agentId={id} /></div>}
           {/* Personal data */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
             className="glass-panel-elevated rounded-[14px] p-5">

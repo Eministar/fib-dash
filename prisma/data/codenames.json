@@ -1,0 +1,9070 @@
+[
+  {
+    "name": "Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Raven",
+    "category": "TIERE"
+  },
+  {
+    "name": "Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Falcon",
+    "category": "TIERE"
+  },
+  {
+    "name": "Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Wolf",
+    "category": "TIERE"
+  },
+  {
+    "name": "Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Fox",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Lynx",
+    "category": "TIERE"
+  },
+  {
+    "name": "Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Panther",
+    "category": "TIERE"
+  },
+  {
+    "name": "Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Viper",
+    "category": "TIERE"
+  },
+  {
+    "name": "Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Cobra",
+    "category": "TIERE"
+  },
+  {
+    "name": "Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Mantis",
+    "category": "TIERE"
+  },
+  {
+    "name": "Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Osprey",
+    "category": "TIERE"
+  },
+  {
+    "name": "Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Kestrel",
+    "category": "TIERE"
+  },
+  {
+    "name": "Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silent Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Silver Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Golden Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Shadow Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Iron Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Copper Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Midnight Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Arctic Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ember Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Lunar Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Solar Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Storm Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Winter Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Autumn Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hidden Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Hollow Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Broken Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Distant Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Crimson Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Pale Badger",
+    "category": "TIERE"
+  },
+  {
+    "name": "Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Ashfall",
+    "category": "WETTER"
+  },
+  {
+    "name": "Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Blizzard",
+    "category": "WETTER"
+  },
+  {
+    "name": "Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Cinder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Cyclone",
+    "category": "WETTER"
+  },
+  {
+    "name": "Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Drizzle",
+    "category": "WETTER"
+  },
+  {
+    "name": "Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Frost",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Hail",
+    "category": "WETTER"
+  },
+  {
+    "name": "Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Monsoon",
+    "category": "WETTER"
+  },
+  {
+    "name": "Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Sirocco",
+    "category": "WETTER"
+  },
+  {
+    "name": "Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Tempest",
+    "category": "WETTER"
+  },
+  {
+    "name": "Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Thunder",
+    "category": "WETTER"
+  },
+  {
+    "name": "Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silent Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Silver Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Golden Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Shadow Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Iron Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Copper Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Midnight Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Arctic Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Ember Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Lunar Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Solar Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Storm Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Winter Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Autumn Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hidden Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Hollow Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Broken Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Distant Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Crimson Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Pale Zephyr",
+    "category": "WETTER"
+  },
+  {
+    "name": "Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Agate",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Amber",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Beryl",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Cobalt",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Garnet",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Jasper",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Obsidian",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Onyx",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Opal",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Quartz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Topaz",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silent Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Silver Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Golden Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Shadow Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Iron Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Copper Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Midnight Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Arctic Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Ember Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Lunar Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Solar Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Storm Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Winter Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Autumn Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hidden Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Hollow Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Broken Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Distant Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Crimson Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Pale Zircon",
+    "category": "MINERALIEN"
+  },
+  {
+    "name": "Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Atlas",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Griffin",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Hydra",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Kraken",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Minotaur",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Pegasus",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Phoenix",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Sphinx",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Titan",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Triton",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Valkyrie",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silent Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Silver Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Golden Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Shadow Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Iron Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Copper Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Midnight Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Arctic Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Ember Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Lunar Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Solar Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Storm Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Winter Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Autumn Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hidden Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Hollow Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Broken Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Distant Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Crimson Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Pale Wyvern",
+    "category": "MYTHOLOGIE"
+  },
+  {
+    "name": "Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Altair",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Antares",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Arcturus",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Capella",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Comet",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Deneb",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Eclipse",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Meteor",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Nebula",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Polaris",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Rigel",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silent Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Silver Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Golden Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Shadow Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Iron Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Copper Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Midnight Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Arctic Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Ember Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Lunar Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Solar Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Storm Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Winter Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Autumn Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hidden Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Hollow Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Broken Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Distant Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Crimson Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Pale Vega",
+    "category": "HIMMELSKOERPER"
+  },
+  {
+    "name": "Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Anvil",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Arrow",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Chisel",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Compass",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Hammer",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Harpoon",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Key",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Lantern",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Needle",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Prism",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Sextant",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silent Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Silver Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Golden Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Shadow Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Iron Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Copper Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Midnight Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Arctic Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Ember Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Lunar Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Solar Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Storm Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Winter Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Autumn Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hidden Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Hollow Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Broken Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Distant Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Crimson Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Pale Shield",
+    "category": "WERKZEUGE"
+  },
+  {
+    "name": "Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Azure",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Bronze",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Carmine",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Cerulean",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Crimson",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Cyan",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Indigo",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Ivory",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Ochre",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Saffron",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Scarlet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silent Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Silver Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Golden Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Shadow Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Iron Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Copper Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Midnight Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Arctic Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Ember Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Lunar Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Solar Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Storm Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Winter Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Autumn Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hidden Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Hollow Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Broken Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Distant Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Crimson Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Pale Violet",
+    "category": "FARBEN"
+  },
+  {
+    "name": "Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Archipelago",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Blackthorn",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Canyon",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Delta",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Dune",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Estuary",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Fjord",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Glacier",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Mesa",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Plateau",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Ridge",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silent Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Silver Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Golden Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Shadow Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Iron Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Copper Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Midnight Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Arctic Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Ember Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Lunar Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Solar Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Storm Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Winter Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Autumn Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hidden Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Hollow Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Broken Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Distant Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Crimson Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Pale Summit",
+    "category": "GEOGRAFIE"
+  },
+  {
+    "name": "Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Cipher",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Echo",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Ghost",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Halcyon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Horizon",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Mirage",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Nexus",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Paradox",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Phantom",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Pulse",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Sentinel",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silent Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Silver Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Golden Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Shadow Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Iron Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Copper Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Midnight Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Arctic Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Ember Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Lunar Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Solar Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Storm Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Winter Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Autumn Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hidden Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Hollow Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Broken Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Distant Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Crimson Vector",
+    "category": "ABSTRAKT"
+  },
+  {
+    "name": "Pale Vector",
+    "category": "ABSTRAKT"
+  }
+]

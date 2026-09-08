@@ -42,6 +42,7 @@ const mainNav: NavItem[] = [
   { name: 'Kalender', href: '/calendar', icon: CalendarDays, permission: 'calendar:view' },
   { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view' },
   { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view' },
+  { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
   { name: 'Up-/D-Rank-Listen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
   { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
   // Ohne `permission`: Sanktionen sind für jeden eingeloggten Agent einsehbar.

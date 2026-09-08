@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import type { CurrentAuth } from './auth'
+import type { Prisma } from '@/generated/prisma'
 
 interface AuditLogParams {
   action: string
@@ -16,9 +17,9 @@ interface AuditLogParams {
   auth?: CurrentAuth
 }
 
-export async function createAuditLog(params: AuditLogParams) {
+export async function createAuditLog(params: AuditLogParams, client: Pick<Prisma.TransactionClient, 'auditLog'> = prisma) {
   const details = enrichDetailsWithAuth(params.auth, params.details)
-  return prisma.auditLog.create({
+  return client.auditLog.create({
     data: {
       action: params.action,
       userId: params.userId || null,
