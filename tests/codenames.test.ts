@@ -130,6 +130,8 @@ test('seed has 2000–3000 unique valid names and management implies view and ag
   const data = createCodenameSchema.array().parse(JSON.parse(readFileSync(new URL('../prisma/data/codenames.json', import.meta.url), 'utf8')))
   assert.ok(data.length >= 2000 && data.length <= 3000)
   assert.equal(new Set(data.map(row => row.name.toLowerCase())).size, data.length)
+  assert.ok(data.every(row => /^[A-Za-z]{2,8}$/.test(row.name)), 'Katalognamen müssen ein einzelnes Wort mit höchstens acht Buchstaben sein')
+  assert.ok(data.filter(row => row.name.length <= 6).length >= data.length * 0.7, 'Mindestens 70 % des Katalogs sollen höchstens sechs Buchstaben haben')
   assert.ok(normalizePermissions(['codenames:manage']).includes('codenames:view'))
   assert.ok(normalizePermissions(['codenames:manage']).includes('agents:view'))
   assert.equal(normalizePermissions(['codenames:view']).includes('codenames:manage'), false)

@@ -22,6 +22,7 @@ import {
 } from '@/lib/investigations'
 import { agentDisplayName, cleanText, parseDate, routeError } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
+import { queueClipCompression } from '@/lib/clip-compression'
 
 export const dynamic = 'force-dynamic'
 
@@ -204,6 +205,7 @@ export async function POST(req: NextRequest) {
     // Ab hier ist die Datei über den Datensatz erreichbar und darf im
     // Fehlerpfad nicht mehr weggeräumt werden.
     storedFilename = null
+    queueClipCompression()
 
     await prisma.investigation.update({
       where: { id: investigationId },

@@ -67,6 +67,9 @@ export type BodycamClip = {
   originalName: string
   /// Vom Server als Zahl geliefert (in der Datenbank ein BigInt).
   sizeBytes: number
+  originalSizeBytes?: number | null
+  compressionStatus?: 'PENDING' | 'PROCESSING' | 'COMPRESSED' | 'SKIPPED' | 'FAILED'
+  compressionError?: string | null
   mimeType: string
   durationSeconds: number | null
   tags: string[]

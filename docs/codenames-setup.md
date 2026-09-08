@@ -26,12 +26,18 @@ Alternativ lässt sich das Schema im bisherigen Projektablauf mit `npm run db:pu
 abgleichen. Vorher den gesamten Schema-Diff der jeweiligen Installation prüfen.
 Für eine neue Datenbank zuerst die bestehende Projektinitialisierung durchführen.
 
-`prisma/data/codenames.json` enthält 2.267 eindeutige **Namensvorschläge**:
-108 thematische Grundnamen und Varianten mit 20 Zusätzen. Die Liste ist eigens
-zusammengestellt, keine extern bezogene oder redaktionell freigegebene Sammlung.
+`prisma/data/codenames.json` enthält 2.100 eindeutige **Namensvorschläge**.
+Alle Namen bestehen aus genau einem Wort mit höchstens acht Buchstaben;
+1.499 davon haben höchstens sechs Buchstaben. Beispiele: Ghost, Flint, Viper,
+Onyx, Lynx, Rook und Nyx. Die Liste enthält eigenständige Namen aus Natur,
+Mythologie, Astronomie und weiteren Themen; keine automatisch erzeugten
+Adjektiv-Kombinationen. Die Liste ist eigens zusammengestellt, keine extern
+bezogene oder redaktionell freigegebene Sammlung.
 Vor einem produktiven Import inhaltlich prüfen. Einzelne Namen dürfen ergänzt oder
 entfernt werden. Ein erneuter Seed überspringt bestehende Namen und verändert weder
 deren Sperren noch Zuweisungen oder Historie. Auch ein bestehendes Präfix bleibt erhalten.
+Bereits importierte Namen, die in einer überarbeiteten Liste fehlen, werden durch
+den Seed nicht gelöscht. Die Listenänderung betrifft zunächst die Datendatei.
 
 ## Berechtigungen und Discord
 

@@ -161,9 +161,17 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     // Erst der Datensatz, dann die Dateien: bleibt ein Löschvorgang auf der
     // Platte hängen, ist die Akte trotzdem fort und es entstehen höchstens
     // verwaiste Dateien statt toter Datenbankverweise.
-    await prisma.investigation.delete({ where: { id } })
-    for (const clip of existing.clips) {
-      await deleteClipFile(clip.filename)
+    const deletedClips = await prisma.$transaction(async tx => {
+      const clips = await tx.bodycamClip.findMany({ where: { investigationId: id }, select: { id: true } })
+      const deleted = []
+      for (const clip of clips) deleted.push(await tx.bodycamClip.delete({ where: { id: clip.id } }))
+      await tx.investigation.delete({ where: { id } })
+      return deleted
+    }, { isolationLevel: 'Serializable' })
+    for (const clip of deletedClips) {
+      for (const filename of new Set([clip.filename, clip.compressionSource, clip.compressionOutput])) {
+        if (filename) await deleteClipFile(filename)
+      }
     }
 
     await createAuditLog({

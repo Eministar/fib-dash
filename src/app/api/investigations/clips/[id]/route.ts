@@ -112,8 +112,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     if (!existing) return notFound('Clip')
     if (!canAccessInvestigation(user, existing.investigation)) return forbidden()
 
-    await prisma.bodycamClip.delete({ where: { id } })
-    await deleteClipFile(existing.filename)
+    const deleted = await prisma.bodycamClip.delete({ where: { id } })
+    await Promise.all([deleted.filename, deleted.compressionSource, deleted.compressionOutput]
+      .filter((filename): filename is string => Boolean(filename)).map(deleteClipFile))
 
     await createAuditLog({
       action: 'CLIP_DELETED',

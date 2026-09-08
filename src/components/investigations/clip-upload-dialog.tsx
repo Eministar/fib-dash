@@ -224,7 +224,7 @@ export function ClipUploadDialog({
       open={open}
       onClose={handleClose}
       title="Bodycam-Clip hochladen"
-      description="Die Datei wird direkt auf den Server gestreamt und nur über die Akte ausgeliefert."
+      description="Clips werden nach dem Upload automatisch platzsparend komprimiert. Die Aufnahme bleibt währenddessen verfügbar."
       size="xl"
     >
       <div className="space-y-4">

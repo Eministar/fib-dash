@@ -53,6 +53,7 @@ interface DiscordConfigResponse {
     updateChannelId: string
     sanctionsChannelId: string
     investigationsChannelId: string
+    photoCatalogChannelId: string
     dutyStatusChannelId: string
     codenameBoardChannelId: string
     dutyAdminLogChannelId: string
@@ -135,6 +136,7 @@ export default function SettingsPage() {
     updateChannelId: '',
     sanctionsChannelId: '',
     investigationsChannelId: '',
+    photoCatalogChannelId: '',
     dutyStatusChannelId: '',
     codenameBoardChannelId: '',
     dutyAdminLogChannelId: '',
@@ -663,6 +665,15 @@ export default function SettingsPage() {
                   Meldungen zu Einsatzakten und neuen Bodycam-Clips. Verschlusssachen werden nie gepostet.
                   Leer lassen, um die Meldungen abzuschalten.
                 </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Bildkatalog-Channel"
+                    value={discordForm.photoCatalogChannelId}
+                    onValueChange={(photoCatalogChannelId) => setDiscordForm({ ...discordForm, photoCatalogChannelId })}
+                    options={channelOptions}
+                />
+                <p className="mt-1.5 text-[11px] text-[#909090]">Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot benötigt Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Leer lassen zum Abschalten; eine Umgebungsvariable hat Vorrang.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select
