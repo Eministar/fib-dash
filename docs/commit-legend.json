@@ -1,7 +1,61 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-07T14:29:04.851Z",
+  "generatedAt": "2026-09-08T14:12:14.177Z",
   "entries": [
+    {
+      "buildId": "build-8e4c6fe371",
+      "commit": "8e4c6fe371d867c98f18a3f45bbf65669b066582",
+      "shortCommit": "8e4c6fe371",
+      "subject": "Merge pull request #2",
+      "author": "Eministar",
+      "date": "2026-09-08T14:11:44Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/8e4c6fe371d867c98f18a3f45bbf65669b066582"
+    },
+    {
+      "buildId": "build-ba06e7bc60",
+      "commit": "ba06e7bc6094716ad997116730cbea6723c9aca5",
+      "shortCommit": "ba06e7bc60",
+      "subject": "feat: implement codename system with Discord integration and management routes",
+      "author": "Eministar",
+      "date": "2026-09-08T14:04:36Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/ba06e7bc6094716ad997116730cbea6723c9aca5"
+    },
+    {
+      "buildId": "build-47acbcfe47",
+      "commit": "47acbcfe47e1ca162d555bd71b3e3d3bcf91e2d7",
+      "shortCommit": "47acbcfe47",
+      "subject": "Spec: Decknamen-System",
+      "author": "Eministar",
+      "date": "2026-09-08T13:36:50Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/47acbcfe47e1ca162d555bd71b3e3d3bcf91e2d7"
+    },
+    {
+      "buildId": "build-d8269ee4f5",
+      "commit": "d8269ee4f589f712c090ec8480335b2489e2f7c3",
+      "shortCommit": "d8269ee4f5",
+      "subject": "Ermittlungssystem: Agent-Zuweisungen, Asservate, Fahrzeuge, Verbindungen",
+      "author": "Eministar",
+      "date": "2026-09-08T13:25:43Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/d8269ee4f589f712c090ec8480335b2489e2f7c3"
+    },
+    {
+      "buildId": "build-3b213b0413",
+      "commit": "3b213b0413b01d1e65881175aea423dffb116c5a",
+      "shortCommit": "3b213b0413",
+      "subject": "Einsatzakten- und Ermittlungssystem mit Bodycam-Katalog",
+      "author": "Eministar",
+      "date": "2026-09-07T17:14:05Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/3b213b0413b01d1e65881175aea423dffb116c5a"
+    },
+    {
+      "buildId": "build-9483c374c7",
+      "commit": "9483c374c7b32ce6c01494ab0584edf36f94107d",
+      "shortCommit": "9483c374c7",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-07T14:29:04Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/9483c374c7b32ce6c01494ab0584edf36f94107d"
+    },
     {
       "buildId": "build-e1a78563e0",
       "commit": "e1a78563e060513bac30214cce7a3fb0b56f2ba2",
