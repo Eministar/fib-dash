@@ -1,7 +1,34 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-08T18:47:36.668Z",
+  "generatedAt": "2026-09-08T21:03:06.161Z",
   "entries": [
+    {
+      "buildId": "build-43ec868e92",
+      "commit": "43ec868e923fc317271e5907240a5e5cf6beba41",
+      "shortCommit": "43ec868e92",
+      "subject": "Merge pull request #5 from Eministar/feat/ermittlungssystem",
+      "author": "Eministar",
+      "date": "2026-09-08T21:02:27Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/43ec868e923fc317271e5907240a5e5cf6beba41"
+    },
+    {
+      "buildId": "build-39878e7801",
+      "commit": "39878e7801e6bf8fb6677087302c20abfc65c1b4",
+      "shortCommit": "39878e7801",
+      "subject": "feat: add shared records management and bodycam access features with Discord integration",
+      "author": "Eministar",
+      "date": "2026-09-08T21:01:26Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/39878e7801e6bf8fb6677087302c20abfc65c1b4"
+    },
+    {
+      "buildId": "build-612372b78f",
+      "commit": "612372b78f0d2dd8bd21d09cdb438fd7e93a6248",
+      "shortCommit": "612372b78f",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-08T18:47:36Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/612372b78f0d2dd8bd21d09cdb438fd7e93a6248"
+    },
     {
       "buildId": "build-848ba587d8",
       "commit": "848ba587d89b72a5b0accbf03673d8584f7f1dce",
