@@ -14,3 +14,8 @@ export function activateChangeTracking(context: ChangeTrackingContext): void {
 export function currentChangeTracking(): ChangeTrackingContext | undefined {
   return storage.getStore()
 }
+
+/** Background media jobs must not inherit the initiating request's undo snapshot. */
+export function withoutChangeTracking<T>(callback: () => T): T {
+  return storage.exit(callback)
+}

@@ -48,11 +48,11 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
           {/* `key` erzwingt ein frisches Element pro Clip – sonst behält der
               Player die Quelle des zuvor geöffneten Clips. */}
           <video
-            key={clip.id}
+            key={`${clip.id}-${clip.filename}`}
             controls
             preload="metadata"
             className="max-h-[60vh] w-full"
-            src={clipStreamUrl(clip.id)}
+            src={`${clipStreamUrl(clip.id)}?v=${encodeURIComponent(clip.filename)}`}
           >
             Dein Browser kann dieses Video nicht abspielen.
           </video>
@@ -83,6 +83,9 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
             </span>
           )}
           <span>{formatClipSize(clip.sizeBytes)}</span>
+          {clip.originalSizeBytes != null && clip.originalSizeBytes > clip.sizeBytes && <span>{Math.round((1 - clip.sizeBytes / clip.originalSizeBytes) * 100)} % Speicher gespart</span>}
+          {['PENDING', 'PROCESSING'].includes(clip.compressionStatus ?? '') && <span>Komprimierung läuft im Hintergrund</span>}
+          {clip.compressionStatus === 'FAILED' && <span>Komprimierung fehlgeschlagen · Original verfügbar</span>}
           {duration && <span>{duration} Min.</span>}
         </div>
 
@@ -142,7 +145,7 @@ export function ClipCard({ clip, onOpen, showCase = false }: ClipCardProps) {
           muted
           playsInline
           className="h-full w-full object-cover"
-          src={`${clipStreamUrl(clip.id)}#t=0.5`}
+          src={`${clipStreamUrl(clip.id)}?v=${encodeURIComponent(clip.filename)}#t=0.5`}
         />
         {duration && (
           <span className="absolute bottom-1.5 right-1.5 rounded-[5px] bg-black/75 px-1.5 py-0.5 text-[11px] font-medium text-white">

@@ -24,7 +24,7 @@ RUN npx prisma generate && npm run build
 
 # ─────────── Stage 3: runner (production) ───────────
 FROM node:${NODE_VERSION}-alpine AS runner
-RUN apk add --no-cache libc6-compat git openssh-client
+RUN apk add --no-cache libc6-compat git openssh-client ffmpeg
 WORKDIR /app
 
 ENV NODE_ENV=production

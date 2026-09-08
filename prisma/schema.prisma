@@ -186,6 +186,7 @@ model User {
   updatedAt            DateTime   @updatedAt
 
   codenamesCreated  Codename[]           @relation("CodenameCreator")
+  dossiersCreated   Dossier[]            @relation("DossierCreator")
   codenamesAssigned CodenameAssignment[] @relation("CodenameAssigner")
   codenamesReleased CodenameAssignment[] @relation("CodenameReleaser")
 
@@ -1577,6 +1578,7 @@ enum InvestigationPersonRole {
 /// Eine Ermittlungsakte. Bündelt die Chronologie der Einsätze, die beteiligten
 /// Personen und die zugehörigen Bodycam-Clips unter einem Aktenzeichen.
 model Investigation {
+  dossiers   Dossier[]             @relation("DossierInvestigations")
   id         String                @id @default(cuid())
   /// Fortlaufendes Aktenzeichen, z. B. "ERM-0001".
   caseNumber String                @unique @db.VarChar(24)
@@ -1664,6 +1666,7 @@ model InvestigationEntry {
 
 /// Fallübergreifendes Personenregister (Zivilisten, keine FIB-Agents).
 model Person {
+  dossiers     Dossier[] @relation("DossierPersons")
   id           String    @id @default(cuid())
   /// Fortlaufende Personenaktennummer, z. B. "PER-0001".
   personNumber String    @unique @db.VarChar(24)
@@ -1731,6 +1734,17 @@ model BodycamClip {
   mimeType        String @db.VarChar(120)
   durationSeconds Int?
 
+  /// PENDING | PROCESSING | COMPRESSED | SKIPPED | FAILED
+  compressionStatus    String    @default("PENDING") @db.VarChar(20)
+  originalSizeBytes    BigInt?
+  compressionError     String?   @db.VarChar(300)
+  compressionStartedAt DateTime?
+  /// UUID output name also identifies the worker that owns the job.
+  compressionOutput    String?   @db.VarChar(80)
+  /// Retained until deletion succeeds, so cleanup survives a restart.
+  compressionSource    String?   @db.VarChar(80)
+  compressedAt         DateTime?
+
   /// Agent, dessen Bodycam die Aufnahme stammt.
   recordedByAgentId String?
   recordedByAgent   Agent?  @relation("BodycamClipRecorder", fields: [recordedByAgentId], references: [id], onDelete: SetNull)
@@ -1744,6 +1758,7 @@ model BodycamClip {
   updatedAt    DateTime @updatedAt
 
   @@index([investigationId, recordedAt])
+  @@index([compressionStatus, createdAt])
   @@index([entryId])
   @@index([recordedByAgentId])
   @@index([createdAt])
@@ -1934,4 +1949,42 @@ model CodenameAssignment {
   @@index([codenameId, assignedAt])
   @@index([agentId, assignedAt])
   @@index([releasedAt])
+}
+
+model InvestigationPhoto {
+  id        String    @id @default(cuid())
+  sourceKey String    @unique @db.VarChar(191)
+  channelId String    @db.VarChar(30)
+  messageId String    @db.VarChar(30)
+  title     String    @db.VarChar(200)
+  filename  String    @unique @db.VarChar(80)
+  mimeType  String    @db.VarChar(80)
+  sizeBytes Int
+  createdAt DateTime  @default(now())
+  dossiers  Dossier[]
+
+  @@index([createdAt])
+}
+
+model Dossier {
+  id             String              @id @default(cuid())
+  title          String              @db.VarChar(200)
+  /// FAMILY | COLLECTION | PROPERTY | FILE
+  kind           String              @default("COLLECTION") @db.VarChar(20)
+  description    String?             @db.Text
+  address        String?             @db.VarChar(300)
+  photoId        String?
+  photo          InvestigationPhoto? @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  parentId       String?
+  parent         Dossier?            @relation("DossierTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  children       Dossier[]           @relation("DossierTree")
+  persons        Person[]            @relation("DossierPersons")
+  investigations Investigation[]     @relation("DossierInvestigations")
+  createdById    String?
+  createdBy      User?               @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([parentId, kind])
+  @@index([kind, updatedAt])
 }

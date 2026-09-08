@@ -64,6 +64,7 @@ type DiscordGuildMember = {
 }
 
 export type DiscordConfig = {
+  photoCatalogChannelId: string
   codenameBoardChannelId: string
   codenameBoardMessageIds: string[]
   guildId: string
@@ -186,6 +187,7 @@ export type DiscordHrEventMessage = {
 const API_BASE = 'https://discord.com/api/v10'
 
 export const DISCORD_SETTING_KEYS = {
+  photoCatalogChannelId: 'discord.photoCatalogChannelId',
   codenameBoardChannelId: 'discord.codenameBoardChannelId',
   codenameBoardMessageIds: 'discord.codenameBoardMessageIds',
   guildId: 'discord.guildId',
@@ -814,6 +816,7 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
       envInvestigationsChannelId(),
       map[DISCORD_SETTING_KEYS.investigationsChannelId],
     ),
+    photoCatalogChannelId: envFirst(process.env.DISCORD_PHOTO_CATALOG_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.photoCatalogChannelId]),
     codenameBoardChannelId: envFirst(process.env.DISCORD_CODENAME_BOARD_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.codenameBoardChannelId]),
     codenameBoardMessageIds: cleanRoleIds(parseJson(map[DISCORD_SETTING_KEYS.codenameBoardMessageIds], [])),
     dutyStatusMessageId: map[DISCORD_SETTING_KEYS.dutyStatusMessageId] || '',
@@ -843,6 +846,7 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   const data: Record<string, string> = {}
 
   if (input.codenameBoardChannelId !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardChannelId] = input.codenameBoardChannelId.trim()
+  if (input.photoCatalogChannelId !== undefined) data[DISCORD_SETTING_KEYS.photoCatalogChannelId] = input.photoCatalogChannelId.trim()
   if (input.codenameBoardMessageIds !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardMessageIds] = JSON.stringify(cleanRoleIds(input.codenameBoardMessageIds))
   if (input.guildId !== undefined) data[DISCORD_SETTING_KEYS.guildId] = input.guildId.trim()
   if (input.applicationId !== undefined) data[DISCORD_SETTING_KEYS.applicationId] = input.applicationId.trim()
@@ -2277,4 +2281,15 @@ async function runCodenameBoardSync() {
     isMissing: cause => cause instanceof DiscordApiError && cause.status === 404 && cause.code === 10008,
   })
   return { skipped: false, messageIds: ids }
+}
+
+export type DiscordPhotoMessage = {
+  id: string
+  content?: string
+  attachments?: { id: string; filename: string; url: string; content_type?: string; size?: number }[]
+}
+
+export async function getDiscordPhotoMessages(channelId: string, before?: string) {
+  if (!/^\d{17,22}$/.test(channelId) || (before && !/^\d{17,22}$/.test(before))) throw new Error('Ungültige Discord-Channel-ID')
+  return discordFetch<DiscordPhotoMessage[]>(`/channels/${channelId}/messages?limit=100${before ? `&before=${before}` : ''}`)
 }

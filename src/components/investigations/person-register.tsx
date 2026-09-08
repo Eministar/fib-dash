@@ -23,6 +23,8 @@ import { formatDate } from '@/lib/utils'
 import { PriorityBadge, StatusBadge } from '@/components/investigations/investigation-badges'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { PersonLinks } from '@/components/investigations/person-links'
+import { PhotoField } from '@/components/investigations/photo-catalog'
+import { PersonDossiers } from '@/components/investigations/dossiers-workspace'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
 import type {
   InvestigationListItem,
@@ -225,6 +227,15 @@ export function PersonRegister() {
             </div>
 
             <dl className="grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
+              <div className="sm:col-span-2"><PhotoField value={detail.photoUrl} readOnly={!canManage} onChange={async photo => {
+                try {
+                  await execute(`/api/persons/${detail.id}`, { method: 'PATCH', body: JSON.stringify({ photoUrl: photo?.url ?? null }) })
+                  await refetchDetail()
+                  await refetch()
+                  toastSuccess('Foto gespeichert', 'Die Personenakte wurde aktualisiert.')
+                } catch (cause) { toastError('Foto nicht gespeichert', cause instanceof Error ? cause.message : 'Unbekannter Fehler') }
+              }} /></div>
+              <div className="sm:col-span-2"><PersonDossiers personId={detail.id} /></div>
               {detail.alias && (
                 <div>
                   <dt className="text-[#6a6a6a]">Alias</dt>
@@ -369,12 +380,7 @@ export function PersonRegister() {
               onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
             />
           </div>
-          <Input
-            label="Foto-URL"
-            value={form.photoUrl}
-            onChange={(event) => setForm((prev) => ({ ...prev, photoUrl: event.target.value }))}
-            placeholder="https://…"
-          />
+          <PhotoField value={form.photoUrl || null} onChange={photo => setForm(prev => ({ ...prev, photoUrl: photo?.url ?? '' }))} />
           <Textarea
             label="Notizen"
             value={form.notes}

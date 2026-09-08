@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
 
     invalidateDiscordCache()
     await saveDiscordConfig({
+      photoCatalogChannelId: canManageSettings && typeof body.photoCatalogChannelId === 'string' ? body.photoCatalogChannelId : undefined,
       codenameBoardChannelId: canManageSettings && typeof body.codenameBoardChannelId === 'string' ? body.codenameBoardChannelId : undefined,
       guildId: canManageSettings && typeof body.guildId === 'string' ? body.guildId : undefined,
       applicationId: canManageSettings && typeof body.applicationId === 'string' ? body.applicationId : undefined,
