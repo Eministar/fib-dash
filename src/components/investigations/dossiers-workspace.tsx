@@ -391,6 +391,7 @@ function DossierPicker({ title, excludeIds, busy, failure, onPick, onClose }: { 
       <Input aria-label="Dauerakte suchen" placeholder="Akte suchen … (leer = nur Hauptakten)" value={search} onChange={e => setSearch(e.target.value)} />
       {(failure || list.error) && <p role="alert" className="text-sm text-red-300">{failure || list.error}</p>}
       {list.loading ? <p className="text-sm text-[#808080]">Akten werden geladen …</p> : !options.length ? <p className="text-sm text-[#808080]">Keine passende Akte gefunden.</p> : <ul className="max-h-72 space-y-1 overflow-y-auto">{options.map(item => <li key={item.id}><button type="button" disabled={busy} className="block w-full rounded px-2 py-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323] disabled:opacity-50" onClick={() => onPick(item)}>{DOSSIER_KINDS[item.kind]} · {item.title}{item.parent ? <span className="text-[#808080]"> · in {item.parent.title}</span> : null}</button></li>)}</ul>}
+      <div className="flex justify-end border-t border-[#232323] pt-3"><Button type="button" variant="ghost" disabled={busy} onClick={onClose}>Abbrechen</Button></div>
     </div>
   </Modal>
 }

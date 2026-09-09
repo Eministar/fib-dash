@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { FileVideo, FolderOpen, Plus, Search, Users } from 'lucide-react'
+import { FileVideo, FolderOpen, Plus, Users } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { PageLoader } from '@/components/ui/loading'
@@ -30,6 +29,8 @@ import {
   labelOptions,
 } from '@/components/investigations/investigation-badges'
 import { AgentPicker } from '@/components/investigations/agent-picker'
+import { EmptyState } from '@/components/ui/empty-state'
+import { FilterBar, SearchInput } from '@/components/ui/filter-bar'
 import { Wizard, type WizardStep } from '@/components/ui/wizard'
 import { SpotPickerField, type PickedSpot } from '@/components/map/spot-picker'
 import { PhotoPicker, type CatalogPhoto } from '@/components/investigations/photo-catalog'
@@ -147,6 +148,9 @@ export function InvestigationsWorkspace() {
   }
 
   const investigations = data ?? []
+  // „Nur laufende“ ist die Voreinstellung und blendet abgeschlossene Akten
+  // aus – der Leerzustand muss das erklären, sonst sucht man vergeblich.
+  const filtered = Boolean(search.trim()) || status !== 'ALL' || priority !== 'ALL'
 
   const steps: WizardStep[] = [
     {
@@ -290,27 +294,44 @@ export function InvestigationsWorkspace() {
         }
       />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#808080]" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Aktenzeichen, Titel, Person oder Fallführung"
-            className="pl-9"
-          />
-        </div>
+      <FilterBar>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          label="Einsatzakte suchen"
+          placeholder="Aktenzeichen, Titel, Person oder Fallführung"
+        />
         <Select options={STATUS_FILTER_OPTIONS} value={status} onValueChange={setStatus} />
         <Select options={PRIORITY_FILTER_OPTIONS} value={priority} onValueChange={setPriority} />
-      </div>
+      </FilterBar>
 
       {loading ? (
         <PageLoader />
       ) : investigations.length === 0 ? (
-        <Card className="py-14 text-center">
-          <FolderOpen className="mx-auto h-8 w-8 text-[#4a4a4a]" />
-          <p className="mt-3 text-[13.5px] text-[#a6a6a6]">Keine Ermittlungsakten gefunden.</p>
-        </Card>
+        <EmptyState
+          icon={FolderOpen}
+          title={filtered ? 'Keine Akte passt zu diesem Filter.' : 'Noch keine Einsatzakten.'}
+          hint={
+            filtered
+              ? 'Der Status steht standardmäßig auf „Nur laufende“ – abgeschlossene Akten sind damit ausgeblendet.'
+              : 'Eine Einsatzakte bündelt Chronologie, Beteiligte, Medien und Asservate eines Falls.'
+          }
+          action={
+            filtered ? (
+              <Button
+                variant="outline"
+                onClick={() => { setSearch(''); setStatus('ALL'); setPriority('ALL') }}
+              >
+                Filter zurücksetzen
+              </Button>
+            ) : canManage ? (
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Neue Akte
+              </Button>
+            ) : null
+          }
+        />
       ) : (
         <div className="space-y-2.5">
           {investigations.map((investigation) => (

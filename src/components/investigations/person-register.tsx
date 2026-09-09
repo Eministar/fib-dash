@@ -3,13 +3,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { AlertTriangle, Car, Pencil, Plus, Search, Trash2, UserSearch } from 'lucide-react'
+import { AlertTriangle, Car, Pencil, Plus, Trash2, UserSearch } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { PageLoader } from '@/components/ui/loading'
@@ -22,6 +21,8 @@ import { hasPermission } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 import { PriorityBadge, StatusBadge } from '@/components/investigations/investigation-badges'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
+import { EmptyState } from '@/components/ui/empty-state'
+import { FilterBar, SearchInput } from '@/components/ui/filter-bar'
 import { PersonLinks } from '@/components/investigations/person-links'
 import { PhotoField } from '@/components/investigations/photo-catalog'
 import { PersonDossiers } from '@/components/investigations/dossiers-workspace'
@@ -216,26 +217,40 @@ export function PersonRegister() {
         }
       />
 
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#808080]" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Name, Alias, Kennung oder PER-Nummer"
-            className="pl-9"
-          />
-        </div>
+      <FilterBar>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          label="Person suchen"
+          placeholder="Name, Alias, Kennung oder PER-Nummer"
+        />
         <Checkbox checked={wantedOnly} onCheckedChange={setWantedOnly} label="Nur zur Fahndung" />
-      </div>
+      </FilterBar>
 
       {loading ? (
         <PageLoader />
       ) : persons.length === 0 ? (
-        <Card className="py-14 text-center">
-          <UserSearch className="mx-auto h-8 w-8 text-[#4a4a4a]" />
-          <p className="mt-3 text-[13.5px] text-[#a6a6a6]">Keine Personen gefunden.</p>
-        </Card>
+        <EmptyState
+          icon={UserSearch}
+          title={search || wantedOnly ? 'Keine Person passt zu diesem Filter.' : 'Noch keine Personen im Register.'}
+          hint={
+            search || wantedOnly
+              ? 'Andere Schreibweise probieren oder den Filter zurücksetzen.'
+              : 'Personen aus diesem Register lassen sich in beliebig vielen Einsatzakten verknüpfen.'
+          }
+          action={
+            search || wantedOnly ? (
+              <Button variant="outline" onClick={() => { setSearch(''); setWantedOnly(false) }}>
+                Filter zurücksetzen
+              </Button>
+            ) : canManage ? (
+              <Button onClick={() => { setForm(emptyForm()); setEditor('create') }}>
+                <Plus className="h-4 w-4" />
+                Neue Person
+              </Button>
+            ) : null
+          }
+        />
       ) : (
         <div className="grid gap-2.5 sm:grid-cols-2">
           {persons.map((person) => (

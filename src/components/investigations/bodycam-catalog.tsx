@@ -1,14 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, Video } from 'lucide-react'
+import { Video } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { PageLoader } from '@/components/ui/loading'
 import { Select } from '@/components/ui/select'
+import { EmptyState } from '@/components/ui/empty-state'
+import { SearchInput } from '@/components/ui/filter-bar'
 import { useAuth } from '@/context/auth-context'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
@@ -87,15 +88,12 @@ export function BodycamCatalog() {
       />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#808080]" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Titel, Ort oder Aktenzeichen"
-            className="pl-9"
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          label="Clip suchen"
+          placeholder="Titel, Ort oder Aktenzeichen"
+        />
         <Select options={agentOptions} value={agentId} onValueChange={setAgentId} />
         <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
         <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
@@ -105,10 +103,11 @@ export function BodycamCatalog() {
       {loading ? (
         <PageLoader />
       ) : clips.length === 0 ? (
-        <Card className="py-14 text-center">
-          <Video className="mx-auto h-8 w-8 text-[#4a4a4a]" />
-          <p className="mt-3 text-[13.5px] text-[#a6a6a6]">Keine Clips gefunden.</p>
-        </Card>
+        <EmptyState
+          icon={Video}
+          title="Keine Clips gefunden."
+          hint="Clips werden in der jeweiligen Einsatzakte hochgeladen und erscheinen dann hier."
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {clips.map((clip) => (

@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
   CalendarClock,
   ImageIcon,
   MapPin,
+  Pencil,
   Plus,
   Trash2,
   Upload,
@@ -15,7 +16,6 @@ import {
   X,
 } from 'lucide-react'
 
-import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -44,6 +44,10 @@ import { InvestigationLinks } from '@/components/investigations/investigation-li
 import { InvestigationVehicles } from '@/components/investigations/investigation-vehicles'
 import { InvestigationDossiers } from '@/components/investigations/dossiers-workspace'
 import { SpotPickerField } from '@/components/map/spot-picker'
+import { ActionMenu, type ActionMenuItem } from '@/components/ui/action-menu'
+import { ImageLightbox, LightboxThumb } from '@/components/ui/image-lightbox'
+import { SectionCard } from '@/components/ui/section-card'
+import { TabBar, resolveTab, type TabItem } from '@/components/ui/tab-bar'
 import { PhotoPicker } from '@/components/investigations/photo-catalog'
 import { mapCategory } from '@/lib/map-spots'
 import {
@@ -81,6 +85,8 @@ function emptyEntryForm(): EntryForm {
 
 export function InvestigationDetail({ investigationId }: { investigationId: string }) {
   const { user } = useAuth()
+  const router = useRouter()
+  const query = useSearchParams()
   const { toastSuccess, toastError } = useInvestigationToast()
   const { execute, loading: saving } = useApi()
 
@@ -104,6 +110,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   const [activeClip, setActiveClip] = useState<BodycamClip | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState<'spots' | 'photos' | null>(null)
+  const [lightboxId, setLightboxId] = useState<string | null>(null)
 
   const personOptions = useMemo(
     () => [
@@ -130,6 +137,54 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   }
 
   const investigation = data
+
+  const photoImages = investigation.photos.map((photo) => ({
+    id: photo.id,
+    title: photo.title,
+    url: `/api/investigations/photos/${photo.id}/image`,
+  }))
+
+  const tabs: TabItem[] = [
+    { id: 'chronologie', label: 'Chronologie', count: investigation.entries.length },
+    {
+      id: 'beteiligte',
+      label: 'Beteiligte',
+      count: investigation.persons.length + investigation.vehicles.length,
+    },
+    { id: 'medien', label: 'Medien', count: investigation.photos.length + investigation.clips.length },
+    { id: 'asservate', label: 'Asservate', count: investigation.evidence.length },
+    {
+      id: 'verknuepfungen',
+      label: 'Verknüpfungen',
+      count: investigation.mapSpots.length + investigation.linksFrom.length + investigation.linksTo.length,
+    },
+  ]
+  const activeTab = resolveTab(query.get('tab'), tabs)
+
+  // Der Reiter steht in der URL, damit ein Reload oder ein geteilter Link an
+  // derselben Stelle landet. `replace` statt `push`: die Zurück-Taste soll
+  // zur Aktenliste führen, nicht durch fünf Reiter zurückstolpern.
+  const selectTab = (id: string) => {
+    const params = new URLSearchParams(query.toString())
+    params.set('tab', id)
+    router.replace(`?${params}`, { scroll: false })
+  }
+
+  const factRows: [string, string][] = [
+    [
+      'Fallführung',
+      investigation.leadAgent
+        ? `${investigation.leadAgent.firstName} ${investigation.leadAgent.lastName} (${investigation.leadAgent.badgeNumber})`
+        : 'nicht zugewiesen',
+    ],
+    ['Ermittler', investigation.assignees.length ? `${investigation.assignees.length} zugewiesen` : 'keine'],
+    ['Angelegt', formatDateTime(investigation.createdAt)],
+    [
+      investigation.closedAt ? 'Abgeschlossen' : 'Aktualisiert',
+      formatDateTime(investigation.closedAt ?? investigation.updatedAt),
+    ],
+  ]
+
 
   const patchInvestigation = async (body: Record<string, unknown>, message: string) => {
     try {
@@ -244,6 +299,16 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
     }
   }
 
+  // Nach den Handlern, weil das Menü sie referenziert.
+  const menuItems: ActionMenuItem[] = [
+    { id: 'clip', label: 'Clip hochladen', icon: Upload, onSelect: () => setUploadOpen(true) },
+    { id: 'person', label: 'Person verknüpfen', icon: UserPlus, onSelect: () => setPersonOpen(true) },
+    { id: 'edit', label: 'Akte bearbeiten', icon: Pencil, onSelect: () => setSettingsOpen(true) },
+    ...(canDelete
+      ? [{ id: 'delete', label: 'Akte löschen', icon: Trash2, danger: true, onSelect: handleDeleteInvestigation }]
+      : []),
+  ]
+
   return (
     <div className="mx-auto max-w-5xl pb-2">
       <Link
@@ -254,112 +319,65 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         Alle Einsatzakten
       </Link>
 
-      <PageHeader
-        eyebrow={investigation.caseNumber}
-        title={investigation.title}
-        description={investigation.summary || undefined}
-        action={
-          canManage ? (
-            <>
-              <Button variant="outline" onClick={() => setSettingsOpen(true)}>
-                Akte bearbeiten
-              </Button>
+      <div className="mb-5 rounded-[14px] border border-[#2a2a2a] bg-[#141414] p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <span className="font-mono text-[12px] text-[#d4af37]">{investigation.caseNumber}</span>
+            <h1 className="mt-1 text-[19px] font-semibold leading-tight text-white">{investigation.title}</h1>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <StatusBadge status={investigation.status} />
+              <PriorityBadge priority={investigation.priority} />
+              {investigation.classified && <ClassifiedBadge />}
+            </div>
+          </div>
+
+          {canManage && (
+            <div className="flex shrink-0 items-center gap-2">
               <Button onClick={() => setEntryOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Eintrag
+                Eintrag hinzufügen
               </Button>
-              <Button variant="secondary" onClick={() => setUploadOpen(true)}>
-                <Upload className="h-4 w-4" />
-                Clip
-              </Button>
-            </>
-          ) : null
-        }
-      />
-
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        <StatusBadge status={investigation.status} />
-        <PriorityBadge priority={investigation.priority} />
-        {investigation.classified && <ClassifiedBadge />}
-        <span className="text-[12px] text-[#6a6a6a]">
-          Fallführung:{' '}
-          {investigation.leadAgent
-            ? `${investigation.leadAgent.firstName} ${investigation.leadAgent.lastName} (${investigation.leadAgent.badgeNumber})`
-            : 'nicht zugewiesen'}
-        </span>
-        {investigation.closedAt && (
-          <span className="text-[12px] text-[#6a6a6a]">
-            Abgeschlossen am {formatDateTime(investigation.closedAt)}
-          </span>
-        )}
-      </div>
-
-      <InvestigationAssignees
-        investigationId={investigationId}
-        assignees={investigation.assignees}
-        leadAgent={investigation.leadAgent}
-        classified={investigation.classified}
-        agents={agents ?? []}
-        canManage={canManage}
-        onChanged={refetch}
-      />
-
-      {/* Beteiligte Personen */}
-      <Card className="mb-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[14px] font-semibold text-white">Beteiligte Personen</h2>
-          {canManage && (
-            <Button variant="ghost" size="sm" onClick={() => setPersonOpen(true)}>
-              <UserPlus className="h-3.5 w-3.5" />
-              Verknüpfen
-            </Button>
+              <ActionMenu items={menuItems} />
+            </div>
           )}
         </div>
 
-        {investigation.persons.length === 0 ? (
-          <p className="py-3 text-[12.5px] text-[#6a6a6a]">Noch keine Personen zugeordnet.</p>
-        ) : (
-          <ul className="divide-y divide-[#232323]">
-            {investigation.persons.map((link) => (
-              <li key={link.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/investigations/persons?person=${link.person.id}`}
-                      className="text-[13.5px] font-medium text-white hover:underline"
-                    >
-                      {link.person.firstName} {link.person.lastName}
-                    </Link>
-                    <RoleBadge role={link.role} />
-                    <span className="font-mono text-[11px] text-[#6a6a6a]">{link.person.personNumber}</span>
-                  </div>
-                  {link.note && <p className="mt-0.5 text-[12px] text-[#a6a6a6]">{link.note}</p>}
-                </div>
-                {canManage && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleUnlinkPerson(link.id, `${link.person.firstName} ${link.person.lastName}`)
-                    }
-                    className="shrink-0 text-[#6a6a6a] transition-colors hover:text-[#fca5a5]"
-                    aria-label="Verknüpfung lösen"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
+        {investigation.summary && (
+          <p className="mt-4 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c4c4c4]">
+            {investigation.summary}
+          </p>
         )}
-      </Card>
 
-      {/* Chronologie */}
-      <Card className="mb-5">
-        <h2 className="mb-3 text-[14px] font-semibold text-white">Chronologie</h2>
+        {/* Beschriftetes Raster statt der früheren Fließtext-Zeile: wer die
+            Fallführung sucht, soll nicht erst einen Satz lesen müssen. */}
+        <dl className="mt-4 grid gap-x-6 gap-y-2.5 border-t border-[#232323] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          {factRows.map(([label, value]) => (
+            <div key={label} className="min-w-0">
+              <dt className="text-[11px] uppercase tracking-wide text-[#6a6a6a]">{label}</dt>
+              <dd className="mt-0.5 truncate text-[12.5px] text-[#d4d4d4]" title={value}>
+                {value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
 
-        {investigation.entries.length === 0 ? (
-          <p className="py-3 text-[12.5px] text-[#6a6a6a]">Noch keine Einträge in dieser Akte.</p>
-        ) : (
+      <TabBar tabs={tabs} active={activeTab} onSelect={selectTab} label="Bereiche der Akte" />
+
+      {activeTab === 'chronologie' && (
+        <SectionCard
+          title="Chronologie"
+          count={investigation.entries.length}
+          empty="Noch keine Einträge in dieser Akte. Jeder Einsatz und jeder Ermittlungsschritt gehört hierher."
+          action={
+            canManage ? (
+              <Button variant="ghost" size="sm" onClick={() => setEntryOpen(true)}>
+                <Plus className="h-3.5 w-3.5" />
+                Eintrag
+              </Button>
+            ) : null
+          }
+        >
           <ol className="space-y-3">
             {investigation.entries.map((entry) => (
               <li key={entry.id} className="rounded-[10px] border border-[#232323] bg-[#111111] p-3.5">
@@ -412,68 +430,176 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
               </li>
             ))}
           </ol>
-        )}
-      </Card>
+        </SectionCard>
+      )}
 
-      {/* Kartenpunkte */}
-      <Card className="mb-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[14px] font-semibold text-white">Kartenpunkte ({investigation.mapSpots.length})</h2>
-          {canManage && (
-            <Button variant="ghost" size="sm" onClick={() => setLinkOpen('spots')}>
-              <MapPin className="h-3.5 w-3.5" />
-              Verknüpfen
-            </Button>
-          )}
-        </div>
-        {investigation.mapSpots.length === 0 ? (
-          <p className="py-3 text-[12.5px] text-[#6a6a6a]">Keine Kartenpunkte zu dieser Akte.</p>
-        ) : (
-          <ul className="flex flex-wrap gap-1.5">
-            {investigation.mapSpots.map((spot) => (
-              <li key={spot.id}>
-                <Link
-                  href="/map"
-                  className="flex items-center gap-1.5 rounded-full border border-[#343434] px-3 py-1.5 text-[12px] text-[#d4d4d4] hover:border-[#a78bfa]"
-                >
-                  <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} />
-                  {spot.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {activeTab === 'beteiligte' && (
+        <>
+          <InvestigationAssignees
+            investigationId={investigationId}
+            assignees={investigation.assignees}
+            leadAgent={investigation.leadAgent}
+            classified={investigation.classified}
+            agents={agents ?? []}
+            canManage={canManage}
+            onChanged={refetch}
+          />
 
-      {/* Bilder */}
-      <Card className="mb-5">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[14px] font-semibold text-white">Bilder ({investigation.photos.length})</h2>
-          {canManage && (
-            <Button variant="ghost" size="sm" onClick={() => setLinkOpen('photos')}>
-              <ImageIcon className="h-3.5 w-3.5" />
-              Verknüpfen
-            </Button>
-          )}
-        </div>
-        {investigation.photos.length === 0 ? (
-          <p className="py-3 text-[12.5px] text-[#6a6a6a]">Noch keine Bilder zu dieser Akte.</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {investigation.photos.map((photo) => (
-              <Image
-                key={photo.id}
-                unoptimized
-                src={`/api/investigations/photos/${photo.id}/image`}
-                alt={photo.title}
-                width={320}
-                height={240}
-                className="aspect-[4/3] w-full rounded-lg border border-[#2a2a2a] object-cover"
-              />
-            ))}
-          </div>
-        )}
-      </Card>
+          <SectionCard
+            title="Beteiligte Personen"
+            count={investigation.persons.length}
+            empty="Noch keine Personen zugeordnet."
+            action={
+              canManage ? (
+                <Button variant="ghost" size="sm" onClick={() => setPersonOpen(true)}>
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Verknüpfen
+                </Button>
+              ) : null
+            }
+          >
+            <ul className="divide-y divide-[#232323]">
+              {investigation.persons.map((link) => (
+                <li key={link.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/investigations/persons?person=${link.person.id}`}
+                        className="text-[13.5px] font-medium text-white hover:underline"
+                      >
+                        {link.person.firstName} {link.person.lastName}
+                      </Link>
+                      <RoleBadge role={link.role} />
+                      <span className="font-mono text-[11px] text-[#6a6a6a]">{link.person.personNumber}</span>
+                    </div>
+                    {link.note && <p className="mt-0.5 text-[12px] text-[#a6a6a6]">{link.note}</p>}
+                  </div>
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleUnlinkPerson(link.id, `${link.person.firstName} ${link.person.lastName}`)
+                      }
+                      className="shrink-0 text-[#6a6a6a] transition-colors hover:text-[#fca5a5]"
+                      aria-label="Verknüpfung lösen"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+
+          <InvestigationVehicles
+            investigationId={investigationId}
+            vehicles={investigation.vehicles}
+            canManage={canManage}
+            onChanged={refetch}
+          />
+        </>
+      )}
+
+      {activeTab === 'medien' && (
+        <>
+          <SectionCard
+            title="Bilder"
+            count={investigation.photos.length}
+            empty="Noch keine Bilder zu dieser Akte."
+            action={
+              canManage ? (
+                <Button variant="ghost" size="sm" onClick={() => setLinkOpen('photos')}>
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  Bilder verwalten
+                </Button>
+              ) : null
+            }
+          >
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {photoImages.map((photo) => (
+                <LightboxThumb key={photo.id} image={photo} onOpen={setLightboxId} />
+              ))}
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Bodycam-Clips"
+            count={investigation.clips.length}
+            empty="Noch keine Clips zu dieser Akte."
+            action={
+              canManage ? (
+                <Button variant="ghost" size="sm" onClick={() => setUploadOpen(true)}>
+                  <Upload className="h-3.5 w-3.5" />
+                  Hochladen
+                </Button>
+              ) : null
+            }
+          >
+            <div className="grid gap-3 sm:grid-cols-3">
+              {investigation.clips.map((clip) => (
+                <ClipCard key={clip.id} clip={clip} onOpen={setActiveClip} />
+              ))}
+            </div>
+          </SectionCard>
+        </>
+      )}
+
+      {activeTab === 'asservate' && (
+        <InvestigationEvidence
+          investigationId={investigationId}
+          evidence={investigation.evidence}
+          entries={investigation.entries}
+          agents={agents ?? []}
+          canManage={canManage}
+          onChanged={refetch}
+        />
+      )}
+
+      {activeTab === 'verknuepfungen' && (
+        <>
+          <SectionCard
+            title="Kartenpunkte"
+            count={investigation.mapSpots.length}
+            empty="Keine Kartenpunkte zu dieser Akte."
+            action={
+              canManage ? (
+                <Button variant="ghost" size="sm" onClick={() => setLinkOpen('spots')}>
+                  <MapPin className="h-3.5 w-3.5" />
+                  Verknüpfen
+                </Button>
+              ) : null
+            }
+          >
+            <ul className="flex flex-wrap gap-1.5">
+              {investigation.mapSpots.map((spot) => (
+                <li key={spot.id}>
+                  <Link
+                    href="/map"
+                    className="flex items-center gap-1.5 rounded-full border border-[#343434] px-3 py-1.5 text-[12px] text-[#d4d4d4] hover:border-[#a78bfa]"
+                  >
+                    <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} />
+                    {spot.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+
+          <InvestigationLinks
+            investigationId={investigationId}
+            linksFrom={investigation.linksFrom}
+            linksTo={investigation.linksTo}
+            canManage={canManage}
+            onChanged={refetch}
+          />
+
+          <Card className="mb-4">
+            <InvestigationDossiers investigationId={investigationId} />
+          </Card>
+        </>
+      )}
+
+      <ImageLightbox images={photoImages} startId={lightboxId} onClose={() => setLightboxId(null)} />
 
       <Modal
         open={linkOpen !== null}
@@ -496,11 +622,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         )}
         {linkOpen === 'photos' && (
           <PhotoPicker
-            value={investigation.photos.map((photo) => ({
-              id: photo.id,
-              title: photo.title,
-              url: `/api/investigations/photos/${photo.id}/image`,
-            }))}
+            value={photoImages}
             onChange={async (photos) => {
               await execute(`/api/investigations/${investigationId}`, {
                 method: 'PATCH',
@@ -510,71 +632,10 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             }}
           />
         )}
+        <div className="mt-5 flex justify-end border-t border-[#232323] pt-4">
+          <Button onClick={() => setLinkOpen(null)}>Fertig</Button>
+        </div>
       </Modal>
-
-      {/* Clips der Akte */}
-      <Card>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[14px] font-semibold text-white">
-            Bodycam-Clips ({investigation.clips.length})
-          </h2>
-          {canManage && (
-            <Button variant="ghost" size="sm" onClick={() => setUploadOpen(true)}>
-              <Upload className="h-3.5 w-3.5" />
-              Hochladen
-            </Button>
-          )}
-        </div>
-
-        {investigation.clips.length === 0 ? (
-          <p className="py-3 text-[12.5px] text-[#6a6a6a]">Noch keine Clips zu dieser Akte.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-3">
-            {investigation.clips.map((clip) => (
-              <ClipCard key={clip.id} clip={clip} onOpen={setActiveClip} />
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <div className="mt-5">
-        <InvestigationEvidence
-          investigationId={investigationId}
-          evidence={investigation.evidence}
-          entries={investigation.entries}
-          agents={agents ?? []}
-          canManage={canManage}
-          onChanged={refetch}
-        />
-
-        <InvestigationVehicles
-          investigationId={investigationId}
-          vehicles={investigation.vehicles}
-          canManage={canManage}
-          onChanged={refetch}
-        />
-
-        <div className="rounded-xl border border-[#343434] bg-[#141414] p-5">
-          <InvestigationDossiers investigationId={investigationId} />
-        </div>
-
-        <InvestigationLinks
-          investigationId={investigationId}
-          linksFrom={investigation.linksFrom}
-          linksTo={investigation.linksTo}
-          canManage={canManage}
-          onChanged={refetch}
-        />
-      </div>
-
-      {canDelete && (
-        <div className="mt-6 flex justify-end">
-          <Button variant="danger" size="sm" onClick={handleDeleteInvestigation}>
-            <Trash2 className="h-3.5 w-3.5" />
-            Akte löschen
-          </Button>
-        </div>
-      )}
 
       <ClipPlayer
         clip={activeClip}

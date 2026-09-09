@@ -2,18 +2,19 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Car, Plus, Search } from 'lucide-react'
+import { Car, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { PageLoader } from '@/components/ui/loading'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
+import { EmptyState } from '@/components/ui/empty-state'
+import { FilterBar, SearchInput } from '@/components/ui/filter-bar'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/context/auth-context'
 import { useFetch } from '@/hooks/use-fetch'
@@ -114,30 +115,39 @@ export function VehicleRegister() {
         }
       />
 
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#808080]" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Kennzeichen, Modell, Halter oder FZG-Nummer"
-            className="pl-9"
-          />
-        </div>
+      <FilterBar>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          label="Fahrzeug suchen"
+          placeholder="Kennzeichen, Modell, Halter oder FZG-Nummer"
+        />
         <Checkbox
           checked={flaggedOnly}
           onCheckedChange={setFlaggedOnly}
           label="Nur Fahndung / gestohlen"
         />
-      </div>
+      </FilterBar>
 
       {loading ? (
         <PageLoader />
       ) : vehicles.length === 0 ? (
-        <Card className="py-14 text-center">
-          <Car className="mx-auto h-8 w-8 text-[#4a4a4a]" />
-          <p className="mt-3 text-[13.5px] text-[#a6a6a6]">Keine Fahrzeuge gefunden.</p>
-        </Card>
+        <EmptyState
+          icon={Car}
+          title={search || flaggedOnly ? 'Kein Fahrzeug passt zu diesem Filter.' : 'Noch keine Fahrzeuge im Register.'}
+          hint={
+            search || flaggedOnly
+              ? 'Andere Schreibweise probieren oder den Filter zurücksetzen.'
+              : 'Fahrzeugakten lassen sich an Einsatzakten und Dauerakten hängen.'
+          }
+          action={
+            search || flaggedOnly ? (
+              <Button variant="outline" onClick={() => { setSearch(''); setFlaggedOnly(false) }}>
+                Filter zurücksetzen
+              </Button>
+            ) : null
+          }
+        />
       ) : (
         <div className="grid gap-2.5 sm:grid-cols-2">
           {vehicles.map((vehicle) => (

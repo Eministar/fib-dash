@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/modal'
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { InvestigationsNavigation } from './investigations-navigation'
+import { ImageLightbox } from '@/components/ui/image-lightbox'
 import { cn } from '@/lib/utils'
 
 export type CatalogPhoto = { id: string; title: string; url: string }
@@ -63,14 +64,14 @@ export function PhotoUploadButton({ onUploaded }: { onUploaded: (photo: CatalogP
 export function PhotoGrid({ onSelect, selectedIds = [], onUpload }: { onSelect?: (photo: CatalogPhoto) => void; selectedIds?: string[]; onUpload?: (photo: CatalogPhoto) => void }) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [preview, setPreview] = useState<CatalogPhoto | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
   const { data, error, loading } = useFetch<{ items: CatalogPhoto[]; total: number }>(`/api/investigations/photos?search=${encodeURIComponent(search)}&page=${page}`)
   return <div className="space-y-4">
     <Input aria-label="Bild suchen" placeholder="Bild nach Beschriftung suchen …" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
     {onUpload && <PhotoUploadButton onUploaded={photo => { onUpload(photo); setSearch(''); setPage(1) }} />}
     {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
     {loading ? <p className="py-8 text-sm text-[#909090]">Bilder werden geladen …</p> : !data?.items.length ? <p className="py-8 text-sm text-[#909090]">Noch keine passenden Bilder. Lade eines hoch oder poste es im eingerichteten Discord-Channel.</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {data.items.map(photo => <button key={photo.id} type="button" onClick={() => onSelect ? onSelect(photo) : setPreview(photo)} aria-pressed={selectedIds.includes(photo.id)} className={cn(
+      {data.items.map(photo => <button key={photo.id} type="button" onClick={() => onSelect ? onSelect(photo) : setPreview(photo.id)} aria-pressed={selectedIds.includes(photo.id)} className={cn(
         'overflow-hidden rounded-xl bg-[#181818] text-left border hover:border-[#a78bfa] focus-visible:outline-2 focus-visible:outline-[#a78bfa]',
         selectedIds.includes(photo.id) ? 'border-[#a78bfa] ring-2 ring-[#a78bfa]/40' : 'border-[#343434]',
       )}>
@@ -79,7 +80,8 @@ export function PhotoGrid({ onSelect, selectedIds = [], onUpload }: { onSelect?:
       </button>)}
     </div>}
     <div className="flex items-center justify-between gap-3"><span className="text-xs text-[#909090]">{data?.total ?? 0} Bilder · Seite {page}</span><div className="flex gap-2"><Button size="sm" variant="outline" disabled={page === 1 || loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button size="sm" variant="outline" disabled={page * 30 >= (data?.total ?? 0) || loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>
-    {preview && <Modal open onClose={() => setPreview(null)} title={preview.title} size="xl"><Image unoptimized src={preview.url} alt={preview.title} width={1400} height={1000} className="max-h-[65vh] w-full object-contain" /></Modal>}
+    {/* Ein gemeinsamer Betrachter statt einer eigenen Vorschau je Ansicht. */}
+    <ImageLightbox images={data?.items ?? []} startId={preview} onClose={() => setPreview(null)} />
   </div>
 }
 
@@ -93,7 +95,10 @@ export function PhotoField({ value, onChange, readOnly = false }: { value: strin
       <PhotoUploadButton onUploaded={photo => onChange(photo)} />
       {value && <Button type="button" size="sm" variant="ghost" onClick={() => onChange(null)}>Foto entfernen</Button>}
     </div>}
-    <Modal open={open} onClose={() => setOpen(false)} title="Foto aus Bildkatalog auswählen" size="xl"><PhotoGrid onSelect={photo => { onChange(photo); setOpen(false) }} /></Modal>
+    <Modal open={open} onClose={() => setOpen(false)} title="Foto aus Bildkatalog auswählen" size="xl">
+      <PhotoGrid onSelect={photo => { onChange(photo); setOpen(false) }} onUpload={photo => { onChange(photo); setOpen(false) }} />
+      <div className="mt-4 flex justify-end border-t border-[#232323] pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button></div>
+    </Modal>
   </div>
 }
 
