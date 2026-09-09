@@ -1,5 +1,4 @@
-import { randomUUID } from 'node:crypto'
-import { mkdir, readdir, stat, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, stat, unlink } from 'node:fs/promises'
 import path from 'node:path'
 
 export const DEFAULT_UPLOAD_MAX_BYTES = 10 * 1024 * 1024
@@ -59,36 +58,6 @@ export function resolveUploadPath(filename: string) {
   if (!target.startsWith(`${base}${path.sep}`)) throw new Error('Dateiname ist ungültig')
 
   return target
-}
-
-export function validateUploadFile(file: File) {
-  if (file.size === 0) return 'Datei ist leer'
-  if (file.size > uploadMaxBytes()) return `Datei zu groß (max. ${uploadMaxBytes()} Bytes)`
-
-  return null
-}
-
-export async function saveUploadedFile(file: File): Promise<UploadedFileInfo> {
-  const validationError = validateUploadFile(file)
-  if (validationError) throw new Error(validationError)
-
-  const ext = sanitizeExt(file.name)
-  const id = randomUUID()
-  const filename = `${id}${ext}`
-  const dir = uploadDir()
-  await mkdir(dir, { recursive: true })
-
-  const buffer = Buffer.from(await file.arrayBuffer())
-  await writeFile(resolveUploadPath(filename), buffer)
-
-  return {
-    id,
-    filename,
-    originalName: file.name,
-    size: file.size,
-    mimeType: file.type || 'application/octet-stream',
-    url: `/uploads/${filename}`,
-  }
 }
 
 export async function listUploadedFiles(): Promise<StoredUploadInfo[]> {

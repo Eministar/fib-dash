@@ -20,6 +20,9 @@ import {
 
 export const contractSelect = {
   id: true,
+  kind: true,
+  counterpartyName: true,
+  counterpartyRole: true,
   agentId: true,
   templateId: true,
   applicationId: true,
@@ -56,6 +59,23 @@ export const contractSelect = {
     },
   },
   template: { select: { id: true, name: true } },
+  // Je Partei eine Zeile mit eigenem Link — der Arbeitsbereich zeigt sie
+  // nebeneinander samt Stand.
+  signatures: {
+    select: {
+      id: true,
+      side: true,
+      partyName: true,
+      partyRole: true,
+      sortOrder: true,
+      token: true,
+      signedAt: true,
+      signedName: true,
+      declinedAt: true,
+      declineReason: true,
+    },
+    orderBy: { sortOrder: 'asc' },
+  },
   application: {
     select: {
       id: true,
@@ -212,21 +232,31 @@ export async function sendContractMessage(contractId: string, options: SendContr
   if (contract.status === 'SIGNED') throw new Error('Dieser Vertrag ist bereits unterschrieben')
   if (contract.status === 'CANCELLED') throw new Error('Dieser Vertrag wurde zurückgezogen')
 
+  // Der Discord-Versand richtet sich an den Agent. Ein Behoerdenvertrag hat
+  // keinen — dessen Link wird kopiert und ueber einen eigenen Kanal
+  // weitergegeben.
+  const agent = contract.agent
+  if (!agent) {
+    throw new Error(
+      'Behördenverträge werden nicht über Discord verschickt. Bitte den Signaturlink kopieren und weitergeben.',
+    )
+  }
+
   const baseUrl = resolveBaseUrl(options.req)
   if (!baseUrl) {
     throw new Error('Basis-URL unbekannt — bitte NEXT_PUBLIC_SITE_URL setzen')
   }
 
   const prefix = await getBadgePrefix()
-  const badgeLabel = prefix && !contract.agent.badgeNumber.startsWith(prefix)
-    ? `${prefix.endsWith('-') ? prefix : `${prefix}-`}${contract.agent.badgeNumber}`
-    : contract.agent.badgeNumber
+  const badgeLabel = prefix && !agent.badgeNumber.startsWith(prefix)
+    ? `${prefix.endsWith('-') ? prefix : `${prefix}-`}${agent.badgeNumber}`
+    : agent.badgeNumber
 
   const result = await sendDiscordContractMessage({
-    discordId: contract.agent.discordId,
-    agentName: `${contract.agent.firstName} ${contract.agent.lastName}`.trim(),
+    discordId: agent.discordId,
+    agentName: `${agent.firstName} ${agent.lastName}`.trim(),
     badgeNumber: badgeLabel,
-    rankName: contract.agent.rank?.name ?? null,
+    rankName: agent.rank?.name ?? null,
     contractTitle: contract.title,
     contractUrl: contractUrl(baseUrl, contract.token),
     reminder: contract.sendCount > 0,

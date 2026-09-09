@@ -3,14 +3,8 @@ import { NextRequest } from 'next/server'
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
-import {
-  ClipTooLargeError,
-  clipExtensionFor,
-  clipMaxBytes,
-  deleteClipFile,
-  formatBytes,
-  saveClipStream,
-} from '@/lib/clips'
+import { deleteClipFile, formatBytes, resolveClipPath } from '@/lib/clips'
+import { adoptUploadedFile } from '@/lib/upload-adopt'
 import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
 import { prisma } from '@/lib/prisma'
 import {
@@ -24,6 +18,9 @@ import type { Prisma } from '@/generated/prisma'
 import { queueClipCompression } from '@/lib/clip-compression'
 import { bodycamAccess } from '@/lib/bodycam-access'
 import { uploadCors, uploadOptions } from '@/lib/upload-cors'
+import { consumeUploadSession, UploadSessionError } from '@/lib/upload-sessions'
+import { randomUUID } from 'node:crypto'
+import { z } from 'zod'
 
 export const OPTIONS = uploadOptions
 export async function POST(req: NextRequest) { return uploadCors(req, await uploadClip(req)) }
@@ -46,24 +43,24 @@ const clipInclude = {
   uploadedBy: { select: { id: true, displayName: true } },
 } as const
 
-/**
- * Die Metadaten reisen als base64-kodiertes JSON im Header `x-clip-meta` mit,
- * damit der Request-Body allein die Videodaten trägt. So kann der Upload direkt
- * auf die Platte gestreamt werden, statt als multipart im Speicher zu landen.
- */
-function parseClipMeta(header: string | null): Record<string, unknown> {
-  if (!header) throw new Error('Clip-Metadaten fehlen')
+const uploadSchema = z
+  .object({
+    uploadId: z.string().trim().min(1).max(64),
+    investigationId: z.string().trim().min(1).max(64),
+    entryId: z.string().trim().min(1).max(64).nullish(),
+    title: z.string().trim().min(1, 'Titel des Clips ist erforderlich').max(200, 'Titel ist zu lang (max. 200 Zeichen)'),
+    description: z.string().trim().max(5000).nullish(),
+    location: z.string().trim().max(200).nullish(),
+    recordedAt: z.string().trim().nullish(),
+    recordedByAgentId: z.string().trim().min(1).max(64).nullish(),
+    durationSeconds: z.number().nullish(),
+    tags: z.array(z.string()).max(50).optional(),
+  })
+  .strict()
 
-  try {
-    const decoded = Buffer.from(header, 'base64').toString('utf8')
-    const parsed = JSON.parse(decoded)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new Error('Clip-Metadaten sind ungültig')
-    }
-    return parsed as Record<string, unknown>
-  } catch {
-    throw new Error('Clip-Metadaten sind ungültig')
-  }
+/** Legt die geprüfte Datei unter einem neuen Namen im Clip-Verzeichnis ab. */
+async function adoptClipFile(source: string, extension: string) {
+  return adoptUploadedFile(source, resolveClipPath(`${randomUUID()}${extension}`))
 }
 
 async function listClips(req: NextRequest) {
@@ -126,26 +123,11 @@ async function uploadClip(req: NextRequest) {
   try {
     const user = await requirePermission('investigations:manage')
 
-    const mimeType = (req.headers.get('content-type') || '').split(';')[0]!.trim().toLowerCase()
-    if (!clipExtensionFor(mimeType)) {
-      return error('Nicht unterstütztes Videoformat (erlaubt: MP4, WebM, MOV, MKV)', 415)
-    }
-
-    // Frühzeitige Ablehnung, bevor überhaupt Daten geschrieben werden.
-    const declaredLength = Number.parseInt(req.headers.get('content-length') || '', 10)
-    const maxBytes = clipMaxBytes()
-    if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
-      return error(`Clip ist zu groß (max. ${formatBytes(maxBytes)})`, 413)
-    }
-
-    const meta = parseClipMeta(req.headers.get('x-clip-meta'))
-
-    const investigationId = cleanText(meta.investigationId)
-    if (!investigationId) return error('Ermittlungsakte ist erforderlich')
-
-    const title = cleanText(meta.title)
-    if (!title) return error('Titel des Clips ist erforderlich')
-    if (title.length > 200) return error('Titel ist zu lang (max. 200 Zeichen)')
+    // Die Videodaten sind bereits ueber /api/uploads eingetroffen und geprueft;
+    // hier reisen nur noch die Metadaten plus das Ticket.
+    const meta = uploadSchema.parse(await req.json())
+    const investigationId = meta.investigationId
+    const title = meta.title
 
     const investigation = await prisma.investigation.findUnique({
       where: { id: investigationId },
@@ -157,7 +139,7 @@ async function uploadClip(req: NextRequest) {
     if (!investigation) return notFound('Ermittlungsakte')
     if (!canAccessInvestigation(user, investigation)) return forbidden()
 
-    const entryId = cleanText(meta.entryId) || null
+    const entryId = cleanText(meta.entryId ?? '') || null
     if (entryId) {
       const entry = await prisma.investigationEntry.findUnique({
         where: { id: entryId },
@@ -169,7 +151,7 @@ async function uploadClip(req: NextRequest) {
       }
     }
 
-    const recordedByAgentId = cleanText(meta.recordedByAgentId) || null
+    const recordedByAgentId = cleanText(meta.recordedByAgentId ?? '') || null
     if (recordedByAgentId) {
       const agent = await prisma.agent.findUnique({
         where: { id: recordedByAgentId },
@@ -178,10 +160,8 @@ async function uploadClip(req: NextRequest) {
       if (!agent) return notFound('Agent')
     }
 
-    if (!req.body) return error('Es wurden keine Videodaten übertragen')
-
-    const expectedSize = req.headers.get('x-upload-size') ?? req.headers.get('content-length')
-    const { filename, sizeBytes } = await saveClipStream(req.body, mimeType, expectedSize === null ? undefined : Number(expectedSize))
+    const stored = await consumeUploadSession(meta.uploadId, user.id, 'CLIP', adoptClipFile)
+    const { filename, sizeBytes, mimeType, originalName } = stored
     storedFilename = filename
 
     const durationRaw = Number(meta.durationSeconds)
@@ -197,7 +177,7 @@ async function uploadClip(req: NextRequest) {
         recordedAt: parseDate(meta.recordedAt),
         location: cleanText(meta.location).slice(0, 200) || null,
         filename,
-        originalName: (cleanText(meta.originalName) || filename).slice(0, 255),
+        originalName: (originalName || filename).slice(0, 255),
         sizeBytes: BigInt(sizeBytes),
         mimeType,
         durationSeconds,
@@ -239,7 +219,7 @@ async function uploadClip(req: NextRequest) {
   } catch (cause: unknown) {
     // Angefangene Uploads hinterlassen keine verwaisten Dateien.
     if (storedFilename) await deleteClipFile(storedFilename)
-    if (cause instanceof ClipTooLargeError) return error(cause.message, 413)
+    if (cause instanceof UploadSessionError) return error(cause.message, cause.status)
     return routeError(cause)
   }
 }

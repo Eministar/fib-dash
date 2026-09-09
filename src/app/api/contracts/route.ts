@@ -20,8 +20,11 @@ export async function GET(req: NextRequest) {
     const agentId = req.nextUrl.searchParams.get('agentId')
     const openOnly = req.nextUrl.searchParams.get('open') === 'true'
 
+    const kind = req.nextUrl.searchParams.get('kind')
+
     const where: Prisma.ContractWhereInput = {}
     if (agentId) where.agentId = agentId
+    if (kind === 'AGENT' || kind === 'AGENCY') where.kind = kind
     if (isContractStatus(statusParam)) where.status = statusParam
     else if (openOnly) where.status = { in: ['DRAFT', 'SENT'] }
 

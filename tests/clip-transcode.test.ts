@@ -48,3 +48,32 @@ test('silent portrait video keeps its orientation; invalid input preserves sourc
     assert.equal(validCompressedDuration(100, 95), false)
   } finally { await rm(dir, { recursive: true, force: true }) }
 })
+
+test('Der Grund eines Fehlschlags landet im Datensatz, nicht nur im Log', async () => {
+  const { compressionFailureText } = await import('../src/lib/clip-compression')
+
+  // Der echte ffmpeg-Text muss durchkommen - vorher stand hier ein fester
+  // Satz, und jeder Fehlschlag sah von aussen gleich aus.
+  const text = compressionFailureText(
+    new Error('Videokonvertierung fehlgeschlagen: Error while opening encoder - maybe incorrect parameters'),
+  )
+  assert.match(text, /Original bleibt erhalten/)
+  assert.match(text, /incorrect parameters/)
+
+  // Dateipfade gehoeren nicht in die Oberflaeche.
+  const withPath = compressionFailureText(
+    new Error('Fehler bei C:\\Users\\srv\\clips\\abc.mp4 beim Lesen'),
+  )
+  assert.doesNotMatch(withPath, /C:\\Users/)
+  assert.match(withPath, /<Datei>/)
+
+  const unixPath = compressionFailureText(new Error('konnte /var/www/uploads/clips/abc.mp4 nicht lesen'))
+  assert.doesNotMatch(unixPath, /\/var\/www/)
+
+  // Das Feld fasst 300 Zeichen - laengere Meldungen werden gekuerzt.
+  assert.ok(compressionFailureText(new Error('x'.repeat(2000))).length <= 300)
+
+  // Auch etwas, das kein Error ist, ergibt einen brauchbaren Satz.
+  assert.match(compressionFailureText('kaputt'), /Grund: kaputt/)
+  assert.match(compressionFailureText(new Error('')), /Grund: unbekannt/)
+})

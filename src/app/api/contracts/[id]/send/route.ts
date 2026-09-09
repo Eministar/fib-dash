@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await createAuditLog({
       action: 'CONTRACT_MESSAGE_SENT',
       userId: user.id,
-      agentId: contract.agentId,
+      agentId: contract.agentId ?? undefined,
       newValue: result.delivered ? `Zugestellt (${result.via === 'dm' ? 'DM' : 'Channel'})` : 'Nicht zugestellt',
       details: result.error ?? contract.title,
     })

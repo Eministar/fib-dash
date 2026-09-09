@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await createAuditLog({
       action: body.action === 'cancel' ? 'CONTRACT_CANCELLED' : 'CONTRACT_REOPENED',
       userId: user.id,
-      agentId: existing.agentId,
+      agentId: existing.agentId ?? undefined,
       oldValue: existing.status,
       newValue: contract.status,
       details: contract.title,
@@ -91,7 +91,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await createAuditLog({
       action: 'CONTRACT_DELETED',
       userId: user.id,
-      agentId: contract.agentId,
+      agentId: contract.agentId ?? undefined,
       oldValue: contract.title,
     })
 

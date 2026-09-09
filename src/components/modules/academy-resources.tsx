@@ -25,6 +25,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
+import { uploadInChunks } from '@/lib/chunked-upload'
 
 type ResourceScope = 'GENERAL' | 'TRAINING'
 type ResourceType = 'FILE' | 'LINK'
@@ -144,26 +145,29 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
     if (mode === 'training' && !form.trainingChoice) return
     if (form.trainingChoice === '__custom__' && !form.customTrainingName.trim()) return
 
-    const body = new FormData()
-    body.set('scope', scope)
-    body.set('type', effectiveType)
-    body.set('title', form.title.trim())
-    body.set('description', form.description.trim())
-    if (mode === 'training') {
-      if (form.trainingChoice === '__custom__') {
-        body.set('customTrainingName', form.customTrainingName.trim())
-      } else {
-        body.set('trainingId', form.trainingChoice)
-      }
-    }
-    if (effectiveType === 'LINK') body.set('url', form.url.trim())
-    if (effectiveType === 'FILE' && file) body.set('file', file)
-
     setSubmitting(true)
     try {
+      // Erst die Datei in Stuecken uebertragen, dann die Ressource anlegen.
+      // Bei einem Link entfaellt der Upload-Schritt ganz.
+      const uploadId = effectiveType === 'FILE' && file ? (await uploadInChunks(file, 'RESOURCE')).uploadId : null
+
+      const body: Record<string, string | null> = {
+        scope,
+        type: effectiveType,
+        title: form.title.trim(),
+        description: form.description.trim(),
+      }
+      if (mode === 'training') {
+        if (form.trainingChoice === '__custom__') body.customTrainingName = form.customTrainingName.trim()
+        else body.trainingId = form.trainingChoice
+      }
+      if (effectiveType === 'LINK') body.url = form.url.trim()
+      if (uploadId) body.uploadId = uploadId
+
       const response = await fetch('/api/academy/resources', {
         method: 'POST',
-        body,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
         credentials: 'include',
         cache: 'no-store',
       })

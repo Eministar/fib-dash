@@ -4,6 +4,17 @@ import { useMemo } from 'react'
 import { renderMarkdown } from '@/lib/markdown'
 import { formatContractDate, type ContractClause, type ContractStatusValue } from '@/lib/contracts'
 
+/** Eine Partei, die den Vertrag unterschreibt. */
+export interface ContractDocumentParty {
+  id: string
+  side: string
+  partyName: string
+  partyRole: string | null
+  signedAt: string | Date | null
+  signedName: string | null
+  declinedAt: string | Date | null
+}
+
 export interface ContractDocumentData {
   title: string
   status: ContractStatusValue
@@ -14,13 +25,20 @@ export interface ContractDocumentData {
   documentDate: string
   signedAt: string | null
   signedName: string | null
+  /** AGENT = Arbeitsvertrag, AGENCY = Vereinbarung mit einer externen Behörde. */
+  kind?: string
+  counterpartyName?: string | null
+  counterpartyRole?: string | null
+  /** Bei einem Behördenvertrag gibt es keinen Mitarbeiter. */
   agent: {
     firstName: string
     lastName: string
     badgeNumber: string
     rankName: string | null
     hireDate: string | Date | null
-  }
+  } | null
+  /** Wenn gesetzt, entsteht die Unterschriftszeile aus diesen Parteien. */
+  parties?: ContractDocumentParty[]
 }
 
 const DEPARTMENT_NAME = 'Federal Investigation Bureau'
@@ -46,10 +64,12 @@ export function ContractDocument({
   document: ContractDocumentData
   children?: React.ReactNode
 }) {
-  const agentName = `${document.agent.firstName} ${document.agent.lastName}`.trim()
+  const agent = document.agent
+  const agentName = agent ? `${agent.firstName} ${agent.lastName}`.trim() : ''
   const dateLabel = formatContractDate(document.documentDate)
   const signed = document.status === 'SIGNED'
   const voided = document.status === 'CANCELLED' || document.status === 'DECLINED'
+  const isAgency = document.kind === 'AGENCY'
 
   return (
     <article
@@ -76,26 +96,53 @@ export function ContractDocument({
 
         <h1 className="contract-doc-title">{document.title}</h1>
         <p className="contract-doc-subtitle">
-          Dokument-Nr. {document.agent.badgeNumber || '—'} · Ausgestellt in {document.place}
+          {isAgency
+            ? `Vereinbarung zwischen zwei Behörden · Ausgestellt in ${document.place}`
+            : `Dokument-Nr. ${agent?.badgeNumber || '—'} · Ausgestellt in ${document.place}`}
         </p>
 
+        {/* Ein Arbeitsvertrag nennt den Mitarbeiter, ein Behördenvertrag die
+            beiden Seiten — dieselbe Zeile trüge sonst falsche Begriffe. */}
         <dl className="contract-meta">
-          <div>
-            <dt>Mitarbeiter</dt>
-            <dd>{agentName || '—'}</dd>
-          </div>
-          <div>
-            <dt>Dienstnummer</dt>
-            <dd>{document.agent.badgeNumber || '—'}</dd>
-          </div>
-          <div>
-            <dt>Dienstgrad</dt>
-            <dd>{document.agent.rankName || '—'}</dd>
-          </div>
-          <div>
-            <dt>Eintrittsdatum</dt>
-            <dd>{formatContractDate(document.agent.hireDate) || '—'}</dd>
-          </div>
+          {isAgency ? (
+            <>
+              <div>
+                <dt>Vertragspartner</dt>
+                <dd>{DEPARTMENT_NAME}</dd>
+              </div>
+              <div>
+                <dt>Gegenpartei</dt>
+                <dd>{document.counterpartyName || '—'}</dd>
+              </div>
+              <div>
+                <dt>Vertreten durch</dt>
+                <dd>{document.counterpartyRole || '—'}</dd>
+              </div>
+              <div>
+                <dt>Ausgestellt</dt>
+                <dd>{dateLabel || '—'}</dd>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <dt>Mitarbeiter</dt>
+                <dd>{agentName || '—'}</dd>
+              </div>
+              <div>
+                <dt>Dienstnummer</dt>
+                <dd>{agent?.badgeNumber || '—'}</dd>
+              </div>
+              <div>
+                <dt>Dienstgrad</dt>
+                <dd>{agent?.rankName || '—'}</dd>
+              </div>
+              <div>
+                <dt>Eintrittsdatum</dt>
+                <dd>{formatContractDate(agent?.hireDate ?? null) || '—'}</dd>
+              </div>
+            </>
+          )}
         </dl>
 
         <section className="contract-section">
@@ -130,23 +177,43 @@ export function ContractDocument({
         </p>
 
         <div className="contract-signature-grid">
-          <div>
-            <div className="contract-signature-name">Personalabteilung</div>
-            <div className="contract-signature-line">Für das {DEPARTMENT_NAME}</div>
-          </div>
-          <div>
-            <div className="contract-signature-name">{signed ? document.signedName : ''}</div>
-            <div className="contract-signature-line">
-              {agentName || 'Mitarbeiter'}
-              {signed && document.signedAt ? ` · ${formatContractDate(document.signedAt)}` : ''}
-            </div>
-          </div>
+          {document.parties && document.parties.length > 0 ? (
+            // Ein Block je Partei — bei zwei Behörden stehen sich beide
+            // gegenüber, bei einem Arbeitsvertrag bleibt es bei einem Feld.
+            document.parties.map((party) => (
+              <div key={party.id}>
+                <div className="contract-signature-name">{party.signedName ?? ''}</div>
+                <div className="contract-signature-line">
+                  {party.partyName}
+                  {party.partyRole ? ` · ${party.partyRole}` : ''}
+                  {party.signedAt ? ` · ${formatContractDate(party.signedAt)}` : ''}
+                  {party.declinedAt ? ' · abgelehnt' : ''}
+                </div>
+              </div>
+            ))
+          ) : (
+            <>
+              <div>
+                <div className="contract-signature-name">Personalabteilung</div>
+                <div className="contract-signature-line">Für das {DEPARTMENT_NAME}</div>
+              </div>
+              <div>
+                <div className="contract-signature-name">{signed ? document.signedName : ''}</div>
+                <div className="contract-signature-line">
+                  {agentName || 'Mitarbeiter'}
+                  {signed && document.signedAt ? ` · ${formatContractDate(document.signedAt)}` : ''}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {signed && (
         <div className="contract-stamp" aria-hidden="true">
-          <span className="contract-stamp-top">FIB · Personalabteilung</span>
+          <span className="contract-stamp-top">
+            {isAgency ? 'FIB · Behördenvereinbarung' : 'FIB · Personalabteilung'}
+          </span>
           <span className="contract-stamp-main">Geprüft</span>
           <span className="contract-stamp-date">{formatContractDate(document.signedAt)}</span>
           <span className="contract-stamp-top">{document.place}</span>

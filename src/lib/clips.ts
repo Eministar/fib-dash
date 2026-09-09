@@ -1,9 +1,7 @@
-import { randomUUID } from 'node:crypto'
-import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, stat, unlink } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
+import { stat, unlink } from 'node:fs/promises'
 import path from 'node:path'
-import { Readable, Transform } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
+import { Readable } from 'node:stream'
 
 import { uploadDir } from '@/lib/uploads'
 
@@ -15,13 +13,6 @@ export const ALLOWED_CLIP_TYPES: Record<string, string> = {
   'video/webm': '.webm',
   'video/quicktime': '.mov',
   'video/x-matroska': '.mkv',
-}
-
-export class ClipTooLargeError extends Error {
-  constructor(maxBytes: number) {
-    super(`Clip ist zu groß (max. ${Math.floor(maxBytes / (1024 * 1024))} MB)`)
-    this.name = 'ClipTooLargeError'
-  }
 }
 
 export function clipMaxBytes() {
@@ -63,55 +54,6 @@ export function resolveClipPath(filename: string) {
 
 export function clipExtensionFor(mimeType: string) {
   return ALLOWED_CLIP_TYPES[mimeType.split(';')[0]!.trim().toLowerCase()] ?? null
-}
-
-/**
- * Schreibt den Request-Body als Stream auf Platte. Die Datei landet nie
- * vollständig im Speicher; bei Limit-Überschreitung oder Abbruch wird die
- * angefangene Datei wieder entfernt.
- */
-export async function saveClipStream(
-  body: ReadableStream<Uint8Array>,
-  mimeType: string,
-  expectedSize?: number,
-): Promise<{ filename: string; sizeBytes: number }> {
-  const extension = clipExtensionFor(mimeType)
-  if (!extension) throw new Error('Nicht unterstütztes Videoformat')
-
-  const maxBytes = clipMaxBytes()
-  if (expectedSize !== undefined && (!Number.isSafeInteger(expectedSize) || expectedSize <= 0)) throw new Error('Ungültige Dateigröße')
-  if (expectedSize !== undefined && expectedSize > maxBytes) throw new ClipTooLargeError(maxBytes)
-  const filename = `${randomUUID()}${extension}`
-  const target = resolveClipPath(filename)
-
-  await mkdir(clipDir(), { recursive: true })
-
-  let sizeBytes = 0
-  const source = Readable.fromWeb(body as Parameters<typeof Readable.fromWeb>[0])
-  const limiter = new Transform({
-    transform(chunk: Buffer, _encoding, callback) {
-      sizeBytes += chunk.length
-      if (sizeBytes > maxBytes) {
-        callback(new ClipTooLargeError(maxBytes))
-        return
-      }
-      callback(null, chunk)
-    },
-  })
-
-  try {
-    await pipeline(source, limiter, createWriteStream(target))
-  } catch (cause) {
-    await unlink(target).catch(() => {})
-    throw cause
-  }
-
-  if (sizeBytes === 0 || (expectedSize !== undefined && sizeBytes !== expectedSize)) {
-    await unlink(target).catch(() => {})
-    throw new Error('Upload unvollständig. Bitte erneut hochladen; der Clip wurde nicht gespeichert.')
-  }
-
-  return { filename, sizeBytes }
 }
 
 export async function deleteClipFile(filename: string) {

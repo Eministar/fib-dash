@@ -6,6 +6,7 @@ import { ImageIcon, RefreshCw, Upload } from 'lucide-react'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useAuth } from '@/context/auth-context'
+import { uploadInChunks } from '@/lib/chunked-upload'
 import { hasPermission } from '@/lib/permissions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -29,15 +30,16 @@ export function PhotoUploadButton({ onUploaded }: { onUploaded: (photo: CatalogP
     setBusy(true)
     setFailure('')
     try {
+      // Auch kleine Bilder gehen ueber den Chunk-Weg: ein Upload-Pfad statt zwei.
+      const ticket = await uploadInChunks(file, 'PHOTO')
       const response = await fetch('/api/investigations/photos/upload', {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': file.type || 'application/octet-stream',
-          'x-photo-title': encodeURIComponent(file.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 200) || 'Upload'),
-          'x-upload-size': String(file.size),
-        },
-        body: file,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uploadId: ticket.uploadId,
+          title: file.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 200) || 'Upload',
+        }),
       })
       const parsed = (await response.json().catch(() => null)) as { success?: boolean; error?: string; data?: CatalogPhoto } | null
       if (!response.ok || !parsed?.success || !parsed.data) {

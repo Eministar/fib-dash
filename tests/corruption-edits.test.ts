@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import type { Prisma } from '../src/generated/prisma'
 import { correctReport, correctionSchema, mergeOfficials } from '../src/lib/corruption-edits'
 import { resolveOfficial } from '../src/lib/corruption-server'
-import { matchesEvidenceType, evidencePath, saveEvidence } from '../src/lib/corruption-evidence'
+import { matchesEvidenceType, evidencePath } from '../src/lib/corruption-evidence'
 import { resolveBodycamAccess } from '../src/lib/bodycam-access'
 import type { CurrentAuth } from '../src/lib/auth'
 
@@ -73,6 +73,7 @@ test('Evidence uploads reject forged content types and traversal', async () => {
   assert.equal(matchesEvidenceType('application/pdf', Buffer.from('<html>fake</html>')), false)
   assert.equal(matchesEvidenceType('image/svg+xml', Buffer.from('<svg/>')), false)
   assert.throws(() => evidencePath('../../secret.pdf'))
-  await assert.rejects(saveEvidence(new ReadableStream({ start(c) { c.enqueue(Buffer.from('not a PNG')); c.close() } }), 'image/png'), /Dateiinhalt/)
+  // Die Signaturpruefung sitzt jetzt im Chunk-Abschluss; hier bleibt der reine Vorgabentest.
+  assert.equal(matchesEvidenceType('image/png', Buffer.from('not a PNG')), false)
   assert.equal(correctionSchema.safeParse({ version: 1, reason: '' }).success, false)
 })

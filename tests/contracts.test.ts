@@ -1,0 +1,211 @@
+/**
+ * Charakterisierungstests: sie schreiben fest, wie sich das Vertragssystem
+ * HEUTE verhält — vor dem Umbau auf mehrere Unterzeichner. Sie sind die
+ * Absicherung des Einstellungsverfahrens: schlägt hier nach dem Umbau etwas
+ * fehl, ist die Migration schuld, nicht der Test.
+ *
+ * Diese Datei prüft nur, was ohne Datenbank läuft. Die Zustandsübergänge
+ * stehen in `contracts-db.test.ts`.
+ */
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+
+import {
+  CONTRACT_FIELD_TYPES,
+  CONTRACT_STATUSES,
+  formatContractDate,
+  normalizeLinkToken,
+  primarySignatureField,
+  readContractClauses,
+  readContractFields,
+  renderContractContent,
+  sanitizeContractFields,
+  validateContractValues,
+  type ContractField,
+} from '../src/lib/contracts'
+
+function field(patch: Partial<ContractField> & Pick<ContractField, 'id' | 'type' | 'label'>): ContractField {
+  return { description: null, placeholder: null, required: false, sortOrder: 0, ...patch }
+}
+
+test('Platzhalter werden beim Anlegen aufgeloest, Ort und Datum bleiben stehen', () => {
+  const context = {
+    firstName: 'Jane',
+    lastName: 'Doe',
+    badgeNumber: '1234',
+    rankName: 'Special Agent',
+    hireDate: new Date('2026-03-04T00:00:00Z'),
+    discordId: '99',
+    units: ['SRU', 'LAD'],
+  }
+
+  const rendered = renderContractContent(
+    'Hallo {{vorname}} {{nachname}} ({{name}}), Nr. {{dienstnummer}}, Rang {{rang}}, ' +
+      'seit {{einstellungsdatum}}, Units {{units}}, Discord {{discord_id}}, {{department}}.',
+    context,
+  )
+
+  assert.match(rendered, /Hallo Jane Doe \(Jane Doe\)/)
+  assert.match(rendered, /Nr\. 1234/)
+  assert.match(rendered, /Rang Special Agent/)
+  assert.match(rendered, /Units SRU, LAD/)
+  assert.match(rendered, /Federal Investigation Bureau/)
+
+  // Ort und Datum werden bewusst erst beim Anzeigen ersetzt, damit auf dem
+  // Dokument immer das aktuelle Datum steht.
+  const kept = renderContractContent('{{ort}}, den {{datum}}', context)
+  assert.equal(kept, '{{ort}}, den {{datum}}')
+
+  // Ein Tippfehler in der Vorlage bleibt sichtbar, statt still zu verschwinden.
+  assert.equal(renderContractContent('{{vorrname}}', context), '{{vorrname}}')
+})
+
+test('Link-Token werden streng normalisiert', () => {
+  assert.equal(normalizeLinkToken('  abc123  '), 'abc123')
+  assert.equal(normalizeLinkToken(''), '')
+  assert.equal(normalizeLinkToken(null), '')
+  assert.equal(normalizeLinkToken(undefined), '')
+})
+
+test('Eingaben des Unterzeichners werden gegen die Felddefinition geprueft', () => {
+  const fields = [
+    field({ id: 'sig', type: 'SIGNATURE', label: 'Unterschrift', required: true }),
+    field({ id: 'ok', type: 'CHECKBOX', label: 'Einverstanden', required: true }),
+    field({ id: 'tag', type: 'DATE', label: 'Datum' }),
+    field({ id: 'note', type: 'LONG_TEXT', label: 'Anmerkung' }),
+  ]
+
+  const good = validateContractValues(fields, {
+    sig: '  Jane Doe  ',
+    ok: true,
+    tag: '2026-09-09',
+    note: 'passt',
+  })
+  assert.deepEqual(good.errors, [])
+  assert.equal(good.values.sig, 'Jane Doe')
+  assert.equal(good.values.ok, true)
+
+  const bad = validateContractValues(fields, { sig: 'JD', ok: false, tag: '09.09.2026' })
+  assert.equal(bad.values.ok, false)
+  assert.equal(bad.errors.length, 3, bad.errors.join(' | '))
+  assert.ok(bad.errors.some((e) => e.includes('vollständigen Namen')))
+  assert.ok(bad.errors.some((e) => e.includes('bestätigt')))
+  assert.ok(bad.errors.some((e) => e.includes('gültiges Datum')))
+
+  // Ein Pflichtfeld ohne Eingabe meldet genau einen Fehler.
+  const empty = validateContractValues([field({ id: 'x', type: 'SHORT_TEXT', label: 'Ort', required: true })], {})
+  assert.deepEqual(empty.errors, ['„Ort“ ist erforderlich.'])
+})
+
+test('Das erste Unterschriftsfeld liefert den gespeicherten Namen', () => {
+  const fields = [
+    field({ id: 'a', type: 'SHORT_TEXT', label: 'Ort' }),
+    field({ id: 'b', type: 'SIGNATURE', label: 'Erste Unterschrift' }),
+    field({ id: 'c', type: 'SIGNATURE', label: 'Zweite Unterschrift' }),
+  ]
+  assert.equal(primarySignatureField(fields)?.id, 'b')
+  assert.equal(primarySignatureField([]), null)
+})
+
+test('Felder und Regelungen werden aus JSON robust gelesen', () => {
+  // Aus der Datenbank kommt Json - alles muss auch bei Unsinn halten.
+  assert.deepEqual(readContractFields(null), [])
+  assert.deepEqual(readContractFields('kaputt'), [])
+  assert.deepEqual(readContractClauses(undefined), [])
+
+  const sanitized = sanitizeContractFields([
+    { id: 'a', type: 'SIGNATURE', label: 'Unterschrift', required: true, sortOrder: 1 },
+    { id: 'b', type: 'GIBT_ES_NICHT', label: 'Unbekannt' },
+  ])
+  assert.equal(sanitized.length, 2)
+  assert.equal(sanitized[0]!.type, 'SIGNATURE')
+  // Ein unbekannter Typ faellt auf Kurztext zurueck, statt den Vertrag zu sprengen.
+  assert.equal(sanitized[1]!.type, 'SHORT_TEXT')
+})
+
+test('Status und Feldtypen sind die erwarteten', () => {
+  // Der Umbau darf keinen Status verlieren; SIGNED und DECLINED werden
+  // kuenftig aus den einzelnen Unterschriften abgeleitet.
+  assert.deepEqual([...CONTRACT_STATUSES], ['DRAFT', 'SENT', 'SIGNED', 'DECLINED', 'CANCELLED'])
+  assert.deepEqual([...CONTRACT_FIELD_TYPES], ['SHORT_TEXT', 'LONG_TEXT', 'DATE', 'CHECKBOX', 'SIGNATURE'])
+})
+
+test('Vertragsdatum wird deutsch formatiert', () => {
+  assert.equal(formatContractDate(new Date('2026-09-09T12:00:00Z')), '09.09.2026')
+  assert.equal(formatContractDate(null), '')
+  assert.equal(formatContractDate('unsinn'), '')
+})
+
+// --- Verträge mit mehreren Unterzeichnern -----------------------------------
+
+test('Der Vertragsstatus wird aus den einzelnen Unterschriften abgeleitet', async () => {
+  const { deriveContractStatus } = await import('../src/lib/contract-signatures')
+  const open = { signedAt: null, declinedAt: null }
+  const signed = { signedAt: new Date(), declinedAt: null }
+  const declined = { signedAt: null, declinedAt: new Date() }
+
+  // Zwei Parteien: erst wenn beide unterschrieben haben, ist der Vertrag zu.
+  assert.equal(deriveContractStatus([open, open], 'SENT'), 'SENT')
+  assert.equal(deriveContractStatus([signed, open], 'SENT'), 'SENT')
+  assert.equal(deriveContractStatus([signed, signed], 'SENT'), 'SIGNED')
+
+  // Eine Ablehnung genügt und wiegt schwerer als eine bereits geleistete
+  // Unterschrift der Gegenseite.
+  assert.equal(deriveContractStatus([signed, declined], 'SENT'), 'DECLINED')
+  assert.equal(deriveContractStatus([declined, open], 'SENT'), 'DECLINED')
+
+  // Ein zurückgezogener Vertrag bleibt zurückgezogen, egal was die Zeilen sagen.
+  assert.equal(deriveContractStatus([signed, signed], 'CANCELLED'), 'CANCELLED')
+
+  // Ein Entwurf bleibt Entwurf, solange niemand gezeichnet hat ...
+  assert.equal(deriveContractStatus([open], 'DRAFT'), 'DRAFT')
+  assert.equal(deriveContractStatus([open, open], 'DRAFT'), 'DRAFT')
+  // ... danach nicht mehr: eine geleistete Unterschrift macht aus einem
+  // Entwurf einen laufenden Vertrag.
+  assert.equal(deriveContractStatus([signed, open], 'DRAFT'), 'SENT')
+  assert.equal(deriveContractStatus([signed], 'DRAFT'), 'SIGNED')
+
+  // Ohne Zeilen lässt sich nichts ableiten - der Status bleibt, wie er ist.
+  assert.equal(deriveContractStatus([], 'SENT'), 'SENT')
+})
+
+test('Eine externe Partei weist sich allein ueber den Link aus', async () => {
+  const { signatureRequiresDiscord } = await import('../src/lib/contract-signatures')
+
+  // Interne Partei: die hinterlegte Discord-Identität muss stimmen.
+  assert.equal(signatureRequiresDiscord({ side: 'INTERNAL', signerDiscordId: '42' }), true)
+
+  // Externe Behörde: kein Account, kein Discord. Wer den Link hat, unterschreibt.
+  assert.equal(signatureRequiresDiscord({ side: 'EXTERNAL', signerDiscordId: null }), false)
+
+  // Ein Altvertrag ist EXTERNAL, traegt aber eine Discord-ID - die gilt weiter.
+  assert.equal(signatureRequiresDiscord({ side: 'EXTERNAL', signerDiscordId: '42' }), true)
+})
+
+test('Wer unterschreiben darf, haengt an der Identitaet - nur extern reicht der Link', async () => {
+  const { signerMatches } = await import('../src/lib/contract-signatures')
+
+  const internal = { side: 'INTERNAL', signerDiscordId: '42' }
+  const external = { side: 'EXTERNAL', signerDiscordId: null }
+
+  // Interne Partei: nur die hinterlegte Discord-Identität kommt durch.
+  assert.equal(signerMatches(internal, null, '42'), true)
+  assert.equal(signerMatches(internal, null, '99'), false)
+  assert.equal(signerMatches(internal, null, null), false)
+
+  // Altvertrag: die Discord-ID der Agent-Akte gilt zusätzlich, damit eine
+  // nachträglich korrigierte ID den richtigen Account nicht aussperrt.
+  const legacy = { side: 'EXTERNAL', signerDiscordId: '42' }
+  assert.equal(signerMatches(legacy, '77', '77'), true)
+  assert.equal(signerMatches(legacy, '77', '42'), true)
+  assert.equal(signerMatches(legacy, '77', '13'), false)
+
+  // Externe Behörde ohne Discord: wer den Link hat, unterschreibt. Bewusst so —
+  // eine fremde Behörde hat keinen Account in diesem Dashboard.
+  assert.equal(signerMatches(external, null, null), true)
+  assert.equal(signerMatches(external, null, 'egal'), true)
+
+  // Eine externe Zeile mit Agent dahinter bleibt an die Identität gebunden.
+  assert.equal(signerMatches(external, '77', null), false)
+  assert.equal(signerMatches(external, '77', '77'), true)
+})

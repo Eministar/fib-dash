@@ -6,5 +6,7 @@ export async function register() {
     ensurePhotoCatalogSync()
     const { ensureHirePingCleanup } = await import('./lib/hire-ping')
     ensureHirePingCleanup()
+    const { ensureUploadCleanupWorker } = await import('./lib/upload-sessions')
+    ensureUploadCleanupWorker()
   }
 }

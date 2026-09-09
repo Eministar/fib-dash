@@ -50,7 +50,8 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Binary uploads must reach their streaming handlers without Next cloning
-  // and truncating their bodies at the proxy's default 10 MB buffer limit.
-  matcher: '/api/((?!investigations/clips/?$|corruption-checks/[^/]+/evidence/?$).*)',
+  // Die Chunk-Route ist der einzige Request, der noch gross wird. Sie muss am
+  // Body-Klonen des Proxys vorbei, das Bodys bei 10 MB abschneidet. Alle
+  // anderen Upload-Endpunkte tragen nur noch JSON.
+  matcher: '/api/((?!uploads/[^/]+/chunks/).*)',
 }

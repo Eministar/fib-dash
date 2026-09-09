@@ -10,6 +10,13 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
+import {
+  cancelUpload,
+  formatRate,
+  formatRemaining,
+  uploadInChunks,
+  type UploadProgress,
+} from '@/lib/chunked-upload'
 import type { AgentLite, BodycamClip, InvestigationEntry } from '@/components/investigations/types'
 
 const ACCEPTED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska']
@@ -20,17 +27,6 @@ function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-}
-
-/**
- * Der Header muss reines ASCII enthalten, die Metadaten dagegen Umlaute
- * transportieren – deshalb UTF-8 kodieren und dann base64.
- */
-function encodeMeta(meta: Record<string, unknown>) {
-  const bytes = new TextEncoder().encode(JSON.stringify(meta))
-  let binary = ''
-  for (const byte of bytes) binary += String.fromCharCode(byte)
-  return btoa(binary)
 }
 
 /** Liest die Laufzeit aus der Datei, damit sie nicht von Hand gepflegt werden muss. */
@@ -74,7 +70,7 @@ export function ClipUploadDialog({
 }: ClipUploadDialogProps) {
   const { toastSuccess, toastError } = useInvestigationToast()
   const inputRef = useRef<HTMLInputElement>(null)
-  const requestRef = useRef<XMLHttpRequest | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -84,7 +80,7 @@ export function ClipUploadDialog({
   const [entryId, setEntryId] = useState('')
   const [recordedByAgentId, setRecordedByAgentId] = useState('')
   const [tags, setTags] = useState('')
-  const [progress, setProgress] = useState<number | null>(null)
+  const [progress, setProgress] = useState<UploadProgress | null>(null)
   const [dragging, setDragging] = useState(false)
 
   const entryOptions = useMemo(
@@ -121,8 +117,8 @@ export function ClipUploadDialog({
 
   const handleClose = () => {
     if (progress !== null) {
-      requestRef.current?.abort()
-      requestRef.current = null
+      abortRef.current?.abort()
+      abortRef.current = null
     }
     reset()
     onClose()
@@ -151,74 +147,77 @@ export function ClipUploadDialog({
 
     const durationSeconds = await readDuration(file)
 
-    const meta = encodeMeta({
-      investigationId,
-      entryId: entryId || null,
-      title: title.trim(),
-      description: description.trim() || null,
-      location: location.trim() || null,
-      recordedAt: recordedAt ? new Date(recordedAt).toISOString() : null,
-      recordedByAgentId: recordedByAgentId || null,
-      originalName: file.name,
-      durationSeconds,
-      tags: tags
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean),
+    const controller = new AbortController()
+    abortRef.current = controller
+    setProgress({
+      sentBytes: 0,
+      totalBytes: file.size,
+      percent: 0,
+      bytesPerSecond: 0,
+      secondsRemaining: null,
+      resumed: false,
     })
 
-    setProgress(0)
+    let ticketId: string | null = null
 
     try {
-      const clip = await new Promise<BodycamClip>((resolve, reject) => {
-        const request = new XMLHttpRequest()
-        requestRef.current = request
-        request.open('POST', '/api/investigations/clips')
-        request.withCredentials = true
-        request.setRequestHeader('Content-Type', file.type || 'video/mp4')
-        request.setRequestHeader('x-clip-meta', meta)
-        request.setRequestHeader('x-upload-size', String(file.size))
-
-        request.upload.onprogress = (event) => {
-          if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100))
-        }
-
-        request.onload = () => {
-          if (request.status === 413 || request.status === 404 && request.responseText.includes('404.13')) {
-            reject(new Error('Der vorgeschaltete Webserver lehnt die Dateigröße ab. Upload-Limit auf dem Server prüfen (HTTP ' + request.status + ').'))
-            return
-          }
-          try {
-            const parsed = JSON.parse(request.responseText) as {
-              success?: boolean
-              error?: string
-              data?: BodycamClip
-            }
-            if (request.status >= 200 && request.status < 300 && parsed.success && parsed.data) {
-              resolve(parsed.data)
-            } else {
-              reject(new Error(parsed.error || `Upload fehlgeschlagen (HTTP ${request.status})`))
-            }
-          } catch {
-            reject(new Error(`Upload fehlgeschlagen (HTTP ${request.status})`))
-          }
-        }
-        request.onerror = () => reject(new Error('Verbindung zum Server unterbrochen'))
-        request.onabort = () => reject(new Error('Upload abgebrochen'))
-
-        request.send(file)
+      // Erst die Datei in Stuecken uebertragen, dann die Metadaten als ganz
+      // normales JSON. Kein Request wird dabei groesser als ein Chunk.
+      const ticket = await uploadInChunks(file, 'CLIP', {
+        signal: controller.signal,
+        onProgress: setProgress,
       })
+      ticketId = ticket.uploadId
+
+      const response = await fetch('/api/investigations/clips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          uploadId: ticket.uploadId,
+          investigationId,
+          entryId: entryId || null,
+          title: title.trim(),
+          description: description.trim() || null,
+          location: location.trim() || null,
+          recordedAt: recordedAt ? new Date(recordedAt).toISOString() : null,
+          recordedByAgentId: recordedByAgentId || null,
+          durationSeconds,
+          tags: tags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        }),
+      })
+
+      const parsed = (await response.json().catch(() => null)) as
+        | { success?: boolean; error?: string; data?: BodycamClip }
+        | null
+      if (!response.ok || !parsed?.success || !parsed.data) {
+        throw new Error(parsed?.error || `Upload fehlgeschlagen (HTTP ${response.status})`)
+      }
+      const clip = parsed.data
 
       toastSuccess('Clip hochgeladen', `"${clip.title}" wurde der Akte hinzugefügt.`)
       onUploaded(clip)
       reset()
       onClose()
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Unbekannter Fehler'
-      if (message !== 'Upload abgebrochen') toastError('Upload fehlgeschlagen', message)
+      if (controller.signal.aborted) {
+        // Beim Abbruch mitten in der Uebertragung bleibt die Sitzung absichtlich
+        // stehen — genau daraus entsteht das spaetere Fortsetzen. Nur ein
+        // bereits fertiges Ticket, das nun niemand mehr einloest, wird
+        // aufgeraeumt, statt 24 Stunden Platz zu belegen.
+        if (ticketId) void cancelUpload(ticketId)
+      } else {
+        toastError(
+          'Upload fehlgeschlagen',
+          cause instanceof Error ? cause.message : 'Unbekannter Fehler',
+        )
+      }
       setProgress(null)
     } finally {
-      requestRef.current = null
+      abortRef.current = null
     }
   }
 
@@ -291,12 +290,24 @@ export function ClipUploadDialog({
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#232323]">
               <div
                 className="h-full rounded-full bg-[#a78bfa] transition-[width] duration-200"
-                style={{ width: `${progress}%` }}
+                style={{ width: `${progress.percent}%` }}
               />
             </div>
-            <p className="mt-1.5 text-[11.5px] text-[#808080]">
-              {progress}% übertragen{progress === 100 ? ' – wird gespeichert…' : ''}
+            <p className="mt-1.5 flex flex-wrap gap-x-2 text-[11.5px] text-[#808080]">
+              <span>
+                {progress.percent}% übertragen
+                {progress.percent === 100 ? ' – wird zusammengesetzt…' : ''}
+              </span>
+              {formatRate(progress.bytesPerSecond) && <span>· {formatRate(progress.bytesPerSecond)}</span>}
+              {formatRemaining(progress.secondsRemaining) && (
+                <span>· {formatRemaining(progress.secondsRemaining)}</span>
+              )}
             </p>
+            {progress.resumed && (
+              <p className="mt-1 text-[11.5px] text-[#a78bfa]">
+                Angefangene Übertragung gefunden – es wird dort fortgesetzt, wo sie abgebrochen ist.
+              </p>
+            )}
           </div>
         )}
 

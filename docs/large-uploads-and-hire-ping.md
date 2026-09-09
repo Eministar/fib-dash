@@ -1,25 +1,77 @@
 # Große Uploads und Einstellungs-Ping
 
-## Upload-Korrektur
+## Uploads in Stücken
 
-Die installierte Next-Version klont Request-Bodies bei aktivem Proxy und puffert standardmäßig nur 10 MB. Die binären Upload-Routen `/api/investigations/clips` und `/api/corruption-checks/:id/evidence` umgehen jetzt diesen Proxy und streamen direkt auf Platte. Die Routen behalten ihre Authentifizierung und liefern CORS inklusive Preflight selbst aus.
+Alle vier Dateiwege des Dashboards — Bodycam-Clips, Asservate der
+Korruptionsprüfung, Ermittlungsfotos und Akademie-Ressourcen — laufen über einen
+gemeinsamen, wiederaufnehmbaren Transport unter `/api/uploads`:
 
-Bodycam-Clips erlauben standardmäßig 500 MiB (über `CLIP_MAX_BYTES` konfigurierbar). Beweisanlagen erlauben jetzt ebenfalls 500 MiB statt bisher 100 MiB. Der Browser sendet die erwartete Größe als `X-Upload-Size`; der Server vergleicht diese mit den tatsächlich gespeicherten Bytes. Abgebrochene oder gekürzte Uploads werden verworfen, bevor ein Datenbankeintrag angelegt wird.
+1. `POST /api/uploads` legt eine Sitzung an oder findet eine angefangene wieder.
+2. `PUT /api/uploads/:id/chunks/:index` nimmt je ein Stück von 8 MiB entgegen,
+   mit dessen SHA-256 im Header `x-chunk-sha256`.
+3. `POST /api/uploads/:id/complete` setzt zusammen und prüft Größe, Dateisignatur
+   und Gesamtprüfsumme.
+4. Die fachliche Route bekommt anschließend nur noch JSON mit `uploadId`.
 
-Die mitgelieferte `web.config` setzt das IIS-Request-Limit auf 524288000 Bytes. Für den iisnode-Server erlaubt `start.js` bis zu 30 Minuten zum Empfangen eines Requests. Diese Änderungen greifen erst nach Deployment und Neustart.
+**Kein einzelner Request wird größer als ein Chunk.** Damit steht kein
+Größenlimit eines vorgeschalteten Proxys mehr im Weg — weder nginx noch ein CDN.
 
-Ein zusätzlicher vorgeschalteter Proxy muss die Größe ebenfalls zulassen. Bei nginx/Plesk beispielsweise im passenden Server-/Location-Kontext:
+### Was das für den Betrieb heißt
+
+- Ein abgebrochener Upload lässt sich **24 Stunden** lang fortsetzen. Der Server
+  erkennt dieselbe Datei am Fingerabdruck aus Name, Größe und Änderungsdatum;
+  der Browser muss sich nichts merken.
+- Höchstens **drei** offene Sitzungen je Nutzer. Die vierte wird mit HTTP 429
+  abgewiesen.
+- Angefangene Uploads belegen bis zum Ablauf Plattenplatz unter
+  `uploads/incoming/<sessionId>/`. Ein eigener Worker
+  (`ensureUploadCleanupWorker`, alle 10 Minuten) räumt abgelaufene Sitzungen,
+  nicht eingelöste fertige Uploads und verwaiste Ordner weg. Er hängt bewusst
+  **nicht** am Komprimierungs-Worker: `CLIP_COMPRESSION_ENABLED=false` darf die
+  Bereinigung nicht stilllegen.
+- Der Dateiinhalt wird an den ersten Bytes geprüft, nicht am `Content-Type` des
+  Clients. WebM und MKV teilen sich die EBML-Signatur und sind dabei nicht
+  unterscheidbar; geprüft wird gegen die erlaubte Signaturgruppe.
+
+### Einstellungen
+
+| Variable | Vorgabe | Wirkung |
+|---|---|---|
+| `UPLOAD_CHUNK_BYTES` | `8388608` (8 MiB) | Größe eines Stücks. Vom Server bestimmt, nicht vom Client. |
+| `NEXT_PUBLIC_UPLOAD_CONCURRENCY` | `3` | Gleichzeitige Verbindungen im Browser. |
+| `CLIP_MAX_BYTES` | `524288000` (500 MiB) | Obergrenze für Clips. |
+
+### nginx
+
+Die Werte aus `scripts/fix-nginx-uploads.sh` sind nach diesem Umbau **nicht mehr
+nötig**, weil kein Request mehr groß wird. Sie schaden aber nicht und schützen den
+Fall, dass jemand `UPLOAD_CHUNK_BYTES` deutlich hochsetzt:
 
 ```nginx
-client_max_body_size 500m;
+client_max_body_size 512M;
 client_body_timeout 1800s;
+proxy_request_buffering off;
 proxy_read_timeout 1800s;
 proxy_send_timeout 1800s;
 ```
 
-Diese externen Servereinstellungen wurden nicht auf dem Live-Host geändert. Ein CDN mit einem festen kleineren Request-Limit benötigt ebenfalls eine angepasste Konfiguration oder einen separaten Upload-Zugang. HTTP 413 wird im Upload-Dialog ausdrücklich als vorgeschaltetes Größenlimit angezeigt.
+Historisch legte `scripts/server-setup.sh` die Site mit `client_max_body_size 25M`
+an — deutlich unter dem App-Limit. Uploads darüber froren im Browser ohne
+Fehlermeldung ein, weil nginx das Lesen abbrach, bevor die App antworten konnte.
+Das war die Ursache des ursprünglichen Problems.
 
-`npx tsx --test tests/large-uploads.test.ts` überträgt jeweils 200 MiB über einen echten lokalen HTTP-Server an beide Produktions-Dateischreiber und verifiziert Größe und SHA-256. Außerdem werden der Proxy-Matcher, Upload-CORS und das Verwerfen unvollständiger Daten geprüft. Der Test ersetzt keinen Upload durch den tatsächlichen Hosting-Proxy.
+### Tests
+
+```bash
+npx tsx --test tests/upload-sessions.test.ts        # Regeln, Chunk-Ablage, Anzeigeformate
+npx tsx --test tests/chunked-uploads.test.ts        # Proxy-Matcher und CORS
+npx tsx --test tests/upload-sessions-db.test.ts     # Sitzungen, Ticket, Aufräumen
+npx tsx --test tests/chunked-uploads-e2e.test.ts    # 200 MiB parallel über echtes HTTP
+```
+
+Die Datenbanktests brauchen eine **eigene** Datenbank: `.env.test` mit einer
+`DATABASE_URL`, die nicht auf `fib_dash` zeigt. `tests/db-env.ts` bricht sonst ab,
+damit nie versehentlich Testzeilen in echten Daten landen.
 
 ## Kurz-Ping bei Neueinstellung
 
