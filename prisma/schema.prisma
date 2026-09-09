@@ -1685,7 +1685,11 @@ model Person {
   identifier   String?   @db.VarChar(100)
   dateOfBirth  DateTime?
   phone        String?   @db.VarChar(64)
+  /// Externe Bild-URL. Bleibt als Rückfall für Altbestände; neue Fotos
+  /// kommen über `photoId` aus dem Bildkatalog.
   photoUrl     String?   @db.VarChar(2048)
+  photoId      String?
+  photo        InvestigationPhoto? @relation("PersonPhoto", fields: [photoId], references: [id], onDelete: SetNull)
   /// Freie Notizen (Markdown).
   notes        String?   @db.Text
   wanted       Boolean   @default(false)
@@ -1703,6 +1707,7 @@ model Person {
 
   @@index([lastName, firstName])
   @@index([wanted])
+  @@index([photoId])
 }
 
 /// Verknüpfung Akte ↔ Person mit der Rolle in genau dieser Ermittlung.
@@ -1844,6 +1849,8 @@ model Vehicle {
   model         String? @db.VarChar(120)
   color         String? @db.VarChar(60)
   notes         String? @db.Text
+  photoId       String?
+  photo         InvestigationPhoto? @relation("VehiclePhoto", fields: [photoId], references: [id], onDelete: SetNull)
   stolen        Boolean @default(false)
   wanted        Boolean @default(false)
 
@@ -1861,6 +1868,7 @@ model Vehicle {
 
   @@index([plate])
   @@index([ownerPersonId])
+  @@index([photoId])
 }
 
 /// Verknuepfung Akte ↔ Fahrzeug.
@@ -1980,6 +1988,8 @@ model InvestigationPhoto {
 
   dossiers       Dossier[]
   investigations Investigation[] @relation("InvestigationPhotos")
+  persons        Person[]        @relation("PersonPhoto")
+  vehicles       Vehicle[]       @relation("VehiclePhoto")
 
   @@index([createdAt])
   @@index([uploadedById])

@@ -81,6 +81,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.dateOfBirth !== undefined) data.dateOfBirth = parseDate(body.dateOfBirth)
     if (body.phone !== undefined) data.phone = cleanText(body.phone).slice(0, 64) || null
     if (body.photoUrl !== undefined) data.photoUrl = cleanText(body.photoUrl).slice(0, 2048) || null
+    if (body.photoId !== undefined) {
+      const photoId = cleanText(body.photoId) || null
+      if (photoId && !(await prisma.investigationPhoto.findUnique({ where: { id: photoId }, select: { id: true } }))) {
+        return notFound('Bild')
+      }
+      data.photo = photoId ? { connect: { id: photoId } } : { disconnect: true }
+    }
     if (body.notes !== undefined) data.notes = cleanText(body.notes) || null
     if (body.wanted !== undefined) data.wanted = body.wanted === true
     if (body.dangerous !== undefined) data.dangerous = body.dangerous === true

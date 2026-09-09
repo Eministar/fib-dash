@@ -79,6 +79,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
+    if (body.photoId !== undefined) {
+      const photoId = cleanText(body.photoId) || null
+      if (photoId && !(await prisma.investigationPhoto.findUnique({ where: { id: photoId }, select: { id: true } }))) {
+        return notFound('Bild')
+      }
+      data.photo = photoId ? { connect: { id: photoId } } : { disconnect: true }
+    }
+
     const plate = data.plate ?? existing.plate
     const model = data.model ?? existing.model
     if (!plate && !model) return error('Kennzeichen oder Modell ist erforderlich')

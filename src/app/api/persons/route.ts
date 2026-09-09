@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 
-import { error, success } from '@/lib/api-response'
+import { error, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
@@ -59,6 +59,11 @@ export async function POST(req: NextRequest) {
     if (!firstName || !lastName) return error('Vor- und Nachname sind erforderlich')
     if (firstName.length > 100 || lastName.length > 100) return error('Name ist zu lang (max. 100 Zeichen)')
 
+    const photoId = cleanText(body.photoId) || null
+    if (photoId && !(await prisma.investigationPhoto.findUnique({ where: { id: photoId }, select: { id: true } }))) {
+      return notFound('Bild')
+    }
+
     const personNumber = await nextPersonNumber()
 
     const person = await prisma.person.create({
@@ -71,6 +76,7 @@ export async function POST(req: NextRequest) {
         dateOfBirth: parseDate(body.dateOfBirth),
         phone: cleanText(body.phone).slice(0, 64) || null,
         photoUrl: cleanText(body.photoUrl).slice(0, 2048) || null,
+        photoId,
         notes: cleanText(body.notes) || null,
         wanted: body.wanted === true,
         dangerous: body.dangerous === true,

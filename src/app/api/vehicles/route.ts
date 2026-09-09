@@ -68,6 +68,11 @@ export async function POST(req: NextRequest) {
       if (!owner) return notFound('Halter')
     }
 
+    const photoId = cleanText(body.photoId) || null
+    if (photoId && !(await prisma.investigationPhoto.findUnique({ where: { id: photoId }, select: { id: true } }))) {
+      return notFound('Bild')
+    }
+
     const vehicleNumber = await nextVehicleNumber()
 
     const vehicle = await prisma.vehicle.create({
@@ -80,6 +85,7 @@ export async function POST(req: NextRequest) {
         stolen: body.stolen === true,
         wanted: body.wanted === true,
         ownerPersonId,
+        photoId,
         createdById: user.id,
       },
       include: { ownerPerson: true },

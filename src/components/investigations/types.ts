@@ -31,6 +31,7 @@ export type Person = {
   dateOfBirth: string | null
   phone: string | null
   photoUrl: string | null
+  photoId: string | null
   notes: string | null
   wanted: boolean
   dangerous: boolean
@@ -113,6 +114,7 @@ export type Vehicle = {
   wanted: boolean
   ownerPersonId: string | null
   ownerPerson?: Person | null
+  photoId: string | null
   createdAt: string
   _count?: { investigations: number }
 }

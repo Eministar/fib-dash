@@ -34,6 +34,11 @@ import type {
   Vehicle,
 } from '@/components/investigations/types'
 
+const catalogPhotoUrl = (id: string) => `/api/investigations/photos/${id}/image`
+/** Neue Fotos kommen aus dem Katalog; `photoUrl` bleibt für Altbestände. */
+const personPhoto = (person: { photoId: string | null; photoUrl: string | null }) =>
+  person.photoId ? catalogPhotoUrl(person.photoId) : person.photoUrl
+
 type PersonForm = {
   firstName: string
   lastName: string
@@ -41,7 +46,7 @@ type PersonForm = {
   identifier: string
   dateOfBirth: string
   phone: string
-  photoUrl: string
+  photoId: string | null
   notes: string
   wanted: boolean
   dangerous: boolean
@@ -56,7 +61,7 @@ function formFromPerson(person: PersonDetail): PersonForm {
     // Das native Date-Input akzeptiert ausschließlich `YYYY-MM-DD`.
     dateOfBirth: person.dateOfBirth ? new Date(person.dateOfBirth).toISOString().slice(0, 10) : '',
     phone: person.phone ?? '',
-    photoUrl: person.photoUrl ?? '',
+    photoId: person.photoId ?? null,
     notes: person.notes ?? '',
     wanted: person.wanted,
     dangerous: person.dangerous,
@@ -71,7 +76,7 @@ function emptyForm(): PersonForm {
     identifier: '',
     dateOfBirth: '',
     phone: '',
-    photoUrl: '',
+    photoId: null,
     notes: '',
     wanted: false,
     dangerous: false,
@@ -149,7 +154,7 @@ export function PersonRegister() {
           alias: form.alias.trim() || null,
           identifier: form.identifier.trim() || null,
           phone: form.phone.trim() || null,
-          photoUrl: form.photoUrl.trim() || null,
+          photoId: form.photoId,
           notes: form.notes.trim() || null,
           dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
         }),
@@ -324,9 +329,9 @@ export function PersonRegister() {
             </div>
 
             <dl className="grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
-              <div className="sm:col-span-2"><PhotoField value={detail.photoUrl} readOnly={!canManage} onChange={async photo => {
+              <div className="sm:col-span-2"><PhotoField value={personPhoto(detail)} readOnly={!canManage} onChange={async photo => {
                 try {
-                  await execute(`/api/persons/${detail.id}`, { method: 'PATCH', body: JSON.stringify({ photoUrl: photo?.url ?? null }) })
+                  await execute(`/api/persons/${detail.id}`, { method: 'PATCH', body: JSON.stringify({ photoId: photo?.id ?? null }) })
                   await refetchDetail()
                   await refetch()
                   toastSuccess('Foto gespeichert', 'Die Personenakte wurde aktualisiert.')
@@ -479,7 +484,7 @@ export function PersonRegister() {
               onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
             />
           </div>
-          <PhotoField value={form.photoUrl || null} onChange={photo => setForm(prev => ({ ...prev, photoUrl: photo?.url ?? '' }))} />
+          <PhotoField value={form.photoId ? catalogPhotoUrl(form.photoId) : null} onChange={photo => setForm(prev => ({ ...prev, photoId: photo?.id ?? null }))} />
           <Textarea
             label="Notizen"
             value={form.notes}

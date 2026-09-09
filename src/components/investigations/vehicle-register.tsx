@@ -23,6 +23,11 @@ import { PriorityBadge, StatusBadge } from '@/components/investigations/investig
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { useInvestigationMutation } from '@/components/investigations/use-investigation-mutation'
 import { vehicleLabel } from '@/components/investigations/investigation-vehicles'
+import { PhotoField } from '@/components/investigations/photo-catalog'
+import { useApi } from '@/hooks/use-api'
+import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
+
+const catalogPhotoUrl = (id: string) => `/api/investigations/photos/${id}/image`
 import type {
   InvestigationListItem,
   Person,
@@ -41,6 +46,7 @@ type VehicleDetail = Vehicle & {
 }
 
 type VehicleForm = {
+  photoId: string | null
   plate: string
   model: string
   color: string
@@ -51,7 +57,7 @@ type VehicleForm = {
 }
 
 function emptyForm(): VehicleForm {
-  return { plate: '', model: '', color: '', ownerPersonId: '', notes: '', stolen: false, wanted: false }
+  return { photoId: null, plate: '', model: '', color: '', ownerPersonId: '', notes: '', stolen: false, wanted: false }
 }
 
 export function VehicleRegister() {
@@ -80,6 +86,8 @@ export function VehicleRegister() {
     selectedId ? `/api/vehicles/${selectedId}` : null,
   )
   const { mutate, saving } = useInvestigationMutation(refetch)
+  const { execute } = useApi()
+  const { toastSuccess, toastError } = useInvestigationToast()
 
   if (!canView) return <UnauthorizedContent />
 
@@ -191,6 +199,23 @@ export function VehicleRegister() {
               {detail.stolen && <Badge variant="danger">Als gestohlen gemeldet</Badge>}
               {detail.wanted && <Badge variant="warning">Zur Fahndung ausgeschrieben</Badge>}
             </div>
+
+            <PhotoField
+              value={detail.photoId ? catalogPhotoUrl(detail.photoId) : null}
+              readOnly={!canManage}
+              onChange={async (photo) => {
+                try {
+                  await execute(`/api/vehicles/${detail.id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ photoId: photo?.id ?? null }),
+                  })
+                  await refetch()
+                  toastSuccess('Foto gespeichert', 'Die Fahrzeugakte wurde aktualisiert.')
+                } catch (cause) {
+                  toastError('Foto nicht gespeichert', cause instanceof Error ? cause.message : 'Unbekannter Fehler')
+                }
+              }}
+            />
 
             <dl className="grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
               {detail.plate && (
@@ -311,6 +336,10 @@ export function VehicleRegister() {
               onValueChange={(value) => setForm((prev) => ({ ...prev, ownerPersonId: value }))}
             />
           </div>
+          <PhotoField
+            value={form.photoId ? catalogPhotoUrl(form.photoId) : null}
+            onChange={(photo) => setForm((prev) => ({ ...prev, photoId: photo?.id ?? null }))}
+          />
           <Textarea
             label="Notizen"
             value={form.notes}
