@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { validateDossierParent, dossierSchema } from '../src/lib/dossiers-server'
+import { validateIdList } from '../src/lib/investigations'
 import { detectPhotoType, isDiscordImageUrl, photoPath } from '../src/lib/investigation-photos'
 import { activateChangeTracking, currentChangeTracking, withoutChangeTracking } from '../src/lib/change-history-context'
 
@@ -45,4 +46,14 @@ test('Photo imports restrict remote addresses, file paths and image types', () =
   assert.equal(detectPhotoType(Buffer.from('<svg onload="evil()"/>')), null)
   assert.equal(detectPhotoType(Buffer.from([255, 216, 255]))?.mimeType, 'image/jpeg')
   assert.equal(detectPhotoType(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))?.mimeType, 'image/png')
+})
+
+test('ID-Listen für Kartenpunkte und Bilder werden entdoppelt und begrenzt', () => {
+  assert.deepEqual(validateIdList(['a', 'b', 'a']), ['a', 'b'])
+  assert.deepEqual(validateIdList(undefined), [])
+  assert.deepEqual(validateIdList([]), [])
+  assert.throws(() => validateIdList('a'), /Liste/)
+  assert.throws(() => validateIdList([1]), /Liste/)
+  assert.throws(() => validateIdList(['']), /Liste/)
+  assert.throws(() => validateIdList(Array(201).fill('x')), /zu viele/i)
 })

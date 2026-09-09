@@ -13,6 +13,7 @@ import {
   isInvestigationPriority,
   isInvestigationStatus,
   serializeBigInts,
+  validateIdList,
 } from '@/lib/investigations'
 import {
   agentDisplayName,
@@ -115,6 +116,15 @@ export async function POST(req: NextRequest) {
     // Verschlusssache angelegt wird.
     const assigneeIds = await validateAgentIds(body.assigneeIds)
 
+    const mapSpotIds = validateIdList(body.mapSpotIds)
+    if (mapSpotIds.length && (await prisma.mapSpot.count({ where: { id: { in: mapSpotIds } } })) !== mapSpotIds.length) {
+      return error('Kartenpunkt wurde nicht gefunden', 404)
+    }
+    const photoIds = validateIdList(body.photoIds)
+    if (photoIds.length && (await prisma.investigationPhoto.count({ where: { id: { in: photoIds } } })) !== photoIds.length) {
+      return error('Bild wurde nicht gefunden', 404)
+    }
+
     const caseNumber = await nextInvestigationCaseNumber()
 
     const investigation = await prisma.investigation.create({
@@ -128,6 +138,8 @@ export async function POST(req: NextRequest) {
         leadAgentId,
         createdById: user.id,
         assignees: { create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })) },
+        mapSpots: { connect: mapSpotIds.map((id) => ({ id })) },
+        photos: { connect: photoIds.map((id) => ({ id })) },
       },
       include: investigationListInclude,
     })
