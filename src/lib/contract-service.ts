@@ -20,6 +20,9 @@ import {
 
 export const contractSelect = {
   id: true,
+  kind: true,
+  counterpartyName: true,
+  counterpartyRole: true,
   agentId: true,
   templateId: true,
   applicationId: true,
@@ -56,6 +59,23 @@ export const contractSelect = {
     },
   },
   template: { select: { id: true, name: true } },
+  // Je Partei eine Zeile mit eigenem Link — der Arbeitsbereich zeigt sie
+  // nebeneinander samt Stand.
+  signatures: {
+    select: {
+      id: true,
+      side: true,
+      partyName: true,
+      partyRole: true,
+      sortOrder: true,
+      token: true,
+      signedAt: true,
+      signedName: true,
+      declinedAt: true,
+      declineReason: true,
+    },
+    orderBy: { sortOrder: 'asc' },
+  },
   application: {
     select: {
       id: true,

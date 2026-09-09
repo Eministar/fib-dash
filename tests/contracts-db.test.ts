@@ -277,3 +277,70 @@ test('Ein unbekannter oder falsch geschriebener Token findet nichts', async () =
   assert.equal(await loadSignatureByToken(''), null)
   assert.equal(await loadSignatureByToken('gibtesnicht'), null)
 })
+
+test('Eine Vorlage laesst sich als Startpunkt nehmen, ohne den Vertrag zu binden', async (t) => {
+  const { template, cleanup } = await scaffold()
+  t.after(cleanup)
+
+  const { createAgencyContract } = await import('../src/lib/contract-signature-service')
+
+  const contract = await createAgencyContract({
+    title: 'Aus Vorlage',
+    content: 'Uebernommener Text.',
+    clauses: [{ id: 'c1', title: 'Regelung', body: 'Text.', sortOrder: 0 }],
+    closing: null,
+    fields: [{ id: 'sig', type: 'SIGNATURE', label: 'Unterschrift', required: true, sortOrder: 0 }],
+    templateId: template.id,
+    ownParty: { partyName: 'FIB', partyRole: 'Direktor', signerDiscordId: null },
+    counterparty: { partyName: 'LSPD', partyRole: 'Chief' },
+    createdById: null,
+  })
+  t.after(() => prisma.contract.delete({ where: { id: contract.id } }).catch(() => {}))
+
+  assert.equal(contract.templateId, template.id)
+  assert.equal(contract.content, 'Uebernommener Text.')
+
+  // Die Vorlage aendert sich - der Vertrag bleibt, wie er war. Der Bezug ist
+  // eine Herkunftsangabe, keine Bindung.
+  await prisma.contractTemplate.update({
+    where: { id: template.id },
+    data: { content: 'GEAENDERT' },
+  })
+  const reloaded = await prisma.contract.findUnique({ where: { id: contract.id } })
+  assert.equal(reloaded!.content, 'Uebernommener Text.')
+})
+
+test('Eine Ruecknahme des Vertrags ueberstimmt die Unterschriften', async (t) => {
+  const { createAgencyContract, signWithToken, refreshContractStatus } = await import(
+    '../src/lib/contract-signature-service'
+  )
+
+  const contract = await createAgencyContract({
+    title: 'Zurueckgezogen',
+    content: 'Text.',
+    clauses: [],
+    closing: null,
+    fields: [],
+    ownParty: { partyName: 'FIB', partyRole: null, signerDiscordId: null },
+    counterparty: { partyName: 'LSPD', partyRole: null },
+    createdById: null,
+  })
+  t.after(() => prisma.contract.delete({ where: { id: contract.id } }).catch(() => {}))
+
+  const rows = await prisma.contractSignature.findMany({ where: { contractId: contract.id } })
+  await prisma.contract.update({ where: { id: contract.id }, data: { status: 'CANCELLED' } })
+
+  for (const row of rows) {
+    await signWithToken(row.token, {
+      values: {},
+      signedName: 'Jemand',
+      userId: null,
+      ip: null,
+      userAgent: null,
+    })
+  }
+
+  assert.equal(await refreshContractStatus(contract.id), 'CANCELLED')
+  const reloaded = await prisma.contract.findUnique({ where: { id: contract.id } })
+  assert.equal(reloaded!.status, 'CANCELLED')
+})
