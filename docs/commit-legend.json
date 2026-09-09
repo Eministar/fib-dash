@@ -1,7 +1,142 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-08T23:51:56.974Z",
+  "generatedAt": "2026-09-09T13:20:21.391Z",
   "entries": [
+    {
+      "buildId": "build-3abfe76242",
+      "commit": "3abfe7624293e61b743d0e9b6433630525f47017",
+      "shortCommit": "3abfe76242",
+      "subject": "Merge pull request #6 from Eministar/feature/karte-akten-wizard",
+      "author": "Eministar",
+      "date": "2026-09-09T13:19:48Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/3abfe7624293e61b743d0e9b6433630525f47017"
+    },
+    {
+      "buildId": "build-fb22c178e1",
+      "commit": "fb22c178e1e4cc550a9c982c256bde0b483aab93",
+      "shortCommit": "fb22c178e1",
+      "subject": "docs: Bild-Upload und Kartenpunkt-Verknüpfungen dokumentiert",
+      "author": "Eministar",
+      "date": "2026-09-09T13:13:57Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/fb22c178e1e4cc550a9c982c256bde0b483aab93"
+    },
+    {
+      "buildId": "build-1a297bdfed",
+      "commit": "1a297bdfedfb8af48de3cd82137ce7087c06f194",
+      "shortCommit": "1a297bdfed",
+      "subject": "feat: Dauerakte-Wizard und Rückrichtung in allen Detailansichten",
+      "author": "Eministar",
+      "date": "2026-09-09T13:12:26Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/1a297bdfedfb8af48de3cd82137ce7087c06f194"
+    },
+    {
+      "buildId": "build-321941fbd5",
+      "commit": "321941fbd5c0a74845018b91def678c10c5cb2ec",
+      "shortCommit": "321941fbd5",
+      "subject": "feat: Einsatzakte über Wizard anlegen, Verschluss vorangekreuzt",
+      "author": "Eministar",
+      "date": "2026-09-09T13:09:04Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/321941fbd5c0a74845018b91def678c10c5cb2ec"
+    },
+    {
+      "buildId": "build-541679282d",
+      "commit": "541679282d6e5e9f28ce714901c321a6421136ff",
+      "shortCommit": "541679282d",
+      "subject": "feat: Kartenpunkt-Auswahl für Akten auf Basis der Stadtkarte",
+      "author": "Eministar",
+      "date": "2026-09-09T13:07:36Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/541679282d6e5e9f28ce714901c321a6421136ff"
+    },
+    {
+      "buildId": "build-0c35bbc0ce",
+      "commit": "0c35bbc0cea08cbe17e51f3ac27b029e7f4fc363",
+      "shortCommit": "0c35bbc0ce",
+      "subject": "feat: generischer Mehrschritt-Wizard für Aktenformulare",
+      "author": "Eministar",
+      "date": "2026-09-09T13:06:23Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/0c35bbc0cea08cbe17e51f3ac27b029e7f4fc363"
+    },
+    {
+      "buildId": "build-c489817c25",
+      "commit": "c489817c25a3591ed8a0680a29f1cf4750767e2a",
+      "shortCommit": "c489817c25",
+      "subject": "feat: Einsatzakten verknüpfen Kartenpunkte und Bilder",
+      "author": "Eministar",
+      "date": "2026-09-09T13:05:57Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/c489817c25a3591ed8a0680a29f1cf4750767e2a"
+    },
+    {
+      "buildId": "build-fd3e36fb99",
+      "commit": "fd3e36fb9947e06dfabe4230aa369552bd26dcb3",
+      "shortCommit": "fd3e36fb99",
+      "subject": "feat: Dauerakten verknüpfen Kartenpunkte",
+      "author": "Eministar",
+      "date": "2026-09-09T13:04:43Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/fd3e36fb9947e06dfabe4230aa369552bd26dcb3"
+    },
+    {
+      "buildId": "build-cfa1851792",
+      "commit": "cfa1851792b5bcb442107cc01e255ac3548e011c",
+      "shortCommit": "cfa1851792",
+      "subject": "feat: Kartenpunkte liefern verknüpfte Akten sichtbarkeitsgefiltert mit",
+      "author": "Eministar",
+      "date": "2026-09-09T13:03:43Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/cfa1851792b5bcb442107cc01e255ac3548e011c"
+    },
+    {
+      "buildId": "build-d7ce777452",
+      "commit": "d7ce777452194140c66b04eda1aa4f2f7155f47d",
+      "shortCommit": "d7ce777452",
+      "subject": "feat: Bildkatalog mit Upload-Button und Mehrfachauswahl",
+      "author": "Eministar",
+      "date": "2026-09-09T13:02:37Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/d7ce777452194140c66b04eda1aa4f2f7155f47d"
+    },
+    {
+      "buildId": "build-7b2acf7d76",
+      "commit": "7b2acf7d761c4368419a2ecb760cb085418034ea",
+      "shortCommit": "7b2acf7d76",
+      "subject": "feat: Bilder lassen sich in den Bildkatalog hochladen",
+      "author": "Eministar",
+      "date": "2026-09-09T13:01:36Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/7b2acf7d761c4368419a2ecb760cb085418034ea"
+    },
+    {
+      "buildId": "build-e06395498a",
+      "commit": "e06395498abb2ade914389fd16e7abc8c9984014",
+      "shortCommit": "e06395498a",
+      "subject": "feat: Relationen für Kartenpunkte, Aktenbilder und Bild-Uploads im Schema",
+      "author": "Eministar",
+      "date": "2026-09-09T13:00:03Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/e06395498abb2ade914389fd16e7abc8c9984014"
+    },
+    {
+      "buildId": "build-ea0d9c19bd",
+      "commit": "ea0d9c19bdc67f8d41342a1dbdcfadd3e31c7e22",
+      "shortCommit": "ea0d9c19bd",
+      "subject": "docs: Umsetzungsplan für Karte↔Akten, Bild-Upload und Akten-Wizard",
+      "author": "Eministar",
+      "date": "2026-09-09T12:58:06Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/ea0d9c19bdc67f8d41342a1dbdcfadd3e31c7e22"
+    },
+    {
+      "buildId": "build-d8e9c4eda1",
+      "commit": "d8e9c4eda11abaed333ba40aa550c5ac39135e31",
+      "shortCommit": "d8e9c4eda1",
+      "subject": "docs: Design für Karte↔Akten-Verknüpfung, Bild-Upload und Akten-Wizard",
+      "author": "Eministar",
+      "date": "2026-09-09T12:49:06Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/d8e9c4eda11abaed333ba40aa550c5ac39135e31"
+    },
+    {
+      "buildId": "build-117fc6c6c1",
+      "commit": "117fc6c6c1048736d34b6a51fe513dc666e74ea6",
+      "shortCommit": "117fc6c6c1",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-08T23:51:57Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/117fc6c6c1048736d34b6a51fe513dc666e74ea6"
+    },
     {
       "buildId": "build-1af6a42756",
       "commit": "1af6a42756760c29919f4a623d62a5ee9da07a4d",
