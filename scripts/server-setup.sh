@@ -98,8 +98,19 @@ fi
 log "Systempakete"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq ca-certificates curl gnupg git screen nginx cron >/dev/null
-ok "git, screen, nginx, cron installiert"
+# ffmpeg wird fuer die Clip-Komprimierung gebraucht. Fehlte es hier, blieben
+# alle Bodycam-Clips stumm auf "Komprimierung laeuft im Hintergrund" stehen,
+# ohne dass irgendwo ein Fehler auftauchte.
+apt-get install -y -qq ca-certificates curl gnupg git screen nginx cron ffmpeg >/dev/null
+ok "git, screen, nginx, cron, ffmpeg installiert"
+
+# AV1 (libsvtav1) fehlt in aelteren Debian-/Ubuntu-Paketen. Steht es nicht zur
+# Verfuegung, weicht die App zur Laufzeit auf VP9 aus - hier nur der Hinweis.
+if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q libsvtav1; then
+  ok "ffmpeg kann AV1 (libsvtav1)"
+else
+  warn "ffmpeg ohne libsvtav1 - Clips werden mit VP9 komprimiert (groessere Dateien)"
+fi
 
 if ! command -v node >/dev/null || [ "$(node -v | sed 's/v\([0-9]*\).*/\1/')" -lt 22 ]; then
   info "Installiere Node.js 22 (NodeSource) …"

@@ -84,8 +84,20 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
           )}
           <span>{formatClipSize(clip.sizeBytes)}</span>
           {clip.originalSizeBytes != null && clip.originalSizeBytes > clip.sizeBytes && <span>{Math.round((1 - clip.sizeBytes / clip.originalSizeBytes) * 100)} % Speicher gespart</span>}
-          {['PENDING', 'PROCESSING'].includes(clip.compressionStatus ?? '') && <span>Komprimierung läuft im Hintergrund</span>}
-          {clip.compressionStatus === 'FAILED' && <span>Komprimierung fehlgeschlagen · Original verfügbar</span>}
+          {/* Ein wartender Clip mit hinterlegtem Grund laeuft NICHT im
+              Hintergrund — dann fehlt dem Server das Werkzeug. Das zu
+              behaupten hat zwei Stunden Fehlersuche gekostet. */}
+          {['PENDING', 'PROCESSING'].includes(clip.compressionStatus ?? '') &&
+            (clip.compressionError ? (
+              <span title={clip.compressionError}>{clip.compressionError}</span>
+            ) : (
+              <span>Komprimierung läuft im Hintergrund</span>
+            ))}
+          {clip.compressionStatus === 'FAILED' && (
+            <span title={clip.compressionError ?? undefined}>
+              {clip.compressionError ?? 'Komprimierung fehlgeschlagen · Original verfügbar'}
+            </span>
+          )}
           {duration && <span>{duration} Min.</span>}
         </div>
 

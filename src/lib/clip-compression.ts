@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { unlink } from 'node:fs/promises'
 import { prisma } from './prisma'
 import { resolveClipPath } from './clips'
-import { checkMediaTools, transcodeClip } from './clip-transcode'
+import { checkMediaTools, compressionOptions, transcodeClip } from './clip-transcode'
 import { createAuditLog } from './audit'
 import { withoutChangeTracking } from './change-history-context'
 
@@ -24,7 +24,7 @@ async function cleanOriginals() {
 }
 
 /** Claim through a DB compare-and-swap, so two server instances cannot own a clip. */
-export async function compressNextClip() {
+export async function compressNextClip(codec?: 'av1' | 'vp9') {
   const cutoff = new Date(Date.now() - staleAfterMs)
   const eligible = { OR: [{ compressionStatus: 'PENDING' }, { compressionStatus: 'PROCESSING', compressionStartedAt: { lt: cutoff } }] }
   const clip = await prisma.bodycamClip.findFirst({ where: eligible, orderBy: { createdAt: 'asc' } })
@@ -42,7 +42,10 @@ export async function compressNextClip() {
   heartbeat.unref?.()
   try {
     if (clip.compressionOutput && clip.compressionOutput !== clip.filename) await removeFile(clip.compressionOutput)
-    const result = await transcodeClip(resolveClipPath(clip.filename), resolveClipPath(output))
+    const result = await transcodeClip(resolveClipPath(clip.filename), resolveClipPath(output), {
+      ...compressionOptions(),
+      ...(codec ? { codec } : {}),
+    })
     if (result.skipped) {
       await prisma.bodycamClip.updateMany({ where: owned, data: { compressionStatus: 'SKIPPED', compressionOutput: null, compressionError: result.reason } })
     } else {
@@ -77,14 +80,49 @@ export async function compressNextClip() {
   return true
 }
 
+/**
+ * Vermerkt an den wartenden Clips, warum nichts passiert.
+ *
+ * Vorher brach der Durchlauf lautlos ab, wenn ffmpeg fehlte: die Clips standen
+ * ewig auf „Komprimierung läuft im Hintergrund", obwohl nie etwas lief. Der
+ * Status bleibt bewusst PENDING — sobald das Werkzeug da ist, laufen sie von
+ * selbst an, ohne dass jemand etwas zurücksetzen muss.
+ */
+async function noteToolFailure(reason: string) {
+  await prisma.bodycamClip.updateMany({
+    where: { compressionStatus: 'PENDING', compressionError: null },
+    data: { compressionError: `Komprimierung nicht möglich: ${reason}`.slice(0, 300) },
+  })
+}
+
+/** Räumt den Hinweis wieder weg, sobald die Werkzeuge da sind. */
+async function clearToolFailure() {
+  await prisma.bodycamClip.updateMany({
+    where: { compressionStatus: 'PENDING', compressionError: { startsWith: 'Komprimierung nicht möglich:' } },
+    data: { compressionError: null },
+  })
+}
+
 export async function drainClipCompressionQueue() {
   if (runtime.clipCompressionRunning || process.env.CLIP_COMPRESSION_ENABLED === 'false') return
   runtime.clipCompressionRunning = true
   try {
     await cleanOriginals()
-    await checkMediaTools()
+
+    let tools: Awaited<ReturnType<typeof checkMediaTools>>
+    try {
+      tools = await checkMediaTools()
+    } catch (cause) {
+      const reason = cause instanceof Error ? cause.message : 'Werkzeuge nicht verfügbar'
+      console.error('[ClipCompression] Werkzeuge:', reason)
+      await noteToolFailure(reason)
+      return
+    }
+    await clearToolFailure()
+    if (tools.fallback) console.warn('[ClipCompression]', tools.fallback)
+
     // One encode per process; never block an upload request while encoding.
-    while (await compressNextClip()) await cleanOriginals()
+    while (await compressNextClip(tools.codec)) await cleanOriginals()
   } finally { runtime.clipCompressionRunning = false }
 }
 

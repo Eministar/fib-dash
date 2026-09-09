@@ -77,3 +77,36 @@ test('Der Grund eines Fehlschlags landet im Datensatz, nicht nur im Log', async 
   assert.match(compressionFailureText('kaputt'), /Grund: kaputt/)
   assert.match(compressionFailureText(new Error('')), /Grund: unbekannt/)
 })
+
+test('Der Encoder wird aus dem gewaehlt, was ffmpeg tatsaechlich kann', async () => {
+  const { pickCodec } = await import('../src/lib/clip-transcode')
+
+  const alles = ' V..... libsvtav1  SVT-AV1\n V....D libvpx-vp9  VP9\n A....D libopus  Opus\n'
+  const ohneAv1 = ' V....D libvpx-vp9  VP9\n A....D libopus  Opus\n'
+  const ohneOpus = ' V..... libsvtav1  SVT-AV1\n V....D libvpx-vp9  VP9\n'
+
+  // Ist der gewuenschte Encoder da, wird er genommen.
+  assert.deepEqual(pickCodec(alles, 'av1'), { codec: 'av1', fallback: null })
+  assert.deepEqual(pickCodec(alles, 'vp9'), { codec: 'vp9', fallback: null })
+
+  // Fehlt er, wird der andere genommen statt aufzugeben. Ein schwaecherer
+  // Encoder ist besser als gar keiner - genau daran hing die Komprimierung.
+  const gewichen = pickCodec(ohneAv1, 'av1')
+  assert.equal(gewichen.codec, 'vp9')
+  assert.match(gewichen.fallback!, /libsvtav1/)
+
+  // Ohne Tonspur-Encoder geht nichts, und die Meldung sagt was fehlt.
+  assert.throws(() => pickCodec(ohneOpus, 'av1'), (cause: Error) => /libopus/.test(cause.message))
+
+  // Ein ffmpeg ohne beide Video-Encoder nennt beide beim Namen.
+  const nurOpus = ' A....D libopus  Opus'
+  assert.throws(
+    () => pickCodec(nurOpus, 'av1'),
+    (cause: Error) => /libsvtav1/.test(cause.message) && /libvpx-vp9/.test(cause.message),
+  )
+
+  // Eine leere Ausgabe bedeutet in der Praxis: ffmpeg fehlt ganz. Genau das
+  // war auf dem Server der Fall.
+  assert.throws(() => pickCodec('', 'av1'), /ffmpeg/i)
+  assert.throws(() => pickCodec('', 'vp9'), /installiert/i)
+})

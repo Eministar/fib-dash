@@ -89,11 +89,55 @@ export function validCompressedDuration(source: number, output: number) {
   return Math.abs(source - output) <= Math.max(0.25, Math.min(1, source * 0.005))
 }
 
+const ENCODER_NAME: Record<CompressionOptions['codec'], string> = {
+  av1: 'libsvtav1',
+  vp9: 'libvpx-vp9',
+}
+
+/**
+ * Wählt den Encoder aus dem, was ffmpeg tatsächlich mitbringt.
+ *
+ * Fehlt der gewünschte, wird auf den anderen ausgewichen statt aufzugeben: ein
+ * schwächerer Encoder ist besser als gar keine Komprimierung. Genau daran hing
+ * es — `libsvtav1` ist in älteren Debian- und Ubuntu-Paketen nicht enthalten,
+ * und der Abbruch war lautlos.
+ */
+export function pickCodec(encoderListing: string, configured: CompressionOptions['codec']) {
+  if (!encoderListing.trim()) {
+    throw new Error('ffmpeg liefert keine Encoder-Liste — ist ffmpeg installiert?')
+  }
+  if (!encoderListing.includes('libopus')) {
+    throw new Error('ffmpeg benötigt libopus für die Tonspur; das Paket bringt es nicht mit')
+  }
+
+  const wanted = ENCODER_NAME[configured]
+  if (encoderListing.includes(wanted)) return { codec: configured, fallback: null as string | null }
+
+  const other: CompressionOptions['codec'] = configured === 'av1' ? 'vp9' : 'av1'
+  if (encoderListing.includes(ENCODER_NAME[other])) {
+    return {
+      codec: other,
+      fallback: `${wanted} fehlt, es wird ${ENCODER_NAME[other]} verwendet`,
+    }
+  }
+
+  throw new Error(`ffmpeg bringt weder ${ENCODER_NAME.av1} noch ${ENCODER_NAME.vp9} mit`)
+}
+
+/**
+ * Prüft die Werkzeuge und liefert den nutzbaren Codec. Wirft mit einer
+ * Meldung, die benennt, was fehlt — sie landet am Clip, nicht nur im Log.
+ */
 export async function checkMediaTools() {
-  const encoders = await runMediaTool(process.env.FFMPEG_PATH?.trim() || 'ffmpeg', ['-hide_banner', '-encoders'], 15_000)
-  const encoder = compressionOptions().codec === 'av1' ? 'libsvtav1' : 'libvpx-vp9'
-  if (!encoders.includes(encoder) || !encoders.includes('libopus')) throw new Error(`FFmpeg benötigt ${encoder} und libopus`)
+  const encoders = await runMediaTool(
+    process.env.FFMPEG_PATH?.trim() || 'ffmpeg',
+    ['-hide_banner', '-encoders'],
+    15_000,
+  ).catch(() => '')
+
+  const picked = pickCodec(encoders, compressionOptions().codec)
   await runMediaTool(process.env.FFPROBE_PATH?.trim() || 'ffprobe', ['-version'], 15_000)
+  return picked
 }
 
 /** Produces a verified candidate only. The caller owns the DB switch and source deletion. */
