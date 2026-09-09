@@ -18,6 +18,7 @@ import { MapLegend } from '@/components/map/map-legend'
 import { SpotDetailDialog } from '@/components/map/spot-detail-dialog'
 import { SpotEditorDialog, type SpotFormValues } from '@/components/map/spot-editor-dialog'
 import { SpotList } from '@/components/map/spot-list'
+import { DossierFilter, filterSpotsByDossier } from '@/components/map/dossier-filter'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
 
 export function MapWorkspace() {
@@ -35,9 +36,13 @@ export function MapWorkspace() {
   const [detailSpot, setDetailSpot] = useState<MapSpot | null>(null)
   const [movingSpot, setMovingSpot] = useState<MapSpot | null>(null)
   const [listOpen, setListOpen] = useState(false)
+  const [dossierId, setDossierId] = useState<string | null>(null)
 
   const { data, loading, refetch } = useFetch<MapSpot[]>(canView ? '/api/map/spots' : null)
-  const spots = data ?? []
+  const allSpots = data ?? []
+  // Der Filter wirkt auf Karte, Legende und Liste gemeinsam – sonst zeigt die
+  // Legende Zahlen, die auf der Karte nicht zu finden sind.
+  const spots = filterSpotsByDossier(allSpots, dossierId)
 
   const focus = useCallback((spot: MapSpot) => {
     mapRef.current?.focusSpot(spot.id)
@@ -143,6 +148,7 @@ export function MapWorkspace() {
           </div>
 
           <div className="hidden min-h-0 flex-col gap-4 lg:flex">
+            <DossierFilter spots={allSpots} value={dossierId} onChange={setDossierId} />
             <MapLegend spots={spots} />
             <SpotList
               spots={spots}
@@ -156,6 +162,7 @@ export function MapWorkspace() {
 
       {/* Auf schmalen Bildschirmen ist rechts kein Platz – dort wandert die Liste in einen Dialog. */}
       <Modal open={listOpen} onClose={() => setListOpen(false)} title="Markierungen" size="lg">
+        <div className="mb-3"><DossierFilter spots={allSpots} value={dossierId} onChange={setDossierId} /></div>
         <div className="h-[65dvh]">
           <SpotList
             spots={spots}
@@ -205,7 +212,16 @@ export function MapWorkspace() {
         onDelete={handleDelete}
       />
 
-      {spots.length === 0 && !loading && canManage && (
+      {spots.length === 0 && !loading && dossierId && (
+        <p className="mt-3 text-[12px] text-[#6a6a6a]">
+          Diese Dauerakte hat keine Kartenpunkte.{' '}
+          <button type="button" className="text-[#c4b5fd] hover:underline" onClick={() => setDossierId(null)}>
+            Filter lösen
+          </button>
+        </p>
+      )}
+
+      {allSpots.length === 0 && !loading && canManage && (
         <p className="mt-3 flex items-center gap-2 text-[12px] text-[#6a6a6a]">
           <MapPin className="h-3.5 w-3.5" />
           Noch keine Markierungen. Klicke auf die Karte, um die erste zu setzen.
