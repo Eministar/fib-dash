@@ -23,7 +23,18 @@ export function createShareToken() { const token = randomBytes(32).toString('bas
 export const sharePath = (token: string) => `/share/records/${token}`
 export function managedSharesWhere(user: CurrentUser) { return hasPermission(user, 'settings:manage') ? {} : { createdById: user.id } }
 
-export async function resolveShare(token: string, lookup = (hash: string) => prisma.recordShare.findUnique({ where: { tokenHash: hash }, include: { items: true } })) {
+/** Der Standardabruf ist bewusst `async` gewrappt: sonst leitet TypeScript
+ *  Prismas Fluent-Client als Parametertyp ab, gegen den keine gewöhnliche
+ *  Funktion mehr zuweisbar ist – Tests könnten dann keinen Ersatz einsetzen. */
+const defaultShareLookup = async (hash: string) =>
+  prisma.recordShare.findUnique({ where: { tokenHash: hash }, include: { items: true } })
+
+export type ResolvableShare = NonNullable<Awaited<ReturnType<typeof defaultShareLookup>>>
+
+export async function resolveShare(
+  token: string,
+  lookup: (hash: string) => Promise<ResolvableShare | null> = defaultShareLookup,
+) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new ShareError('Link ungültig, abgelaufen oder deaktiviert', 404)
   const share = await lookup(tokenHash(token))
   if (!share || !shareIsActive(share)) throw new ShareError('Link ungültig, abgelaufen oder deaktiviert', 404)
