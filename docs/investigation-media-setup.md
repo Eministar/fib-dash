@@ -42,3 +42,32 @@ Lesen erfordert `investigations:view`, Anlegen/Bearbeiten `investigations:manage
 ## Prüfung
 
 `npx tsx --test tests/clip-transcode.test.ts tests/investigation-media.test.ts` prüft echte Videokonvertierung, Laufzeit/Ton/Größe, Hochformat, ungültige Videos, Aktenzyklen, Eingabegrenzen und die URL-/Dateitypgrenzen des Bildimports. Die Videotests benötigen FFmpeg. Vor dem Produktiveinsatz mit einer Testdatenbank einen Discord-Bildupload, die Fotoauswahl und das Anlegen/Verschieben einer Unterakte durchspielen; ein Live-Discord-Abgleich ist nicht Teil der lokalen Tests.
+
+## Bilder hochladen
+
+Neben dem Discord-Bilderchannel lassen sich Bilder direkt im Dashboard
+hochladen – im Bildkatalog, im Bild-Feld einer Akte und im Bilder-Schritt
+des Einsatzakten-Wizards. Voraussetzung ist `investigations:manage`.
+
+Hochgeladene Bilder liegen in derselben Tabelle und demselben Verzeichnis
+(`uploads/investigation-photos/`) wie die importierten. Sie haben keine
+Discord-Herkunft: `sourceKey`, `channelId` und `messageId` bleiben leer,
+stattdessen ist `uploadedById` gesetzt.
+
+Grenzen: 20 MB pro Bild, Formate JPG, PNG, WebP und GIF. Der Typ wird an
+den Magic Bytes erkannt, ein abweichender `Content-Type` oder eine
+umbenannte Datei ändert daran nichts.
+
+## Kartenpunkte an Akten
+
+Dauerakten und Einsatzakten verknüpfen Kartenpunkte (`/map`). Bei
+Dauerakten sind das die Routen, Sammler und Anwesen einer Familie; bei
+Einsatzakten die Orte, an denen der Einsatz stattfand.
+
+Der Punkt selbst bleibt für alle mit `map:view` sichtbar. Gefiltert werden
+nur die Verknüpfungen: eine Verschlusssache erscheint im Kartenpunkt-Dialog
+nur für Berechtigte.
+
+Einen neuen Punkt direkt aus einer Akte heraus zu setzen erfordert
+`map:manage`. Ohne dieses Recht bietet der Picker nur die Auswahl
+bestehender Punkte an.
