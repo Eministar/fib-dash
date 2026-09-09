@@ -135,3 +135,49 @@ test('Vertragsdatum wird deutsch formatiert', () => {
   assert.equal(formatContractDate(null), '')
   assert.equal(formatContractDate('unsinn'), '')
 })
+
+// --- Verträge mit mehreren Unterzeichnern -----------------------------------
+
+test('Der Vertragsstatus wird aus den einzelnen Unterschriften abgeleitet', async () => {
+  const { deriveContractStatus } = await import('../src/lib/contract-signatures')
+  const open = { signedAt: null, declinedAt: null }
+  const signed = { signedAt: new Date(), declinedAt: null }
+  const declined = { signedAt: null, declinedAt: new Date() }
+
+  // Zwei Parteien: erst wenn beide unterschrieben haben, ist der Vertrag zu.
+  assert.equal(deriveContractStatus([open, open], 'SENT'), 'SENT')
+  assert.equal(deriveContractStatus([signed, open], 'SENT'), 'SENT')
+  assert.equal(deriveContractStatus([signed, signed], 'SENT'), 'SIGNED')
+
+  // Eine Ablehnung genügt und wiegt schwerer als eine bereits geleistete
+  // Unterschrift der Gegenseite.
+  assert.equal(deriveContractStatus([signed, declined], 'SENT'), 'DECLINED')
+  assert.equal(deriveContractStatus([declined, open], 'SENT'), 'DECLINED')
+
+  // Ein zurückgezogener Vertrag bleibt zurückgezogen, egal was die Zeilen sagen.
+  assert.equal(deriveContractStatus([signed, signed], 'CANCELLED'), 'CANCELLED')
+
+  // Ein Entwurf bleibt Entwurf, solange niemand gezeichnet hat ...
+  assert.equal(deriveContractStatus([open], 'DRAFT'), 'DRAFT')
+  assert.equal(deriveContractStatus([open, open], 'DRAFT'), 'DRAFT')
+  // ... danach nicht mehr: eine geleistete Unterschrift macht aus einem
+  // Entwurf einen laufenden Vertrag.
+  assert.equal(deriveContractStatus([signed, open], 'DRAFT'), 'SENT')
+  assert.equal(deriveContractStatus([signed], 'DRAFT'), 'SIGNED')
+
+  // Ohne Zeilen lässt sich nichts ableiten - der Status bleibt, wie er ist.
+  assert.equal(deriveContractStatus([], 'SENT'), 'SENT')
+})
+
+test('Eine externe Partei weist sich allein ueber den Link aus', async () => {
+  const { signatureRequiresDiscord } = await import('../src/lib/contract-signatures')
+
+  // Interne Partei: die hinterlegte Discord-Identität muss stimmen.
+  assert.equal(signatureRequiresDiscord({ side: 'INTERNAL', signerDiscordId: '42' }), true)
+
+  // Externe Behörde: kein Account, kein Discord. Wer den Link hat, unterschreibt.
+  assert.equal(signatureRequiresDiscord({ side: 'EXTERNAL', signerDiscordId: null }), false)
+
+  // Ein Altvertrag ist EXTERNAL, traegt aber eine Discord-ID - die gilt weiter.
+  assert.equal(signatureRequiresDiscord({ side: 'EXTERNAL', signerDiscordId: '42' }), true)
+})

@@ -164,3 +164,116 @@ test('Die Migration uebertraegt Token und Signaturdaten unveraendert', async (t)
   await migrateContractSignatures()
   assert.equal((await prisma.contractSignature.count({ where: { contractId: contract.id } })), 1)
 })
+
+test('Zwei Parteien: erst beide Unterschriften schliessen den Vertrag', async (t) => {
+  const { createAgencyContract, loadSignatureByToken, signWithToken } = await import(
+    '../src/lib/contract-signature-service'
+  )
+
+  const contract = await createAgencyContract({
+    title: 'Kooperationsvereinbarung',
+    content: 'Zwischen den Behörden.',
+    clauses: [{ id: 'c1', title: 'Zusammenarbeit', body: 'Gilt ab sofort.', sortOrder: 0 }],
+    closing: null,
+    fields: [{ id: 'sig', type: 'SIGNATURE', label: 'Unterschrift', required: true, sortOrder: 0 }],
+    ownParty: { partyName: 'Federal Investigation Bureau', partyRole: 'Direktor', signerDiscordId: null },
+    counterparty: { partyName: 'Los Santos Police Department', partyRole: 'Chief' },
+    createdById: null,
+  })
+  t.after(() => prisma.contract.delete({ where: { id: contract.id } }).catch(() => {}))
+
+  assert.equal(contract.kind, 'AGENCY')
+  assert.equal(contract.agentId, null)
+  assert.equal(contract.counterpartyName, 'Los Santos Police Department')
+
+  const rows = await prisma.contractSignature.findMany({
+    where: { contractId: contract.id },
+    orderBy: { sortOrder: 'asc' },
+  })
+  assert.equal(rows.length, 2, 'je Seite eine Zeile')
+  assert.equal(rows[0]!.side, 'INTERNAL')
+  assert.equal(rows[1]!.side, 'EXTERNAL')
+  assert.notEqual(rows[0]!.token, rows[1]!.token, 'jede Seite hat ihren eigenen Link')
+
+  // Der Token findet genau seine eigene Zeile.
+  const found = await loadSignatureByToken(rows[1]!.token)
+  assert.equal(found?.signature.id, rows[1]!.id)
+  assert.equal(found?.contract.id, contract.id)
+  assert.equal(found?.siblings.length, 1, 'die Gegenseite ist sichtbar')
+
+  // Eine Unterschrift genügt noch nicht.
+  await signWithToken(rows[1]!.token, {
+    values: { sig: 'Chief Miller' },
+    signedName: 'Chief Miller',
+    userId: null,
+    ip: '203.0.113.9',
+    userAgent: 'Testbrowser',
+  })
+  let reloaded = await prisma.contract.findUnique({ where: { id: contract.id } })
+  assert.equal(reloaded!.status, 'SENT', 'eine von zwei reicht nicht')
+
+  // Die zweite schliesst ihn.
+  await signWithToken(rows[0]!.token, {
+    values: { sig: 'Direktor Vance' },
+    signedName: 'Direktor Vance',
+    userId: null,
+    ip: null,
+    userAgent: null,
+  })
+  reloaded = await prisma.contract.findUnique({ where: { id: contract.id } })
+  assert.equal(reloaded!.status, 'SIGNED')
+
+  // Jede Zeile traegt ihre eigene Beweissicherung.
+  const after = await prisma.contractSignature.findMany({ where: { contractId: contract.id }, orderBy: { sortOrder: 'asc' } })
+  assert.equal(after[1]!.signedName, 'Chief Miller')
+  assert.equal(after[1]!.signedIp, '203.0.113.9')
+  assert.equal(after[0]!.signedName, 'Direktor Vance')
+  assert.equal(after[0]!.signedIp, null)
+  assert.deepEqual(after[0]!.values, { sig: 'Direktor Vance' })
+})
+
+test('Lehnt eine Partei ab, kommt der Vertrag nicht zustande', async (t) => {
+  const { createAgencyContract, declineWithToken, signWithToken } = await import(
+    '../src/lib/contract-signature-service'
+  )
+
+  const contract = await createAgencyContract({
+    title: 'Abgelehnte Vereinbarung',
+    content: 'Text.',
+    clauses: [],
+    closing: null,
+    fields: [{ id: 'sig', type: 'SIGNATURE', label: 'Unterschrift', required: true, sortOrder: 0 }],
+    ownParty: { partyName: 'FIB', partyRole: null, signerDiscordId: null },
+    counterparty: { partyName: 'LSPD', partyRole: null },
+    createdById: null,
+  })
+  t.after(() => prisma.contract.delete({ where: { id: contract.id } }).catch(() => {}))
+
+  const rows = await prisma.contractSignature.findMany({
+    where: { contractId: contract.id },
+    orderBy: { sortOrder: 'asc' },
+  })
+
+  await signWithToken(rows[0]!.token, {
+    values: { sig: 'Direktor Vance' },
+    signedName: 'Direktor Vance',
+    userId: null,
+    ip: null,
+    userAgent: null,
+  })
+  await declineWithToken(rows[1]!.token, 'Bedingungen nicht tragbar')
+
+  const reloaded = await prisma.contract.findUnique({ where: { id: contract.id } })
+  // Eine Ablehnung wiegt schwerer als die bereits geleistete Unterschrift.
+  assert.equal(reloaded!.status, 'DECLINED')
+
+  const declined = await prisma.contractSignature.findUnique({ where: { id: rows[1]!.id } })
+  assert.equal(declined!.declineReason, 'Bedingungen nicht tragbar')
+  assert.ok(declined!.declinedAt)
+})
+
+test('Ein unbekannter oder falsch geschriebener Token findet nichts', async () => {
+  const { loadSignatureByToken } = await import('../src/lib/contract-signature-service')
+  assert.equal(await loadSignatureByToken(''), null)
+  assert.equal(await loadSignatureByToken('gibtesnicht'), null)
+})
