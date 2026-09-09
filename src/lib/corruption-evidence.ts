@@ -7,22 +7,14 @@ import path from 'node:path'
 import { uploadDir } from './uploads'
 import { parseRangeHeader } from './clips'
 import { CorruptionError } from './corruption-server'
+import { matchesFileSignature } from './upload-signatures'
 
 export const evidenceTypes: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp', 'application/pdf': 'pdf', 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov' }
 export function evidencePath(filename: string) {
   if (!/^[a-f0-9-]{36}\.(jpg|png|gif|webp|pdf|mp4|webm|mov)$/.test(filename)) throw new CorruptionError('Ungültiger Dateiname')
   return path.join(/*turbopackIgnore: true*/ uploadDir(), 'corruption-evidence', filename)
 }
-export function matchesEvidenceType(mime: string, b: Buffer) {
-  if (mime === 'image/jpeg') return b[0] === 255 && b[1] === 216 && b[2] === 255
-  if (mime === 'image/png') return b.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
-  if (mime === 'image/gif') return ['GIF87a', 'GIF89a'].includes(b.subarray(0, 6).toString())
-  if (mime === 'image/webp') return b.subarray(0,4).toString() === 'RIFF' && b.subarray(8,12).toString() === 'WEBP'
-  if (mime === 'application/pdf') return b.subarray(0,5).toString() === '%PDF-'
-  if (mime === 'video/webm') return b.subarray(0,4).equals(Buffer.from([26,69,223,163]))
-  if (mime === 'video/mp4' || mime === 'video/quicktime') return b.subarray(4,8).toString() === 'ftyp'
-  return false
-}
+export { matchesFileSignature as matchesEvidenceType } from './upload-signatures'
 export async function saveEvidence(body: ReadableStream<Uint8Array>, mime: string, expectedSize?: number) {
   if (expectedSize !== undefined && (!Number.isSafeInteger(expectedSize) || expectedSize <= 0)) throw new CorruptionError('Ungültige Dateigröße')
   if (expectedSize !== undefined && expectedSize > 500 * 1024 * 1024) throw new CorruptionError('Datei zu groß (max. 500 MB)', 413)
@@ -42,7 +34,7 @@ export async function saveEvidence(body: ReadableStream<Uint8Array>, mime: strin
   try {
     await pipeline(Readable.fromWeb(body as Parameters<typeof Readable.fromWeb>[0]), limiter, createWriteStream(target, { flags: 'wx' }))
     if (expectedSize !== undefined && sizeBytes !== expectedSize) throw new CorruptionError('Upload unvollständig. Bitte erneut hochladen.')
-    if (!matchesEvidenceType(mime, prefix)) throw new CorruptionError('Dateiinhalt passt nicht zum angegebenen Format')
+    if (!matchesFileSignature(mime, prefix)) throw new CorruptionError('Dateiinhalt passt nicht zum angegebenen Format')
     return { filename, sizeBytes, mimeType: mime }
   } catch (cause) { await unlink(target).catch(() => {}); throw cause }
 }
