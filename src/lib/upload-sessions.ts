@@ -1,6 +1,6 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 import { createWriteStream } from 'node:fs'
-import { mkdir, readdir, rename, unlink } from 'node:fs/promises'
+import { mkdir, readdir, rename, rm, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
@@ -8,7 +8,9 @@ import { pipeline } from 'node:stream/promises'
 import { ALLOWED_CLIP_TYPES, clipMaxBytes } from './clips'
 import { evidenceTypes } from './corruption-evidence'
 import { MAX_IMAGE_BYTES } from './investigation-photos'
+import { prisma } from './prisma'
 import { uploadDir, uploadMaxBytes } from './uploads'
+import type { UploadSession } from '@/generated/prisma'
 
 export const DEFAULT_UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024
 
@@ -156,4 +158,110 @@ export async function storeChunk(
     await unlink(temporary).catch(() => {})
     throw cause
   }
+}
+
+export const MAX_OPEN_SESSIONS_PER_USER = 3
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000
+
+export interface OpenUploadSessionInput {
+  kind: UploadKind
+  ownerId: string
+  originalName: string
+  mimeType: string
+  totalBytes: number
+  fingerprint: string
+}
+
+/**
+ * Legt eine Sitzung an — oder liefert die vorhandene zurück, wenn dieselbe
+ * Datei schon einmal angefangen wurde. Genau darin besteht das Fortsetzen; der
+ * Browser muss sich dafür nichts merken.
+ */
+export async function openUploadSession(input: OpenUploadSessionInput) {
+  const rules = uploadKindRules[input.kind]
+  if (!rules) throw new UploadSessionError('Unbekannte Upload-Art')
+  if (!Number.isSafeInteger(input.totalBytes) || input.totalBytes <= 0) {
+    throw new UploadSessionError('Ungültige Dateigröße')
+  }
+  if (input.totalBytes > rules.maxBytes()) {
+    throw new UploadSessionError(
+      `Datei ist zu groß (max. ${Math.floor(rules.maxBytes() / (1024 * 1024))} MB)`,
+      413,
+    )
+  }
+  if (!rules.types[input.mimeType]) {
+    throw new UploadSessionError('Nicht unterstütztes Dateiformat', 415)
+  }
+
+  const existing = await prisma.uploadSession.findFirst({
+    where: { ownerId: input.ownerId, kind: input.kind, fingerprint: input.fingerprint, status: 'OPEN' },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  // Gleiche Datei, gleiche Größe: da machen wir weiter. Weicht die Größe ab,
+  // hat sich die Datei geändert und die alte Sitzung ist wertlos.
+  if (existing && Number(existing.totalBytes) === input.totalBytes && existing.expiresAt > new Date()) {
+    return {
+      sessionId: existing.id,
+      chunkSize: existing.chunkSize,
+      chunkCount: existing.chunkCount,
+      received: await receivedChunkIndexes(existing.id),
+      resumed: true,
+    }
+  }
+  if (existing) await cancelUploadSession(existing.id, input.ownerId)
+
+  const open = await prisma.uploadSession.count({ where: { ownerId: input.ownerId, status: 'OPEN' } })
+  if (open >= MAX_OPEN_SESSIONS_PER_USER) {
+    throw new UploadSessionError(
+      `Es laufen bereits ${MAX_OPEN_SESSIONS_PER_USER} Uploads. Bitte einen davon abschließen oder abbrechen.`,
+      429,
+    )
+  }
+
+  const chunkSize = uploadChunkBytes()
+  const session = await prisma.uploadSession.create({
+    data: {
+      kind: input.kind,
+      ownerId: input.ownerId,
+      fingerprint: input.fingerprint.slice(0, 120),
+      originalName: input.originalName.slice(0, 255),
+      mimeType: input.mimeType,
+      totalBytes: BigInt(input.totalBytes),
+      chunkSize,
+      chunkCount: chunkCountFor(input.totalBytes, chunkSize),
+      expiresAt: new Date(Date.now() + SESSION_TTL_MS),
+    },
+  })
+
+  return {
+    sessionId: session.id,
+    chunkSize: session.chunkSize,
+    chunkCount: session.chunkCount,
+    received: [] as number[],
+    resumed: false,
+  }
+}
+
+export async function loadOwnedSessionUnchecked(sessionId: string): Promise<UploadSession> {
+  assertSessionId(sessionId)
+  const session = await prisma.uploadSession.findUnique({ where: { id: sessionId } })
+  if (!session) throw new UploadSessionError('Upload-Sitzung nicht gefunden', 404)
+  return session
+}
+
+/**
+ * Eine fremde Sitzung antwortet wie eine nicht vorhandene: dass es sie gibt,
+ * ist keine Information, die wir preisgeben müssen.
+ */
+export async function loadOwnedSession(sessionId: string, ownerId: string): Promise<UploadSession> {
+  const session = await loadOwnedSessionUnchecked(sessionId)
+  if (session.ownerId !== ownerId) throw new UploadSessionError('Upload-Sitzung nicht gefunden', 404)
+  return session
+}
+
+export async function cancelUploadSession(sessionId: string, ownerId: string) {
+  const session = await loadOwnedSession(sessionId, ownerId)
+  await rm(incomingDir(session.id), { recursive: true, force: true })
+  await prisma.uploadSession.delete({ where: { id: session.id } }).catch(() => {})
 }
