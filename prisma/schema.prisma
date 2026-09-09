@@ -234,6 +234,7 @@ model User {
   contractTemplatesCreated   ContractTemplate[]        @relation("ContractTemplateCreator")
   contractsCreated           Contract[]                @relation("ContractCreator")
   contractsSigned            Contract[]                @relation("ContractSigner")
+  contractSignaturesSigned   ContractSignature[]       @relation("ContractSignatureSigner")
   agentSearchesCreated       AgentSearch[]             @relation("AgentSearchCreator")
   internalAffairsDawsCreated InternalAffairsDaw[]      @relation("IaDawCreator")
   legalCasesCreated          LegalCase[]               @relation("LegalCaseCreator")
@@ -1346,8 +1347,20 @@ model Contract {
   id            String            @id @default(cuid())
   templateId    String?
   template      ContractTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  agentId       String
-  agent         Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  /// AGENT | AGENCY — ein Arbeitsvertrag hängt an einem Agent, ein
+  /// Behördenvertrag an einer frei eingetragenen Gegenpartei.
+  kind          String            @default("AGENT") @db.VarChar(20)
+
+  /// Nur bei kind = AGENT gesetzt. Bewusst SetNull statt Cascade: ein
+  /// unterschriebener Vertrag darf nicht verschwinden, weil ein Agent
+  /// gelöscht wird.
+  agentId       String?
+  agent         Agent?            @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  /// Kopfdaten der Gegenseite bei kind = AGENCY, je Vertrag frei eingetragen.
+  counterpartyName String? @db.VarChar(200)
+  counterpartyRole String? @db.VarChar(200)
   applicationId String?
   application   JobApplication?   @relation("JobApplicationContracts", fields: [applicationId], references: [id], onDelete: SetNull)
 
@@ -1389,7 +1402,10 @@ model Contract {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  signatures ContractSignature[]
+
   @@index([agentId, createdAt])
+  @@index([kind, status])
   @@index([status, updatedAt])
   @@index([applicationId])
   @@index([templateId])
@@ -2222,4 +2238,47 @@ model UploadSession {
 
   @@index([ownerId, fingerprint, status])
   @@index([status, expiresAt])
+}
+
+/// Eine Partei, die diesen Vertrag unterschreibt. Jede bekommt ihren eigenen
+/// Link; der Vertrag ist geschlossen, wenn keine Zeile mehr offen ist.
+///
+/// Ein Arbeitsvertrag hat genau eine Zeile (der Agent), ein Behördenvertrag
+/// zwei — eine je Seite.
+model ContractSignature {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  /// INTERNAL | EXTERNAL — bestimmt die Beschriftung im Dokument.
+  side      String  @db.VarChar(20)
+  /// Anzeigename der Partei, z. B. "Federal Investigation Bureau".
+  partyName String  @db.VarChar(200)
+  /// Funktion des Unterzeichners, z. B. "Direktor".
+  partyRole String? @db.VarChar(200)
+  /// Reihenfolge im Dokument und der Unterschriftsfelder.
+  sortOrder Int     @default(0)
+
+  /// Eigener Link-Token dieser Partei.
+  token String @unique
+  /// Nur bei internen Parteien: dann darf genau dieser Discord-Account
+  /// unterschreiben. Eine externe Behörde weist sich allein über den Link aus.
+  signerDiscordId String?
+
+  signedAt        DateTime?
+  signedName      String?
+  signedByUserId  String?
+  signedBy        User?     @relation("ContractSignatureSigner", fields: [signedByUserId], references: [id], onDelete: SetNull)
+  signedIp        String?   @db.VarChar(64)
+  signedUserAgent String?   @db.VarChar(200)
+  /// Vom Unterzeichner eingetragene Werte dieser Partei.
+  values          Json?
+
+  declinedAt    DateTime?
+  declineReason String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId, sortOrder])
 }

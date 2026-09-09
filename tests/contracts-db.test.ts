@@ -123,3 +123,44 @@ test('Jeder Vertrag bekommt seinen eigenen Token', async (t) => {
   const second = await createContractForAgent({ templateId: template.id, agent, createdById: null })
   assert.notEqual(first.token, second.token)
 })
+
+test('Die Migration uebertraegt Token und Signaturdaten unveraendert', async (t) => {
+  const { agent, template, cleanup } = await scaffold()
+  t.after(cleanup)
+
+  const contract = await createContractForAgent({ templateId: template.id, agent, createdById: null })
+  const signedAt = new Date('2026-05-01T10:00:00Z')
+  await prisma.contract.update({
+    where: { id: contract.id },
+    data: {
+      status: 'SIGNED',
+      signedAt,
+      signedName: 'Jane Doe',
+      signedIp: '203.0.113.7',
+      signedUserAgent: 'Testbrowser',
+      values: { sig: 'Jane Doe' },
+    },
+  })
+
+  const { migrateContractSignatures } = await import('../src/lib/contract-signature-migration')
+  const written = await migrateContractSignatures()
+  assert.ok(written >= 1)
+
+  const rows = await prisma.contractSignature.findMany({ where: { contractId: contract.id } })
+  assert.equal(rows.length, 1, 'genau eine Zeile je Altvertrag')
+
+  const row = rows[0]!
+  // Der Link muss weiter funktionieren - er ist womoeglich schon verschickt.
+  assert.equal(row.token, contract.token)
+  assert.equal(row.signerDiscordId, agent.discordId)
+  assert.equal(row.signedName, 'Jane Doe')
+  assert.equal(row.signedAt?.getTime(), signedAt.getTime())
+  assert.equal(row.signedIp, '203.0.113.7')
+  assert.equal(row.signedUserAgent, 'Testbrowser')
+  assert.deepEqual(row.values, { sig: 'Jane Doe' })
+  assert.match(row.partyName, /Jane Doe/)
+
+  // Wiederholbar: ein zweiter Lauf legt keine Dublette an.
+  await migrateContractSignatures()
+  assert.equal((await prisma.contractSignature.count({ where: { contractId: contract.id } })), 1)
+})
