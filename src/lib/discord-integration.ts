@@ -2151,7 +2151,7 @@ export function queueDiscordHrEvent(event: Parameters<typeof sendDiscordHrEvent>
 /* ── Ermittlungssystem ────────────────────────────────────────────── */
 
 export type DiscordInvestigationEventInput = {
-  type: 'created' | 'status' | 'clip' | 'closed'
+  type: 'created' | 'status' | 'clip' | 'closed' | 'assignee'
   caseNumber: string
   title: string
   /// Verschlusssachen werden nie gepostet – der Aufrufer muss das Flag setzen.
@@ -2167,6 +2167,7 @@ const INVESTIGATION_EVENT_META = {
   status: { icon: '🔄', label: 'Aktenstatus geändert' },
   clip: { icon: '🎥', label: 'Neuer Bodycam-Clip' },
   closed: { icon: '📕', label: 'Ermittlung abgeschlossen' },
+  assignee: { icon: '👤', label: 'Ermittler zugewiesen' },
 } as const
 
 export async function sendDiscordInvestigationEvent(event: DiscordInvestigationEventInput) {

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { canAccessInvestigation, investigationAccessInclude } from '@/lib/investigations'
 import { agentDisplayName, cleanText, routeError } from '@/lib/investigations-server'
 import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,6 +66,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         userId: user.id,
         agentId,
         details: `Akte ${investigation.caseNumber}: ${agentDisplayName(agent)} als Ermittler zugewiesen`,
+      })
+
+      // Verschlusssachen filtert `sendDiscordInvestigationEvent` selbst heraus:
+      // die Zuweisung zu einer geheimen Akte darf nicht im offenen Channel
+      // stehen. Der Zugewiesene sieht sie im Dashboard.
+      queueDiscordInvestigationEvent({
+        type: 'assignee',
+        caseNumber: investigation.caseNumber,
+        title: investigation.title,
+        classified: investigation.classified,
+        actorName: user.displayName,
+        rows: [
+          { label: 'Ermittler', value: agentDisplayName(agent) },
+          { label: 'Dienstnummer', value: agent.badgeNumber },
+        ],
       })
 
       // Ohne verknuepftes Discord-Konto laesst sich der Agent keinem
