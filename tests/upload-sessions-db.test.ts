@@ -4,7 +4,7 @@ import './db-env'
 import assert from 'node:assert/strict'
 import { after, test } from 'node:test'
 import path from 'node:path'
-import { mkdtemp, readFile, rename } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rename } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { createHash, randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
@@ -20,6 +20,8 @@ import {
   stagedPath,
   assembleUploadSession,
   consumeUploadSession,
+  cleanupUploadSessions,
+  incomingDir,
   UploadSessionError,
 } from '../src/lib/upload-sessions'
 
@@ -218,4 +220,49 @@ test('Eine Datei mit fremder Signatur wird beim Abschluss abgewiesen', async (t)
   )
   const stored = await prisma.uploadSession.findUnique({ where: { id: session.sessionId } })
   assert.equal(stored?.status, 'FAILED')
+})
+
+test('Der Aufraeum-Job entfernt abgelaufene Sitzungen und verwaiste Ordner', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'fib-upload-'))
+  process.env.UPLOAD_DIR = directory
+
+  const owner = await makeUser('Testnutzer')
+  t.after(async () => {
+    await prisma.uploadSession.deleteMany({ where: { ownerId: owner.id } })
+    await prisma.user.delete({ where: { id: owner.id } })
+  })
+
+  const session = await openUploadSession({
+    kind: 'CLIP',
+    ownerId: owner.id,
+    originalName: 'alt.mp4',
+    mimeType: 'video/mp4',
+    totalBytes: 4096,
+    fingerprint: 'alt.mp4:4096:1',
+  })
+  const payload = Buffer.alloc(64, 1)
+  await storeChunk(
+    session.sessionId,
+    0,
+    streamOf(payload),
+    createHash('sha256').update(payload).digest('hex'),
+    payload.length,
+  )
+  await prisma.uploadSession.update({
+    where: { id: session.sessionId },
+    data: { expiresAt: new Date(Date.now() - 60_000) },
+  })
+
+  // Ein Ordner ohne zugehoerige Zeile - etwa nach einem harten Neustart.
+  const orphan = path.join(directory, 'incoming', 'clxverwaist000000001')
+  await mkdir(orphan, { recursive: true })
+
+  const removed = await cleanupUploadSessions()
+  assert.ok(removed >= 1, 'mindestens die abgelaufene Sitzung wurde entfernt')
+  assert.equal(await prisma.uploadSession.findUnique({ where: { id: session.sessionId } }), null)
+  assert.deepEqual(await receivedChunkIndexes(session.sessionId), [])
+
+  // Auch der verwaiste Ordner ist weg.
+  await assert.rejects(() => readdir(orphan), (cause: NodeJS.ErrnoException) => cause.code === 'ENOENT')
+  assert.ok(incomingDir(session.sessionId).startsWith(directory))
 })

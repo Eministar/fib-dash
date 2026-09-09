@@ -414,3 +414,68 @@ export async function consumeUploadSession(
     throw cause
   }
 }
+
+/**
+ * Entfernt, was liegen geblieben ist: abgelaufene und gescheiterte Sitzungen,
+ * fertige Uploads, die niemand eingelöst hat, und verwaiste Chunk-Ordner ohne
+ * zugehörige Zeile.
+ *
+ * Ein hängengebliebenes ASSEMBLING braucht hier nichts: dessen Lease läuft
+ * nach fünf Minuten ab, und der nächste Abschlussversuch übernimmt es.
+ */
+export async function cleanupUploadSessions(): Promise<number> {
+  const stale = await prisma.uploadSession.findMany({
+    where: { expiresAt: { lt: new Date() }, status: { in: ['OPEN', 'FAILED', 'DONE'] } },
+    select: { id: true, storedFilename: true },
+    take: 50,
+  })
+
+  for (const session of stale) {
+    await rm(incomingDir(session.id), { recursive: true, force: true })
+    if (session.storedFilename) {
+      await unlink(stagedPath(session.id, path.extname(session.storedFilename))).catch(() => {})
+    }
+    await prisma.uploadSession.delete({ where: { id: session.id } }).catch(() => {})
+  }
+
+  // Ordner ohne Zeile entstehen etwa, wenn der Prozess zwischen dem Anlegen
+  // der Datei und dem Schreiben der Zeile abstürzt.
+  const base = path.join(/*turbopackIgnore: true*/ uploadDir(), 'incoming')
+  const entries = await readdir(base).catch(() => [] as string[])
+  for (const name of entries) {
+    if (await prisma.uploadSession.findUnique({ where: { id: name }, select: { id: true } })) continue
+    await rm(path.join(/*turbopackIgnore: true*/ base, name), { recursive: true, force: true })
+  }
+
+  return stale.length
+}
+
+const workerRuntime = globalThis as typeof globalThis & {
+  uploadCleanupTimer?: ReturnType<typeof setInterval>
+  uploadCleanupRunning?: boolean
+}
+
+/**
+ * Startet die regelmäßige Bereinigung. Bewusst ein eigener Timer statt eines
+ * Anhängsels am Komprimierungs-Worker: der steigt bei
+ * `CLIP_COMPRESSION_ENABLED=false` sofort aus, und ein abgeschaltetes
+ * Transkodieren darf nicht dazu führen, dass angefangene Uploads für immer
+ * liegen bleiben.
+ */
+export function ensureUploadCleanupWorker() {
+  if (workerRuntime.uploadCleanupTimer) return
+
+  const run = () => {
+    if (workerRuntime.uploadCleanupRunning) return
+    workerRuntime.uploadCleanupRunning = true
+    void cleanupUploadSessions()
+      .catch((cause) => console.error('[UploadCleanup]', cause))
+      .finally(() => {
+        workerRuntime.uploadCleanupRunning = false
+      })
+  }
+
+  workerRuntime.uploadCleanupTimer = setInterval(run, 10 * 60_000)
+  workerRuntime.uploadCleanupTimer.unref?.()
+  run()
+}

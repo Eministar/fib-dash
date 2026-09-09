@@ -21,12 +21,8 @@ test('Nur die Chunk-Route umgeht den Body-klonenden Proxy', () => {
   assert.equal(matcher.test('/api/uploads/clx0000000000000001'), true)
   assert.equal(matcher.test('/api/uploads/clx0000000000000001/complete'), true)
   assert.equal(matcher.test('/api/agents'), true)
-
-  // Uebergangsweise: die alten Rohbody-Routen bleiben ausgenommen, bis alle
-  // Uploads ueber die Chunk-Route laufen. Diese beiden Zeilen entfallen mit
-  // dem Entfernen der alten Pfade.
-  assert.equal(matcher.test('/api/investigations/clips'), false)
-  assert.equal(matcher.test('/api/corruption-checks/example/evidence'), false)
+  assert.equal(matcher.test('/api/investigations/clips'), true)
+  assert.equal(matcher.test('/api/corruption-checks/example/evidence'), true)
 })
 
 test('Der Preflight erlaubt den Pruefsummen-Header', () => {

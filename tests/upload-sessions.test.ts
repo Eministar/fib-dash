@@ -60,8 +60,18 @@ test('Chunk-Aufteilung und Pfade', () => {
   assert.equal(chunkCountFor(8 * 1024 * 1024 + 1, 8 * 1024 * 1024), 2)
   assert.equal(chunkCountFor(214958080, 8 * 1024 * 1024), 26)
 
+  // Die Grenzen der vier Arten - frueher in savePhotoUpload/saveEvidence/
+  // saveUploadedFile verstreut, jetzt an einer Stelle.
   assert.equal(uploadKindRules.CLIP.types['video/x-matroska'], '.mkv')
+  assert.equal(uploadKindRules.CLIP.maxBytes(), 500 * 1024 * 1024)
+  assert.equal(uploadKindRules.EVIDENCE.maxBytes(), 500 * 1024 * 1024)
+  assert.equal(uploadKindRules.PHOTO.maxBytes(), 20 * 1024 * 1024)
   assert.equal(uploadKindRules.RESOURCE.maxBytes(), 10 * 1024 * 1024)
+
+  // Ein SVG ist kein Katalogbild - frueher in photo-upload.test.ts geprueft.
+  assert.equal(uploadKindRules.PHOTO.types['image/svg+xml'], undefined)
+  assert.equal(uploadKindRules.PHOTO.types['image/png'], '.png')
+  assert.equal(uploadKindRules.EVIDENCE.types['application/pdf'], '.pdf')
 
   // Ein manipulierter Bezeichner darf nie aus dem Zielordner herausführen.
   assert.throws(() => incomingDir('../../etc'), UploadSessionError)
