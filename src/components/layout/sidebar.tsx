@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText, ChartNoAxesCombined,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
-  Menu, X, KeyRound, Timer, Upload, CalendarDays, Download,
+  Menu, X, KeyRound, Timer, CalendarDays, Download,
   FileText, Gavel, FolderSearch, Map,
   History,
 } from 'lucide-react'
@@ -62,7 +62,6 @@ const adminNav: NavItem[] = [
   { name: 'Benutzergruppen', href: '/admin/user-groups', icon: Users, permission: 'groups:manage' },
   { name: 'API-Tokens', href: '/admin/api-tokens', icon: KeyRound, permission: 'groups:manage' },
   { name: 'Exporte', href: '/exports', icon: Download, permission: 'exports:view' },
-  { name: 'Uploads', href: '/admin/uploads', icon: Upload, permission: 'settings:manage' },
   { name: 'Einstellungen', href: '/admin/settings', icon: Settings, permission: 'settings:manage' },
 ]
 
