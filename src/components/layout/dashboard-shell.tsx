@@ -12,6 +12,7 @@ import { SessionRecoveryScreen } from '@/components/auth/session-recovery-screen
 import { Button } from '@/components/ui/button'
 import { useFetch } from '@/hooks/use-fetch'
 import { ChangeHistoryControls } from '@/components/layout/change-history-controls'
+import { GlobalSearch } from '@/components/layout/global-search'
 
 interface ActiveTestSession {
   sessionId: string
@@ -117,7 +118,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <ChangeHistoryControls />
       <main className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <div className="w-full flex-1 px-3 pb-10 pt-16 sm:px-6 lg:px-8 lg:pt-6">
+        {/* Rechtsbündig über dem Inhalt: erreichbar von jeder Seite, ohne
+            das Layout der einzelnen Ansichten anzufassen. */}
+        <div className="hidden justify-end px-3 pt-4 sm:px-6 lg:flex lg:px-8">
+          <GlobalSearch />
+        </div>
+        <div className="w-full flex-1 px-3 pb-10 pt-16 sm:px-6 lg:px-8 lg:pt-3">
           {children}
         </div>
         <AppFooter />
