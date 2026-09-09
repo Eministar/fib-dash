@@ -2,11 +2,27 @@ import { z } from 'zod'
 
 import { Prisma } from '@/generated/prisma'
 import { error, forbidden, unauthorized } from './api-response'
+import type { CurrentUser } from './auth'
+import { investigationVisibilityWhere } from './investigations'
 import { MAP_CATEGORY_IDS, MAP_SPOT_LIMITS, type MapCategory, type MapSpot } from './map-spots'
 
 export const spotInclude = {
   createdBy: { select: { id: true, displayName: true } },
+  dossiers: { select: { id: true, title: true, kind: true }, orderBy: { title: 'asc' } },
+  investigations: { select: { id: true, caseNumber: true, title: true, classified: true }, orderBy: { caseNumber: 'asc' } },
 } satisfies Prisma.MapSpotInclude
+
+/**
+ * Wie `spotInclude`, aber Verschlusssachen bleiben für Unbefugte weg. Der
+ * Punkt selbst bleibt sichtbar: verschwände er, verriete genau dieses
+ * Verschwinden die geheime Verknüpfung.
+ */
+export function visibleSpotInclude(user: CurrentUser) {
+  return {
+    ...spotInclude,
+    investigations: { ...spotInclude.investigations, where: investigationVisibilityWhere(user) },
+  }
+}
 
 type SpotRow = Prisma.MapSpotGetPayload<{ include: typeof spotInclude }>
 
@@ -53,6 +69,9 @@ export function serializeSpot(spot: SpotRow): MapSpot {
     icon: spot.icon,
     x: spot.x,
     y: spot.y,
+    // `?? []` deckt POST und PATCH ab, die ohne die Relationen laden können.
+    dossiers: spot.dossiers?.map((entry) => ({ id: entry.id, title: entry.title, kind: entry.kind })) ?? [],
+    investigations: spot.investigations?.map((entry) => ({ id: entry.id, caseNumber: entry.caseNumber, title: entry.title, classified: entry.classified })) ?? [],
     createdById: spot.createdById,
     // Gelöschte Benutzer setzen `createdById` auf NULL – die Markierung bleibt.
     createdByName: spot.createdBy?.displayName ?? 'Unbekannt',
