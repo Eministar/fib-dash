@@ -97,7 +97,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       await createAuditLog({
         action: 'CONTRACT_DECLINED',
         userId: user.id,
-        agentId: declined.agentId,
+        agentId: declined.agentId ?? undefined,
         oldValue: contract.status,
         newValue: 'DECLINED',
         details: reason || declined.title,
@@ -123,7 +123,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         status: 'SIGNED',
         values: values as unknown as Prisma.InputJsonValue,
         signedAt: new Date(),
-        signedName: signedName || `${contract.agent.firstName} ${contract.agent.lastName}`.trim(),
+        // Ein Behoerdenvertrag hat keinen Agent; dann traegt allein das
+        // Unterschriftsfeld den Namen.
+        signedName:
+          signedName ||
+          [contract.agent?.firstName, contract.agent?.lastName].filter(Boolean).join(' ').trim() ||
+          null,
         signerDiscordId: contractSignerDiscordId(contract),
         signedByUserId: user.id,
         signedIp: clientIp(req),
@@ -158,17 +163,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     await createAuditLog({
       action: 'CONTRACT_SIGNED',
       userId: user.id,
-      agentId: signed.agentId,
+      agentId: signed.agentId ?? undefined,
       newValue: signed.signedName ?? '',
       details: signed.title,
     })
 
-    queueDiscordHrEvent({
-      type: 'update',
-      title: 'Arbeitsvertrag unterschrieben',
-      agent: signed.agent,
-      description: `${signed.title} wurde von ${signed.signedName} unterschrieben.`,
-    })
+    // Die HR-Meldung gilt Arbeitsvertraegen. Ein Behoerdenvertrag hat keinen
+    // Agent, ueber den sie berichten koennte.
+    if (signed.agent) {
+      queueDiscordHrEvent({
+        type: 'update',
+        title: 'Arbeitsvertrag unterschrieben',
+        agent: signed.agent,
+        description: `${signed.title} wurde von ${signed.signedName} unterschrieben.`,
+      })
+    }
 
     const updated = await loadContractByToken(token)
     return success(updated ? await serializeContractDocument(updated) : null)

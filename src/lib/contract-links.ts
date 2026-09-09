@@ -146,8 +146,8 @@ export async function serializeContractDocument(
     value ? applyContractDatePlaceholders(value, documentDate) : ''
 
   const prefix = await getBadgePrefix()
-  const badge = contract.agent.badgeNumber
-  const badgeLabel = prefix && !badge.startsWith(prefix)
+  const badge = contract.agent?.badgeNumber ?? ''
+  const badgeLabel = badge && prefix && !badge.startsWith(prefix)
     ? `${prefix.endsWith('-') ? prefix : `${prefix}-`}${badge}`
     : badge
 
@@ -173,13 +173,17 @@ export async function serializeContractDocument(
     signedName: contract.signedName,
     declinedAt: contract.declinedAt,
     declineReason: contract.declineReason,
-    agent: {
-      firstName: contract.agent.firstName,
-      lastName: contract.agent.lastName,
-      badgeNumber: badgeLabel,
-      rankName: contract.agent.rank?.name ?? null,
-      hireDate: contract.agent.hireDate,
-    },
+    // Bei einem Behoerdenvertrag gibt es keinen Agent; das Dokument setzt dann
+    // die Gegenpartei in den Briefkopf.
+    agent: contract.agent
+      ? {
+          firstName: contract.agent.firstName,
+          lastName: contract.agent.lastName,
+          badgeNumber: badgeLabel,
+          rankName: contract.agent.rank?.name ?? null,
+          hireDate: contract.agent.hireDate,
+        }
+      : null,
   }
 }
 
