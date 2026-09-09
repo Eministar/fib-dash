@@ -8,6 +8,10 @@
  * Die Logik liegt in `src/lib/contract-signature-migration.ts` und ist dort
  * getestet; dieses Skript ist nur die Kommandozeile davor.
  */
+// Muss vor jedem Prisma-Import stehen: ohne das liest der Prozess die .env
+// nicht und bricht mit "DATABASE_URL fehlt" ab, obwohl sie vorhanden ist.
+import 'dotenv/config'
+
 import { prisma } from '../src/lib/prisma'
 import { migrateContractSignatures } from '../src/lib/contract-signature-migration'
 
