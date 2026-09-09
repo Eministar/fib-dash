@@ -1,7 +1,250 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-09T15:31:36.166Z",
+  "generatedAt": "2026-09-09T18:30:27.431Z",
   "entries": [
+    {
+      "buildId": "build-58fc337d5f",
+      "commit": "58fc337d5f19a0a3117e8e9743fa7615e7e6932e",
+      "shortCommit": "58fc337d5f",
+      "subject": "Merge pull request #7",
+      "author": "Eministar",
+      "date": "2026-09-09T18:29:50Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/58fc337d5f19a0a3117e8e9743fa7615e7e6932e"
+    },
+    {
+      "buildId": "build-273d181ebc",
+      "commit": "273d181ebcb05ab722b8f246e84e3009f4969e11",
+      "shortCommit": "273d181ebc",
+      "subject": "feat: implement agency contracts management interface",
+      "author": "Eministar",
+      "date": "2026-09-09T18:29:23Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/273d181ebcb05ab722b8f246e84e3009f4969e11"
+    },
+    {
+      "buildId": "build-1fd7718e1e",
+      "commit": "1fd7718e1eb344e77bb81dde0b8b16b65ac4ceb7",
+      "shortCommit": "1fd7718e1e",
+      "subject": "fix: toten Menueeintrag \"Uploads\" entfernt",
+      "author": "Eministar",
+      "date": "2026-09-09T18:28:18Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/1fd7718e1eb344e77bb81dde0b8b16b65ac4ceb7"
+    },
+    {
+      "buildId": "build-af327b1c88",
+      "commit": "af327b1c88fef89d74b25cfac2cdfddc00ea91d6",
+      "shortCommit": "af327b1c88",
+      "subject": "fix: echter Grund eines Komprimierungs-Fehlschlags landet im Datensatz",
+      "author": "Eministar",
+      "date": "2026-09-09T18:25:53Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/af327b1c88fef89d74b25cfac2cdfddc00ea91d6"
+    },
+    {
+      "buildId": "build-121077b150",
+      "commit": "121077b1505ae273e38ad2aff3df4f9467d0d55e",
+      "shortCommit": "121077b150",
+      "subject": "feat: Route zum Anlegen von Behoerdenvertraegen",
+      "author": "Eministar",
+      "date": "2026-09-09T18:19:46Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/121077b1505ae273e38ad2aff3df4f9467d0d55e"
+    },
+    {
+      "buildId": "build-be02a8d07a",
+      "commit": "be02a8d07a6d76d5bfc94691cee0209a05e65c51",
+      "shortCommit": "be02a8d07a",
+      "subject": "feat: Dokument und Arbeitsbereich vertragen zwei Parteien",
+      "author": "Eministar",
+      "date": "2026-09-09T18:17:08Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/be02a8d07a6d76d5bfc94691cee0209a05e65c51"
+    },
+    {
+      "buildId": "build-a30c5fcd3e",
+      "commit": "a30c5fcd3ec7ada14a1f97cb0c409f75ab8cf3f8",
+      "shortCommit": "a30c5fcd3e",
+      "subject": "feat: Signaturablauf laeuft ueber die Unterschriftszeilen",
+      "author": "Eministar",
+      "date": "2026-09-09T18:11:44Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/a30c5fcd3ec7ada14a1f97cb0c409f75ab8cf3f8"
+    },
+    {
+      "buildId": "build-3e0cf41eb4",
+      "commit": "3e0cf41eb488800c8dda4910c1148d2a8cbf05f4",
+      "shortCommit": "3e0cf41eb4",
+      "subject": "feat: Behoerdenvertraege mit zwei Unterzeichnern",
+      "author": "Eministar",
+      "date": "2026-09-09T18:06:30Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/3e0cf41eb488800c8dda4910c1148d2a8cbf05f4"
+    },
+    {
+      "buildId": "build-c45294267c",
+      "commit": "c45294267c17d2030aa84df3b6970b303b53632f",
+      "shortCommit": "c45294267c",
+      "subject": "fix: optionaler Agent an allen Vertragsstellen behandelt",
+      "author": "Eministar",
+      "date": "2026-09-09T17:19:07Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/c45294267c17d2030aa84df3b6970b303b53632f"
+    },
+    {
+      "buildId": "build-80c5531003",
+      "commit": "80c55310036bfee2db7bfd9d7e26888f7fa48fe4",
+      "shortCommit": "80c5531003",
+      "subject": "feat: Unterschriften als eigenes Modell, Migration der Altvertraege",
+      "author": "Eministar",
+      "date": "2026-09-09T17:16:48Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/80c55310036bfee2db7bfd9d7e26888f7fa48fe4"
+    },
+    {
+      "buildId": "build-acd97c297a",
+      "commit": "acd97c297a8994d38ce2ee2e4196d942c58f58b1",
+      "shortCommit": "acd97c297a",
+      "subject": "test: Charakterisierungstests fuer das bestehende Vertragssystem",
+      "author": "Eministar",
+      "date": "2026-09-09T17:14:25Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/acd97c297a8994d38ce2ee2e4196d942c58f58b1"
+    },
+    {
+      "buildId": "build-95aef348c3",
+      "commit": "95aef348c3e5dd1a3389a44446bcec444b79dbb8",
+      "shortCommit": "95aef348c3",
+      "subject": "feat: Aufraeum-Job fuer Upload-Sitzungen, alte Rohbody-Pfade entfernt",
+      "author": "Eministar",
+      "date": "2026-09-09T17:11:48Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/95aef348c3e5dd1a3389a44446bcec444b79dbb8"
+    },
+    {
+      "buildId": "build-27edf343af",
+      "commit": "27edf343aff2c35c59a70e13b9391e21e55d945c",
+      "shortCommit": "27edf343af",
+      "subject": "feat: Akademie-Ressourcen ueber Chunk-Upload",
+      "author": "Eministar",
+      "date": "2026-09-09T17:03:46Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/27edf343aff2c35c59a70e13b9391e21e55d945c"
+    },
+    {
+      "buildId": "build-1da91516d0",
+      "commit": "1da91516d0550f09c5ec640ce9af8561fd812a76",
+      "shortCommit": "1da91516d0",
+      "subject": "feat: Asservate und Ermittlungsfotos ueber Chunk-Upload",
+      "author": "Eministar",
+      "date": "2026-09-09T16:59:29Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/1da91516d0550f09c5ec640ce9af8561fd812a76"
+    },
+    {
+      "buildId": "build-087500884a",
+      "commit": "087500884ae0e66ec984dfb8bd31ba9a2b118b02",
+      "shortCommit": "087500884a",
+      "subject": "feat: Bodycam-Clips ueber Chunk-Upload mit Fortsetzen",
+      "author": "Eministar",
+      "date": "2026-09-09T16:55:16Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/087500884ae0e66ec984dfb8bd31ba9a2b118b02"
+    },
+    {
+      "buildId": "build-3b5bfd5d70",
+      "commit": "3b5bfd5d70447d4cac83ad05b87fc5a2dca47c50",
+      "shortCommit": "3b5bfd5d70",
+      "subject": "feat: Client-Bibliothek fuer parallele Chunk-Uploads",
+      "author": "Eministar",
+      "date": "2026-09-09T16:51:53Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/3b5bfd5d70447d4cac83ad05b87fc5a2dca47c50"
+    },
+    {
+      "buildId": "build-808a14cb79",
+      "commit": "808a14cb798daef38e7c899a2ab46f833cd0a37f",
+      "shortCommit": "808a14cb79",
+      "subject": "feat: API fuer wiederaufnehmbare Chunk-Uploads",
+      "author": "Eministar",
+      "date": "2026-09-09T16:49:14Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/808a14cb798daef38e7c899a2ab46f833cd0a37f"
+    },
+    {
+      "buildId": "build-d9a90adac2",
+      "commit": "d9a90adac2b4aedc3e10db3bec418f6f29666b4a",
+      "shortCommit": "d9a90adac2",
+      "subject": "feat: Chunks zusammensetzen, pruefen und als einmaliges Ticket einloesen",
+      "author": "Eministar",
+      "date": "2026-09-09T16:46:21Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/d9a90adac2b4aedc3e10db3bec418f6f29666b4a"
+    },
+    {
+      "buildId": "build-54d80e6154",
+      "commit": "54d80e61542de994f0d50add0d9e83c3e796073f",
+      "shortCommit": "54d80e6154",
+      "subject": "feat: Upload-Sitzungen anlegen, wiederfinden und begrenzen",
+      "author": "Eministar",
+      "date": "2026-09-09T16:44:08Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/54d80e61542de994f0d50add0d9e83c3e796073f"
+    },
+    {
+      "buildId": "build-88ff90e3ed",
+      "commit": "88ff90e3edc5a94ee0628e3e1d9ba8688d141cd9",
+      "shortCommit": "88ff90e3ed",
+      "subject": "feat: Chunks per Pruefsumme verifiziert ablegen",
+      "author": "Eministar",
+      "date": "2026-09-09T16:36:08Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/88ff90e3edc5a94ee0628e3e1d9ba8688d141cd9"
+    },
+    {
+      "buildId": "build-f3be11fa09",
+      "commit": "f3be11fa09eda0541a8356984635cfc3c1427272",
+      "shortCommit": "f3be11fa09",
+      "subject": "feat: Regeln je Upload-Art und Chunk-Ablage im Dateisystem",
+      "author": "Eministar",
+      "date": "2026-09-09T16:35:32Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/f3be11fa09eda0541a8356984635cfc3c1427272"
+    },
+    {
+      "buildId": "build-264a43f942",
+      "commit": "264a43f94237e4c050228f7db8150b8308a9c0d3",
+      "shortCommit": "264a43f942",
+      "subject": "refactor: Magic-Byte-Prüfung in ein geteiltes Modul gezogen",
+      "author": "Eministar",
+      "date": "2026-09-09T16:34:38Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/264a43f94237e4c050228f7db8150b8308a9c0d3"
+    },
+    {
+      "buildId": "build-6a174e64c8",
+      "commit": "6a174e64c8278846dd3c161fa97c5f65a6f19b09",
+      "shortCommit": "6a174e64c8",
+      "subject": "feat: Datenmodell für wiederaufnehmbare Upload-Sitzungen",
+      "author": "Eministar",
+      "date": "2026-09-09T16:33:51Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/6a174e64c8278846dd3c161fa97c5f65a6f19b09"
+    },
+    {
+      "buildId": "build-aa993d9b86",
+      "commit": "aa993d9b86e20debce778584a7534e51a28165c4",
+      "shortCommit": "aa993d9b86",
+      "subject": "docs: Entwurf für Verträge mit externen Behörden",
+      "author": "Eministar",
+      "date": "2026-09-09T16:32:13Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/aa993d9b86e20debce778584a7534e51a28165c4"
+    },
+    {
+      "buildId": "build-ddbdd66feb",
+      "commit": "ddbdd66febbc64fd30996ce763dc359fe7bfcf7d",
+      "shortCommit": "ddbdd66feb",
+      "subject": "docs: Umsetzungsplan für Chunked Uploads",
+      "author": "Eministar",
+      "date": "2026-09-09T16:24:17Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/ddbdd66febbc64fd30996ce763dc359fe7bfcf7d"
+    },
+    {
+      "buildId": "build-50397a3b86",
+      "commit": "50397a3b8663ef48d512ca7db6da9c9d26f7cd37",
+      "shortCommit": "50397a3b86",
+      "subject": "fix: nginx-Upload-Limit angehoben und Entwurf für Chunked Uploads",
+      "author": "Eministar",
+      "date": "2026-09-09T16:18:02Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/50397a3b8663ef48d512ca7db6da9c9d26f7cd37"
+    },
+    {
+      "buildId": "build-0ae19a5e49",
+      "commit": "0ae19a5e490a5592295520adbd5b1dff35673b11",
+      "shortCommit": "0ae19a5e49",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-09T15:31:36Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/0ae19a5e490a5592295520adbd5b1dff35673b11"
+    },
     {
       "buildId": "build-2d89421dac",
       "commit": "2d89421dac5061d8f307cd1ba8c97761de59f096",
