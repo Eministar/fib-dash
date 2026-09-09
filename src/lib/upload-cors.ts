@@ -6,7 +6,7 @@ export function uploadCors(req: Request, response: Response) {
     response.headers.append('Vary', 'Origin')
     response.headers.set('Access-Control-Allow-Credentials', 'true')
     response.headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Authorization,Content-Type,X-Clip-Meta,X-Evidence-Title,X-Photo-Title,X-Upload-Size,X-Discord-Id')
+    response.headers.set('Access-Control-Allow-Headers', 'Authorization,Content-Type,X-Chunk-Sha256,X-Clip-Meta,X-Evidence-Title,X-Photo-Title,X-Upload-Size,X-Discord-Id')
     response.headers.set('Access-Control-Max-Age', '600')
   }
   return response

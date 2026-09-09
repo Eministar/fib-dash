@@ -52,5 +52,10 @@ export function proxy(req: NextRequest) {
 export const config = {
   // Binary uploads must reach their streaming handlers without Next cloning
   // and truncating their bodies at the proxy's default 10 MB buffer limit.
-  matcher: '/api/((?!investigations/clips/?$|corruption-checks/[^/]+/evidence/?$).*)',
+  //
+  // Die beiden Rohbody-Routen stehen hier nur noch uebergangsweise: sie fallen
+  // weg, sobald alle Uploads ueber /api/uploads/:id/chunks/:index laufen. Bis
+  // dahin muessen sie ausgenommen bleiben, sonst bricht ein grosser Upload
+  // zwischen zwei Commits.
+  matcher: '/api/((?!uploads/[^/]+/chunks/|investigations/clips/?$|corruption-checks/[^/]+/evidence/?$).*)',
 }
