@@ -44,6 +44,7 @@ import { InvestigationLinks } from '@/components/investigations/investigation-li
 import { InvestigationVehicles } from '@/components/investigations/investigation-vehicles'
 import { InvestigationDossiers } from '@/components/investigations/dossiers-workspace'
 import { SpotPickerField } from '@/components/map/spot-picker'
+import { InvestigationHistory } from '@/components/investigations/investigation-history'
 import { ActionMenu, type ActionMenuItem } from '@/components/ui/action-menu'
 import { ImageLightbox, LightboxThumb } from '@/components/ui/image-lightbox'
 import { SectionCard } from '@/components/ui/section-card'
@@ -158,6 +159,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
       label: 'Verknüpfungen',
       count: investigation.mapSpots.length + investigation.linksFrom.length + investigation.linksTo.length,
     },
+    { id: 'verlauf', label: 'Verlauf' },
   ]
   const activeTab = resolveTab(query.get('tab'), tabs)
 
@@ -598,6 +600,8 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           </Card>
         </>
       )}
+
+      {activeTab === 'verlauf' && <InvestigationHistory investigationId={investigationId} />}
 
       <ImageLightbox images={photoImages} startId={lightboxId} onClose={() => setLightboxId(null)} />
 
