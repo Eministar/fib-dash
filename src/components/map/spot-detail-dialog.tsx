@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { LocateFixed, Move, Pencil, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -64,6 +65,37 @@ export function SpotDetailDialog({
             <p className="mt-4 flex-1 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c4c4c4]">
               {spot.description || 'Für diese Markierung wurden keine Notizen hinterlegt.'}
             </p>
+
+            {(spot.dossiers.length > 0 || spot.investigations.length > 0) && (
+              <div className="mt-4 space-y-2 border-t border-[#232323] pt-3">
+                <p className="text-[11.5px] font-medium text-[#a6a6a6]">Verknüpfte Akten</p>
+                <ul className="space-y-1">
+                  {spot.dossiers.map((dossier) => (
+                    <li key={dossier.id}>
+                      <Link
+                        href={`/investigations/dossiers?id=${encodeURIComponent(dossier.id)}`}
+                        className="text-[12.5px] text-[#c4b5fd] hover:underline"
+                      >
+                        {dossier.title}
+                      </Link>
+                    </li>
+                  ))}
+                  {spot.investigations.map((investigation) => (
+                    <li key={investigation.id} className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/investigations/${investigation.id}`}
+                        className="text-[12.5px] text-[#c4b5fd] hover:underline"
+                      >
+                        {investigation.caseNumber} · {investigation.title}
+                      </Link>
+                      {investigation.classified && (
+                        <span className="rounded bg-[#7f1d1d]/40 px-1.5 text-[10.5px] text-[#fca5a5]">Verschluss</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <p className="mt-5 border-t border-[#232323] pt-3 text-[11.5px] text-[#6a6a6a]">
               {spot.createdByName} · {formatDateTime(spot.createdAt)}

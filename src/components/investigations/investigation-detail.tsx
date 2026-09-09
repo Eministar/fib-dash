@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ArrowLeft,
   CalendarClock,
+  ImageIcon,
   MapPin,
   Plus,
   Trash2,
@@ -41,6 +43,9 @@ import { InvestigationEvidence } from '@/components/investigations/investigation
 import { InvestigationLinks } from '@/components/investigations/investigation-links'
 import { InvestigationVehicles } from '@/components/investigations/investigation-vehicles'
 import { InvestigationDossiers } from '@/components/investigations/dossiers-workspace'
+import { SpotPickerField } from '@/components/map/spot-picker'
+import { PhotoPicker } from '@/components/investigations/photo-catalog'
+import { mapCategory } from '@/lib/map-spots'
 import {
   ClassifiedBadge,
   EntryKindBadge,
@@ -98,6 +103,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   const [uploadOpen, setUploadOpen] = useState(false)
   const [activeClip, setActiveClip] = useState<BodycamClip | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [linkOpen, setLinkOpen] = useState<'spots' | 'photos' | null>(null)
 
   const personOptions = useMemo(
     () => [
@@ -408,6 +414,103 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           </ol>
         )}
       </Card>
+
+      {/* Kartenpunkte */}
+      <Card className="mb-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[14px] font-semibold text-white">Kartenpunkte ({investigation.mapSpots.length})</h2>
+          {canManage && (
+            <Button variant="ghost" size="sm" onClick={() => setLinkOpen('spots')}>
+              <MapPin className="h-3.5 w-3.5" />
+              Verknüpfen
+            </Button>
+          )}
+        </div>
+        {investigation.mapSpots.length === 0 ? (
+          <p className="py-3 text-[12.5px] text-[#6a6a6a]">Keine Kartenpunkte zu dieser Akte.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-1.5">
+            {investigation.mapSpots.map((spot) => (
+              <li key={spot.id}>
+                <Link
+                  href="/map"
+                  className="flex items-center gap-1.5 rounded-full border border-[#343434] px-3 py-1.5 text-[12px] text-[#d4d4d4] hover:border-[#a78bfa]"
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} />
+                  {spot.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      {/* Bilder */}
+      <Card className="mb-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[14px] font-semibold text-white">Bilder ({investigation.photos.length})</h2>
+          {canManage && (
+            <Button variant="ghost" size="sm" onClick={() => setLinkOpen('photos')}>
+              <ImageIcon className="h-3.5 w-3.5" />
+              Verknüpfen
+            </Button>
+          )}
+        </div>
+        {investigation.photos.length === 0 ? (
+          <p className="py-3 text-[12.5px] text-[#6a6a6a]">Noch keine Bilder zu dieser Akte.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {investigation.photos.map((photo) => (
+              <Image
+                key={photo.id}
+                unoptimized
+                src={`/api/investigations/photos/${photo.id}/image`}
+                alt={photo.title}
+                width={320}
+                height={240}
+                className="aspect-[4/3] w-full rounded-lg border border-[#2a2a2a] object-cover"
+              />
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Modal
+        open={linkOpen !== null}
+        onClose={() => setLinkOpen(null)}
+        title={linkOpen === 'photos' ? 'Bilder verknüpfen' : 'Kartenpunkte verknüpfen'}
+        size="xl"
+      >
+        {linkOpen === 'spots' && (
+          <SpotPickerField
+            value={investigation.mapSpots}
+            canCreate={hasPermission(user, 'map:manage')}
+            onChange={async (spots) => {
+              await execute(`/api/investigations/${investigationId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ mapSpotIds: spots.map((spot) => spot.id) }),
+              })
+              await refetch()
+            }}
+          />
+        )}
+        {linkOpen === 'photos' && (
+          <PhotoPicker
+            value={investigation.photos.map((photo) => ({
+              id: photo.id,
+              title: photo.title,
+              url: `/api/investigations/photos/${photo.id}/image`,
+            }))}
+            onChange={async (photos) => {
+              await execute(`/api/investigations/${investigationId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ photoIds: photos.map((photo) => photo.id) }),
+              })
+              await refetch()
+            }}
+          />
+        )}
+      </Modal>
 
       {/* Clips der Akte */}
       <Card>
