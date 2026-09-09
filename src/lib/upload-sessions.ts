@@ -1,5 +1,9 @@
-import { readdir } from 'node:fs/promises'
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
+import { createWriteStream } from 'node:fs'
+import { mkdir, readdir, rename, unlink } from 'node:fs/promises'
 import path from 'node:path'
+import { Readable, Transform } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 
 import { ALLOWED_CLIP_TYPES, clipMaxBytes } from './clips'
 import { evidenceTypes } from './corruption-evidence'
@@ -94,4 +98,62 @@ export async function receivedChunkIndexes(sessionId: string): Promise<number[]>
     .map((name) => Number.parseInt(name.slice(0, -'.part'.length), 10))
     .filter((index) => Number.isSafeInteger(index) && index >= 0)
     .sort((a, b) => a - b)
+}
+
+/**
+ * Schreibt einen Chunk nach `<index>.<uuid>.tmp` und benennt ihn erst nach
+ * bestandener Prüfung auf `<index>.part` um. Dadurch existiert ein `.part`
+ * ausschließlich für vollständige, verifizierte Daten — und der Fortschritt
+ * lässt sich allein aus dem Ordner ablesen.
+ *
+ * Der zufällige Zwischenname verhindert, dass zwei gleichzeitige Zustellungen
+ * desselben Index einander die Datei unter den Füßen wegziehen.
+ */
+export async function storeChunk(
+  sessionId: string,
+  index: number,
+  body: ReadableStream<Uint8Array>,
+  expectedSha256: string,
+  expectedBytes: number,
+): Promise<void> {
+  if (!/^[a-f0-9]{64}$/i.test(expectedSha256)) throw new UploadSessionError('Ungültige Prüfsumme')
+  if (!Number.isSafeInteger(expectedBytes) || expectedBytes <= 0) {
+    throw new UploadSessionError('Ungültige Chunk-Größe')
+  }
+
+  const target = chunkPath(sessionId, index)
+  const temporary = chunkPath(sessionId, index, `.${randomUUID()}.tmp`)
+  await mkdir(incomingDir(sessionId), { recursive: true })
+
+  let sizeBytes = 0
+  const hash = createHash('sha256')
+  const meter = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      sizeBytes += chunk.length
+      if (sizeBytes > expectedBytes) {
+        callback(new UploadSessionError('Chunk ist größer als angekündigt'))
+        return
+      }
+      hash.update(chunk)
+      callback(null, chunk)
+    },
+  })
+
+  try {
+    const source = Readable.fromWeb(body as Parameters<typeof Readable.fromWeb>[0])
+    await pipeline(source, meter, createWriteStream(temporary))
+
+    if (sizeBytes !== expectedBytes) throw new UploadSessionError('Chunk ist unvollständig')
+
+    const actual = Buffer.from(hash.digest('hex'), 'utf8')
+    const expected = Buffer.from(expectedSha256.toLowerCase(), 'utf8')
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
+      throw new UploadSessionError('Prüfsumme des Chunks stimmt nicht')
+    }
+
+    await rename(temporary, target)
+  } catch (cause) {
+    await unlink(temporary).catch(() => {})
+    throw cause
+  }
 }

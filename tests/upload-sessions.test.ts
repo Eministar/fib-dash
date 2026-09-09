@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import path from 'node:path'
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+import { createHash } from 'node:crypto'
+import { Readable } from 'node:stream'
 
 import { matchesFileSignature } from '../src/lib/upload-signatures'
 import {
@@ -13,7 +15,12 @@ import {
   uploadChunkBytes,
   uploadKindRules,
   UploadSessionError,
+  storeChunk,
 } from '../src/lib/upload-sessions'
+
+function streamOf(buffer: Buffer) {
+  return Readable.toWeb(Readable.from([buffer])) as ReadableStream<Uint8Array>
+}
 
 function head(bytes: number[]) {
   const buffer = Buffer.alloc(32)
@@ -74,4 +81,32 @@ test('Empfangene Chunks werden aus dem Dateisystem gelesen', async () => {
 
   assert.deepEqual(await receivedChunkIndexes(session), [0, 3])
   assert.deepEqual(await receivedChunkIndexes('clxsession0002abcd'), [])
+})
+
+test('Chunks werden nur bei passender Länge und Prüfsumme abgelegt', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'fib-upload-'))
+  process.env.UPLOAD_DIR = directory
+  const session = 'clxsession0003abcd'
+  const payload = Buffer.alloc(1024, 0x41)
+  const digest = createHash('sha256').update(payload).digest('hex')
+
+  await storeChunk(session, 0, streamOf(payload), digest, payload.length)
+  assert.deepEqual(await receivedChunkIndexes(session), [0])
+
+  // Doppelte Zustellung nach einem Wiederholversuch ist unschädlich.
+  await storeChunk(session, 0, streamOf(payload), digest, payload.length)
+  assert.deepEqual(await receivedChunkIndexes(session), [0])
+
+  await assert.rejects(
+    () => storeChunk(session, 1, streamOf(payload), 'f'.repeat(64), payload.length),
+    (cause: UploadSessionError) => cause.status === 400,
+  )
+  await assert.rejects(
+    () => storeChunk(session, 2, streamOf(payload), digest, payload.length + 1),
+    (cause: UploadSessionError) => cause.status === 400,
+  )
+
+  // Abgelehnte Chunks hinterlassen weder .part noch .tmp.
+  assert.deepEqual(await receivedChunkIndexes(session), [0])
+  assert.deepEqual((await readdir(incomingDir(session))).sort(), ['0.part'])
 })
