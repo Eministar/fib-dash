@@ -13,6 +13,7 @@ import {
   Trash2,
 } from 'lucide-react'
 
+import { PENAL_GRADE_ORDER, PENAL_GRADE_RULES } from '@/lib/sanction-catalog'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -129,13 +130,13 @@ const FORM_STATUS_OPTIONS: SelectOption[] = [
   { value: 'DISMISSED', label: 'Eingestellt / Abgelehnt' },
 ]
 
+/** Einstufung nach dem Sanktionskatalog v1.0 (Abschnitt 01). */
 const PENAL_GRADE_OPTIONS: SelectOption[] = [
   { value: '', label: '-- Kein Penal Grade --' },
-  { value: 'GRADE_1', label: 'Penal Grade I (bis 10.000 $ / 1 SG)' },
-  { value: 'GRADE_2', label: 'Penal Grade II (bis 20.000 $ / 2 SG / 48h Suspendierung)' },
-  { value: 'GRADE_3', label: 'Penal Grade III (bis 40.000 $ / 3 SG / Suspendierung)' },
-  { value: 'GRADE_4', label: 'Penal Grade IV (bis 60.000 $ / 4 SG / Suspendierung / Entlassung)' },
-  { value: 'GRADE_5', label: 'Penal Grade V (bis 85.000 $ / 5 SG / Entlassung)' },
+  ...PENAL_GRADE_ORDER.map((grade) => ({
+    value: `GRADE_${grade}`,
+    label: `Penal Grade ${grade} — ${PENAL_GRADE_RULES[grade].severity} (${PENAL_GRADE_RULES[grade].typicalConsequence})`,
+  })),
 ]
 
 interface DawFormData {

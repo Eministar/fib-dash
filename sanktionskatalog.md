@@ -1,137 +1,166 @@
 # Sanktionskatalog
 
-**Federal Investigation Bureau (FIB)**
+**Federal Investigation Bureau (FIB)** · Version 1.0 — Interner Dienststandard
 
-Diese Datei ist die zentrale Quelle für den Sanktionskatalog der HR-Abteilung. Penal Grades dienen der einheitlichen Bewertung disziplinarer Verstöße und der Transparenz gegenüber Betroffenen.
+**Klar. Einheitlich. Verhältnismäßig.**
 
-## Überblick
+Ein kompakter Leitfaden zur Einstufung, Sanktionierung und Dokumentation von Fehlverhalten innerhalb des Federal Investigation Bureau.
 
-| Grade | Geldstrafe (wählbar) | SG-Runden (wählbar) | Suspendierung / Sonstiges    |
-| ----- | -------------------- | ------------------- | ---------------------------- |
-| I     | 10.000 $             | 1                   | keine weiteren Maßnahmen     |
-| II    | 20.000 $             | 2                   | bis 48 h                     |
-| III   | 40.000 $             | 3                   | unbefristet möglich          |
-| IV    | 60.000 $             | 4                   | unbefristet; ggf. Entlassung |
-| V     | 85.000 $             | 5                   | Entlassung                   |
+| Schritt | Aufgabe |
+| ------- | ------- |
+| 01 · Verstoß | Sachverhalt feststellen |
+| 02 · Penal Grade | Schwere einstufen |
+| 03 · Sanktion | Maßnahme bestimmen |
+| 04 · Dokumentation | Entscheidung festhalten |
 
-## Allgemeine Hinweise
+## Gültigkeit & Grundsatz
 
-- **Anwendung:** Beim Ausstellen wird je Penal Grade entweder die Geldstrafe oder die hinterlegte Anzahl an SG-Runden ausgewählt. Die Grade-Folge (z. B. Suspendierung oder Entlassung) bleibt zusätzlich dokumentiert.
-- **Dokumentation:** Jede Sanktion ist sachlich zu begründen und nachvollziehbar zu dokumentieren (Datum, Tathergang, einschlägige Vorschriften).
-- **Stellungnahme:** Betroffene sollen, soweit zumutbar, Gelegenheit zur Einlassung erhalten, bevor eine schwerwiegende Maßnahme (ab Grade III) festgesetzt wird.
-- **Kumulation:** Wiederholte Verstöße der niedrigeren Grade können als Eskalation in eine höhere Penal-Stufe eingestuft werden.
+Dieser Katalog dient als interner Orientierungs- und Entscheidungsrahmen. Maßgeblich bleiben die jeweils geltenden Dienstvorschriften. Sanktionen sind stets nach dem Grundsatz der Verhältnismäßigkeit zu wählen.
 
 ---
 
-## Penal Grade I
+## 01 — Penal Grades
 
-**Maximale Geldstrafe:** 10.000 $
+Die Penal Grades bilden die sechs Schweregrade des Katalogs. Je höher der Grade, desto größer die Auswirkungen auf Vertrauen, Dienstbetrieb und Personalmaßnahmen.
 
-**Alternative:** 1 SG-Runde
-
-**Weitere Maßnahmen:** keine
-
-**Begründung (Auswahl, nicht abschließend):**
-
-- unsachgemäßes Parken
-- unautorisiertes Führen eines Fahrzeugs (ohne weiteren schweren Kontext)
-- geringfügige Formfehler bei Meldungen, sofern ohne Sicherheitsrisiko
-- leichte Verstöße gegen interne Park-/Fahrregeln auf Dienstgelände
-
-**Ausstellbar durch:** Human Resources und Chief-Ebene; Commander und Captain
+| PG | Schwere | Kurzbeschreibung | Typische Folge |
+| -- | ------- | ---------------- | -------------- |
+| 1 | Geringfügig | Leichte Regelverstöße ohne wesentliche Folgen. | Hinweis / Verwarnung |
+| 2 | Leicht | Erkennbarer Verstoß gegen interne Abläufe oder Verhalten. | Schriftliche Verwarnung |
+| 3 | Mittel | Deutlicher Verstoß gegen Dienst- oder Verhaltenspflichten. | Disziplinarmaßnahme |
+| 4 | Schwer | Erhebliche Pflichtverletzung oder erheblicher Vertrauensschaden. | Degradierung / Suspendierung |
+| 5 | Sehr schwer | Schwerwiegender Vertrauensbruch. | Entlassung |
+| 6 | Schwerstverstoß | Weitere Tätigkeit grundsätzlich nicht vertretbar. | Sofortige Entlassung |
 
 ---
 
-## Penal Grade II
+## 02 — Sanktionsstufen
 
-**Maximale Geldstrafe:** 20.000 $
-
-**Alternative:** 2 SG-Runden
-
-**Weitere Maßnahmen:** maximale Suspendierung von 48 Stunden
-
-**Begründung (Auswahl, nicht abschließend):**
-
-- fehlende Funkdisziplin
-- Funkpflicht verletzt / unterlassene Meldungen mit geringem Schaden
-- persönlicher Streit unter Kolleginnen und Kollegen
-- Nichteinhaltung der Kleiderordnung / unzureichende dienstliche Erscheinung
-- Missachten von Befehlen von Vorgesetzten (ohne schwere Folgen)
-- respektloses Verhalten
-- unprofessionelles Verhalten in Tickets / Schriftverkehr
-- demonstratives Infragestellen des dienstlichen Machtgefüges (z. B. „Ich bin dir überstellt“ ohne sachlichen Anlass)
-- wiederholte geringfügige Grade-I-Verstöße nach Abmahnung
-
-**Ausstellbar durch:** Human Resources und Chief-Ebene; Commander und Captain
+| Stufe | Maßnahme | Anwendung |
+| ----- | -------- | --------- |
+| 01 | Mündliche Verwarnung | Direkter Hinweis auf das Fehlverhalten; keine formelle Disziplinarmaßnahme. |
+| 02 | Schriftliche Verwarnung | Dokumentierte Verwarnung und Eintrag in die Personalakte. |
+| 03 | Disziplinarmaßnahme | Formeller Disziplinareintrag; gegebenenfalls Entzug einzelner Befugnisse. |
+| 04 | Degradierung | Rückstufung um einen oder mehrere Ränge beziehungsweise Entzug von Sonderberechtigungen. |
+| 05 | Suspendierung | Vorübergehende Entbindung vom Dienst; Dauer nach Einzelfall. |
+| 06 | Entlassung | Beendigung der Tätigkeit beim FIB. |
+| 07 | Sofortige Entlassung | Bei besonders schweren Verstößen; vorherige Verwarnung nicht erforderlich. |
 
 ---
 
-## Penal Grade III
+## 03 — Verstöße nach Schwere
 
-**Maximale Geldstrafe:** 40.000 $
+Die Beispiele sind eine Auswahl und nicht abschließend.
 
-**Alternative:** 3 SG-Runden
+### Penal Grade 1 — Geringfügig
 
-**Weitere Maßnahmen:** unbefristete Suspendierung möglich
+Uniform unvollständig · Unpünktlichkeit ohne triftigen Grund · kleinere interne Ablaufverstöße · unzureichende Kommunikation · kleinere vergessene Dienstpflichten
 
-**Begründung (Auswahl, nicht abschließend):**
+- **Regelsanktion:** Mündliche Verwarnung
+- **Wiederholung:** grundsätzlich schriftliche Verwarnung
 
-- massives Fehlverhalten gegenüber Beamten oder Bürgerinnen und Bürgern
-- wiederholte oder gravierende Nichteinhaltung der Dienstvorschriften
-- unautorisierte Körper- oder Fahrzeugdurchsuchung
-- mutwillige Zerstörung oder Beschädigung amtlicher Gegenstände
-- Bloßstellung des Department (Öffentlichkeit, Medien, soziale Medien)
-- unabgemeldetes Fehlen von mindestens drei aufeinanderfolgenden Diensttagen
-- vorsätzliche Verweigerung dienstlicher Mitwirkung bei internen Ermittlungen (mittleres Gewicht)
-- wiederholte Grade-II-Verstöße trotz laufender Maßnahmen
+### Penal Grade 2 — Leicht
 
-**Ausstellbar durch:** Human Resources und Chief-Ebene; Commander und Captain
+Wiederholte Unpünktlichkeit · Missachtung interner Anweisungen · unprofessionelles Auftreten · unangemessene Kommunikation · unbegründetes Fernbleiben · Missachtung des Dienstweges · unsachgemäße Ressourcennutzung
+
+- **Regelsanktion:** Schriftliche Verwarnung
+- **Wiederholung:** Disziplinarmaßnahme, gegebenenfalls Degradierung
+
+### Penal Grade 3 — Mittel
+
+Wiederholte Anweisungsverstöße · bewusste Umgehung des Dienstweges · unbefugte Nutzung von Fahrzeugen oder Ausrüstung · Respektlosigkeit gegenüber Vorgesetzten · Missachtung rechtmäßiger Weisungen · unbegründetes Verlassen eines Einsatzes · Behinderung eines Einsatzes
+
+- **Regelsanktion:** Disziplinarmaßnahme
+- **Wiederholung:** Degradierung / Suspendierung
+
+### Penal Grade 4 — Schwer
+
+Schwerwiegende Anweisungsverstöße · Machtmissbrauch · unbefugte Weitergabe interner Informationen · Manipulation von Einsatz- oder Ermittlungsunterlagen · unbefugter Datenzugriff · Gefährdung anderer durch grobe Pflichtverletzung · bewusste Einsatzbehinderung
+
+- **Regelsanktion:** Degradierung / Suspendierung
+- **Wiederholung:** Suspendierung / Entlassung
+
+### Penal Grade 5 — Sehr schwer
+
+Korruption · Bestechlichkeit · schwerer Machtmissbrauch · Weitergabe vertraulicher Ermittlungsinformationen · Beweismittelmanipulation · Fälschung offizieller Dokumente · schwere Verschwiegenheitsverletzung · Decken schwerer Straftaten · Amtsmissbrauch zum persönlichen Vorteil
+
+- **Regelsanktion:** Entlassung
+- **Wiederholung:** Einzelfallprüfung; regelmäßig keine weitere Verwendung
+
+### Penal Grade 6 — Schwerstverstoß
+
+Schwere Korruption · Verrat hochsensibler Informationen · gezielte Sabotage des FIB · vorsätzlicher schwerwiegender Amtsmissbrauch · schwere Zusammenarbeit mit kriminellen Organisationen · vorsätzliche erhebliche Gefährdung anderer aus persönlichen Interessen
+
+- **Regelsanktion:** Sofortige Entlassung
+- **Wiederholung:** vorherige Verwarnung nicht erforderlich
+
+---
+
+## 04 — Wiederholungsfälle
+
+Wiederholtes Fehlverhalten wird grundsätzlich strenger bewertet. Entscheidend sind insbesondere Gleichartigkeit, zeitlicher Abstand, Vorsatz und die bisherigen Disziplinarmaßnahmen.
+
+| Wiederholung | Grundsatz |
+| ------------ | --------- |
+| 1. Verstoß | Regelsanktion nach Penal Grade |
+| 2. gleichartiger Verstoß | Nächsthöhere Sanktionsstufe |
+| 3. gleichartiger Verstoß | Degradierung oder Suspendierung |
+| 4. gleichartiger Verstoß | Entlassung kann ausgesprochen werden |
+
+**Mildernd:** Erstverstoß · Fahrlässigkeit statt Vorsatz · geringe Auswirkungen · sofortige Kooperation · freiwillige Meldung · erkennbare Einsicht
+
+**Erschwerend:** Vorsatz · Wiederholung · Vertuschung · Lügen im Verfahren · Ausnutzung der Position · Gefährdung anderer · erheblicher Schaden · Missbrauch dienstlicher Ressourcen
 
 ---
 
-## Penal Grade IV
+## 05 — Zuständigkeiten
 
-**Maximale Geldstrafe:** 60.000 $
+Sanktionen werden nur durch die jeweils zuständige und unbefangene Stelle ausgesprochen. Niemand entscheidet über ein Verfahren gegen die eigene Person.
 
-**Alternative:** 4 SG-Runden
-
-**Weitere Maßnahmen:** unbefristete Suspendierung; gegebenenfalls Entlassung
-
-**Begründung (Auswahl, nicht abschließend):**
-
-- Lügen gegenüber Vorgesetzten oder in dienstlichen Verfahren
-- schwere oder wiederholte Nichteinhaltung der Rangordnung
-- unsachgemäße oder gefährdende Nutzung von Ausrüstung und Mitteln
-- Nichteinhaltung grundlegender dienstlicher Grundsätze (Neutralität, Fairness, Rechtsstaatlichkeit)
-- Verstoß gegen allgemeine Rechte Dritter im dienstlichen Kontext
-- respektloses Verhalten gegenüber der Leitungsebene
-- Beihilfe zu schwerem Fehlverhalten Dritter im Department (mit Wissen und Billigung)
-- Datenmanipulation oder unzulässige Löschung dienstlicher Aufzeichnungen (ohne Korruptionsvorwurf im Sinne Grade V)
-
-**Ausstellbar durch:** Human Resources und Chief-Ebene; Commander (**nicht** Captain auf dieser Stufe)
+| Stelle | Befugnis |
+| ------ | -------- |
+| Direkter Vorgesetzter | Mündliche Verwarnung |
+| Führungsebene | Schriftliche Verwarnung / Disziplinarmaßnahmen |
+| Abteilungsleitung | Degradierung / Suspendierung |
+| FIB-Leitung | Schwere Disziplinarmaßnahmen / Entlassung |
+| Direktor / Chief-Ebene | Penal Grade 5–6 / endgültige Personalentscheidungen |
 
 ---
 
-## Penal Grade V
+## 06 — Disziplinarverfahren
 
-**Maximale Geldstrafe:** 85.000 $
+1. **Vorwurf** — Sachverhalt aufnehmen
+2. **Beweise** — Beweismittel sichern
+3. **Stellungnahme** — Betroffenen anhören
+4. **Prüfung** — Sachverhalt unabhängig bewerten
+5. **Einstufung** — Penal Grade festlegen
+6. **Entscheidung** — Sanktion aussprechen
+7. **Dokumentation** — Entscheidung festhalten
 
-**Alternative:** 5 SG-Runden
-
-**Weitere Maßnahmen:** Entlassung
-
-**Begründung (Auswahl, nicht abschließend):**
-
-- vorsätzliche Gefährdung eigener Kolleginnen und Kollegen
-- vorsätzliche Gefährdung von Bürgerinnen, Bürgern oder anderen Beamten
-- schwerwiegende und anhaltende Nichteinhaltung zahlreicher Dienstvorschriften
-- mehrfache oder fundamentale Befehlsverweigerung mit schwerwiegenden Folgen
-- Korruption, Bestechlichkeit, Vorteilsnahme
-- Weitergabe interner Dienstgeheimnisse oder vertraulicher Ermittlungsstände
-- unbefugte Weitergabe personenbezogener oder sensibler Daten
-- schwere körperliche Übergriffe oder Drohungen mit Systembruch-Charakter im Dienst
-- aktive Sabotage von Ermittlungen zugunsten Dritter
-
-**Ausstellbar durch:** Human Resources und Chief-Ebene; Commander
+Bei Penal Grade 5 und 6 sollte grundsätzlich eine zweite Führungskraft die Entscheidung bestätigen. Bei Verfahren gegen Führungskräfte entscheidet die nächsthöhere, unbefangene Stelle.
 
 ---
+
+## 07 — Entscheidungs-Check
+
+Vor jeder Sanktion kurz prüfen:
+
+- Sachverhalt ausreichend geklärt?
+- Beweise / Aussagen dokumentiert?
+- Betroffener konnte Stellung nehmen?
+- Penal Grade anhand der Schwere bestimmt?
+- Wiederholungsfall geprüft?
+- Mildernde / erschwerende Umstände berücksichtigt?
+- Zuständige Stelle entscheidet?
+- Sanktion verhältnismäßig?
+- Entscheidung dokumentiert und Betroffener informiert?
+
+---
+
+## Merksatz
+
+> Nicht die Person entscheidet über die Sanktion — sondern der nachgewiesene Verstoß, seine Schwere und die Umstände des Einzelfalls.
+
+---
+
+*Version 1.0 · Interner FIB-Dienststandard · Nur für den internen Dienstgebrauch*

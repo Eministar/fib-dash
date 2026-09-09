@@ -16,17 +16,17 @@ export async function GET(req: NextRequest) {
     if (!agent) return error('Agent nicht gefunden', 404)
 
     const sanctions = await prisma.sanction.findMany({
-      where: { agentId, status: 'OPEN' },
+      where: { agentId, status: { in: ['ISSUED', 'EXECUTED'] } },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         reason: true,
         penalGrade: true,
-        measureType: true,
-        fineAmount: true,
-        sgRounds: true,
+        level: true,
+        violationCode: true,
         penalty: true,
-        dueAt: true,
+        suspendedUntil: true,
+        status: true,
         createdAt: true,
         issuedBy: { select: { displayName: true } },
       },

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { renderMarkdown } from '@/lib/markdown'
-import { formatFineAmount, penalGradeLabel, sanctionMeasureLabel } from '@/lib/sanction-catalog'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
 import {
   CONTRACT_CLAUSE_6_BODY,
   CONTRACT_CLAUSE_6_TITLE,
@@ -159,15 +159,15 @@ export function LegalCaseDocument({ document }: { document: LegalCaseDocumentDat
                     Sanktion belegt in der Personalakte — {penalGradeLabel(sanction.penalGrade)}
                   </p>
                   <p className="lawsuit-evidence-meta">
-                    Maßnahme: {sanctionMeasureLabel(sanction)}
-                    {sanction.measureType !== 'SG_ROUNDS' && sanction.fineAmount !== null
-                      ? ` · Forderung ${formatFineAmount(sanction.fineAmount)}`
+                    Maßnahme: {sanctionLevelLabel(sanction.level)}
+                    {resolveViolation(sanction.violationCode)
+                      ? ` · Verstoß: ${resolveViolation(sanction.violationCode)!.label}`
                       : ''}
                   </p>
                   <p className="lawsuit-evidence-meta">Grund: {sanction.reason}</p>
                   <p className="lawsuit-evidence-meta">
-                    Ausgestellt am {formatDate(sanction.createdAt)}
-                    {sanction.dueAt ? ` · Frist bis ${formatDate(sanction.dueAt)}` : ' · ohne Frist'}
+                    Ausgesprochen am {formatDate(sanction.createdAt)}
+                    {sanction.suspendedUntil ? ` · suspendiert bis ${formatDate(sanction.suspendedUntil)}` : ''}
                   </p>
                 </li>
               ))}

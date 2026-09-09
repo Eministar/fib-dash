@@ -26,7 +26,7 @@ import { canCheckDiscordGuildMembers, getDiscordGuildMember, queueDiscordHrEvent
 import { getAgentDutyTime, getAgentPlaytimeReport } from '@/lib/duty-times'
 import { syncAgentPlayerPlaytime } from '@/lib/player-online'
 import { getAgentAbsenceReport, runAgentStatusAutomation } from '@/lib/absence-status'
-import { runSanctionDeadlineAutomation } from '@/lib/sanctions'
+import { runSanctionSuspensionAutomation } from '@/lib/sanctions'
 import { withAgentTrainingRows } from '@/lib/agent-trainings'
 import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
 import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params
   await Promise.all([
     runAgentStatusAutomation(),
-    runSanctionDeadlineAutomation(),
+    runSanctionSuspensionAutomation(),
   ])
 
   const [agent, trainings] = await Promise.all([

@@ -35,13 +35,18 @@ import { notifyLiveUpdate } from '@/lib/live-updates'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
 import {
-  PENAL_GRADES,
-  SANCTION_CATALOG,
-  formatFineAmount,
-  normalizeSanctionMeasureType,
+  DECISION_CHECKLIST,
+  AGGRAVATING_CIRCUMSTANCES,
+  MITIGATING_CIRCUMSTANCES,
+  PENAL_GRADE_ORDER,
+  PENAL_GRADE_RULES,
+  SANCTION_LEVELS,
+  SANCTION_LEVEL_ORDER,
+  isPenalGrade,
+  isSanctionLevel,
   penalGradeLabel,
-  resolveSanctionPenalty,
-  type SanctionMeasureType,
+  sanctionLevelLabel,
+  violationsForGrade,
 } from '@/lib/sanction-catalog'
 import { CONTRACT_STATUS_META, type ContractStatusValue } from '@/lib/contracts'
 import { SanctionCard, type SanctionRecord } from '@/components/sanctions/sanction-card'
@@ -178,10 +183,25 @@ interface AgentForm {
 }
 interface SanctionForm {
   penalGrade: string
-  measureType: SanctionMeasureType
+  level: string
+  violationCode: string
   reason: string
-  deadlineDays: string
-  dueAt: string
+  penalty: string
+  /** Dauer einer Suspendierung in Stunden (Stufe 05). */
+  suspensionHours: string
+  mitigating: string[]
+  aggravating: string[]
+}
+
+/** Antwort von `GET /api/sanctions/repeat-check`. */
+interface RepeatAssessment {
+  occurrence: number
+  principle: string
+  regularLevel: string
+  recommendedLevel: string
+  recommendedLevelLabel: string
+  priors: { id: string; penalGrade: string; level: string; reason: string; createdAt: string }[]
+  violationLabel: string | null
 }
 interface RankChangeList {
   id: string
@@ -205,16 +225,24 @@ const EMPTY_AGENT_FORM: AgentForm = {
 }
 
 const EMPTY_SANCTION_FORM: SanctionForm = {
-  penalGrade: 'I',
-  measureType: 'FINE',
+  penalGrade: '1',
+  level: '01',
+  violationCode: '',
   reason: '',
-  deadlineDays: '7',
-  dueAt: '',
+  penalty: '',
+  suspensionHours: '48',
+  mitigating: [],
+  aggravating: [],
 }
 
-const PENAL_GRADE_OPTIONS = Object.values(SANCTION_CATALOG).map((rule) => ({
-  value: rule.grade,
-  label: penalGradeLabel(rule.grade),
+const PENAL_GRADE_OPTIONS = PENAL_GRADE_ORDER.map((grade) => ({
+  value: grade,
+  label: penalGradeLabel(grade),
+}))
+
+const SANCTION_LEVEL_OPTIONS = SANCTION_LEVEL_ORDER.map((level) => ({
+  value: level,
+  label: sanctionLevelLabel(level),
 }))
 const PLAYTIME_HISTORY_COLLAPSE_LIMIT = 5
 
@@ -294,6 +322,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const canRankChange = hasPermission(user, 'rank-changes:manage')
   const canTerminate = hasPermission(user, 'terminations:manage')
   const canSanction = hasPermission(user, 'sanctions:manage')
+  const canConfirmSanction = hasPermission(user, 'sanctions:confirm')
   const canManageNotes = hasPermission(user, 'notes:manage')
   const canManageContracts = hasPermission(user, 'contracts:manage')
   const canViewContracts = canManageContracts || hasPermission(user, 'contracts:view')
@@ -317,6 +346,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const [sanctionForm, setSanctionForm] = useState<SanctionForm>(EMPTY_SANCTION_FORM)
   const [editingSanction, setEditingSanction] = useState<SanctionRecord | null>(null)
   const [sanctionToDelete, setSanctionToDelete] = useState<SanctionRecord | null>(null)
+  const [sanctionChecklist, setSanctionChecklist] = useState<Record<string, boolean>>({})
+  const [repeatCheck, setRepeatCheck] = useState<RepeatAssessment | null>(null)
   const [newRankId, setNewRankId] = useState('')
   const [newBadgeNumber, setNewBadgeNumber] = useState('')
   const [rankChangeNote, setRankChangeNote] = useState('')
@@ -335,7 +366,14 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     training: Training
     completed: boolean
   } | null>(null)
-  const selectedSanctionRule = resolveSanctionPenalty(sanctionForm.penalGrade) ?? SANCTION_CATALOG.I
+  const selectedGradeRule = isPenalGrade(sanctionForm.penalGrade)
+    ? PENAL_GRADE_RULES[sanctionForm.penalGrade]
+    : PENAL_GRADE_RULES['1']
+  const selectedLevelRule = isSanctionLevel(sanctionForm.level)
+    ? SANCTION_LEVELS[sanctionForm.level]
+    : SANCTION_LEVELS['01']
+  const selectedViolations = violationsForGrade(selectedGradeRule.grade)
+  const sanctionChecklistComplete = DECISION_CHECKLIST.every((item) => sanctionChecklist[item.key])
   const editing = editingMode !== null
   const unitOnlyEditing = editingMode === 'units'
 
@@ -425,21 +463,59 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  /**
+   * Wiederholungsprüfung nach Abschnitt 04 — sobald Grade und Verstoß feststehen,
+   * holt die Seite die gleichartigen Vorverstöße und den Stufenvorschlag.
+   */
+  useEffect(() => {
+    if (!sanctionModal || !canSanction || !sanctionForm.violationCode) {
+      setRepeatCheck(null)
+      return
+    }
+
+    let cancelled = false
+    const params = new URLSearchParams({
+      agentId: id,
+      penalGrade: sanctionForm.penalGrade,
+      violationCode: sanctionForm.violationCode,
+    })
+    if (editingSanction) params.set('excludeSanctionId', editingSanction.id)
+
+    fetch(`/api/sanctions/repeat-check?${params.toString()}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled && json?.data) setRepeatCheck(json.data as RepeatAssessment)
+      })
+      .catch(() => {
+        if (!cancelled) setRepeatCheck(null)
+      })
+
+    return () => { cancelled = true }
+  }, [sanctionModal, canSanction, id, sanctionForm.penalGrade, sanctionForm.violationCode, editingSanction])
+
   const openSanctionModal = () => {
     setSanctionForm(EMPTY_SANCTION_FORM)
     setEditingSanction(null)
+    setSanctionChecklist({})
+    setRepeatCheck(null)
     setSanctionModal(true)
   }
 
   const openEditSanctionModal = (sanction: SanctionRecord) => {
     setEditingSanction(sanction)
     setSanctionForm({
-      penalGrade: PENAL_GRADES.has(sanction.penalGrade) ? sanction.penalGrade : 'I',
-      measureType: normalizeSanctionMeasureType(sanction.measureType),
+      penalGrade: isPenalGrade(sanction.penalGrade) ? sanction.penalGrade : '1',
+      level: isSanctionLevel(sanction.level) ? sanction.level : '01',
+      violationCode: sanction.violationCode ?? '',
       reason: sanction.reason,
-      deadlineDays: '',
-      dueAt: sanction.dueAt?.split('T')[0] ?? '',
+      penalty: sanction.penalty ?? '',
+      suspensionHours: '',
+      mitigating: [],
+      aggravating: [],
     })
+    // Der Entscheidungs-Check wird bei jeder Änderung neu bestätigt.
+    setSanctionChecklist({})
+    setRepeatCheck(null)
     setSanctionModal(true)
   }
 
@@ -447,6 +523,33 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     setSanctionModal(false)
     setEditingSanction(null)
     setSanctionForm(EMPTY_SANCTION_FORM)
+    setSanctionChecklist({})
+    setRepeatCheck(null)
+  }
+
+  /**
+   * Grade-Wechsel setzt Stufe auf die Regelsanktion und verwirft den Verstoß,
+   * da Verstöße immer genau zu einem Grade gehören.
+   */
+  const handleSanctionGradeChange = (penalGrade: string) => {
+    const rule = isPenalGrade(penalGrade) ? PENAL_GRADE_RULES[penalGrade] : null
+    setSanctionForm((current) => ({
+      ...current,
+      penalGrade,
+      level: rule ? rule.regularLevels[0] : current.level,
+      violationCode: '',
+    }))
+    setRepeatCheck(null)
+  }
+
+  const toggleCircumstance = (kind: 'mitigating' | 'aggravating', value: string) => {
+    setSanctionForm((current) => {
+      const list = current[kind]
+      return {
+        ...current,
+        [kind]: list.includes(value) ? list.filter((item) => item !== value) : [...list, value],
+      }
+    })
   }
 
   /** Erstellt einen Arbeitsvertrag aus der Standardvorlage und versendet ihn. */
@@ -491,7 +594,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleSanction = async () => {
-    if (!sanctionForm.reason.trim()) return
+    if (!sanctionForm.reason.trim() || !sanctionChecklistComplete) return
     try {
       const isEditingSanction = !!editingSanction
       await execute(isEditingSanction ? `/api/sanctions/${editingSanction.id}` : '/api/sanctions', {
@@ -499,11 +602,14 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         body: JSON.stringify({
           ...(isEditingSanction ? {} : { agentId: id }),
           penalGrade: sanctionForm.penalGrade,
-          measureType: sanctionForm.measureType,
+          level: sanctionForm.level,
+          violationCode: sanctionForm.violationCode || null,
           reason: sanctionForm.reason.trim(),
-          ...(isEditingSanction
-            ? { dueAt: sanctionForm.dueAt || null }
-            : { deadlineDays: sanctionForm.deadlineDays.trim() || null }),
+          penalty: sanctionForm.penalty.trim(),
+          checklist: sanctionChecklist,
+          mitigating: sanctionForm.mitigating,
+          aggravating: sanctionForm.aggravating,
+          ...(selectedLevelRule.suspends ? { suspensionHours: sanctionForm.suspensionHours.trim() || null } : {}),
         }),
       })
       addToast({ type: 'success', title: isEditingSanction ? 'Sanktion aktualisiert' : 'Sanktion ausgestellt' })
@@ -514,31 +620,27 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  const handleMarkSanctionPaid = async (sanctionId: string, measureType?: string | null) => {
+  const patchSanction = async (sanctionId: string, action: string, successTitle: string) => {
     try {
       await execute(`/api/sanctions/${sanctionId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ action: 'MARK_PAID' }),
+        body: JSON.stringify({ action }),
       })
-      addToast({ type: 'success', title: normalizeSanctionMeasureType(measureType) === 'SG_ROUNDS' ? 'Sanktion als erledigt markiert' : 'Sanktion als bezahlt markiert' })
+      addToast({ type: 'success', title: successTitle })
       await refetch()
     } catch (err) {
       addToast({ type: 'error', title: 'Fehler', message: err instanceof Error ? err.message : '' })
     }
   }
 
-  const handleEscalateSanction = async (sanctionId: string) => {
-    try {
-      await execute(`/api/sanctions/${sanctionId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ action: 'ESCALATE' }),
-      })
-      addToast({ type: 'success', title: 'Sanktion verdoppelt' })
-      await refetch()
-    } catch (err) {
-      addToast({ type: 'error', title: 'Fehler', message: err instanceof Error ? err.message : '' })
-    }
-  }
+  const handleExecuteSanction = (sanctionId: string) =>
+    patchSanction(sanctionId, 'EXECUTE', 'Maßnahme als vollzogen vermerkt')
+
+  const handleConfirmSanction = (sanctionId: string) =>
+    patchSanction(sanctionId, 'CONFIRM', 'Sanktion bestätigt')
+
+  const handleRevokeSanction = (sanctionId: string) =>
+    patchSanction(sanctionId, 'REVOKE', 'Sanktion aufgehoben')
 
   const handleDeleteSanction = async (sanctionId: string) => {
     try {
@@ -717,7 +819,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const higherRanks = ranks?.filter(r => r.sortOrder < agent.rank?.sortOrder) || []
   const lowerRanks = ranks?.filter(r => r.sortOrder > agent.rank?.sortOrder) || []
   const addToListRanks = addToListModal === 'PROMOTION' ? higherRanks : lowerRanks
-  const openSanctions = agent.sanctions?.filter((sanction) => sanction.status === 'OPEN') ?? []
+  // Laufend = ausgesprochen oder vollzogen, also noch nicht abschließend entschieden.
+  const openSanctions = agent.sanctions?.filter(
+    (sanction) => sanction.status === 'ISSUED' || sanction.status === 'EXECUTED',
+  ) ?? []
   const playtimeSessions = agent.playtime?.recentSessions ?? []
   const canTogglePlaytimeHistory = playtimeSessions.length > PLAYTIME_HISTORY_COLLAPSE_LIMIT
   const visiblePlaytimeSessions = playtimeHistoryExpanded
@@ -1115,17 +1220,19 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.11 }}
               className="glass-panel-elevated rounded-[14px] p-5">
               <div className="flex items-center justify-between gap-3 mb-4">
-                <h3 className="text-[13.5px] font-semibold text-[#eee]">Offene Sanktionen</h3>
+                <h3 className="text-[13.5px] font-semibold text-[#eee]">Laufende Sanktionen</h3>
                 <span className="rounded-full border border-[#b45309]/40 bg-[#1d1608]/70 px-2.5 py-1 text-[11px] font-medium text-[#fbbf24]">
-                  {openSanctions.length} offen
+                  {openSanctions.length} laufend
                 </span>
               </div>
               <div className="space-y-2.5">
                 {openSanctions.map((sanction) => (
                   <SanctionCard key={sanction.id} sanction={sanction} canSanction={canSanction}
-                    onPaid={() => handleMarkSanctionPaid(sanction.id, sanction.measureType)}
+                    canConfirm={canConfirmSanction}
+                    onExecute={sanction.status === 'ISSUED' ? () => handleExecuteSanction(sanction.id) : undefined}
+                    onConfirm={() => handleConfirmSanction(sanction.id)}
                     onEdit={() => openEditSanctionModal(sanction)}
-                    onEscalate={() => handleEscalateSanction(sanction.id)}
+                    onRevoke={() => handleRevokeSanction(sanction.id)}
                     onDelete={() => setSanctionToDelete(sanction)}
                     variant="open"
                   />
@@ -1320,53 +1427,79 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           <Select
             label="Penal Grade"
             value={sanctionForm.penalGrade}
-            onValueChange={(penalGrade) => setSanctionForm({ ...sanctionForm, penalGrade })}
+            onValueChange={handleSanctionGradeChange}
             options={PENAL_GRADE_OPTIONS}
           />
 
+          <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
+            <p className="text-[12.5px] font-medium text-[#aeaeae]">{selectedGradeRule.severity}</p>
+            <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">{selectedGradeRule.description}</p>
+            <p className="mt-1.5 text-[12px] text-[#808080]">
+              Typische Folge: {selectedGradeRule.typicalConsequence}
+            </p>
+          </div>
+
           <Select
-            label="Maßnahme"
-            value={sanctionForm.measureType}
-            onValueChange={(measureType) => setSanctionForm({ ...sanctionForm, measureType: measureType as SanctionMeasureType })}
+            label="Verstoß"
+            value={sanctionForm.violationCode}
+            onValueChange={(violationCode) => setSanctionForm({ ...sanctionForm, violationCode })}
             options={[
-              { value: 'FINE', label: `Geldstrafe · ${formatFineAmount(selectedSanctionRule.fineAmount)}` },
-              { value: 'SG_ROUNDS', label: `SG-Runden · ${selectedSanctionRule.sgRounds}` },
+              { value: '', label: 'Kein Katalog-Verstoß' },
+              ...selectedViolations.map((item) => ({ value: item.code, label: item.label })),
             ]}
           />
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
-              <p className="text-[12.5px] font-medium text-[#aeaeae]">Geldstrafe</p>
-              <p className={cn('mt-1 text-[14px] font-semibold', sanctionForm.measureType === 'FINE' ? 'text-[#d4d4d4]' : 'text-[#808080]')}>
-                {sanctionForm.measureType === 'FINE' ? formatFineAmount(selectedSanctionRule.fineAmount) : 'Nicht ausgewählt'}
+          {repeatCheck && repeatCheck.occurrence > 1 && (
+            <div className="rounded-[10px] border border-[#b45309]/40 bg-[#1d1608]/60 px-3.5 py-3">
+              <p className="text-[12.5px] font-semibold text-[#fbbf24]">
+                Wiederholungsfall — {repeatCheck.occurrence}. gleichartiger Verstoß
               </p>
-            </div>
-            <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
-              <p className="text-[12.5px] font-medium text-[#aeaeae]">SG-Runden</p>
-              <p className={cn('mt-1 text-[14px] font-semibold', sanctionForm.measureType === 'SG_ROUNDS' ? 'text-[#7dd3fc]' : 'text-[#808080]')}>
-                {sanctionForm.measureType === 'SG_ROUNDS' ? selectedSanctionRule.sgRounds : 'Nicht ausgewählt'}
+              <p className="mt-1 text-[12.5px] leading-snug text-[#d4d4d4]">{repeatCheck.principle}</p>
+              <p className="mt-1.5 text-[12px] text-[#a6a6a6]">
+                Empfohlene Stufe: {repeatCheck.recommendedLevelLabel}
               </p>
+              {repeatCheck.recommendedLevel !== sanctionForm.level && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-2.5"
+                  onClick={() => setSanctionForm({ ...sanctionForm, level: repeatCheck.recommendedLevel })}
+                >
+                  Empfehlung übernehmen
+                </Button>
+              )}
+              {repeatCheck.priors.length > 0 && (
+                <ul className="mt-2.5 space-y-1 border-t border-[#b45309]/25 pt-2.5">
+                  {repeatCheck.priors.slice(0, 4).map((prior) => (
+                    <li key={prior.id} className="text-[11.5px] leading-snug text-[#a6a6a6]">
+                      {new Date(prior.createdAt).toLocaleDateString('de-DE')} ·{' '}
+                      {sanctionLevelLabel(prior.level)} — {prior.reason}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </div>
+          )}
+
+          <Select
+            label="Sanktionsstufe"
+            value={sanctionForm.level}
+            onValueChange={(level) => setSanctionForm({ ...sanctionForm, level })}
+            options={SANCTION_LEVEL_OPTIONS}
+          />
 
           <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
-            <p className="text-[12.5px] font-medium text-[#aeaeae]">Zusätzliche Grade-Folge</p>
-            <p className="mt-1 text-[13px] font-medium leading-snug text-[#f4f4f4]">{selectedSanctionRule.penalty}</p>
+            <p className="text-[12.5px] font-medium text-[#aeaeae]">Anwendung</p>
+            <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">{selectedLevelRule.application}</p>
           </div>
 
-          {editingSanction ? (
-            <DateField
-              label="Frist"
-              value={sanctionForm.dueAt}
-              onChange={(dueAt) => setSanctionForm({ ...sanctionForm, dueAt })}
-            />
-          ) : (
+          {selectedLevelRule.suspends && !editingSanction && (
             <Input
-              label="Frist in Tagen (optional)"
-              value={sanctionForm.deadlineDays}
-              onChange={(e) => setSanctionForm({ ...sanctionForm, deadlineDays: e.target.value })}
+              label="Suspendierung in Stunden"
+              value={sanctionForm.suspensionHours}
+              onChange={(e) => setSanctionForm({ ...sanctionForm, suspensionHours: e.target.value })}
               inputMode="numeric"
-              placeholder="z.B. 7"
+              placeholder="z.B. 48"
             />
           )}
 
@@ -1379,9 +1512,87 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             placeholder="Detaillierter Grund der Sanktion..."
           />
 
+          <Textarea
+            label="Weitere Folge"
+            value={sanctionForm.penalty}
+            onChange={(e) => setSanctionForm({ ...sanctionForm, penalty: e.target.value })}
+            rows={2}
+            placeholder="Zusätzliche Auflagen oder Folgen (optional)..."
+          />
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-[10px] border border-[#166534]/40 bg-[#052e1a]/30 px-3 py-2.5">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#86efac]">Mildernd</p>
+              <div className="space-y-1.5">
+                {MITIGATING_CIRCUMSTANCES.map((item) => (
+                  <label key={item} className="flex cursor-pointer items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={sanctionForm.mitigating.includes(item)}
+                      onChange={() => toggleCircumstance('mitigating', item)}
+                      className="mt-[3px] h-3.5 w-3.5 shrink-0 accent-[#16a34a]"
+                    />
+                    <span className="text-[12px] leading-snug text-[#c3c3c3]">{item}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[10px] border border-[#7f1d1d]/40 bg-[#2a1212]/30 px-3 py-2.5">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#fca5a5]">Erschwerend</p>
+              <div className="space-y-1.5">
+                {AGGRAVATING_CIRCUMSTANCES.map((item) => (
+                  <label key={item} className="flex cursor-pointer items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={sanctionForm.aggravating.includes(item)}
+                      onChange={() => toggleCircumstance('aggravating', item)}
+                      className="mt-[3px] h-3.5 w-3.5 shrink-0 accent-[#dc2626]"
+                    />
+                    <span className="text-[12px] leading-snug text-[#c3c3c3]">{item}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/60 px-3.5 py-3">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#808080]">
+              Entscheidungs-Check
+            </p>
+            <div className="space-y-1.5">
+              {DECISION_CHECKLIST.map((item) => (
+                <label key={item.key} className="flex cursor-pointer items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={sanctionChecklist[item.key] ?? false}
+                    onChange={(e) => setSanctionChecklist((current) => ({ ...current, [item.key]: e.target.checked }))}
+                    className="mt-[3px] h-3.5 w-3.5 shrink-0 accent-[#f59e0b]"
+                  />
+                  <span className="text-[12.5px] leading-snug text-[#c3c3c3]">{item.label}</span>
+                </label>
+              ))}
+            </div>
+            {!sanctionChecklistComplete && (
+              <p className="mt-2.5 text-[11.5px] text-[#808080]">
+                Alle Punkte müssen bestätigt sein, bevor die Sanktion ausgesprochen werden kann.
+              </p>
+            )}
+          </div>
+
+          {(sanctionForm.penalGrade === '5' || sanctionForm.penalGrade === '6') && (
+            <p className="rounded-[9px] border border-[#b45309]/40 bg-[#1d1608]/50 px-3 py-2.5 text-[12px] leading-snug text-[#fbbf24]">
+              Penal Grade {sanctionForm.penalGrade}: Die Entscheidung muss anschließend von einer zweiten
+              Führungskraft bestätigt werden, bevor die Maßnahme vollzogen werden kann.
+            </p>
+          )}
+
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="secondary" size="sm" onClick={closeSanctionModal}>Abbrechen</Button>
-            <Button size="sm" onClick={handleSanction} disabled={!sanctionForm.reason.trim() || !sanctionForm.penalGrade}>
+            <Button
+              size="sm"
+              onClick={handleSanction}
+              disabled={!sanctionForm.reason.trim() || !sanctionForm.penalGrade || !sanctionChecklistComplete}
+            >
               <Gavel size={13} strokeWidth={2} />
               {editingSanction ? 'Speichern' : 'Sanktion ausstellen'}
             </Button>

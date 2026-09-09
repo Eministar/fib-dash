@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { AlertTriangle, ArrowRight, Gavel, Printer, Scale } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PdCloudLoader } from '@/components/ui/loading'
-import { formatFineAmount, penalGradeLabel, sanctionMeasureLabel } from '@/lib/sanction-catalog'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
 import { formatDateTime } from '@/lib/utils'
 
 interface BatchCase {
@@ -23,10 +23,9 @@ interface BatchCase {
     sanctionId: string
     reason: string
     penalGrade: string
-    measureType: string
-    fineAmount: number | null
-    sgRounds: number | null
-    dueAt: string | null
+    level: string
+    violationCode: string | null
+    suspendedUntil: string | null
     createdAt: string
   }[]
 }
@@ -157,9 +156,9 @@ export default function LegalCaseBatchPage() {
                   {legalCase.sanctions.map((sanction) => (
                     <div key={sanction.sanctionId} className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-[#a6a6a6]">
                       <span className="font-semibold text-[#c4b5fd]">{penalGradeLabel(sanction.penalGrade)}</span>
-                      <span>{sanctionMeasureLabel(sanction)}</span>
-                      {sanction.measureType !== 'SG_ROUNDS' && sanction.fineAmount !== null && (
-                        <span className="text-[#d4d4d4]">{formatFineAmount(sanction.fineAmount)}</span>
+                      <span>{sanctionLevelLabel(sanction.level)}</span>
+                      {resolveViolation(sanction.violationCode) && (
+                        <span className="text-[#d4d4d4]">{resolveViolation(sanction.violationCode)!.label}</span>
                       )}
                       <span className="text-[#686868]">· {sanction.reason}</span>
                     </div>

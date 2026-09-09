@@ -5,7 +5,7 @@ import { error, unauthorized } from '@/lib/api-response'
 import { getDutyTimesSnapshot, formatDuration } from '@/lib/duty-times'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { displayBadgeNumber } from '@/lib/badge-number'
-import { formatFineAmount, normalizeSanctionMeasureType, penalGradeLabel } from '@/lib/sanction-catalog'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
 import { withAgentTrainingRows } from '@/lib/agent-trainings'
 import { PROBATION_STATUS_LABELS, PROBATION_TYPE_LABELS } from '@/lib/probations'
 
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
     const rows = [
-      ['Datum', 'Agent', 'Dienstnummer', 'Rang', 'Penal Grade', 'Status', 'Maßnahme', 'Geldstrafe', 'SG-Runden', 'Grade-Folge', 'Frist', 'Grund', 'Ausgestellt von'],
+      ['Datum', 'Agent', 'Dienstnummer', 'Rang', 'Penal Grade', 'Status', 'Sanktionsstufe', 'Verstoß', 'Weitere Folge', 'Suspendiert bis', 'Grund', 'Ausgestellt von'],
       ...sanctions.map((sanction) => [
         formatDateTime(sanction.createdAt),
         sanction.agent ? `${sanction.agent.firstName} ${sanction.agent.lastName}` : `${sanction.previousFirstName ?? ''} ${sanction.previousLastName ?? ''}`.trim(),
@@ -127,10 +127,10 @@ export async function GET(req: NextRequest) {
         sanction.agent?.rank.name ?? sanction.previousRank ?? '',
         penalGradeLabel(sanction.penalGrade),
         sanction.status,
-        normalizeSanctionMeasureType(sanction.measureType) === 'FINE' ? formatFineAmount(sanction.fineAmount) : '',
-        normalizeSanctionMeasureType(sanction.measureType) === 'SG_ROUNDS' ? String(sanction.sgRounds ?? '') : '',
+        sanctionLevelLabel(sanction.level),
+        resolveViolation(sanction.violationCode)?.label ?? '',
         sanction.penalty ?? '',
-        formatDateTime(sanction.dueAt),
+        formatDateTime(sanction.suspendedUntil),
         sanction.reason,
         sanction.issuedBy?.displayName ?? '',
       ]),
@@ -218,7 +218,7 @@ export async function GET(req: NextRequest) {
           },
           { title: 'Ausbildungen', rows: [['Ausbildung', 'Status'], ...agentWithTrainingRows.trainings.map((item) => [item.training.label, item.completed ? 'Abgeschlossen' : 'Offen'])] },
           { title: 'Rangverlauf', rows: [['Datum', 'Von', 'Nach', 'Notiz'], ...agent.promotionLogs.map((item) => [formatDateTime(item.createdAt), item.oldRank.name, item.newRank.name, item.note ?? ''])] },
-          { title: 'Sanktionen', rows: [['Datum', 'Grade', 'Status', 'Maßnahme', 'Grade-Folge', 'Grund'], ...agent.sanctions.map((item) => [formatDateTime(item.createdAt), penalGradeLabel(item.penalGrade), item.status, normalizeSanctionMeasureType(item.measureType) === 'SG_ROUNDS' ? `${item.sgRounds ?? '—'} SG-Runden` : formatFineAmount(item.fineAmount), item.penalty ?? '', item.reason])] },
+          { title: 'Sanktionen', rows: [['Datum', 'Grade', 'Status', 'Sanktionsstufe', 'Verstoß', 'Grund'], ...agent.sanctions.map((item) => [formatDateTime(item.createdAt), penalGradeLabel(item.penalGrade), item.status, sanctionLevelLabel(item.level), resolveViolation(item.violationCode)?.label ?? '', item.reason])] },
           { title: 'Notizen', rows: [['Datum', 'Titel', 'Inhalt'], ...agent.agentNotes.map((item) => [formatDateTime(item.createdAt), item.title ?? '', item.content])] },
         ],
       ), { headers: { 'content-type': 'text/html; charset=utf-8' } })

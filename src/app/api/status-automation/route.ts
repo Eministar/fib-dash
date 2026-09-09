@@ -3,7 +3,7 @@ import { error, success, unauthorized , forbidden } from '@/lib/api-response'
 import { runAgentStatusAutomation } from '@/lib/absence-status'
 import { syncDiscordAbsenceStatusMessage, syncDiscordDutyStatusMessage } from '@/lib/discord-integration'
 import { queueDiscordWebhookEvent } from '@/lib/discord-webhook'
-import { runSanctionDeadlineAutomation } from '@/lib/sanctions'
+import { runSanctionSuspensionAutomation } from '@/lib/sanctions'
 import { runAuditLogCleanup } from '@/lib/audit-log-retention'
 
 export const runtime = 'nodejs'
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   try {
     const [result, sanctionResult, auditLogCleanup] = await Promise.all([
       runAgentStatusAutomation({ force: true }),
-      runSanctionDeadlineAutomation(),
+      runSanctionSuspensionAutomation(),
       runAuditLogCleanup(),
     ])
     const panelResults = await Promise.allSettled([

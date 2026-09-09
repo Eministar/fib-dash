@@ -1,4 +1,3 @@
-import { createAuditLog } from './audit'
 import {
   deleteDiscordHrEventMessage,
   editDiscordHrEventMessage,
@@ -7,29 +6,61 @@ import {
 } from './discord-integration'
 import { prisma } from './prisma'
 import {
-  formatFineAmount,
-  normalizeSanctionMeasureType,
+  AGGRAVATING_CIRCUMSTANCES,
+  MITIGATING_CIRCUMSTANCES,
+  normalizeCircumstances,
   penalGradeLabel,
-  sanctionMeasureLabel,
-  resolveSanctionPenalty,
+  requiresDualControl,
+  resolveSanctionLevel,
+  resolveViolation,
+  sanctionLevelLabel,
 } from './sanction-catalog'
 
 export {
+  AGGRAVATING_CIRCUMSTANCES,
+  CATALOG_PRINCIPLE,
+  CATALOG_VERSION,
+  DECISION_CHECKLIST,
+  DUAL_CONTROL_FROM_GRADE,
+  MITIGATING_CIRCUMSTANCES,
   PENAL_GRADES,
-  formatFineAmount,
-  isSanctionMeasureType,
-  normalizeSanctionMeasureType,
+  PENAL_GRADE_ORDER,
+  PENAL_GRADE_RULES,
+  PROCEDURE_STEPS,
+  REPEAT_RULES,
+  SANCTION_AUTHORITIES,
+  SANCTION_LEVELS,
+  SANCTION_LEVEL_ORDER,
+  SANCTION_VIOLATIONS,
+  authorityForSanction,
+  isChecklistComplete,
+  isPenalGrade,
+  isSanctionLevel,
+  normalizeChecklist,
+  normalizeCircumstances,
   penalGradeLabel,
+  recommendedLevel,
+  regularLevelForGrade,
+  requiresDualControl,
+  resolvePenalGrade,
+  resolveSanctionLevel,
+  resolveViolation,
+  sanctionLevelLabel,
   sanctionMeasureLabel,
-  resolveSanctionPenalty,
-  resolveSanctionMeasure,
-  type SanctionMeasureType,
+  violationsForGrade,
+  type PenalGrade,
+  type SanctionLevel,
 } from './sanction-catalog'
-export const SANCTION_STATUSES = new Set(['OPEN', 'PAID', 'ESCALATED', 'IN_COURT'])
+
+export const SANCTION_STATUSES = new Set(['ISSUED', 'EXECUTED', 'IN_COURT', 'UPHELD', 'REVOKED'])
+
+/** Status, in denen die Maßnahme noch aussteht oder wirkt. */
+export const ACTIVE_SANCTION_STATUSES = ['ISSUED', 'EXECUTED', 'IN_COURT'] as const
 
 export const sanctionInclude = {
   agent: { include: { rank: true } },
   issuedBy: { select: { displayName: true, discordId: true } },
+  confirmedBy: { select: { displayName: true } },
 } as const
 
 export async function getSanctionById(id: string) {
@@ -45,21 +76,7 @@ export function cleanSanctionText(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-export function parseDeadlineDays(value: unknown) {
-  if (value === null || value === undefined || value === '') return null
-  const days = typeof value === 'number' ? value : Number.parseInt(String(value), 10)
-  if (!Number.isSafeInteger(days) || days < 1 || days > 365) return undefined
-  return days
-}
-
-export function dueAtFromDeadlineDays(days: number | null) {
-  if (days === null) return null
-  const dueAt = new Date()
-  dueAt.setDate(dueAt.getDate() + days)
-  return dueAt
-}
-
-export function parseDueAt(value: unknown) {
+export function parseSuspendedUntil(value: unknown) {
   if (value === null || value === undefined || value === '') return null
   if (typeof value !== 'string') return undefined
   const raw = value.trim()
@@ -69,17 +86,36 @@ export function parseDueAt(value: unknown) {
   return date
 }
 
+/** Suspendierungsdauer in Stunden ab jetzt (Stufe 05, Dauer nach Einzelfall). */
+export function suspendedUntilFromHours(value: unknown) {
+  if (value === null || value === undefined || value === '') return null
+  const hours = typeof value === 'number' ? value : Number.parseInt(String(value), 10)
+  if (!Number.isSafeInteger(hours) || hours < 1 || hours > 8760) return undefined
+  const until = new Date()
+  until.setHours(until.getHours() + hours)
+  return until
+}
+
 export function sanctionStatusLabel(status: string) {
   switch (status) {
-    case 'PAID':
-      return 'Bezahlt'
-    case 'ESCALATED':
-      return 'Nicht bezahlt / verdoppelt'
+    case 'EXECUTED':
+      return 'Vollzogen'
     case 'IN_COURT':
-      return 'In Klage'
+      return 'Einspruch / Klage'
+    case 'UPHELD':
+      return 'Bestätigt'
+    case 'REVOKED':
+      return 'Aufgehoben'
     default:
-      return 'Offen'
+      return 'Ausgesprochen'
   }
+}
+
+export function readCircumstances(value: unknown, kind: 'mitigating' | 'aggravating') {
+  return normalizeCircumstances(
+    value,
+    kind === 'mitigating' ? MITIGATING_CIRCUMSTANCES : AGGRAVATING_CIRCUMSTANCES,
+  )
 }
 
 function formatDateTime(value: Date | null | undefined) {
@@ -112,35 +148,60 @@ function discordRelativeTimestamp(value: Date) {
   return `<t:${Math.floor(value.getTime() / 1000)}:R>`
 }
 
-function sanctionDeadlineValue(sanction: SanctionWithRelations) {
-  if (!sanction.dueAt) return 'Keine Frist'
-  if (sanction.status === 'OPEN') {
-    return `${formatDateTime(sanction.dueAt)} · ${discordRelativeTimestamp(sanction.dueAt)}`
-  }
-  return formatDateTime(sanction.dueAt)
-}
-
 function sanctionDiscordFields(sanction: SanctionWithRelations): DiscordField[] {
-  const measureType = normalizeSanctionMeasureType(sanction.measureType)
+  const level = resolveSanctionLevel(sanction.level)
+  const violation = resolveViolation(sanction.violationCode)
+
   const fields: DiscordField[] = [
     { name: 'Grund', value: sanction.reason, inline: false },
     {
       name: 'Einstufung',
-      value: `\`${sanction.penalGrade}\` · ${penalGradeLabel(sanction.penalGrade)}`,
+      value: `\`PG ${sanction.penalGrade}\` · ${penalGradeLabel(sanction.penalGrade)}`,
       inline: true,
     },
     {
       name: 'Maßnahme',
-      value: measureType === 'SG_ROUNDS'
-        ? `**${sanction.sgRounds ?? '—'} SG-Runden**`
-        : `**Geldstrafe: ${formatFineAmount(sanction.fineAmount)}**`,
+      value: `**${sanctionLevelLabel(sanction.level)}**`,
       inline: true,
     },
   ]
-  if (sanction.penalty) {
-    fields.push({ name: 'Grade-Folge', value: sanction.penalty, inline: false })
+
+  if (violation) {
+    fields.push({ name: 'Verstoß', value: violation.label, inline: false })
   }
-  fields.push({ name: 'Frist', value: sanctionDeadlineValue(sanction), inline: true })
+
+  if (level?.suspends && sanction.suspendedUntil) {
+    fields.push({
+      name: 'Suspendiert bis',
+      value: `${formatDateTime(sanction.suspendedUntil)} · ${discordRelativeTimestamp(sanction.suspendedUntil)}`,
+      inline: true,
+    })
+  }
+
+  const aggravating = readCircumstances(sanction.aggravating, 'aggravating')
+  if (aggravating.length > 0) {
+    fields.push({ name: 'Erschwerend', value: aggravating.join(' · '), inline: false })
+  }
+
+  const mitigating = readCircumstances(sanction.mitigating, 'mitigating')
+  if (mitigating.length > 0) {
+    fields.push({ name: 'Mildernd', value: mitigating.join(' · '), inline: false })
+  }
+
+  if (sanction.penalty) {
+    fields.push({ name: 'Weitere Folge', value: sanction.penalty, inline: false })
+  }
+
+  if (requiresDualControl(sanction.penalGrade)) {
+    fields.push({
+      name: 'Vier-Augen-Bestätigung',
+      value: sanction.confirmedBy?.displayName
+        ? `${sanction.confirmedBy.displayName} · ${formatDateTime(sanction.confirmedAt)}`
+        : 'Ausstehend',
+      inline: true,
+    })
+  }
+
   fields.push({ name: 'Status', value: sanctionStatusLabel(sanction.status), inline: true })
   return fields
 }
@@ -193,123 +254,50 @@ export async function deleteSanctionDiscordMessage(sanction: SanctionWithRelatio
   }
 }
 
-export async function escalateSanction(
-  sanctionId: string,
-  options?: { actorUserId?: string; now?: Date; manual?: boolean },
-) {
-  const source = await getSanctionById(sanctionId)
-  if (!source) throw new Error('Sanktion nicht gefunden')
-  if (source.status !== 'OPEN') return null
-
+/**
+ * Beendet abgelaufene Suspendierungen. Ersetzt die frühere Fristen-Automatik
+ * der Geldsanktionen — der Katalog v1.0 kennt keine Zahlungsfristen mehr.
+ */
+export async function runSanctionSuspensionAutomation(options?: { now?: Date; limit?: number }) {
   const now = options?.now ?? new Date()
-  const measureType = normalizeSanctionMeasureType(source.measureType)
-  const sourceRule = resolveSanctionPenalty(source.penalGrade)
-  const sourceRounds = source.sgRounds ?? sourceRule?.sgRounds ?? null
-  const doubledFine = measureType === 'FINE' && source.fineAmount !== null
-    ? Math.min(source.fineAmount * 2, 2_147_483_647)
-    : null
-  const doubledRounds = measureType === 'SG_ROUNDS' && sourceRounds !== null
-    ? Math.min(sourceRounds * 2, 2_147_483_647)
-    : null
-  const actorUserId = options?.actorUserId || source.issuedByUserId
-  const originalMeasure = sanctionMeasureLabel({ measureType, fineAmount: source.fineAmount, sgRounds: sourceRounds })
-  const newMeasure = sanctionMeasureLabel({ measureType, fineAmount: doubledFine, sgRounds: doubledRounds })
-  const dueText = source.dueAt ? formatDateTime(source.dueAt) : 'ohne Frist'
-  const agent = agentSnapshot(source)
-
-  const created = await prisma.$transaction(async (tx) => {
-    const claimed = await tx.sanction.updateMany({
-      where: { id: sanctionId, status: 'OPEN' },
-      data: {
-        status: 'ESCALATED',
-        escalatedAt: now,
-        resolvedAt: now,
-      },
-    })
-    if (claimed.count === 0) return null
-
-    return tx.sanction.create({
-      data: {
-        agentId: source.agentId,
-        reason: `Nicht bezahlt bis ${dueText}. Ursprünglicher Grund: ${source.reason}`,
-        penalGrade: source.penalGrade,
-        measureType,
-        fineAmount: doubledFine,
-        sgRounds: doubledRounds,
-        penalty: source.penalty
-          ? `${source.penalty}\nAutomatische Verdopplung wegen nicht bezahlter Sanktion.`
-          : 'Automatische Verdopplung wegen nicht bezahlter Sanktion.',
-        issuedByUserId: actorUserId,
-        parentSanctionId: source.id,
-        previousRank: source.agent?.rank?.name ?? source.previousRank,
-        previousBadgeNumber: agent.badgeNumber,
-        previousFirstName: agent.firstName,
-        previousLastName: agent.lastName,
-      },
-    })
-  })
-
-  if (!created) return null
-
-  const [original, createdSanction] = await Promise.all([
-    getSanctionById(source.id),
-    getSanctionById(created.id),
-  ])
-  if (!original || !createdSanction) return null
-
-  await Promise.all([
-    syncSanctionDiscordMessage(original, {
-      description: 'Sanktion wurde nicht bezahlt. Es wurde eine weitere Sanktion erstellt.',
-      note: `Maßnahme: ${originalMeasure} → ${newMeasure}`,
-    }),
-    syncSanctionDiscordMessage(createdSanction, {
-      description: 'Automatische Folgesanktion wegen nicht bezahlter Sanktion.',
-    }),
-  ])
-
-  await createAuditLog({
-    action: options?.manual ? 'SANCTION_ESCALATED_MANUALLY' : 'SANCTION_AUTO_ESCALATED',
-    userId: actorUserId,
-    agentId: source.agentId ?? undefined,
-    oldValue: originalMeasure,
-    newValue: newMeasure,
-    details: `${sanctionAgentName(source)}: Sanktion nicht bezahlt, Maßnahme verdoppelt (${originalMeasure} → ${newMeasure})`,
-  })
-
-  return { original, createdSanction }
-}
-
-export async function runSanctionDeadlineAutomation(options?: { now?: Date; limit?: number }) {
-  const now = options?.now ?? new Date()
-  const overdue = await prisma.sanction.findMany({
+  const expired = await prisma.sanction.findMany({
     where: {
-      status: 'OPEN',
-      dueAt: { not: null, lte: now },
+      status: 'EXECUTED',
+      level: '05',
+      suspendedUntil: { not: null, lte: now },
+      resolvedAt: null,
     },
-    orderBy: { dueAt: 'asc' },
+    orderBy: { suspendedUntil: 'asc' },
     take: options?.limit ?? 50,
     select: { id: true },
   })
 
-  let escalated = 0
-  let skipped = 0
+  let resolved = 0
   let failed = 0
 
-  for (const item of overdue) {
+  for (const item of expired) {
     try {
-      const result = await escalateSanction(item.id, { now })
-      if (result) escalated += 1
-      else skipped += 1
+      await prisma.sanction.update({
+        where: { id: item.id },
+        data: { status: 'UPHELD', resolvedAt: now },
+      })
+      const updated = await getSanctionById(item.id)
+      if (updated) {
+        await syncSanctionDiscordMessage(updated, {
+          description: 'Suspendierung abgelaufen; der Dienst kann wieder aufgenommen werden.',
+          allowCreate: false,
+        })
+      }
+      resolved += 1
     } catch (error) {
       failed += 1
-      console.error('[Sanctions] Automatische Verdopplung fehlgeschlagen:', error)
+      console.error('[Sanctions] Suspendierung konnte nicht beendet werden:', error)
     }
   }
 
   return {
-    sanctionsChecked: overdue.length,
-    sanctionsEscalated: escalated,
-    sanctionsSkipped: skipped,
-    sanctionsFailed: failed,
+    suspensionsChecked: expired.length,
+    suspensionsResolved: resolved,
+    suspensionsFailed: failed,
   }
 }

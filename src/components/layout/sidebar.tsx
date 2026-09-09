@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText, ChartNoAxesCombined,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, CalendarDays, Download,
-  FileText, Gavel, FolderSearch, Map,
+  FileText, Gavel, Scale, FolderSearch, Map,
   History,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -45,8 +45,9 @@ const mainNav: NavItem[] = [
   { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
   { name: 'Up-/D-Rank-Listen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
   { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
-  // Ohne `permission`: Sanktionen sind für jeden eingeloggten Agent einsehbar.
+  // Ohne `permission`: Sanktionen und Katalog sind für jeden eingeloggten Agent einsehbar.
   { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
+  { name: 'Sanktionskatalog', href: '/sanktionen/katalog', icon: Scale },
   { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield },
   { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
   { name: 'Karte', href: '/map', icon: Map, permission: 'map:view' },

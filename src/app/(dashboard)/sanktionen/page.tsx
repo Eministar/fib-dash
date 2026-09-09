@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { AlertTriangle, Gavel, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DateField } from '@/components/ui/date-field'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,7 +16,19 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { hasPermission } from '@/lib/permissions'
-import { PENAL_GRADES, SANCTION_CATALOG, formatFineAmount, normalizeSanctionMeasureType, penalGradeLabel, resolveSanctionPenalty, type SanctionMeasureType } from '@/lib/sanction-catalog'
+import {
+  DECISION_CHECKLIST,
+  PENAL_GRADE_ORDER,
+  PENAL_GRADE_RULES,
+  SANCTION_LEVELS,
+  SANCTION_LEVEL_ORDER,
+  isPenalGrade,
+  isSanctionLevel,
+  penalGradeLabel,
+  resolveViolation,
+  sanctionLevelLabel,
+  violationsForGrade,
+} from '@/lib/sanction-catalog'
 import { cn } from '@/lib/utils'
 
 /** Serverantwort von `GET /api/sanctions` — Karte plus Agent-Bezug. */
@@ -40,37 +51,36 @@ interface SanctionListItem extends SanctionRecord {
 
 interface EditForm {
   penalGrade: string
-  measureType: SanctionMeasureType
+  level: string
+  violationCode: string
   reason: string
-  dueAt: string
+  penalty: string
 }
-
-const DAY_MS = 24 * 60 * 60 * 1000
 
 const PENAL_GRADE_OPTIONS = [
   { value: '', label: 'Alle Penal Grades' },
-  ...Object.values(SANCTION_CATALOG).map((rule) => ({ value: rule.grade, label: penalGradeLabel(rule.grade) })),
+  ...PENAL_GRADE_ORDER.map((grade) => ({ value: grade, label: penalGradeLabel(grade) })),
 ]
 
-const EDIT_PENAL_GRADE_OPTIONS = Object.values(SANCTION_CATALOG).map((rule) => ({
-  value: rule.grade,
-  label: penalGradeLabel(rule.grade),
+const EDIT_PENAL_GRADE_OPTIONS = PENAL_GRADE_ORDER.map((grade) => ({
+  value: grade,
+  label: penalGradeLabel(grade),
 }))
 
-const STATUS_OPTIONS = [
-  { value: 'OPEN', label: 'Offen' },
-  { value: 'PAID', label: 'Bezahlt' },
-  { value: 'ESCALATED', label: 'Nicht bezahlt / verdoppelt' },
-  { value: 'IN_COURT', label: 'In Klage' },
-  { value: '', label: 'Alle Status' },
-]
+const LEVEL_OPTIONS = SANCTION_LEVEL_ORDER.map((level) => ({
+  value: level,
+  label: sanctionLevelLabel(level),
+}))
 
-const DEADLINE_OPTIONS = [
-  { value: '', label: 'Jede Frist' },
-  { value: 'overdue', label: 'Überfällig' },
-  { value: '24h', label: 'Läuft in 24h ab' },
-  { value: '7d', label: 'Läuft in 7 Tagen ab' },
-  { value: 'none', label: 'Ohne Frist' },
+const LEVEL_FILTER_OPTIONS = [{ value: '', label: 'Alle Stufen' }, ...LEVEL_OPTIONS]
+
+const STATUS_OPTIONS = [
+  { value: 'ISSUED', label: 'Ausgesprochen' },
+  { value: 'EXECUTED', label: 'Vollzogen' },
+  { value: 'IN_COURT', label: 'Einspruch / Klage' },
+  { value: 'UPHELD', label: 'Bestätigt' },
+  { value: 'REVOKED', label: 'Aufgehoben' },
+  { value: '', label: 'Alle Status' },
 ]
 
 /** Agent-Daten für die Karte — fällt auf den Snapshot zurück, wenn das Profil gelöscht wurde. */
@@ -93,30 +103,20 @@ function cardAgent(sanction: SanctionListItem): SanctionCardAgent {
   }
 }
 
-function matchesDeadline(sanction: SanctionListItem, filter: string, now: number) {
-  if (!filter) return true
-  if (filter === 'none') return !sanction.dueAt
-  if (!sanction.dueAt) return false
-
-  const due = new Date(sanction.dueAt).getTime()
-  if (Number.isNaN(due)) return false
-  if (filter === 'overdue') return due < now
-  if (filter === '24h') return due >= now && due <= now + DAY_MS
-  if (filter === '7d') return due >= now && due <= now + 7 * DAY_MS
-  return true
+/** Offen = noch nicht abschließend entschieden. */
+function isOpenSanction(sanction: SanctionListItem) {
+  return sanction.status === 'ISSUED' || sanction.status === 'EXECUTED'
 }
 
-/** Dringlichstes zuerst: offene vor erledigten, danach nach Frist, zuletzt nach Datum. */
+/**
+ * Dringlichstes zuerst: noch nicht vollzogene vor allen anderen, dann die
+ * schwerste Maßnahme, zuletzt das jüngste Datum.
+ */
 function compareSanctions(a: SanctionListItem, b: SanctionListItem) {
-  if (a.status !== b.status) {
-    if (a.status === 'OPEN') return -1
-    if (b.status === 'OPEN') return 1
-  }
-  if (a.status === 'OPEN' && b.status === 'OPEN') {
-    const dueA = a.dueAt ? new Date(a.dueAt).getTime() : Number.POSITIVE_INFINITY
-    const dueB = b.dueAt ? new Date(b.dueAt).getTime() : Number.POSITIVE_INFINITY
-    if (dueA !== dueB) return dueA - dueB
-  }
+  const openA = isOpenSanction(a)
+  const openB = isOpenSanction(b)
+  if (openA !== openB) return openA ? -1 : 1
+  if (openA && openB && a.level !== b.level) return b.level.localeCompare(a.level)
   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 }
 
@@ -124,29 +124,28 @@ export default function SanktionenPage() {
   const { user } = useAuth()
   // Jeder eingeloggte Agent darf die Liste sehen — nur Verwalten braucht ein Recht.
   const canManage = hasPermission(user, 'sanctions:manage')
+  const canConfirm = hasPermission(user, 'sanctions:confirm')
   const { data: sanctions, loading, error: loadError, refetch } = useFetch<SanctionListItem[]>('/api/sanctions')
   const { execute } = useApi()
   const { addToast } = useToast()
 
   const [search, setSearch] = useState('')
   const [gradeFilter, setGradeFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('OPEN')
+  const [levelFilter, setLevelFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ISSUED')
   const [issuerFilter, setIssuerFilter] = useState('')
-  const [deadlineFilter, setDeadlineFilter] = useState('')
 
-  // Fristen werden gegen diese Zeitbasis geprüft; sie tickt minütlich nach.
-  const [nowMs, setNowMs] = useState<number | null>(null)
   const [editing, setEditing] = useState<SanctionListItem | null>(null)
-  const [editForm, setEditForm] = useState<EditForm>({ penalGrade: 'I', measureType: 'FINE', reason: '', dueAt: '' })
+  const [editForm, setEditForm] = useState<EditForm>({
+    penalGrade: '1',
+    level: '01',
+    violationCode: '',
+    reason: '',
+    penalty: '',
+  })
+  const [editChecklist, setEditChecklist] = useState<Record<string, boolean>>({})
   const [toDelete, setToDelete] = useState<SanctionListItem | null>(null)
   const [busy, setBusy] = useState(false)
-
-  useEffect(() => {
-    const updateNow = () => setNowMs(Date.now())
-    updateNow()
-    const interval = window.setInterval(updateNow, 60_000)
-    return () => window.clearInterval(interval)
-  }, [])
 
   const issuerOptions = useMemo(() => {
     const byId = new Map<string, string>()
@@ -163,15 +162,14 @@ export default function SanktionenPage() {
 
   const filtered = useMemo(() => {
     if (!sanctions) return []
-    const now = nowMs ?? 0
     const needle = search.trim().toLowerCase()
 
     return sanctions
       .filter((sanction) => {
         if (statusFilter && sanction.status !== statusFilter) return false
         if (gradeFilter && sanction.penalGrade !== gradeFilter) return false
+        if (levelFilter && sanction.level !== levelFilter) return false
         if (issuerFilter && sanction.issuedByUserId !== issuerFilter) return false
-        if (!matchesDeadline(sanction, deadlineFilter, now)) return false
         if (!needle) return true
 
         const agent = cardAgent(sanction)
@@ -182,26 +180,34 @@ export default function SanktionenPage() {
           agent.rankName ?? '',
           sanction.reason,
           sanction.penalty ?? '',
-          sanction.measureType ?? '',
-          sanction.sgRounds === null || sanction.sgRounds === undefined ? '' : String(sanction.sgRounds),
+          resolveViolation(sanction.violationCode)?.label ?? '',
+          sanctionLevelLabel(sanction.level),
           sanction.issuedBy?.displayName ?? '',
         ].join(' ').toLowerCase()
         return haystack.includes(needle)
       })
       .sort(compareSanctions)
-  }, [sanctions, search, statusFilter, gradeFilter, issuerFilter, deadlineFilter, nowMs])
+  }, [sanctions, search, statusFilter, gradeFilter, levelFilter, issuerFilter])
 
   const stats = useMemo(() => {
-    const now = nowMs ?? 0
-    const open = (sanctions ?? []).filter((sanction) => sanction.status === 'OPEN')
+    const all = sanctions ?? []
+    const open = all.filter(isOpenSanction)
     return {
       open: open.length,
-      overdue: open.filter((sanction) => sanction.dueAt && new Date(sanction.dueAt).getTime() < now).length,
-      openAmount: open.reduce((sum, sanction) => sum + (sanction.fineAmount ?? 0), 0),
+      pendingExecution: all.filter((sanction) => sanction.status === 'ISSUED').length,
+      pendingConfirmation: all.filter(
+        (sanction) => (sanction.penalGrade === '5' || sanction.penalGrade === '6') && !sanction.confirmedAt,
+      ).length,
+      severe: open.filter((sanction) => sanction.level >= '04').length,
     }
-  }, [sanctions, nowMs])
+  }, [sanctions])
 
-  const editRule = resolveSanctionPenalty(editForm.penalGrade) ?? SANCTION_CATALOG.I
+  const editViolations = useMemo(
+    () => (isPenalGrade(editForm.penalGrade) ? violationsForGrade(editForm.penalGrade) : []),
+    [editForm.penalGrade],
+  )
+  const editLevelRule = isSanctionLevel(editForm.level) ? SANCTION_LEVELS[editForm.level] : null
+  const editChecklistComplete = DECISION_CHECKLIST.every((item) => editChecklist[item.key])
 
   const runAction = async (label: string, request: () => Promise<unknown>) => {
     setBusy(true)
@@ -218,37 +224,52 @@ export default function SanktionenPage() {
     }
   }
 
-  const handleMarkPaid = (id: string, measureType?: string | null) =>
-    runAction(normalizeSanctionMeasureType(measureType) === 'SG_ROUNDS' ? 'Sanktion als erledigt markiert' : 'Sanktion als bezahlt markiert', () =>
-      execute(`/api/sanctions/${id}`, { method: 'PATCH', body: JSON.stringify({ action: 'MARK_PAID' }) }),
-    )
+  const patch = (id: string, body: Record<string, unknown>) =>
+    execute(`/api/sanctions/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
 
-  const handleEscalate = (id: string) =>
-    runAction('Sanktion verdoppelt', () =>
-      execute(`/api/sanctions/${id}`, { method: 'PATCH', body: JSON.stringify({ action: 'ESCALATE' }) }),
-    )
+  const handleExecute = (id: string) =>
+    runAction('Maßnahme als vollzogen vermerkt', () => patch(id, { action: 'EXECUTE' }))
+
+  const handleConfirm = (id: string) =>
+    runAction('Sanktion bestätigt', () => patch(id, { action: 'CONFIRM' }))
+
+  const handleRevoke = (id: string) =>
+    runAction('Sanktion aufgehoben', () => patch(id, { action: 'REVOKE' }))
 
   const openEdit = (sanction: SanctionListItem) => {
     setEditing(sanction)
     setEditForm({
-      penalGrade: PENAL_GRADES.has(sanction.penalGrade) ? sanction.penalGrade : 'I',
-      measureType: normalizeSanctionMeasureType(sanction.measureType),
+      penalGrade: isPenalGrade(sanction.penalGrade) ? sanction.penalGrade : '1',
+      level: isSanctionLevel(sanction.level) ? sanction.level : '01',
+      violationCode: sanction.violationCode ?? '',
       reason: sanction.reason,
-      dueAt: sanction.dueAt?.split('T')[0] ?? '',
+      penalty: sanction.penalty ?? '',
     })
+    // Der Entscheidungs-Check wird bei jeder Änderung neu bestätigt.
+    setEditChecklist({})
+  }
+
+  /** Grade-Wechsel setzt Stufe und Verstoß auf die Regelsanktion des neuen Grades. */
+  const handleGradeChange = (penalGrade: string) => {
+    const rule = isPenalGrade(penalGrade) ? PENAL_GRADE_RULES[penalGrade] : null
+    setEditForm((current) => ({
+      ...current,
+      penalGrade,
+      level: rule ? rule.regularLevels[0] : current.level,
+      violationCode: '',
+    }))
   }
 
   const handleSaveEdit = async () => {
-    if (!editing || !editForm.reason.trim()) return
+    if (!editing || !editForm.reason.trim() || !editChecklistComplete) return
     const ok = await runAction('Sanktion aktualisiert', () =>
-      execute(`/api/sanctions/${editing.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          penalGrade: editForm.penalGrade,
-          measureType: editForm.measureType,
-          reason: editForm.reason.trim(),
-          dueAt: editForm.dueAt || null,
-        }),
+      patch(editing.id, {
+        penalGrade: editForm.penalGrade,
+        level: editForm.level,
+        violationCode: editForm.violationCode || null,
+        reason: editForm.reason.trim(),
+        penalty: editForm.penalty.trim(),
+        checklist: editChecklist,
       }),
     )
     if (ok) setEditing(null)
@@ -272,7 +293,7 @@ export default function SanktionenPage() {
       <PageHeader
         title="Sanktionen"
         eyebrow="Übersicht"
-        description="Alle Sanktionen des Departments — filterbar nach Agent, Penal Grade, Status, Aussteller und Frist."
+        description="Alle Sanktionen des Departments nach dem Sanktionskatalog v1.0 — filterbar nach Agent, Penal Grade, Stufe, Status und Aussteller."
       />
 
       {loadError ? (
@@ -285,10 +306,15 @@ export default function SanktionenPage() {
         </div>
       ) : (
         <>
-          <div className="mb-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-            <StatTile label="Offene Sanktionen" value={String(stats.open)} tone="open" />
-            <StatTile label="Davon überfällig" value={String(stats.overdue)} tone={stats.overdue > 0 ? 'alert' : 'neutral'} />
-            <StatTile label="Offene Geldstrafen" value={formatFineAmount(stats.openAmount)} tone="gold" />
+          <div className="mb-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+            <StatTile label="Laufende Sanktionen" value={String(stats.open)} tone="open" />
+            <StatTile label="Vollzug ausstehend" value={String(stats.pendingExecution)} tone="neutral" />
+            <StatTile
+              label="Bestätigung ausstehend"
+              value={String(stats.pendingConfirmation)}
+              tone={stats.pendingConfirmation > 0 ? 'alert' : 'neutral'}
+            />
+            <StatTile label="Ab Stufe 04" value={String(stats.severe)} tone={stats.severe > 0 ? 'alert' : 'neutral'} />
           </div>
 
           <div className="mb-5 flex flex-col gap-2 lg:flex-row">
@@ -297,15 +323,15 @@ export default function SanktionenPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Suche nach Name, Dienstnummer, Rang oder Grund..."
+                placeholder="Suche nach Name, Dienstnummer, Rang, Verstoß oder Grund..."
                 className={cn(filterClass, 'w-full pl-9 placeholder:text-[#808080]')}
               />
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex">
-              <Select size="sm" value={statusFilter} onValueChange={setStatusFilter} options={STATUS_OPTIONS} className="lg:w-[195px]" />
-              <Select size="sm" value={gradeFilter} onValueChange={setGradeFilter} options={PENAL_GRADE_OPTIONS} className="lg:w-[175px]" />
+              <Select size="sm" value={statusFilter} onValueChange={setStatusFilter} options={STATUS_OPTIONS} className="lg:w-[185px]" />
+              <Select size="sm" value={gradeFilter} onValueChange={setGradeFilter} options={PENAL_GRADE_OPTIONS} className="lg:w-[190px]" />
+              <Select size="sm" value={levelFilter} onValueChange={setLevelFilter} options={LEVEL_FILTER_OPTIONS} className="lg:w-[210px]" />
               <Select size="sm" value={issuerFilter} onValueChange={setIssuerFilter} options={issuerOptions} className="lg:w-[175px]" />
-              <Select size="sm" value={deadlineFilter} onValueChange={setDeadlineFilter} options={DEADLINE_OPTIONS} className="lg:w-[175px]" />
             </div>
           </div>
 
@@ -331,9 +357,11 @@ export default function SanktionenPage() {
                     sanction={sanction}
                     agent={cardAgent(sanction)}
                     canSanction={canManage && !busy}
-                    variant={sanction.status === 'OPEN' ? 'open' : 'history'}
-                    onPaid={sanction.status === 'OPEN' ? () => void handleMarkPaid(sanction.id, sanction.measureType) : undefined}
-                    onEscalate={sanction.status === 'OPEN' ? () => void handleEscalate(sanction.id) : undefined}
+                    canConfirm={canConfirm}
+                    variant={isOpenSanction(sanction) ? 'open' : 'history'}
+                    onExecute={sanction.status === 'ISSUED' ? () => void handleExecute(sanction.id) : undefined}
+                    onConfirm={() => void handleConfirm(sanction.id)}
+                    onRevoke={isOpenSanction(sanction) ? () => void handleRevoke(sanction.id) : undefined}
                     onEdit={() => openEdit(sanction)}
                     onDelete={() => setToDelete(sanction)}
                   />
@@ -367,41 +395,47 @@ export default function SanktionenPage() {
             <Select
               label="Penal Grade"
               value={editForm.penalGrade}
-              onValueChange={(penalGrade) => setEditForm({ ...editForm, penalGrade })}
+              onValueChange={handleGradeChange}
               options={EDIT_PENAL_GRADE_OPTIONS}
             />
 
+            {isPenalGrade(editForm.penalGrade) && (
+              <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
+                <p className="text-[12.5px] font-medium text-[#aeaeae]">
+                  {PENAL_GRADE_RULES[editForm.penalGrade].severity}
+                </p>
+                <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">
+                  {PENAL_GRADE_RULES[editForm.penalGrade].description}
+                </p>
+                <p className="mt-1.5 text-[12px] text-[#808080]">
+                  Regelsanktion: {PENAL_GRADE_RULES[editForm.penalGrade].typicalConsequence}
+                </p>
+              </div>
+            )}
+
             <Select
-              label="Maßnahme"
-              value={editForm.measureType}
-              onValueChange={(measureType) => setEditForm({ ...editForm, measureType: measureType as SanctionMeasureType })}
+              label="Verstoß"
+              value={editForm.violationCode}
+              onValueChange={(violationCode) => setEditForm({ ...editForm, violationCode })}
               options={[
-                { value: 'FINE', label: `Geldstrafe · ${formatFineAmount(editRule.fineAmount)}` },
-                { value: 'SG_ROUNDS', label: `SG-Runden · ${editRule.sgRounds}` },
+                { value: '', label: 'Kein Katalog-Verstoß' },
+                ...editViolations.map((item) => ({ value: item.code, label: item.label })),
               ]}
             />
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
-                <p className="text-[12.5px] font-medium text-[#aeaeae]">Geldstrafe</p>
-                <p className={cn('mt-1 text-[14px] font-semibold', editForm.measureType === 'FINE' ? 'text-[#d4d4d4]' : 'text-[#808080]')}>
-                  {editForm.measureType === 'FINE' ? formatFineAmount(editRule.fineAmount) : 'Nicht ausgewählt'}
-                </p>
-              </div>
-              <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
-                <p className="text-[12.5px] font-medium text-[#aeaeae]">SG-Runden</p>
-                <p className={cn('mt-1 text-[14px] font-semibold', editForm.measureType === 'SG_ROUNDS' ? 'text-[#7dd3fc]' : 'text-[#808080]')}>
-                  {editForm.measureType === 'SG_ROUNDS' ? editRule.sgRounds : 'Nicht ausgewählt'}
-                </p>
-              </div>
-            </div>
+            <Select
+              label="Sanktionsstufe"
+              value={editForm.level}
+              onValueChange={(level) => setEditForm({ ...editForm, level })}
+              options={LEVEL_OPTIONS}
+            />
 
-            <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
-              <p className="text-[12.5px] font-medium text-[#aeaeae]">Zusätzliche Grade-Folge</p>
-              <p className="mt-1 text-[13px] font-medium leading-snug text-[#f4f4f4]">{editRule.penalty}</p>
-            </div>
-
-            <DateField label="Frist" value={editForm.dueAt} onChange={(dueAt) => setEditForm({ ...editForm, dueAt })} />
+            {editLevelRule && (
+              <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
+                <p className="text-[12.5px] font-medium text-[#aeaeae]">Anwendung</p>
+                <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">{editLevelRule.application}</p>
+              </div>
+            )}
 
             <Textarea
               label="Grund *"
@@ -412,9 +446,40 @@ export default function SanktionenPage() {
               placeholder="Detaillierter Grund der Sanktion..."
             />
 
+            <Textarea
+              label="Weitere Folge"
+              value={editForm.penalty}
+              onChange={(e) => setEditForm({ ...editForm, penalty: e.target.value })}
+              rows={2}
+              placeholder="Zusätzliche Auflagen oder Folgen (optional)..."
+            />
+
+            <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/60 px-3.5 py-3">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#808080]">
+                Entscheidungs-Check
+              </p>
+              <div className="space-y-1.5">
+                {DECISION_CHECKLIST.map((item) => (
+                  <label key={item.key} className="flex cursor-pointer items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={editChecklist[item.key] ?? false}
+                      onChange={(e) => setEditChecklist((current) => ({ ...current, [item.key]: e.target.checked }))}
+                      className="mt-[3px] h-3.5 w-3.5 shrink-0 accent-[#f59e0b]"
+                    />
+                    <span className="text-[12.5px] leading-snug text-[#c3c3c3]">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="secondary" size="sm" onClick={() => setEditing(null)}>Abbrechen</Button>
-              <Button size="sm" onClick={handleSaveEdit} disabled={busy || !editForm.reason.trim()}>
+              <Button
+                size="sm"
+                onClick={handleSaveEdit}
+                disabled={busy || !editForm.reason.trim() || !editChecklistComplete}
+              >
                 <Gavel size={13} strokeWidth={2} /> Speichern
               </Button>
             </div>

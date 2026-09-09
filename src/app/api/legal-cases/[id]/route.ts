@@ -122,7 +122,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
     await prisma.$transaction(async (tx) => {
       await tx.sanction.updateMany({
         where: { legalCaseId: id },
-        data: { status: 'OPEN', legalCaseId: null },
+        data: { status: 'ISSUED', legalCaseId: null },
       })
       await tx.legalCase.delete({ where: { id } })
     })

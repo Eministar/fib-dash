@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getBadgePrefix } from '@/lib/settings-helpers'
 import { CONTRACT_PLACE } from '@/lib/contracts'
 import { stripTerminatedBadgeNumber } from '@/lib/badge-number'
-import { formatFineAmount, penalGradeLabel, sanctionMeasureLabel } from '@/lib/sanction-catalog'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
 import { formatSequenceNumber, nextSequenceNumber, parseSequenceNumber } from '@/lib/sequence-numbers'
 import {
   LEGAL_CASE_PREFIX,
@@ -85,6 +85,12 @@ function formatDateDe(value: Date | string | null | undefined) {
   return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+/**
+ * Sanktionen, die einer Klage zugeordnet werden können: ausgesprochen oder
+ * vollzogen, aber weder bestätigt, aufgehoben noch bereits vor Gericht.
+ */
+const OPEN_FOR_CASE_STATUSES = ['ISSUED', 'EXECUTED'] as const
+
 type AgentForCase = {
   id: string
   firstName: string
@@ -98,10 +104,9 @@ type SanctionForCase = {
   id: string
   reason: string
   penalGrade: string
-  measureType: string
-  fineAmount: number | null
-  sgRounds: number | null
-  dueAt: Date | null
+  level: string
+  violationCode: string | null
+  suspendedUntil: Date | null
   createdAt: Date
 }
 
@@ -110,42 +115,42 @@ export function buildSanctionCaseContent(agent: AgentForCase, sanctions: Sanctio
   const name = `${agent.firstName} ${agent.lastName}`.trim()
   const badge = agent.badgeNumber || null
 
-  const subject = `Klage des Federal Investigation Bureau gegen ${name}${badge ? ` (${badge})` : ''} wegen Nichtzahlung offener Sanktion(en) nach Beendigung des Dienstverhältnisses`
-
-  const totalFine = sanctions
-    .filter((sanction) => sanction.measureType !== 'SG_ROUNDS' && sanction.fineAmount !== null)
-    .reduce((sum, sanction) => sum + (sanction.fineAmount ?? 0), 0)
+  const subject = `Klage des Federal Investigation Bureau gegen ${name}${badge ? ` (${badge})` : ''} wegen nicht abgeschlossener Disziplinarmaßnahmen nach Beendigung des Dienstverhältnisses`
 
   const bullets = sanctions.map((sanction) => {
-    const measure = sanctionMeasureLabel(sanction)
+    const violation = resolveViolation(sanction.violationCode)
     const meta = [
       penalGradeLabel(sanction.penalGrade),
-      measure,
-      sanction.dueAt ? `Frist bis ${formatDateDe(sanction.dueAt)}` : 'ohne Frist',
-      `ausgestellt am ${formatDateDe(sanction.createdAt)}`,
-    ].join(' · ')
+      sanctionLevelLabel(sanction.level),
+      violation ? violation.label : null,
+      `ausgesprochen am ${formatDateDe(sanction.createdAt)}`,
+    ].filter(Boolean).join(' · ')
     return `- **${meta}**\n  Grund: ${sanction.reason}`
   })
 
-  const claimAmount = totalFine > 0
-    ? ` die offenen Forderungen in Höhe von insgesamt **${formatFineAmount(totalFine)}** nebst Zinsen`
-    : ' die offenen Verbindlichkeiten vollständig'
+  // Schwerste Stufe bestimmt die Stoßrichtung des Antrags.
+  const highestLevel = sanctions
+    .map((sanction) => sanction.level)
+    .sort()
+    .at(-1) ?? '01'
 
   const content = [
     `Die Klägerin, das **Federal Investigation Bureau**, vertreten durch die Legal Affairs Division, erhebt gegen den Beklagten Klage und trägt hierzu wie folgt vor:`,
     '',
-    `1. Der Beklagte stand im Dienst der Klägerin und unterlag dem zwischen den Parteien geschlossenen Arbeitsvertrag.`,
-    `2. Das Dienstverhältnis des Beklagten wurde beendet. Gemäß **§ 6 des Arbeitsvertrages** entbindet eine Kündigung oder Entlassung jedoch nicht von bereits bestehenden Verpflichtungen; offene Sanktionen, Geldstrafen und sonstige Forderungen bleiben bestehen und sind vollständig zu begleichen.`,
-    `3. Gegen den Beklagten bestehen die nachfolgend näher bezeichneten offenen Sanktionen (siehe Beweismittel):`,
+    `1. Der Beklagte stand im Dienst der Klägerin und unterlag dem zwischen den Parteien geschlossenen Arbeitsvertrag sowie dem **Sanktionskatalog des FIB (Version 1.0)**.`,
+    `2. Das Dienstverhältnis des Beklagten wurde beendet. Gemäß **§ 6 des Arbeitsvertrages** entbindet eine Kündigung oder Entlassung nicht von den Folgen bereits festgestellter Dienstpflichtverletzungen; ausgesprochene Disziplinarmaßnahmen bleiben in der Personalakte bestehen.`,
+    `3. Gegen den Beklagten wurden die nachfolgend bezeichneten Sanktionen ausgesprochen, die zum Zeitpunkt der Beendigung des Dienstverhältnisses nicht abgeschlossen waren (siehe Beweismittel):`,
     ...bullets,
-    `4. Trotz Fälligkeit und ausdrücklichem Hinweis auf die fortbestehende Zahlungspflicht hat der Beklagte die offenen Beträge bis heute nicht beglichen.`,
+    `4. Die Einstufung erfolgte nach dem Sanktionskatalog anhand der nachgewiesenen Verstöße, ihrer Schwere und der Umstände des Einzelfalls. Der Beklagte hatte Gelegenheit zur Stellungnahme.`,
   ].join('\n')
 
   const closing = [
     'Aus den vorgenannten Gründen wird beantragt,',
     '',
-    `1. den Beklagten zu verurteilen,${claimAmount} zu begleichen,`,
-    '2. festzustellen, dass sich der Beklagte mit der Zahlung in Verzug befindet,',
+    `1. festzustellen, dass die vorbezeichneten Sanktionen rechtmäßig ausgesprochen wurden und Bestand haben,`,
+    highestLevel >= '06'
+      ? '2. festzustellen, dass die Beendigung des Dienstverhältnisses gerechtfertigt war,'
+      : '2. den Beklagten zu verpflichten, die angeordneten Maßnahmen gegen sich gelten zu lassen,',
     '3. dem Beklagten die Kosten des Verfahrens aufzuerlegen.',
   ].join('\n')
 
@@ -200,7 +205,8 @@ export async function createLegalCase(input: CreateLegalCaseInput) {
     if (sanctions.length !== selectedSanctionIds.length) {
       throw new Error('Eine oder mehrere Sanktionen wurden nicht gefunden')
     }
-    const openSanctions = sanctions.filter((sanction) => sanction.status === 'OPEN')
+    const openSanctions = sanctions.filter((sanction) =>
+      (OPEN_FOR_CASE_STATUSES as readonly string[]).includes(sanction.status))
     if (openSanctions.length !== sanctions.length) {
       throw new Error('Nur offene Sanktionen können einer Klage zugeordnet werden')
     }
@@ -280,10 +286,9 @@ export function buildSanctionSnapshot(sanctions: SanctionForCase[]) {
     sanctionId: sanction.id,
     reason: sanction.reason,
     penalGrade: sanction.penalGrade,
-    measureType: sanction.measureType,
-    fineAmount: sanction.fineAmount,
-    sgRounds: sanction.sgRounds,
-    dueAt: sanction.dueAt ? sanction.dueAt.toISOString() : null,
+    level: sanction.level,
+    violationCode: sanction.violationCode,
+    suspendedUntil: sanction.suspendedUntil ? sanction.suspendedUntil.toISOString() : null,
     createdAt: sanction.createdAt.toISOString(),
   }))
 }
@@ -410,7 +415,7 @@ function formatSequenceNumberAllocated(prefix: string, value: number) {
  */
 export async function createLegalCaseBatch(createdById: string) {
   const agents = await prisma.agent.findMany({
-    where: { status: 'TERMINATED', sanctions: { some: { status: 'OPEN' } } },
+    where: { status: 'TERMINATED', sanctions: { some: { status: { in: [...OPEN_FOR_CASE_STATUSES] } } } },
     select: {
       id: true,
       firstName: true,
@@ -427,7 +432,7 @@ export async function createLegalCaseBatch(createdById: string) {
   }
 
   const openSanctions = await prisma.sanction.findMany({
-    where: { status: 'OPEN', agentId: { in: agents.map((agent) => agent.id) } },
+    where: { status: { in: [...OPEN_FOR_CASE_STATUSES] }, agentId: { in: agents.map((agent) => agent.id) } },
     orderBy: { createdAt: 'asc' },
   })
 

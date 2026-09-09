@@ -40,11 +40,14 @@ export function isLegalCaseKind(value: unknown): value is LegalCaseKindValue {
 export interface LegalCaseSanctionSnapshot {
   sanctionId: string
   reason: string
+  /** Penal Grade "1"–"6" des Sanktionskatalogs v1.0. */
   penalGrade: string
-  measureType: string
-  fineAmount: number | null
-  sgRounds: number | null
-  dueAt: string | null
+  /** Sanktionsstufe "01"–"07". */
+  level: string
+  /** Verstoß-Code aus dem Katalog, sofern hinterlegt. */
+  violationCode: string | null
+  /** Ende einer befristeten Suspendierung (Stufe 05). */
+  suspendedUntil: string | null
   createdAt: string
 }
 
@@ -59,10 +62,9 @@ export function readLegalCaseSanctions(value: unknown): LegalCaseSanctionSnapsho
         sanctionId: typeof raw.sanctionId === 'string' ? raw.sanctionId : '',
         reason: typeof raw.reason === 'string' ? raw.reason : '',
         penalGrade: typeof raw.penalGrade === 'string' ? raw.penalGrade : '',
-        measureType: typeof raw.measureType === 'string' ? raw.measureType : 'FINE',
-        fineAmount: typeof raw.fineAmount === 'number' ? raw.fineAmount : null,
-        sgRounds: typeof raw.sgRounds === 'number' ? raw.sgRounds : null,
-        dueAt: typeof raw.dueAt === 'string' ? raw.dueAt : null,
+        level: typeof raw.level === 'string' ? raw.level : '',
+        violationCode: typeof raw.violationCode === 'string' ? raw.violationCode : null,
+        suspendedUntil: typeof raw.suspendedUntil === 'string' ? raw.suspendedUntil : null,
         createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : '',
       } satisfies LegalCaseSanctionSnapshot
     })

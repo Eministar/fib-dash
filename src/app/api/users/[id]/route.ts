@@ -47,6 +47,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const data: Record<string, unknown> = {}
     if ('permissions' in body) data.permissions = sanitizePermissions(body.permissions)
 
+    // Personalakte verknüpfen — Grundlage der Zuständigkeitsprüfung im
+    // Sanktionskatalog (der Rang der handelnden Person). Jede Akte gehört
+    // höchstens einem Account, deshalb wird eine bestehende Bindung gelöst.
+    if ('agentId' in body) {
+      const agentId = typeof body.agentId === 'string' && body.agentId.trim() ? body.agentId.trim() : null
+      if (agentId) {
+        const agent = await prisma.agent.findUnique({ where: { id: agentId }, select: { id: true } })
+        if (!agent) return error('Agent nicht gefunden', 404)
+      }
+      await prisma.$transaction(async (tx) => {
+        await tx.agent.updateMany({ where: { userId: id }, data: { userId: null } })
+        if (agentId) await tx.agent.update({ where: { id: agentId }, data: { userId: id } })
+      })
+    }
+
     // Manual group assignment — done in separate transaction to avoid primary key conflicts
     // (user may already have a Discord-synced membership for a group they're being manually added to)
     if ('groupIds' in body && Array.isArray(body.groupIds)) {
@@ -117,6 +132,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         lastLoginAt: true,
         groupId: true,
         group: { select: { id: true, name: true } },
+        agentProfile: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            badgeNumber: true,
+            rank: { select: { name: true, sortOrder: true } },
+          },
+        },
         permissions: true,
         groupMemberships: {
           select: { group: { select: { id: true, name: true } }, source: true },

@@ -31,7 +31,7 @@ import {
   type LegalCaseKindValue,
   type LegalCaseStatusValue,
 } from '@/lib/legal-cases'
-import { formatFineAmount, penalGradeLabel, sanctionMeasureLabel } from '@/lib/sanction-catalog'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { cn, formatDateTime } from '@/lib/utils'
 
@@ -67,11 +67,11 @@ interface OpenSanction {
   id: string
   reason: string
   penalGrade: string
-  measureType: string
-  fineAmount: number | null
-  sgRounds: number | null
+  level: string
+  violationCode: string | null
   penalty: string | null
-  dueAt: string | null
+  suspendedUntil: string | null
+  status: string
   createdAt: string
 }
 
@@ -361,9 +361,12 @@ function SanctionCaseForm({ submitting, onCreate, onBack }: { submitting: boolea
     return () => { cancelled = true }
   }, [agentId])
 
-  const totalFine = useMemo(() => sanctions
-    .filter((s) => selected.has(s.id) && s.measureType !== 'SG_ROUNDS' && s.fineAmount !== null)
-    .reduce((sum, s) => sum + (s.fineAmount ?? 0), 0), [sanctions, selected])
+  /** Schwerste ausgewählte Stufe — zeigt das Gewicht der Klage auf einen Blick. */
+  const highestLevel = useMemo(() => sanctions
+    .filter((s) => selected.has(s.id))
+    .map((s) => s.level)
+    .sort()
+    .at(-1) ?? null, [sanctions, selected])
 
   const toggle = (id: string) => {
     setSelected((current) => {
@@ -408,21 +411,18 @@ function SanctionCaseForm({ submitting, onCreate, onBack }: { submitting: boolea
                   />
                   <span className="min-w-0">
                     <span className="block text-[12.5px] font-semibold text-[#f4f4f4]">
-                      {penalGradeLabel(sanction.penalGrade)} · {sanctionMeasureLabel(sanction)}
-                      {sanction.measureType !== 'SG_ROUNDS' && sanction.fineAmount !== null
-                        ? ` · ${formatFineAmount(sanction.fineAmount)}`
-                        : ''}
+                      {penalGradeLabel(sanction.penalGrade)} · {sanctionLevelLabel(sanction.level)}
                     </span>
                     <span className="mt-0.5 block text-[12px] leading-5 text-[#a6a6a6]">{sanction.reason}</span>
                     <span className="mt-0.5 block text-[11px] text-[#808080]">
-                      {sanction.dueAt ? `Frist bis ${formatDateTime(sanction.dueAt)}` : 'Ohne Frist'} · {formatDateTime(sanction.createdAt)}
+                      {resolveViolation(sanction.violationCode)?.label ?? 'Kein Katalog-Verstoß hinterlegt'} · {formatDateTime(sanction.createdAt)}
                     </span>
                   </span>
                 </label>
               ))}
-              {totalFine > 0 && (
+              {highestLevel && (
                 <p className="pt-1 text-[12px] text-[#a78bfa]">
-                  Offene Gesamtforderung der Auswahl: {formatFineAmount(totalFine)}
+                  Schwerste Maßnahme der Auswahl: {sanctionLevelLabel(highestLevel)}
                 </p>
               )}
             </div>
@@ -516,7 +516,7 @@ function CustomCaseForm({ submitting, onCreate, onBack }: { submitting: boolean;
               <label key={sanction.id} className="flex cursor-pointer items-start gap-3 rounded-[9px] border border-[#343434]/50 bg-[#0f0f0f]/60 p-3">
                 <input type="checkbox" checked={selected.has(sanction.id)} onChange={() => toggle(sanction.id)} className="mt-0.5 h-4 w-4 accent-[#8b5cf6]" />
                 <span className="text-[12.5px] text-[#f4f4f4]">
-                  {penalGradeLabel(sanction.penalGrade)} · {sanctionMeasureLabel(sanction)}
+                  {penalGradeLabel(sanction.penalGrade)} · {sanctionLevelLabel(sanction.level)}
                 </span>
               </label>
             ))}

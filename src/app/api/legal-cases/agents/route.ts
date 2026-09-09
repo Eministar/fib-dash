@@ -25,7 +25,7 @@ export async function GET() {
         orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
       }),
       prisma.sanction.findMany({
-        where: { status: 'OPEN', agentId: { not: null } },
+        where: { status: { in: ['ISSUED', 'EXECUTED'] }, agentId: { not: null } },
         select: { agentId: true },
       }),
     ])

@@ -85,8 +85,14 @@ export async function GET() {
     prisma.rankChangeList.count({ where: { status: 'DRAFT' } }),
     canViewDutyTimes ? getDutyTimesSnapshot(new Date(), { sync: false }) : Promise.resolve(null),
     getActiveAbsenceNotices(),
+    // Ausgesprochen, aber noch nicht vollzogen — plus abgelaufene Suspendierungen.
     prisma.sanction.count({
-      where: { status: 'OPEN', dueAt: { lt: new Date() } },
+      where: {
+        OR: [
+          { status: 'ISSUED' },
+          { status: 'EXECUTED', suspendedUntil: { lt: new Date() }, resolvedAt: null },
+        ],
+      },
     }),
     prisma.probation.findMany({
       where: {

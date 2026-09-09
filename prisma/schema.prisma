@@ -54,11 +54,20 @@ enum AgentFlag {
   BLUE
 }
 
+/// Lebenszyklus einer Sanktion nach dem Sanktionskatalog v1.0. Der Katalog kennt
+/// keine Geldstrafen mehr — eine Sanktion wird ausgesprochen, ggf. vollzogen und
+/// kann im Rechtsmittelweg bestätigt oder aufgehoben werden.
 enum SanctionStatus {
-  OPEN
-  PAID
-  ESCALATED
+  /// Ausgesprochen, Maßnahme noch nicht vollzogen.
+  ISSUED
+  /// Maßnahme vollzogen (Degradierung durchgeführt, Suspendierung aktiv, …).
+  EXECUTED
+  /// Betroffener hat Einspruch erhoben; Klage der Legal Affairs Division läuft.
   IN_COURT
+  /// Nach Prüfung bestätigt.
+  UPHELD
+  /// Aufgehoben; zählt nicht als Vorverstoß.
+  REVOKED
 }
 
 enum CalendarEventType {
@@ -187,6 +196,9 @@ model User {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
+  /// Agent-Personalakte, die zu diesem Dashboard-Account gehört.
+  agentProfile      Agent?               @relation("AgentAccount")
+
   mapSpotsCreated   MapSpot[]            @relation("MapSpotCreator")
   observationsMade  MapSpotObservation[] @relation("ObservationCreator")
   photosUploaded    InvestigationPhoto[] @relation("PhotoUploader")
@@ -199,6 +211,7 @@ model User {
   promotionsPerformed        PromotionLog[]            @relation("PerformedBy")
   terminationsPerformed      Termination[]             @relation("TerminatedBy")
   sanctionsIssued            Sanction[]                @relation("SanctionIssuedBy")
+  sanctionsConfirmed         Sanction[]                @relation("SanctionConfirmedBy")
   notesAuthored              Note[]                    @relation("NoteAuthor")
   auditLogs                  AuditLog[]                @relation("AuditUser")
   createdLists               RankChangeList[]          @relation("ListCreator")
@@ -608,6 +621,10 @@ model Agent {
   badgeNumber      String
   /// Discord-Snowflake (nur Dashboard / Verknüpfung; ohne Bot-Anbindung)
   discordId        String?                @unique
+  /// Dashboard-Account dieses Agents. Wird für die Zuständigkeitsprüfung im
+  /// Sanktionskatalog gebraucht (Rang der handelnden Person).
+  userId           String?                @unique
+  user             User?                  @relation("AgentAccount", fields: [userId], references: [id], onDelete: SetNull)
   firstName        String
   lastName         String
   rankId           String
@@ -912,24 +929,41 @@ model Termination {
   previousLastName    String?
 }
 
+/// Disziplinarische Sanktion nach dem FIB-Sanktionskatalog v1.0.
 model Sanction {
   id                  String         @id @default(cuid())
   agentId             String?
   agent               Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
   reason              String         @db.Text
+  /// Penal Grade "1"–"6" (Abschnitt 01).
   penalGrade          String
-  measureType         String         @default("FINE")
-  fineAmount          Int?
-  sgRounds            Int?
+  /// Sanktionsstufe "01"–"07" (Abschnitt 02).
+  level               String
+  /// Code des Verstoßes aus dem Katalog, z. B. "pg2.dienstweg". Grundlage der
+  /// Wiederholungsprüfung nach Abschnitt 04.
+  violationCode       String?
+  /// Ergänzende Folge / Auflage im Klartext.
   penalty             String?        @db.Text
-  status              SanctionStatus @default(OPEN)
-  dueAt               DateTime?
-  paidAt              DateTime?
+  status              SanctionStatus @default(ISSUED)
+  /// Ende einer befristeten Suspendierung (Stufe 05).
+  suspendedUntil      DateTime?
+  /// Zeitpunkt des Vollzugs der Maßnahme.
+  executedAt          DateTime?
   resolvedAt          DateTime?
-  escalatedAt         DateTime?
-  parentSanctionId    String?
-  parentSanction      Sanction?      @relation("SanctionEscalation", fields: [parentSanctionId], references: [id], onDelete: SetNull)
-  escalatedSanctions  Sanction[]     @relation("SanctionEscalation")
+  /// Angekreuzte mildernde Umstände (string[]).
+  mitigating          Json           @default("[]")
+  /// Angekreuzte erschwerende Umstände (string[]).
+  aggravating         Json           @default("[]")
+  /// Entscheidungs-Check aus Abschnitt 07 (`{ [key]: boolean }`).
+  checklist           Json           @default("{}")
+  /// Vorheriger gleichartiger Verstoß, auf den sich die Höherstufung stützt.
+  repeatOfSanctionId  String?
+  repeatOf            Sanction?      @relation("SanctionRepeat", fields: [repeatOfSanctionId], references: [id], onDelete: SetNull)
+  repeatedSanctions   Sanction[]     @relation("SanctionRepeat")
+  /// Vier-Augen-Bestätigung; bei Penal Grade 5 und 6 vorgesehen.
+  confirmedByUserId   String?
+  confirmedBy         User?          @relation("SanctionConfirmedBy", fields: [confirmedByUserId], references: [id], onDelete: SetNull)
+  confirmedAt         DateTime?
   discordChannelId    String?
   discordMessageId    String?
   issuedByUserId      String?
@@ -946,9 +980,24 @@ model Sanction {
 
   @@index([agentId, createdAt])
   @@index([issuedByUserId, createdAt])
-  @@index([status, dueAt])
-  @@index([parentSanctionId])
+  @@index([status, createdAt])
+  @@index([agentId, violationCode, createdAt])
+  @@index([repeatOfSanctionId])
+  @@index([confirmedByUserId])
   @@index([legalCaseId])
+}
+
+/// Mindestrang, ab dem eine Sanktionsstufe ausgesprochen werden darf
+/// (Abschnitt 05 des Sanktionskatalogs). Anpassbar, damit Umbenennungen oder
+/// Umbauten der Rangstruktur keinen Code-Change erfordern.
+model SanctionLevelAuthority {
+  /// Sanktionsstufe "01"–"07".
+  level            String   @id @db.VarChar(2)
+  /// Bezeichnung der zuständigen Stelle, z. B. "Abteilungsleitung".
+  authorityLabel   String
+  /// Rank.sortOrder des niedrigsten zulässigen Ranges (kleiner = höher).
+  minRankSortOrder Int
+  updatedAt        DateTime @updatedAt
 }
 
 model Note {

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
 export default function SanktionskatalogPage() {
-  // Redirect zum neuen System
-  redirect('/ordnungen/sanktionskatalog')
+  // Der Katalog liegt seit Version 1.0 im Sanktionsbereich.
+  redirect('/sanktionen/katalog')
 }

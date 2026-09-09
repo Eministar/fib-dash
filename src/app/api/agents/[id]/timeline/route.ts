@@ -83,10 +83,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     push(items, {
       id: `sanction-${sanction.id}`,
       type: 'sanction',
-      title: `Sanktion ${sanction.penalGrade}`,
+      title: `Sanktion · Penal Grade ${sanction.penalGrade}`,
       description: sanction.reason,
       createdAt: sanction.createdAt,
-      meta: { status: sanction.status, measure: sanctionMeasureLabel(sanction), actor: sanction.issuedBy?.displayName ?? 'Gelöscht' },
+      meta: { status: sanction.status, measure: sanctionMeasureLabel(sanction.level), actor: sanction.issuedBy?.displayName ?? 'Gelöscht' },
     })
   }
 
