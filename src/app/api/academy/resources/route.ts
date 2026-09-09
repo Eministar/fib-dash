@@ -2,7 +2,11 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { error, success, unauthorized } from '@/lib/api-response'
 import { requireTaskModuleManage, requireTaskModuleView } from '@/lib/module-permissions'
-import { deleteUploadedFile, saveUploadedFile, validateUploadFile } from '@/lib/uploads'
+import { deleteUploadedFile, resolveUploadPath } from '@/lib/uploads'
+import { adoptUploadedFile } from '@/lib/upload-adopt'
+import { consumeUploadSession, UploadSessionError } from '@/lib/upload-sessions'
+import { randomUUID } from 'node:crypto'
+import { z } from 'zod'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,16 +16,18 @@ const resourceInclude = {
   createdBy: { select: { id: true, displayName: true } },
 }
 
-function text(form: FormData, key: string) {
-  const value = form.get(key)
-  return typeof value === 'string' ? value.trim() : ''
-}
-
-function uploadErrorStatus(message: string) {
-  if (message.includes('leer')) return 400
-  if (message.includes('zu groß')) return 413
-  return 415
-}
+const bodySchema = z
+  .object({
+    scope: z.string().trim(),
+    type: z.string().trim(),
+    title: z.string().trim(),
+    description: z.string().trim().max(5000).nullish(),
+    trainingId: z.string().trim().max(64).nullish(),
+    customTrainingName: z.string().trim().max(200).nullish(),
+    url: z.string().trim().max(2000).nullish(),
+    uploadId: z.string().trim().max(64).nullish(),
+  })
+  .strict()
 
 function validExternalUrl(value: string) {
   try {
@@ -47,6 +53,7 @@ export async function GET() {
     ])
     return success({ resources, trainings })
   } catch (e: unknown) {
+    if (e instanceof UploadSessionError) return error(e.message, e.status)
     const message = e instanceof Error ? e.message : 'Serverfehler'
     if (message === 'Unauthorized') return unauthorized()
     if (message === 'Forbidden') return error('Keine Berechtigung', 403)
@@ -57,15 +64,16 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const user = await requireTaskModuleManage('ACADEMY')
-    const form = await req.formData().catch(() => null)
-    if (!form) return error('Multipart/Form-Data wird benötigt')
+    // Die Datei ist bereits ueber /api/uploads eingetroffen und geprueft;
+    // hier reisen nur noch die Angaben zur Ressource plus das Ticket.
+    const body = bodySchema.parse(await req.json())
 
-    const scope = text(form, 'scope')
-    const type = text(form, 'type')
-    const title = text(form, 'title')
-    const description = text(form, 'description')
-    const trainingId = text(form, 'trainingId')
-    const customTrainingName = text(form, 'customTrainingName')
+    const scope = body.scope
+    const type = body.type
+    const title = body.title
+    const description = body.description ?? ''
+    const trainingId = body.trainingId ?? ''
+    const customTrainingName = body.customTrainingName ?? ''
 
     if (scope !== 'GENERAL' && scope !== 'TRAINING') return error('Ungültiger Ressourcenbereich')
     if (type !== 'FILE' && type !== 'LINK') return error('Ungültiger Ressourcentyp')
@@ -81,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === 'LINK') {
-      const url = text(form, 'url')
+      const url = body.url ?? ''
       if (!validExternalUrl(url)) return error('Gültiger HTTP- oder HTTPS-Link ist erforderlich')
 
       const resource = await prisma.academyResource.create({
@@ -100,12 +108,11 @@ export async function POST(req: NextRequest) {
       return success(resource, 201)
     }
 
-    const file = form.get('file')
-    if (!(file instanceof File)) return error('Datei ist erforderlich')
-    const validationError = validateUploadFile(file)
-    if (validationError) return error(validationError, uploadErrorStatus(validationError))
+    if (!body.uploadId) return error('Datei ist erforderlich')
 
-    const uploaded = await saveUploadedFile(file)
+    const uploaded = await consumeUploadSession(body.uploadId, user.id, 'RESOURCE', (source, extension) =>
+      adoptUploadedFile(source, resolveUploadPath(`${randomUUID()}${extension}`)),
+    )
     try {
       const resource = await prisma.academyResource.create({
         data: {
@@ -115,11 +122,11 @@ export async function POST(req: NextRequest) {
           description: description || null,
           trainingId: trainingId || null,
           customTrainingName: trainingId ? null : customTrainingName || null,
-          url: uploaded.url,
+          url: `/uploads/${uploaded.filename}`,
           storedFilename: uploaded.filename,
           originalFilename: uploaded.originalName,
           mimeType: uploaded.mimeType,
-          size: uploaded.size,
+          size: uploaded.sizeBytes,
           createdById: user.id,
         },
         include: resourceInclude,
