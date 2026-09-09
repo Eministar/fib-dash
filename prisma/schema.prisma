@@ -188,6 +188,7 @@ model User {
   updatedAt            DateTime          @updatedAt
 
   mapSpotsCreated   MapSpot[]            @relation("MapSpotCreator")
+  observationsMade  MapSpotObservation[] @relation("ObservationCreator")
   photosUploaded    InvestigationPhoto[] @relation("PhotoUploader")
   codenamesCreated  Codename[]           @relation("CodenameCreator")
   dossiersCreated   Dossier[]            @relation("DossierCreator")
@@ -2126,6 +2127,25 @@ model RecordShareItem {
   @@index([kind, recordId])
 }
 
+/// Eine einzelne Beobachtung an einem Kartenpunkt. Macht aus einer statischen
+/// Nadel eine Chronologie: wer wann was an dieser Route oder diesem Sammler
+/// gesehen hat.
+model MapSpotObservation {
+  id     String  @id @default(cuid())
+  spotId String
+  spot   MapSpot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+
+  note String @db.Text
+  /// Zeitpunkt der Beobachtung, nicht der Erfassung.
+  observedAt DateTime
+
+  createdById String?
+  createdBy   User?    @relation("ObservationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([spotId, observedAt])
+}
+
 /// Frei platzierbare Markierung auf der Stadtkarte (Routen, Schwarzmarkt, Orte).
 model MapSpot {
   id          String  @id @default(cuid())
@@ -2143,6 +2163,7 @@ model MapSpot {
   /// Akten, die diesen Punkt als Route, Sammler, Anwesen oder Einsatzort führen.
   dossiers       Dossier[]       @relation("DossierMapSpots")
   investigations Investigation[] @relation("InvestigationMapSpots")
+  observations   MapSpotObservation[]
 
   createdById String?
   createdBy   User?    @relation("MapSpotCreator", fields: [createdById], references: [id], onDelete: SetNull)

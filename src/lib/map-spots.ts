@@ -32,6 +32,7 @@ export const MAP_SPOT_LIMITS = {
   title: 80,
   description: 1000,
   icon: 16,
+  observation: 2000,
 } as const
 
 /** Seitenverhältnis des Kartenbilds unter `src/assets/map.png`. */
@@ -51,6 +52,8 @@ export interface MapSpot {
   dossiers: { id: string; title: string; kind: string }[]
   /** Einsatzakten an diesem Punkt – bereits sichtbarkeitsgefiltert. */
   investigations: { id: string; caseNumber: string; title: string; classified: boolean }[]
+  /** Beobachtungen, neueste zuerst. */
+  observations: { id: string; note: string; observedAt: string; createdByName: string }[]
   createdById: string | null
   createdByName: string
   createdAt: string

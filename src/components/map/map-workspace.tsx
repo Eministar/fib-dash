@@ -33,7 +33,7 @@ export function MapWorkspace() {
   const [editorSpot, setEditorSpot] = useState<MapSpot | null>(null)
   const [pendingPosition, setPendingPosition] = useState<{ x: number; y: number } | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
-  const [detailSpot, setDetailSpot] = useState<MapSpot | null>(null)
+  const [detailSpotId, setDetailSpotId] = useState<string | null>(null)
   const [movingSpot, setMovingSpot] = useState<MapSpot | null>(null)
   const [listOpen, setListOpen] = useState(false)
   const [dossierId, setDossierId] = useState<string | null>(null)
@@ -43,6 +43,9 @@ export function MapWorkspace() {
   // Der Filter wirkt auf Karte, Legende und Liste gemeinsam – sonst zeigt die
   // Legende Zahlen, die auf der Karte nicht zu finden sind.
   const spots = filterSpotsByDossier(allSpots, dossierId)
+  // Aus der Liste abgeleitet statt kopiert: nach dem Nachladen zeigt der
+  // Dialog sofort die neuen Beobachtungen.
+  const detailSpot = allSpots.find((spot) => spot.id === detailSpotId) ?? null
 
   const focus = useCallback((spot: MapSpot) => {
     mapRef.current?.focusSpot(spot.id)
@@ -78,7 +81,7 @@ export function MapWorkspace() {
       editing ? 'Die Änderungen wurden übernommen.' : 'Die Markierung wurde angelegt.',
     )
     closeEditor()
-    setDetailSpot(null)
+    setDetailSpotId(null)
     await refetch()
   }
 
@@ -103,7 +106,7 @@ export function MapWorkspace() {
     try {
       await execute(`/api/map/spots/${detailSpot.id}`, { method: 'DELETE' })
       toastSuccess('Markierung gelöscht', `„${detailSpot.title}“ wurde entfernt.`)
-      setDetailSpot(null)
+      setDetailSpotId(null)
       await refetch()
     } catch (cause) {
       toastError('Löschen fehlgeschlagen', cause instanceof Error ? cause.message : 'Unbekannter Fehler')
@@ -138,7 +141,7 @@ export function MapWorkspace() {
               spots={spots}
               canManage={canManage}
               onPlace={handlePlace}
-              onOpenDetail={setDetailSpot}
+              onOpenDetail={(spot) => setDetailSpotId(spot.id)}
               movingSpot={movingSpot}
               moving={saving}
               onMoveTo={handleMoveTo}
@@ -154,7 +157,7 @@ export function MapWorkspace() {
               spots={spots}
               className="min-h-0 flex-1"
               onFocus={focus}
-              onOpenDetail={setDetailSpot}
+              onOpenDetail={(spot) => setDetailSpotId(spot.id)}
             />
           </div>
         </div>
@@ -173,7 +176,7 @@ export function MapWorkspace() {
             }}
             onOpenDetail={(spot) => {
               setListOpen(false)
-              setDetailSpot(spot)
+              setDetailSpotId(spot.id)
             }}
           />
         </div>
@@ -194,10 +197,10 @@ export function MapWorkspace() {
         spot={movingSpot || editorOpen ? null : detailSpot}
         canManage={canManage}
         busy={saving}
-        onClose={() => setDetailSpot(null)}
+        onClose={() => setDetailSpotId(null)}
         onFocus={() => {
           if (detailSpot) focus(detailSpot)
-          setDetailSpot(null)
+          setDetailSpotId(null)
         }}
         onEdit={() => {
           setEditorSpot(detailSpot)
@@ -210,6 +213,7 @@ export function MapWorkspace() {
           focus(detailSpot)
         }}
         onDelete={handleDelete}
+        onChanged={() => void refetch()}
       />
 
       {spots.length === 0 && !loading && dossierId && (

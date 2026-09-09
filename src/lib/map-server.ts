@@ -10,6 +10,10 @@ export const spotInclude = {
   createdBy: { select: { id: true, displayName: true } },
   dossiers: { select: { id: true, title: true, kind: true }, orderBy: { title: 'asc' } },
   investigations: { select: { id: true, caseNumber: true, title: true, classified: true }, orderBy: { caseNumber: 'asc' } },
+  observations: {
+    select: { id: true, note: true, observedAt: true, createdBy: { select: { displayName: true } } },
+    orderBy: { observedAt: 'desc' },
+  },
 } satisfies Prisma.MapSpotInclude
 
 /**
@@ -36,6 +40,13 @@ const icon = z
   .nullable()
   .optional()
   .transform((value) => (value ? value : null))
+
+export const observationSchema = z
+  .object({
+    note: z.string().trim().min(1, 'Beobachtung ist erforderlich').max(MAP_SPOT_LIMITS.observation),
+    observedAt: z.coerce.date(),
+  })
+  .strict()
 
 export const createSpotSchema = z
   .object({
@@ -72,6 +83,12 @@ export function serializeSpot(spot: SpotRow): MapSpot {
     // `?? []` deckt POST und PATCH ab, die ohne die Relationen laden können.
     dossiers: spot.dossiers?.map((entry) => ({ id: entry.id, title: entry.title, kind: entry.kind })) ?? [],
     investigations: spot.investigations?.map((entry) => ({ id: entry.id, caseNumber: entry.caseNumber, title: entry.title, classified: entry.classified })) ?? [],
+    observations: spot.observations?.map((entry) => ({
+      id: entry.id,
+      note: entry.note,
+      observedAt: entry.observedAt.toISOString(),
+      createdByName: entry.createdBy?.displayName ?? 'Unbekannt',
+    })) ?? [],
     createdById: spot.createdById,
     // Gelöschte Benutzer setzen `createdById` auf NULL – die Markierung bleibt.
     createdByName: spot.createdBy?.displayName ?? 'Unbekannt',

@@ -1,12 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { LocateFixed, Move, Pencil, Trash2 } from 'lucide-react'
+import { LocateFixed, Move, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { mapCategory, type MapSpot } from '@/lib/map-spots'
+import { Textarea } from '@/components/ui/textarea'
+import { useApi } from '@/hooks/use-api'
+import { MAP_SPOT_LIMITS, mapCategory, type MapSpot } from '@/lib/map-spots'
 import { formatDateTime } from '@/lib/utils'
+
+function localDateTimeValue(date = new Date()) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 16)
+}
 
 export function SpotDetailDialog({
   spot,
@@ -17,6 +26,7 @@ export function SpotDetailDialog({
   onEdit,
   onMove,
   onDelete,
+  onChanged,
 }: {
   spot: MapSpot | null
   canManage: boolean
@@ -26,8 +36,40 @@ export function SpotDetailDialog({
   onEdit: () => void
   onMove: () => void
   onDelete: () => void
+  onChanged: () => void
 }) {
   const category = spot ? mapCategory(spot.category) : null
+  const [note, setNote] = useState('')
+  const [observedAt, setObservedAt] = useState(localDateTimeValue)
+  const [failure, setFailure] = useState('')
+  const { execute, loading: savingNote } = useApi()
+
+  const addObservation = async () => {
+    if (!spot || !note.trim()) return
+    setFailure('')
+    try {
+      await execute(`/api/map/spots/${spot.id}/observations`, {
+        method: 'POST',
+        body: JSON.stringify({ note, observedAt: new Date(observedAt).toISOString() }),
+      })
+      setNote('')
+      setObservedAt(localDateTimeValue())
+      onChanged()
+    } catch (cause) {
+      setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen')
+    }
+  }
+
+  const removeObservation = async (id: string) => {
+    if (!spot) return
+    setFailure('')
+    try {
+      await execute(`/api/map/spots/${spot.id}/observations/${id}`, { method: 'DELETE' })
+      onChanged()
+    } catch (cause) {
+      setFailure(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen')
+    }
+  }
 
   return (
     <Modal open={Boolean(spot)} onClose={onClose} title={spot?.title ?? 'Markierung'} size="xl">
@@ -96,6 +138,78 @@ export function SpotDetailDialog({
                 </ul>
               </div>
             )}
+
+            {/* Chronologie des Punkts: was hier wann beobachtet wurde. Belegt
+                über die Zeit, wer eine Route oder einen Sammler beansprucht. */}
+            <div className="mt-4 space-y-2 border-t border-[#232323] pt-3">
+              <p className="text-[11.5px] font-medium text-[#a6a6a6]">
+                Beobachtungen
+                {spot.observations.length > 0 && (
+                  <span className="ml-2 font-mono text-[10.5px] text-[#6a6a6a]">{spot.observations.length}</span>
+                )}
+              </p>
+
+              {spot.observations.length === 0 ? (
+                <p className="text-[12px] text-[#808080]">Noch nichts beobachtet.</p>
+              ) : (
+                <ul className="max-h-40 space-y-2 overflow-y-auto pr-1">
+                  {spot.observations.map((entry) => (
+                    <li key={entry.id} className="rounded-[8px] border border-[#232323] bg-[#111111] p-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-mono text-[10.5px] text-[#a78bfa]">
+                          {formatDateTime(entry.observedAt)}
+                        </span>
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => void removeObservation(entry.id)}
+                            disabled={savingNote}
+                            className="shrink-0 text-[#6a6a6a] hover:text-[#fca5a5] disabled:opacity-50"
+                            aria-label="Beobachtung löschen"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <p className="mt-1 whitespace-pre-wrap text-[12px] leading-relaxed text-[#c4c4c4]">{entry.note}</p>
+                      <p className="mt-1 text-[10.5px] text-[#6a6a6a]">{entry.createdByName}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {canManage && (
+                <div className="space-y-2 pt-1">
+                  <Textarea
+                    aria-label="Beobachtung"
+                    rows={2}
+                    maxLength={MAP_SPOT_LIMITS.observation}
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    placeholder="z. B. zwei Fahrzeuge, Übergabe, 20 Minuten …"
+                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      type="datetime-local"
+                      aria-label="Zeitpunkt der Beobachtung"
+                      value={observedAt}
+                      onChange={(event) => setObservedAt(event.target.value)}
+                      className="max-w-[210px]"
+                    />
+                    <Button
+                      size="sm"
+                      loading={savingNote}
+                      disabled={!note.trim()}
+                      onClick={() => void addObservation()}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Notieren
+                    </Button>
+                  </div>
+                  {failure && <p role="alert" className="text-[11.5px] text-red-300">{failure}</p>}
+                </div>
+              )}
+            </div>
 
             <p className="mt-5 border-t border-[#232323] pt-3 text-[11.5px] text-[#6a6a6a]">
               {spot.createdByName} · {formatDateTime(spot.createdAt)}
