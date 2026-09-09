@@ -181,3 +181,31 @@ test('Eine externe Partei weist sich allein ueber den Link aus', async () => {
   // Ein Altvertrag ist EXTERNAL, traegt aber eine Discord-ID - die gilt weiter.
   assert.equal(signatureRequiresDiscord({ side: 'EXTERNAL', signerDiscordId: '42' }), true)
 })
+
+test('Wer unterschreiben darf, haengt an der Identitaet - nur extern reicht der Link', async () => {
+  const { signerMatches } = await import('../src/lib/contract-signatures')
+
+  const internal = { side: 'INTERNAL', signerDiscordId: '42' }
+  const external = { side: 'EXTERNAL', signerDiscordId: null }
+
+  // Interne Partei: nur die hinterlegte Discord-Identität kommt durch.
+  assert.equal(signerMatches(internal, null, '42'), true)
+  assert.equal(signerMatches(internal, null, '99'), false)
+  assert.equal(signerMatches(internal, null, null), false)
+
+  // Altvertrag: die Discord-ID der Agent-Akte gilt zusätzlich, damit eine
+  // nachträglich korrigierte ID den richtigen Account nicht aussperrt.
+  const legacy = { side: 'EXTERNAL', signerDiscordId: '42' }
+  assert.equal(signerMatches(legacy, '77', '77'), true)
+  assert.equal(signerMatches(legacy, '77', '42'), true)
+  assert.equal(signerMatches(legacy, '77', '13'), false)
+
+  // Externe Behörde ohne Discord: wer den Link hat, unterschreibt. Bewusst so —
+  // eine fremde Behörde hat keinen Account in diesem Dashboard.
+  assert.equal(signerMatches(external, null, null), true)
+  assert.equal(signerMatches(external, null, 'egal'), true)
+
+  // Eine externe Zeile mit Agent dahinter bleibt an die Identität gebunden.
+  assert.equal(signerMatches(external, '77', null), false)
+  assert.equal(signerMatches(external, '77', '77'), true)
+})

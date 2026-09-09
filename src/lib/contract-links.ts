@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import type { CurrentUser } from '@/lib/auth'
 import { isDiscordContractAuditor } from '@/lib/discord-integration'
 import { hasAnyPermission } from '@/lib/permissions'
+import { loadSignatureByToken } from '@/lib/contract-signature-service'
+import { signatureStateLabel, signerMatches } from '@/lib/contract-signatures'
 import { getBadgePrefix } from '@/lib/settings-helpers'
 import {
   CONTRACT_PLACE,
@@ -60,6 +62,63 @@ export async function loadContractByToken(token: string) {
   if (contract.token !== token) return null
 
   return contract
+}
+
+export interface ContractLinkParty {
+  id: string
+  side: string
+  partyName: string
+  partyRole: string | null
+  sortOrder: number
+  signedAt: Date | null
+  signedName: string | null
+  declinedAt: Date | null
+  declineReason: string | null
+  state: string
+  /** Nur für die eigene Zeile: die Werte, die diese Partei eingetragen hat. */
+  own: boolean
+}
+
+/**
+ * Löst einen Link-Token gegen seine Unterschriftszeile auf.
+ *
+ * Nach der Migration trägt jede Zeile den Token ihres Vertrags, verschickte
+ * Links funktionieren also unverändert weiter. Der Rückfall auf `Contract.token`
+ * greift nur, solange die Migration auf einem Host noch nicht gelaufen ist —
+ * danach ist er wirkungslos und kann entfallen.
+ */
+export async function loadContractLinkByToken(token: string) {
+  const viaSignature = await loadSignatureByToken(token)
+  if (viaSignature) return viaSignature
+
+  const contract = await loadContractByToken(token)
+  if (!contract) return null
+
+  // Altbestand ohne Unterschriftszeile: aus dem Vertrag selbst eine bauen,
+  // damit die Seite auch vor der Migration funktioniert.
+  return {
+    signature: {
+      id: `legacy-${contract.id}`,
+      contractId: contract.id,
+      side: 'EXTERNAL',
+      partyName: contract.agent
+        ? `${contract.agent.firstName} ${contract.agent.lastName}`.trim()
+        : 'Unbekannt',
+      partyRole: null,
+      sortOrder: 0,
+      token: contract.token,
+      signerDiscordId: contract.signerDiscordId,
+      signedAt: contract.signedAt,
+      signedName: contract.signedName,
+      signedIp: null,
+      signedUserAgent: null,
+      values: contract.values,
+      declinedAt: contract.declinedAt,
+      declineReason: contract.declineReason,
+    },
+    contract,
+    siblings: [] as never[],
+  }
 }
 
 /**
@@ -137,11 +196,43 @@ export async function resolveContractAccess(
  * steht. Ein unterschriebener Vertrag friert stattdessen das Unterschriftsdatum
  * ein.
  */
+export interface ContractDocumentSource {
+  id: string
+  kind?: string
+  title: string
+  status: string
+  content: string
+  closing: string | null
+  clauses: unknown
+  fields: unknown
+  sentAt: Date | null
+  counterpartyName?: string | null
+  counterpartyRole?: string | null
+  agent: {
+    firstName: string
+    lastName: string
+    badgeNumber: string
+    hireDate: Date
+    rank: { name: string } | null
+  } | null
+}
+
+/** Die Unterschriftsdaten der Zeile, aus deren Sicht das Dokument entsteht. */
+export interface ContractDocumentSignature {
+  token: string
+  values: unknown
+  signedAt: Date | null
+  signedName: string | null
+  declinedAt: Date | null
+  declineReason: string | null
+}
+
 export async function serializeContractDocument(
-  contract: ContractLinkRecord,
+  contract: ContractDocumentSource,
+  signature: ContractDocumentSignature,
   access: ContractLinkAccess = 'signer',
 ) {
-  const documentDate = contract.signedAt ?? new Date()
+  const documentDate = signature.signedAt ?? new Date()
   const resolve = (value: string | null | undefined) =>
     value ? applyContractDatePlaceholders(value, documentDate) : ''
 
@@ -153,10 +244,13 @@ export async function serializeContractDocument(
 
   return {
     id: contract.id,
-    token: contract.token,
+    token: signature.token,
     access,
+    kind: contract.kind ?? 'AGENT',
     title: contract.title,
     status: contract.status,
+    counterpartyName: contract.counterpartyName ?? null,
+    counterpartyRole: contract.counterpartyRole ?? null,
     content: resolve(contract.content),
     closing: resolve(contract.closing),
     clauses: readContractClauses(contract.clauses).map((clause) => ({
@@ -165,14 +259,14 @@ export async function serializeContractDocument(
       body: resolve(clause.body),
     })),
     fields: readContractFields(contract.fields),
-    values: readContractValues(contract.values),
+    values: readContractValues(signature.values),
     place: CONTRACT_PLACE,
     documentDate: documentDate.toISOString(),
     sentAt: contract.sentAt,
-    signedAt: contract.signedAt,
-    signedName: contract.signedName,
-    declinedAt: contract.declinedAt,
-    declineReason: contract.declineReason,
+    signedAt: signature.signedAt,
+    signedName: signature.signedName,
+    declinedAt: signature.declinedAt,
+    declineReason: signature.declineReason,
     // Bei einem Behoerdenvertrag gibt es keinen Agent; das Dokument setzt dann
     // die Gegenpartei in den Briefkopf.
     agent: contract.agent
@@ -188,3 +282,92 @@ export async function serializeContractDocument(
 }
 
 export type ContractDocument = Awaited<ReturnType<typeof serializeContractDocument>>
+
+/**
+ * Entscheidet, ob und wie jemand diese Unterschriftszeile öffnen darf.
+ *
+ * Gegenüber {@link resolveContractAccess} ist der Unterschied, dass eine
+ * externe Partei ohne hinterlegte Identität allein über den Link zugreift —
+ * eine fremde Behörde hat keinen Account in diesem Dashboard.
+ */
+export async function resolveSignatureAccess(
+  signature: { side: string; signerDiscordId: string | null },
+  agentDiscordId: string | null,
+  user: CurrentUser | null,
+): Promise<ContractAccessResult> {
+  const linkIsProof = !signature.signerDiscordId?.trim() && !agentDiscordId?.trim()
+
+  // Externer Vertragspartner: kein Login nötig, der Link ist der Nachweis.
+  if (linkIsProof) return { ok: true, access: 'signer' }
+
+  if (!user) {
+    return {
+      ok: false,
+      status: 401,
+      message: 'Bitte melde dich mit Discord an, um diesen Vertrag zu öffnen.',
+    }
+  }
+
+  if (signerMatches(signature, agentDiscordId, user.discordId)) {
+    return { ok: true, access: 'signer' }
+  }
+
+  // HR sieht Verträge ohnehin im Dashboard — dann darf der Link nicht strenger sein.
+  if (hasAnyPermission(user, ['contracts:view', 'contracts:manage'])) {
+    return { ok: true, access: 'auditor' }
+  }
+  if (await isDiscordContractAuditor(user.discordId)) {
+    return { ok: true, access: 'auditor' }
+  }
+
+  return {
+    ok: false,
+    status: 403,
+    message: 'Dieser Vertrag gehört zu einem anderen Discord-Account.',
+  }
+}
+
+/** Die Parteien eines Vertrags für die Anzeige — eigene Zeile zuerst markiert. */
+export function serializeParties(
+  signature: {
+    id: string
+    side: string
+    partyName: string
+    partyRole: string | null
+    sortOrder: number
+    signedAt: Date | null
+    signedName: string | null
+    declinedAt: Date | null
+    declineReason: string | null
+  },
+  siblings: readonly {
+    id: string
+    side: string
+    partyName: string
+    partyRole: string | null
+    sortOrder: number
+    signedAt: Date | null
+    signedName: string | null
+    declinedAt: Date | null
+    declineReason: string | null
+  }[],
+): ContractLinkParty[] {
+  return [
+    { ...signature, own: true },
+    ...siblings.map((row) => ({ ...row, own: false })),
+  ]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((row) => ({
+      id: row.id,
+      side: row.side,
+      partyName: row.partyName,
+      partyRole: row.partyRole,
+      sortOrder: row.sortOrder,
+      signedAt: row.signedAt,
+      signedName: row.signedName,
+      declinedAt: row.declinedAt,
+      declineReason: row.declineReason,
+      state: signatureStateLabel(row),
+      own: row.own,
+    }))
+}

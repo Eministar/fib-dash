@@ -67,3 +67,28 @@ export function signatureStateLabel(signature: SignatureState) {
   if (signature.signedAt) return 'Unterschrieben'
   return 'Offen'
 }
+
+/**
+ * Ob dieser eingeloggte Discord-Account diese Unterschrift leisten darf.
+ *
+ * Drei Fälle:
+ *
+ * - Die Zeile trägt eine Discord-ID (interne Partei oder Arbeitsvertrag):
+ *   nur dieser Account kommt durch.
+ * - Es gibt einen Agent dahinter: dessen aktuelle Discord-ID gilt zusätzlich.
+ *   HR kann sie nachträglich korrigieren; ohne diesen Fallback bliebe sonst
+ *   auch der richtige Account dauerhaft ausgesperrt.
+ * - Weder noch — eine externe Behörde: dann ist der **Besitz des Links** der
+ *   Nachweis. Das ist eine bewusste Abwägung; eine fremde Behörde hat keinen
+ *   Account in diesem Dashboard. Wo der Link kopiert wird, muss das stehen.
+ */
+export function signerMatches(
+  signature: { side: string; signerDiscordId: string | null },
+  agentDiscordId: string | null,
+  userDiscordId: string | null,
+) {
+  const expected = [signature.signerDiscordId?.trim(), agentDiscordId?.trim()].filter(Boolean)
+  if (expected.length === 0) return true
+  const actual = userDiscordId?.trim()
+  return Boolean(actual && expected.includes(actual))
+}
