@@ -1,6 +1,19 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import path from 'node:path'
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+
 import { matchesFileSignature } from '../src/lib/upload-signatures'
+import {
+  chunkCountFor,
+  chunkPath,
+  incomingDir,
+  receivedChunkIndexes,
+  uploadChunkBytes,
+  uploadKindRules,
+  UploadSessionError,
+} from '../src/lib/upload-sessions'
 
 function head(bytes: number[]) {
   const buffer = Buffer.alloc(32)
@@ -32,4 +45,33 @@ test('Signaturprüfung erkennt erlaubte Formate und weist fremde ab', () => {
   // Eine ausführbare Datei, die sich als Video ausgibt.
   assert.equal(matchesFileSignature('video/mp4', head([0x4d, 0x5a, 0x90, 0x00])), false)
   assert.equal(matchesFileSignature('application/x-msdownload', head([0x4d, 0x5a])), false)
+})
+
+test('Chunk-Aufteilung und Pfade', () => {
+  assert.equal(uploadChunkBytes(), 8 * 1024 * 1024)
+  assert.equal(chunkCountFor(8 * 1024 * 1024, 8 * 1024 * 1024), 1)
+  assert.equal(chunkCountFor(8 * 1024 * 1024 + 1, 8 * 1024 * 1024), 2)
+  assert.equal(chunkCountFor(214958080, 8 * 1024 * 1024), 26)
+
+  assert.equal(uploadKindRules.CLIP.types['video/x-matroska'], '.mkv')
+  assert.equal(uploadKindRules.RESOURCE.maxBytes(), 10 * 1024 * 1024)
+
+  // Ein manipulierter Bezeichner darf nie aus dem Zielordner herausführen.
+  assert.throws(() => incomingDir('../../etc'), UploadSessionError)
+  assert.throws(() => chunkPath('clxsession0001abcd', -1), UploadSessionError)
+  assert.throws(() => chunkPath('clxsession0001abcd', 1.5), UploadSessionError)
+})
+
+test('Empfangene Chunks werden aus dem Dateisystem gelesen', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'fib-upload-'))
+  process.env.UPLOAD_DIR = directory
+  const session = 'clxsession0001abcd'
+  await mkdir(incomingDir(session), { recursive: true })
+  await writeFile(chunkPath(session, 3), 'x')
+  await writeFile(chunkPath(session, 0), 'x')
+  // Eine halbfertige Datei zählt nicht mit.
+  await writeFile(path.join(incomingDir(session), '7.tmp'), 'x')
+
+  assert.deepEqual(await receivedChunkIndexes(session), [0, 3])
+  assert.deepEqual(await receivedChunkIndexes('clxsession0002abcd'), [])
 })
