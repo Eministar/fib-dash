@@ -64,13 +64,18 @@ interface ContractRow {
   signedAt: string | null
   signedName: string | null
   createdAt: string
+  /** AGENT = Arbeitsvertrag, AGENCY = Vereinbarung mit einer externen Behörde. */
+  kind?: string
+  /** Bei einem Behördenvertrag gibt es keinen Agent. */
   agent: {
     id: string
     firstName: string
     lastName: string
     badgeNumber: string
     discordId: string | null
-  }
+  } | null
+  counterpartyName?: string | null
+  counterpartyRole?: string | null
   application: { id: string; applicantDisplayName: string } | null
 }
 
@@ -507,14 +512,24 @@ function ContractListRow({
           <UserRound size={16} />
         </span>
         <div className="min-w-0">
-          <Link
-            href={`/agents/${contract.agent.id}`}
-            className="truncate text-[13.5px] font-semibold text-white hover:text-[#d4d4d4]"
-          >
-            {contract.agent.firstName} {contract.agent.lastName}
-          </Link>
+          {/* Ein Behoerdenvertrag hat keinen Agent — dann steht die Gegenpartei
+              an dieser Stelle, und es gibt keine Akte zum Verlinken. */}
+          {contract.agent ? (
+            <Link
+              href={`/agents/${contract.agent.id}`}
+              className="truncate text-[13.5px] font-semibold text-white hover:text-[#d4d4d4]"
+            >
+              {contract.agent.firstName} {contract.agent.lastName}
+            </Link>
+          ) : (
+            <p className="truncate text-[13.5px] font-semibold text-white">
+              {contract.counterpartyName ?? 'Behördenvertrag'}
+            </p>
+          )}
           <p className="mt-0.5 truncate text-[11.5px] text-[#909090]">
-            {contract.title} · DN {contract.agent.badgeNumber}
+            {contract.title}
+            {contract.agent ? ` · DN ${contract.agent.badgeNumber}` : ''}
+            {contract.counterpartyRole ? ` · ${contract.counterpartyRole}` : ''}
             {contract.application ? ` · Bewerbung: ${contract.application.applicantDisplayName}` : ''}
           </p>
           <p className="mt-0.5 truncate text-[11px] text-[#808080]">
