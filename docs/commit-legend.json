@@ -1,7 +1,88 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-09T14:14:42.666Z",
+  "generatedAt": "2026-09-09T15:31:36.166Z",
   "entries": [
+    {
+      "buildId": "build-2d89421dac",
+      "commit": "2d89421dac5061d8f307cd1ba8c97761de59f096",
+      "shortCommit": "2d89421dac",
+      "subject": "Merge branch 'main' of https://github.com/Eministar/fib-dash",
+      "author": "Eministar",
+      "date": "2026-09-09T15:30:45Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/2d89421dac5061d8f307cd1ba8c97761de59f096"
+    },
+    {
+      "buildId": "build-15a07ad5c6",
+      "commit": "15a07ad5c61e59b4c82dc8cdb5a887ee8e24ccbd",
+      "shortCommit": "15a07ad5c6",
+      "subject": "fix: resolveShare lässt wieder einen Ersatz-Abruf zu",
+      "author": "Eministar",
+      "date": "2026-09-09T15:21:44Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/15a07ad5c61e59b4c82dc8cdb5a887ee8e24ccbd"
+    },
+    {
+      "buildId": "build-95be58c740",
+      "commit": "95be58c7401a52b95f1b4413cb7cdda810a79745",
+      "shortCommit": "95be58c740",
+      "subject": "feat: Discord-Meldung, wenn ein Ermittler einer Akte zugewiesen wird",
+      "author": "Eministar",
+      "date": "2026-09-09T15:19:08Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/95be58c7401a52b95f1b4413cb7cdda810a79745"
+    },
+    {
+      "buildId": "build-d339f67537",
+      "commit": "d339f6753741ebdfe85e58291a7a9283a19e89f1",
+      "shortCommit": "d339f67537",
+      "subject": "feat: Änderungsverlauf als Reiter in der Einsatzakte",
+      "author": "Eministar",
+      "date": "2026-09-09T15:17:43Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/d339f6753741ebdfe85e58291a7a9283a19e89f1"
+    },
+    {
+      "buildId": "build-c2ee94c8da",
+      "commit": "c2ee94c8da800e900da23925feee6fefb06de8d2",
+      "shortCommit": "c2ee94c8da",
+      "subject": "feat: bereichsübergreifende Suche mit Strg+K",
+      "author": "Eministar",
+      "date": "2026-09-09T15:15:29Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/c2ee94c8da800e900da23925feee6fefb06de8d2"
+    },
+    {
+      "buildId": "build-b9e32bc7ea",
+      "commit": "b9e32bc7eaf27a91f046cd7ab9fa7dfda5d10f8c",
+      "shortCommit": "b9e32bc7ea",
+      "subject": "feat: Fotos aus dem Bildkatalog an Personen- und Fahrzeugakten",
+      "author": "Eministar",
+      "date": "2026-09-09T15:12:14Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/b9e32bc7eaf27a91f046cd7ab9fa7dfda5d10f8c"
+    },
+    {
+      "buildId": "build-93462b1671",
+      "commit": "93462b167123681aaa73798f2dd96b2dd5db7d46",
+      "shortCommit": "93462b1671",
+      "subject": "feat: Beobachtungen am Kartenpunkt",
+      "author": "Eministar",
+      "date": "2026-09-09T15:08:19Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/93462b167123681aaa73798f2dd96b2dd5db7d46"
+    },
+    {
+      "buildId": "build-1630145a8d",
+      "commit": "1630145a8d09b2b37105f09372ea2aca7029f4bc",
+      "shortCommit": "1630145a8d",
+      "subject": "feat: Karte nach Dauerakte filtern",
+      "author": "Eministar",
+      "date": "2026-09-09T15:04:18Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/1630145a8d09b2b37105f09372ea2aca7029f4bc"
+    },
+    {
+      "buildId": "build-859255e10b",
+      "commit": "859255e10b8ef484b6f19efd9f2b3eb6921f9058",
+      "shortCommit": "859255e10b",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-09T14:14:42Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/859255e10b8ef484b6f19efd9f2b3eb6921f9058"
+    },
     {
       "buildId": "build-38359e8d12",
       "commit": "38359e8d12dd3cbfcadab8dce0c979cf5db114b5",
