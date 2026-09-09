@@ -1,7 +1,25 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-09T18:30:27.431Z",
+  "generatedAt": "2026-09-09T18:45:13.495Z",
   "entries": [
+    {
+      "buildId": "build-87da7b0d95",
+      "commit": "87da7b0d95d9f8a318e885337a7da1000744efb9",
+      "shortCommit": "87da7b0d95",
+      "subject": "fix: langer Dateiname liess den Upload scheitern",
+      "author": "Eministar",
+      "date": "2026-09-09T18:41:53Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/87da7b0d95d9f8a318e885337a7da1000744efb9"
+    },
+    {
+      "buildId": "build-153f4a0ff7",
+      "commit": "153f4a0ff761fd55db3061deaeef6115c38cd6eb",
+      "shortCommit": "153f4a0ff7",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-09T18:30:27Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/153f4a0ff761fd55db3061deaeef6115c38cd6eb"
+    },
     {
       "buildId": "build-58fc337d5f",
       "commit": "58fc337d5f19a0a3117e8e9743fa7615e7e6932e",
