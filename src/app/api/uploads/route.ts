@@ -32,6 +32,11 @@ export async function POST(req: NextRequest) {
     return success(session, session.resumed ? 200 : 201)
   } catch (cause) {
     if (cause instanceof UploadSessionError) return error(cause.message, cause.status)
+    // Eine fehlerhafte Anfrage ist kein Serverfehler. Ohne diesen Zweig
+    // landete der rohe Zod-Dump als HTTP 500 im Upload-Dialog.
+    if (cause instanceof z.ZodError) {
+      return error(`Ungültige Upload-Anfrage: ${cause.issues.map((issue) => issue.message).join(' ')}`, 400)
+    }
     return routeError(cause)
   }
 }

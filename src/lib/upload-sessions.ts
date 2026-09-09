@@ -194,6 +194,12 @@ export async function openUploadSession(input: OpenUploadSessionInput) {
   if (!rules.types[input.mimeType]) {
     throw new UploadSessionError('Nicht unterstütztes Dateiformat', 415)
   }
+  // Nicht kuerzen, sondern ablehnen: ein abgeschnittener Abdruck verliert
+  // Groesse und Aenderungsdatum und wuerde zwei verschiedene Dateien als
+  // dieselbe erkennen.
+  if (!input.fingerprint || input.fingerprint.length > 120) {
+    throw new UploadSessionError('Ungültige Dateikennung')
+  }
 
   const existing = await prisma.uploadSession.findFirst({
     where: { ownerId: input.ownerId, kind: input.kind, fingerprint: input.fingerprint, status: 'OPEN' },
@@ -226,7 +232,7 @@ export async function openUploadSession(input: OpenUploadSessionInput) {
     data: {
       kind: input.kind,
       ownerId: input.ownerId,
-      fingerprint: input.fingerprint.slice(0, 120),
+      fingerprint: input.fingerprint,
       originalName: input.originalName.slice(0, 255),
       mimeType: input.mimeType,
       totalBytes: BigInt(input.totalBytes),

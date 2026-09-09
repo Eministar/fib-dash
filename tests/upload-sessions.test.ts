@@ -124,9 +124,29 @@ test('Chunks werden nur bei passender Länge und Prüfsumme abgelegt', async () 
 test('Fingerabdruck und Anzeigeformate', async () => {
   const { fingerprintFor, formatRate, formatRemaining } = await import('../src/lib/chunked-upload')
 
-  // Nur Metadaten — ein Hash ueber 400 MB kostet im Browser mehr als der Upload.
   const file = { name: 'zugriff.mp4', size: 214958080, lastModified: 1757320145000 } as File
-  assert.equal(fingerprintFor(file), 'zugriff.mp4:214958080:1757320145000')
+  const printed = await fingerprintFor(file)
+
+  // Immer 64 Hex-Zeichen, egal wie lang der Dateiname ist. Genau daran ist der
+  // Upload vorher gescheitert: das Feld fasst 120 Zeichen, ein Dateiname bis 255.
+  assert.match(printed, /^[a-f0-9]{64}$/)
+
+  const langerName = {
+    name: 'Waffenhandel + LKW Voller Illegaler Gegenstände ' + 'x'.repeat(200) + '.mp4',
+    size: 214958080,
+    lastModified: 1757320145000,
+  } as File
+  const langPrint = await fingerprintFor(langerName)
+  assert.equal(langPrint.length, 64)
+  assert.notEqual(langPrint, printed)
+
+  // Dieselbe Datei ergibt denselben Abdruck — sonst gaebe es kein Fortsetzen.
+  assert.equal(await fingerprintFor({ ...file } as File), printed)
+
+  // Groesse und Aenderungsdatum zaehlen mit; ein Abschneiden auf 120 Zeichen
+  // haette sie verworfen und zwei Dateien als dieselbe erkannt.
+  assert.notEqual(await fingerprintFor({ ...file, size: 1 } as File), printed)
+  assert.notEqual(await fingerprintFor({ ...file, lastModified: 1 } as File), printed)
 
   assert.equal(formatRate(0), null)
   assert.equal(formatRate(12.4 * 1024 * 1024), '12.4 MB/s')

@@ -30,15 +30,30 @@ function concurrency() {
 }
 
 /**
- * Erkennt dieselbe Datei bei einem späteren Versuch wieder. Bewusst nur aus
- * Metadaten gebildet: ein Hash über 400 MB kostet im Browser mehr Zeit als der
- * halbe Upload.
+ * Erkennt dieselbe Datei bei einem späteren Versuch wieder.
+ *
+ * Gebildet wird der Abdruck nur aus Metadaten — ein Hash über 400 MB Inhalt
+ * kostet im Browser mehr Zeit als der halbe Upload. Diese Metadaten wandern
+ * aber durch SHA-256, statt im Klartext zu reisen: ein Dateiname darf 255
+ * Zeichen lang sein, das Feld fasst 120. Vorher scheiterte der Upload an einem
+ * langen Namen, und ein Abschneiden hätte Größe und Änderungsdatum verworfen —
+ * zwei verschiedene Dateien mit gleichem Namensanfang wären dann als dieselbe
+ * erkannt worden.
  */
-export function fingerprintFor(file: File) {
-  return `${file.name}:${file.size}:${file.lastModified}`
+export async function fingerprintFor(file: File) {
+  const identity = `${file.name}:${file.size}:${file.lastModified}`
+  return sha256Hex(new TextEncoder().encode(identity).buffer as ArrayBuffer)
 }
 
 async function sha256Hex(data: ArrayBuffer) {
+  // `crypto.subtle` gibt es nur im sicheren Kontext. Ueber reines HTTP (ausser
+  // localhost) ist es undefined — ohne diese Pruefung braeche der Upload mit
+  // "Cannot read properties of undefined" ab, was niemandem weiterhilft.
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    throw new Error(
+      'Uploads benötigen eine HTTPS-Verbindung. Bitte die Seite über https:// öffnen.',
+    )
+  }
   const digest = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, '0'))
@@ -90,7 +105,7 @@ export async function uploadInChunks(
         originalName: file.name,
         mimeType: file.type,
         totalBytes: file.size,
-        fingerprint: fingerprintFor(file),
+        fingerprint: await fingerprintFor(file),
       }),
     }),
   )) as SessionResponse
