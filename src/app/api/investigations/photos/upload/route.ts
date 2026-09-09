@@ -3,12 +3,12 @@ import { success } from '@/lib/api-response'
 import { createAuditLog } from '@/lib/audit'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import {
-  PhotoUploadError,
-  discardPhotoUpload,
-  photoUploadRouteError,
-  savePhotoUpload,
-} from '@/lib/investigation-photo-upload'
+import { discardPhotoUpload, photoUploadRouteError } from '@/lib/investigation-photo-upload'
+import { photoPath } from '@/lib/investigation-photos'
+import { adoptUploadedFile } from '@/lib/upload-adopt'
+import { consumeUploadSession, UploadSessionError } from '@/lib/upload-sessions'
+import { error } from '@/lib/api-response'
+import { randomUUID } from 'node:crypto'
 import { uploadCors, uploadOptions } from '@/lib/upload-cors'
 
 export const dynamic = 'force-dynamic'
@@ -19,28 +19,33 @@ export async function POST(req: Request) {
 }
 
 /**
- * Rohbody statt `FormData`: Nexts Body-Klonen zöge bei großen Bildern den
- * Speicher doppelt. Dasselbe Muster nutzt der Asservate-Upload.
+ * Das Bild ist bereits über `/api/uploads` eingetroffen und geprüft; hier
+ * reisen nur noch Titel und Ticket. Dasselbe Muster nutzen Clips und Asservate.
  */
 async function uploadPhoto(req: Request) {
   let stored: string | undefined
   try {
     const user = await requirePermission('investigations:manage')
-    if (!req.body) throw new PhotoUploadError('Datei fehlt')
 
-    const title = z
-      .string()
-      .trim()
-      .min(1)
-      .max(200)
-      .parse(decodeURIComponent(req.headers.get('x-photo-title') ?? ''))
-    const expected = req.headers.get('x-upload-size') ?? req.headers.get('content-length')
-    const file = await savePhotoUpload(req.body, expected === null ? undefined : Number(expected))
+    const { uploadId, title } = z
+      .object({ uploadId: z.string().trim().min(1).max(64), title: z.string().trim().min(1).max(200) })
+      .strict()
+      .parse(await req.json())
+
+    const file = await consumeUploadSession(uploadId, user.id, 'PHOTO', (source, extension) =>
+      adoptUploadedFile(source, photoPath(`${randomUUID()}${extension}`)),
+    )
     stored = file.filename
 
     const photo = await prisma.$transaction(async (tx) => {
       const created = await tx.investigationPhoto.create({
-        data: { ...file, title, uploadedById: user.id },
+        data: {
+          filename: file.filename,
+          mimeType: file.mimeType,
+          sizeBytes: file.sizeBytes,
+          title,
+          uploadedById: user.id,
+        },
       })
       await createAuditLog(
         { action: 'PHOTO_UPLOADED', userId: user.id, details: `Bildkatalog: „${title}“` },
@@ -65,6 +70,7 @@ async function uploadPhoto(req: Request) {
         /* Möglicherweise referenzierte Bytes bleiben lieber liegen. */
       }
     }
+    if (cause instanceof UploadSessionError) return error(cause.message, cause.status)
     return photoUploadRouteError(cause)
   }
 }

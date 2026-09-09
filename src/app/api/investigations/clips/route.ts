@@ -3,7 +3,8 @@ import { NextRequest } from 'next/server'
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
-import { clipDir, deleteClipFile, formatBytes, resolveClipPath } from '@/lib/clips'
+import { deleteClipFile, formatBytes, resolveClipPath } from '@/lib/clips'
+import { adoptUploadedFile } from '@/lib/upload-adopt'
 import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
 import { prisma } from '@/lib/prisma'
 import {
@@ -19,7 +20,6 @@ import { bodycamAccess } from '@/lib/bodycam-access'
 import { uploadCors, uploadOptions } from '@/lib/upload-cors'
 import { consumeUploadSession, UploadSessionError } from '@/lib/upload-sessions'
 import { randomUUID } from 'node:crypto'
-import { copyFile, mkdir, rename, unlink } from 'node:fs/promises'
 import { z } from 'zod'
 
 export const OPTIONS = uploadOptions
@@ -58,24 +58,9 @@ const uploadSchema = z
   })
   .strict()
 
-/**
- * Verschiebt die fertig geprüfte Datei aus der Zwischenablage ins
- * Clip-Verzeichnis. Beide liegen unter `uploadDir()`, ein `rename` genügt also
- * normalerweise; über Dateisystemgrenzen hinweg scheitert es mit `EXDEV` und
- * wird zu Kopieren-und-Löschen.
- */
+/** Legt die geprüfte Datei unter einem neuen Namen im Clip-Verzeichnis ab. */
 async function adoptClipFile(source: string, extension: string) {
-  const filename = `${randomUUID()}${extension}`
-  const target = resolveClipPath(filename)
-  await mkdir(clipDir(), { recursive: true })
-  try {
-    await rename(source, target)
-  } catch (cause) {
-    if ((cause as NodeJS.ErrnoException).code !== 'EXDEV') throw cause
-    await copyFile(source, target)
-    await unlink(source).catch(() => {})
-  }
-  return filename
+  return adoptUploadedFile(source, resolveClipPath(`${randomUUID()}${extension}`))
 }
 
 async function listClips(req: NextRequest) {

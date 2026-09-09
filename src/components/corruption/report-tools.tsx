@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { officialNumber } from '@/lib/corruption-validation'
+import { uploadInChunks, formatRate, formatRemaining, type UploadProgress } from '@/lib/chunked-upload'
 import { formatDateTime } from '@/lib/utils'
 import type { Agent, Check, Official } from './corruption-workspace'
 
@@ -92,6 +93,7 @@ function EvidencePanel({ report, onChanged }: { report: Report; onChanged: () =>
   const [fileKey, setFileKey] = useState(0)
   const [title, setTitle] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState<UploadProgress | null>(null)
   const [message, setMessage] = useState('')
   const [chooseClip, setChooseClip] = useState(false)
   const [search, setSearch] = useState('')
@@ -109,14 +111,13 @@ function EvidencePanel({ report, onChanged }: { report: Report; onChanged: () =>
       if (file.size > 500 * 1024 * 1024) { setMessage('Datei zu groß (max. 500 MB)'); return }
       setUploading(true); setMessage('')
       try {
-        const mime = file.type || (file.name.toLowerCase().endsWith('.mov') ? 'video/quicktime' : '')
-        const response = await fetch(`/api/corruption-checks/${report.id}/evidence`, { method: 'POST', headers: { 'Content-Type': mime, 'x-evidence-title': encodeURIComponent(title), 'x-upload-size': String(file.size) }, body: file })
-        if (response.status === 413) throw new Error('Der Webserver lehnt die Dateigröße ab. Upload-Limit auf dem Server prüfen (HTTP 413).')
+        const ticket = await uploadInChunks(file, 'EVIDENCE', { onProgress: setProgress })
+        const response = await fetch(`/api/corruption-checks/${report.id}/evidence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ uploadId: ticket.uploadId, title }) })
         const json = await response.json()
         if (!response.ok || !json.success) throw new Error(json.error || 'Upload fehlgeschlagen')
         setFile(null); setFileKey(key => key + 1); await onChanged(); setMessage('Beweis gespeichert.')
-      } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Upload fehlgeschlagen') } finally { setUploading(false) }
-    }}>Beweis hochladen</Button></>}
+      } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Upload fehlgeschlagen') } finally { setUploading(false); setProgress(null) }
+    }}>Beweis hochladen</Button>{progress && <div><div className="h-1.5 w-full overflow-hidden rounded-full bg-[#232323]"><div className="h-full rounded-full bg-[#a78bfa] transition-[width] duration-200" style={{ width: `${progress.percent}%` }} /></div><p className="mt-1 flex flex-wrap gap-x-2 text-xs text-[#909090]"><span>{progress.percent}% übertragen{progress.percent === 100 ? ' – wird zusammengesetzt…' : ''}</span>{formatRate(progress.bytesPerSecond) && <span>· {formatRate(progress.bytesPerSecond)}</span>}{formatRemaining(progress.secondsRemaining) && <span>· {formatRemaining(progress.secondsRemaining)}</span>}</p>{progress.resumed && <p className="mt-1 text-xs text-[#c4b5fd]">Angefangene Übertragung gefunden – wird fortgesetzt.</p>}</div>}</>}
     {access.data?.allowed && <Button variant="outline" size="sm" onClick={() => setChooseClip(!chooseClip)}>Bodycam aus Katalog verknüpfen</Button>}
     {chooseClip && <div className="space-y-3"><Input label="Bodycam suchen" value={search} onChange={e => setSearch(e.target.value)} /><Select label="Bodycam" value={clipId} onValueChange={setClipId} options={[{ value: '', label: 'Clip wählen' }, ...(clips.data ?? []).map(c => ({ value: c.id, label: c.title }))]} />{clips.error && <p className="text-sm text-red-300">{clips.error}</p>}<p className="text-xs text-[#909090]">Die ursprünglichen Bodycam-Zugriffsrechte gelten auch für diese Verknüpfung.</p><Button size="sm" loading={loading} disabled={!clipId} onClick={async () => { try { await execute(`/api/corruption-checks/${report.id}/evidence`, { method: 'POST', body: JSON.stringify({ clipId }) }); setChooseClip(false); setClipId(''); await onChanged() } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Verknüpfen fehlgeschlagen') } }}>Clip verknüpfen</Button></div>}
     {message && <p role="status" className="text-sm text-[#c4c4c4]">{message}</p>}
