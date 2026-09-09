@@ -17,6 +17,7 @@ export const dossierSchema = z.object({
   personIds: z.array(id).max(200).optional(),
   investigationIds: z.array(id).max(200).optional(),
   vehicleIds: z.array(id).max(200).optional(),
+  mapSpotIds: z.array(id).max(200).optional(),
   clipIds: z.array(id).max(200).optional(),
 }).strict()
 
@@ -63,6 +64,8 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
     if (investigationIds && await tx.investigation.count({ where: { AND: [investigationVisibilityWhere(user), { id: { in: investigationIds } }] } }) !== investigationIds.length) throw new DossierError('Einsatzakte nicht verfügbar', 404)
     const vehicleIds = input.vehicleIds ? [...new Set(input.vehicleIds)] : undefined
     if (vehicleIds && await tx.vehicle.count({ where: { id: { in: vehicleIds } } }) !== vehicleIds.length) throw new DossierError('Fahrzeugakte nicht gefunden', 404)
+    const mapSpotIds = input.mapSpotIds ? [...new Set(input.mapSpotIds)] : undefined
+    if (mapSpotIds && await tx.mapSpot.count({ where: { id: { in: mapSpotIds } } }) !== mapSpotIds.length) throw new DossierError('Kartenpunkt nicht gefunden', 404)
     // Clips erben die Sichtbarkeit ihrer Einsatzakte – ein Clip an einer
     // Verschlusssache darf für Unbefugte weder auftauchen noch verknüpfbar sein.
     const clipVisibility = { investigation: investigationVisibilityWhere(user) }
@@ -71,12 +74,15 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
     // Updating visible links must not disconnect classified cases hidden from this user.
     const visibleLinks = id && investigationIds ? await tx.investigation.findMany({ where: { AND: [investigationVisibilityWhere(user), { dossiers: { some: { id } } }] }, select: { id: true } }) : []
     const visibleClipLinks = id && clipIds ? await tx.bodycamClip.findMany({ where: { AND: [clipVisibility, { dossiers: { some: { id } } }] }, select: { id: true } }) : []
-    const { personIds: _persons, investigationIds: _investigations, vehicleIds: _vehicles, clipIds: _clips, ...fields } = input
-    void _persons; void _investigations; void _vehicles; void _clips
+    const { personIds: _persons, investigationIds: _investigations, vehicleIds: _vehicles, clipIds: _clips, mapSpotIds: _mapSpots, ...fields } = input
+    void _persons; void _investigations; void _vehicles; void _clips; void _mapSpots
     const relations = {
       ...(personIds ? { persons: { set: personIds.map(id => ({ id })) } } : {}),
       ...(investigationIds ? { investigations: { disconnect: visibleLinks, connect: investigationIds.map(id => ({ id })) } } : {}),
       ...(vehicleIds ? { vehicles: { set: vehicleIds.map(id => ({ id })) } } : {}),
+      // `set` genügt: Kartenpunkte sind nicht sichtbarkeitsbeschränkt, ein
+      // Update kann also nichts trennen, was der Bearbeiter nicht sieht.
+      ...(mapSpotIds ? { mapSpots: { set: mapSpotIds.map(id => ({ id })) } } : {}),
       ...(clipIds ? { clips: { disconnect: visibleClipLinks, connect: clipIds.map(id => ({ id })) } } : {}),
     }
     const dossier = id
@@ -86,6 +92,7 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
           persons: { connect: (personIds ?? []).map(id => ({ id })) },
           investigations: { connect: (investigationIds ?? []).map(id => ({ id })) },
           vehicles: { connect: (vehicleIds ?? []).map(id => ({ id })) },
+          mapSpots: { connect: (mapSpotIds ?? []).map(id => ({ id })) },
           clips: { connect: (clipIds ?? []).map(id => ({ id })) },
         } })
     await createAuditLog({ action: id ? 'DOSSIER_UPDATED' : 'DOSSIER_CREATED', userId: user.id, oldValue: existing ? JSON.stringify(existing) : undefined, newValue: JSON.stringify(dossier) }, tx)

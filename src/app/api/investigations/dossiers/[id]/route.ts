@@ -14,6 +14,7 @@ export async function GET(_req: Request, { params }: Context) {
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
       investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, classified: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
       vehicles: { select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' } },
+      mapSpots: { select: { id: true, title: true, category: true, icon: true, x: true, y: true }, orderBy: { title: 'asc' } },
       clips: { where: { investigation: investigationVisibilityWhere(user) }, select: { id: true, title: true, recordedAt: true }, orderBy: { createdAt: 'desc' } },
     } })
     return item ? success(item) : notFound('Akte')

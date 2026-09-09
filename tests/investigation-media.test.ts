@@ -31,6 +31,13 @@ test('Dossiers accept fixed categories and reject invalid or unbounded fields', 
   }
 })
 
+test('Dossiers nehmen Kartenpunkte an und begrenzen ihre Zahl', () => {
+  const parsed = dossierSchema.parse({ title: 'Familie Moretti', kind: 'FAMILY', mapSpotIds: ['spot-1', 'spot-2'] })
+  assert.deepEqual(parsed.mapSpotIds, ['spot-1', 'spot-2'])
+  assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', mapSpotIds: Array(201).fill('x') }).success, false)
+  assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', mapSpotIds: [''] }).success, false)
+})
+
 test('Photo imports restrict remote addresses, file paths and image types', () => {
   assert.equal(isDiscordImageUrl('https://cdn.discordapp.com/attachments/1/2/photo.png?ex=123'), true)
   for (const url of ['http://cdn.discordapp.com/attachments/x', 'https://cdn.discordapp.com.evil.test/attachments/x', 'https://user@cdn.discordapp.com/attachments/x', 'https://127.0.0.1/attachments/x', 'https://cdn.discordapp.com:444/attachments/x', 'https://cdn.discordapp.com/other']) assert.equal(isDiscordImageUrl(url), false)
