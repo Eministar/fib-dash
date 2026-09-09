@@ -252,6 +252,7 @@ model User {
   vehiclesCreated              Vehicle[]               @relation("VehicleCreator")
   personLinksCreated           PersonLink[]            @relation("PersonLinkCreator")
   investigationLinksCreated    InvestigationLink[]     @relation("InvestigationLinkCreator")
+  uploadSessions               UploadSession[]         @relation("UploadSessionOwner")
 }
 
 model UserGroupMembership {
@@ -2182,4 +2183,43 @@ model MapSpot {
 
   @@index([createdAt])
   @@index([createdById])
+}
+
+/// Eine laufende, wiederaufnehmbare Dateiübertragung. Der Fortschritt steht
+/// bewusst nicht hier, sondern im Dateisystem unter `uploads/incoming/<id>/`:
+/// so schreiben parallel eintreffende Chunks verschiedene Dateien statt
+/// dieselbe Zeile, und es gibt keine verlorenen Updates.
+model UploadSession {
+  id String @id @default(cuid())
+
+  /// CLIP | EVIDENCE | PHOTO | RESOURCE
+  kind    String @db.VarChar(20)
+  ownerId String
+  owner   User   @relation("UploadSessionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  /// Aus Dateiname, Größe und Änderungsdatum. Findet eine angefangene Sitzung
+  /// wieder, wenn der Nutzer dieselbe Datei erneut auswählt.
+  fingerprint  String @db.VarChar(120)
+  originalName String @db.VarChar(255)
+  /// Deklaration des Clients; beim Abschluss gegen die echten Bytes geprüft.
+  mimeType     String @db.VarChar(120)
+  totalBytes   BigInt
+  /// Serverseitig festgelegt, nie vom Client gewählt.
+  chunkSize    Int
+  chunkCount   Int
+
+  /// OPEN | ASSEMBLING | DONE | CONSUMED | FAILED
+  status            String    @default("OPEN") @db.VarChar(20)
+  /// Heartbeat des Zusammensetzens, analog zu BodycamClip.compressionStartedAt.
+  assembleStartedAt DateTime?
+  storedFilename    String?   @db.VarChar(80)
+  sha256            String?   @db.VarChar(64)
+  error             String?   @db.VarChar(300)
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId, fingerprint, status])
+  @@index([status, expiresAt])
 }
