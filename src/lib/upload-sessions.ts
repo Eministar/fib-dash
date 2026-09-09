@@ -1,5 +1,5 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
-import { createWriteStream } from 'node:fs'
+import { createReadStream, createWriteStream } from 'node:fs'
 import { mkdir, readdir, rename, rm, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
@@ -9,6 +9,7 @@ import { ALLOWED_CLIP_TYPES, clipMaxBytes } from './clips'
 import { evidenceTypes } from './corruption-evidence'
 import { MAX_IMAGE_BYTES } from './investigation-photos'
 import { prisma } from './prisma'
+import { matchesFileSignature } from './upload-signatures'
 import { uploadDir, uploadMaxBytes } from './uploads'
 import type { UploadSession } from '@/generated/prisma'
 
@@ -264,4 +265,151 @@ export async function cancelUploadSession(sessionId: string, ownerId: string) {
   const session = await loadOwnedSession(sessionId, ownerId)
   await rm(incomingDir(session.id), { recursive: true, force: true })
   await prisma.uploadSession.delete({ where: { id: session.id } }).catch(() => {})
+}
+
+const ASSEMBLE_LEASE_MS = 5 * 60_000
+
+export function stagedPath(sessionId: string, extension: string) {
+  assertSessionId(sessionId)
+  if (!/^\.[a-z0-9]{1,8}$/i.test(extension)) throw new UploadSessionError('Ungültige Dateiendung')
+  const base = path.join(/*turbopackIgnore: true*/ uploadDir(), 'staging')
+  return path.join(/*turbopackIgnore: true*/ base, `${sessionId}${extension}`)
+}
+
+/**
+ * Setzt die Chunks in aufsteigender Reihenfolge zusammen und prüft dabei in
+ * einem Durchlauf Vollständigkeit, Gesamtgröße und Dateisignatur.
+ *
+ * Der Übergang OPEN -> ASSEMBLING läuft als Compare-and-Swap, damit zwei
+ * gleichzeitige Aufrufe oder zwei Serverinstanzen nicht beide zusammensetzen —
+ * dasselbe Muster wie compressNextClip() in clip-compression.ts.
+ */
+export async function assembleUploadSession(sessionId: string, ownerId: string) {
+  const session = await loadOwnedSession(sessionId, ownerId)
+  if (session.status === 'DONE' && session.sha256) {
+    return {
+      sessionId: session.id,
+      sizeBytes: Number(session.totalBytes),
+      mimeType: session.mimeType,
+      sha256: session.sha256,
+    }
+  }
+
+  // Fehlende Teile sind kein Scheitern der Sitzung, sondern "noch nicht so
+  // weit". Deshalb wird das vor dem Claim geprueft: die Sitzung bleibt OPEN
+  // und ein spaeterer Versuch mit vollstaendigen Chunks kommt durch.
+  const present = await receivedChunkIndexes(session.id)
+  if (present.length !== session.chunkCount) {
+    throw new UploadSessionError(
+      `Es fehlen ${session.chunkCount - present.length} von ${session.chunkCount} Teilen`,
+      409,
+    )
+  }
+
+  const staleBefore = new Date(Date.now() - ASSEMBLE_LEASE_MS)
+  const claimed = await prisma.uploadSession.updateMany({
+    where: {
+      id: session.id,
+      OR: [{ status: 'OPEN' }, { status: 'ASSEMBLING', assembleStartedAt: { lt: staleBefore } }],
+    },
+    data: { status: 'ASSEMBLING', assembleStartedAt: new Date(), error: null },
+  })
+  if (!claimed.count) throw new UploadSessionError('Der Upload wird bereits abgeschlossen', 409)
+
+  const extension = uploadKindRules[session.kind as UploadKind].types[session.mimeType]!
+  const target = stagedPath(session.id, extension)
+
+  const fail = async (message: string, status: number): Promise<never> => {
+    await prisma.uploadSession.updateMany({
+      where: { id: session.id, status: 'ASSEMBLING' },
+      data: { status: 'FAILED', error: message.slice(0, 300), assembleStartedAt: null },
+    })
+    await unlink(target).catch(() => {})
+    throw new UploadSessionError(message, status)
+  }
+
+  await mkdir(path.dirname(target), { recursive: true })
+  const hash = createHash('sha256')
+  let sizeBytes = 0
+  let head = Buffer.alloc(0)
+  const output = createWriteStream(target)
+
+  try {
+    for (let index = 0; index < session.chunkCount; index += 1) {
+      const source = createReadStream(chunkPath(session.id, index))
+      for await (const piece of source) {
+        const buffer = piece as Buffer
+        sizeBytes += buffer.length
+        hash.update(buffer)
+        if (head.length < 32) head = Buffer.concat([head, buffer.subarray(0, 32 - head.length)])
+        if (!output.write(buffer)) await new Promise((resolve) => output.once('drain', resolve))
+      }
+    }
+    await new Promise<void>((resolve, reject) =>
+      output.end((cause?: Error | null) => (cause ? reject(cause) : resolve())),
+    )
+  } catch (cause) {
+    output.destroy()
+    return fail(cause instanceof Error ? cause.message : 'Zusammensetzen fehlgeschlagen', 500)
+  }
+
+  if (sizeBytes !== Number(session.totalBytes)) {
+    return fail('Die zusammengesetzte Datei hat nicht die angekündigte Größe', 409)
+  }
+  if (!matchesFileSignature(session.mimeType, head)) {
+    return fail('Der Dateiinhalt passt nicht zum angegebenen Format', 415)
+  }
+
+  const sha256 = hash.digest('hex')
+  await prisma.uploadSession.updateMany({
+    where: { id: session.id, status: 'ASSEMBLING' },
+    data: { status: 'DONE', storedFilename: path.basename(target), sha256, assembleStartedAt: null },
+  })
+  await rm(incomingDir(session.id), { recursive: true, force: true })
+
+  return { sessionId: session.id, sizeBytes, mimeType: session.mimeType, sha256 }
+}
+
+/**
+ * Löst ein Ticket ein: `moveTo` bekommt die fertige Datei und liefert den
+ * endgültigen Dateinamen zurück. Der Übergang DONE -> CONSUMED ist ein
+ * Compare-and-Swap, deshalb lässt sich ein Ticket nicht zweimal einlösen.
+ */
+export async function consumeUploadSession(
+  sessionId: string,
+  ownerId: string,
+  kind: UploadKind,
+  moveTo: (source: string, extension: string) => Promise<string>,
+) {
+  const session = await loadOwnedSession(sessionId, ownerId)
+  if (session.kind !== kind) throw new UploadSessionError('Upload-Sitzung nicht gefunden', 404)
+  if (session.status !== 'DONE' || !session.storedFilename) {
+    throw new UploadSessionError('Der Upload ist nicht abgeschlossen', 409)
+  }
+
+  const claimed = await prisma.uploadSession.updateMany({
+    where: { id: session.id, status: 'DONE' },
+    data: { status: 'CONSUMED' },
+  })
+  if (!claimed.count) throw new UploadSessionError('Der Upload wurde bereits übernommen', 409)
+
+  const extension = path.extname(session.storedFilename)
+  try {
+    const filename = await moveTo(stagedPath(session.id, extension), extension)
+    return {
+      filename,
+      sizeBytes: Number(session.totalBytes),
+      mimeType: session.mimeType,
+      originalName: session.originalName,
+      sha256: session.sha256!,
+    }
+  } catch (cause) {
+    // Zurück auf DONE, damit der Nutzer es erneut versuchen kann, ohne die
+    // gesamte Datei noch einmal zu übertragen.
+    await prisma.uploadSession.updateMany({
+      where: { id: session.id, status: 'CONSUMED' },
+      data: { status: 'DONE' },
+    })
+    throw cause
+  }
 }

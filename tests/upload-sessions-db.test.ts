@@ -4,7 +4,7 @@ import './db-env'
 import assert from 'node:assert/strict'
 import { after, test } from 'node:test'
 import path from 'node:path'
-import { mkdtemp } from 'node:fs/promises'
+import { mkdtemp, readFile, rename } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { createHash, randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
@@ -17,6 +17,9 @@ import {
   openUploadSession,
   receivedChunkIndexes,
   storeChunk,
+  stagedPath,
+  assembleUploadSession,
+  consumeUploadSession,
   UploadSessionError,
 } from '../src/lib/upload-sessions'
 
@@ -112,4 +115,107 @@ test('Sitzungen werden wiedergefunden, begrenzt und gegen Fremdzugriff geschütz
   await cancelUploadSession(first.sessionId, owner.id)
   assert.deepEqual(await receivedChunkIndexes(first.sessionId), [])
   assert.equal(await prisma.uploadSession.findUnique({ where: { id: first.sessionId } }), null)
+})
+
+test('Zusammensetzen prueft Vollstaendigkeit und liefert ein einmaliges Ticket', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'fib-upload-'))
+  process.env.UPLOAD_DIR = directory
+  process.env.UPLOAD_CHUNK_BYTES = String(1024)
+  t.after(() => {
+    delete process.env.UPLOAD_CHUNK_BYTES
+  })
+
+  const owner = await makeUser('Testnutzer')
+  t.after(async () => {
+    await prisma.uploadSession.deleteMany({ where: { ownerId: owner.id } })
+    await prisma.user.delete({ where: { id: owner.id } })
+  })
+
+  const file = Buffer.alloc(2500, 0x5a)
+  file.write('ftyp', 4, 'ascii')
+  const expectedHash = createHash('sha256').update(file).digest('hex')
+
+  const session = await openUploadSession({
+    kind: 'CLIP',
+    ownerId: owner.id,
+    originalName: 'a.mp4',
+    mimeType: 'video/mp4',
+    totalBytes: file.length,
+    fingerprint: 'a.mp4:2500:1',
+  })
+  assert.equal(session.chunkCount, 3)
+
+  // Unvollstaendig: das Zusammensetzen muss scheitern.
+  await assert.rejects(
+    () => assembleUploadSession(session.sessionId, owner.id),
+    (cause: UploadSessionError) => cause.status === 409,
+  )
+
+  // Absichtlich in vertauschter Reihenfolge senden.
+  for (const index of [2, 0, 1]) {
+    const part = file.subarray(index * 1024, Math.min((index + 1) * 1024, file.length))
+    await storeChunk(
+      session.sessionId,
+      index,
+      streamOf(part),
+      createHash('sha256').update(part).digest('hex'),
+      part.length,
+    )
+  }
+
+  const result = await assembleUploadSession(session.sessionId, owner.id)
+  assert.equal(result.sizeBytes, file.length)
+  assert.equal(result.sha256, expectedHash)
+  assert.deepEqual(await readFile(stagedPath(session.sessionId, '.mp4')), file)
+  // Der Chunk-Ordner ist danach weg.
+  assert.deepEqual(await receivedChunkIndexes(session.sessionId), [])
+
+  // Einloesen verschiebt die Datei und entwertet das Ticket.
+  const ticket = await consumeUploadSession(session.sessionId, owner.id, 'CLIP', async (source, extension) => {
+    const target = path.join(directory, `final${extension}`)
+    await rename(source, target)
+    return path.basename(target)
+  })
+  assert.equal(ticket.filename, 'final.mp4')
+  assert.equal(ticket.originalName, 'a.mp4')
+  assert.equal(ticket.sizeBytes, file.length)
+
+  await assert.rejects(
+    () => consumeUploadSession(session.sessionId, owner.id, 'CLIP', async () => 'x'),
+    (cause: UploadSessionError) => cause.status === 409,
+  )
+})
+
+test('Eine Datei mit fremder Signatur wird beim Abschluss abgewiesen', async (t) => {
+  process.env.UPLOAD_DIR = await mkdtemp(path.join(tmpdir(), 'fib-upload-'))
+  const owner = await makeUser('Testnutzer')
+  t.after(async () => {
+    await prisma.uploadSession.deleteMany({ where: { ownerId: owner.id } })
+    await prisma.user.delete({ where: { id: owner.id } })
+  })
+
+  // Eine Windows-Programmdatei, die sich als MP4 ausgibt.
+  const disguised = Buffer.from([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00])
+  const session = await openUploadSession({
+    kind: 'CLIP',
+    ownerId: owner.id,
+    originalName: 'b.mp4',
+    mimeType: 'video/mp4',
+    totalBytes: disguised.length,
+    fingerprint: 'b.mp4:8:1',
+  })
+  await storeChunk(
+    session.sessionId,
+    0,
+    streamOf(disguised),
+    createHash('sha256').update(disguised).digest('hex'),
+    disguised.length,
+  )
+
+  await assert.rejects(
+    () => assembleUploadSession(session.sessionId, owner.id),
+    (cause: UploadSessionError) => cause.status === 415,
+  )
+  const stored = await prisma.uploadSession.findUnique({ where: { id: session.sessionId } })
+  assert.equal(stored?.status, 'FAILED')
 })
