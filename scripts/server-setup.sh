@@ -139,8 +139,12 @@ server {
     listen [::]:80;
     server_name $DOMAIN;
 
-    # Uploads bis 25 MB durchlassen (nginx-Default waeren 1 MB).
-    client_max_body_size 25M;
+    # Bodycam-Clips duerfen 500 MiB gross sein (CLIP_MAX_BYTES). Liegt dieses
+    # Limit niedriger als das der App, bricht nginx den Upload mittendrin ab und
+    # der Browser bleibt bei einem beliebigen Prozentwert stehen.
+    client_max_body_size 512M;
+    # Grosse Uploads dauern; der Default von 60s killt sie sonst zwischendurch.
+    client_body_timeout 1800s;
 
     location / {
         proxy_pass http://127.0.0.1:$APP_PORT;
@@ -152,7 +156,11 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
-        proxy_read_timeout 300s;
+        # Ohne dies puffert nginx den kompletten Body erst auf Platte und
+        # reicht ihn erst danach weiter — der Balken steht dann lange auf 100 %.
+        proxy_request_buffering off;
+        proxy_read_timeout 1800s;
+        proxy_send_timeout 1800s;
     }
 }
 NGINX

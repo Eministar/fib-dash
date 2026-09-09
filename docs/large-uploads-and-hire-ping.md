@@ -8,16 +8,25 @@ Bodycam-Clips erlauben standardmäßig 500 MiB (über `CLIP_MAX_BYTES` konfiguri
 
 Die mitgelieferte `web.config` setzt das IIS-Request-Limit auf 524288000 Bytes. Für den iisnode-Server erlaubt `start.js` bis zu 30 Minuten zum Empfangen eines Requests. Diese Änderungen greifen erst nach Deployment und Neustart.
 
-Ein zusätzlicher vorgeschalteter Proxy muss die Größe ebenfalls zulassen. Bei nginx/Plesk beispielsweise im passenden Server-/Location-Kontext:
+Ein zusätzlicher vorgeschalteter Proxy muss die Größe ebenfalls zulassen. `scripts/server-setup.sh` hat die Site lange mit `client_max_body_size 25M` angelegt — deutlich unter dem App-Limit von 500 MiB. Ein Upload darüber friert im Browser bei einem beliebigen Prozentwert ein, ohne Fehlermeldung: nginx bricht das Lesen ab, bevor die App überhaupt antworten kann. Das Template setzt jetzt 512M sowie passende Timeouts und `proxy_request_buffering off`.
+
+Das Setup-Skript läuft nur bei der Erstinstallation, die Update-Skripte fassen nginx nicht an. Auf einem bereits laufenden Server deshalb einmalig:
+
+```bash
+sudo bash scripts/fix-nginx-uploads.sh
+```
+
+Das Skript schreibt die Limits nach `/etc/nginx/conf.d/fib-dash-uploads.conf` (http-Kontext, gilt damit auch für den 443-Block von certbot), meldet konkurrierende `client_max_body_size`-Zeilen aus `sites-enabled`, prüft die Konfiguration und lädt nginx neu:
 
 ```nginx
-client_max_body_size 500m;
+client_max_body_size 512M;
 client_body_timeout 1800s;
+proxy_request_buffering off;
 proxy_read_timeout 1800s;
 proxy_send_timeout 1800s;
 ```
 
-Diese externen Servereinstellungen wurden nicht auf dem Live-Host geändert. Ein CDN mit einem festen kleineren Request-Limit benötigt ebenfalls eine angepasste Konfiguration oder einen separaten Upload-Zugang. HTTP 413 wird im Upload-Dialog ausdrücklich als vorgeschaltetes Größenlimit angezeigt.
+Ein CDN mit einem festen kleineren Request-Limit benötigt ebenfalls eine angepasste Konfiguration oder einen separaten Upload-Zugang. HTTP 413 wird im Upload-Dialog ausdrücklich als vorgeschaltetes Größenlimit angezeigt.
 
 `npx tsx --test tests/large-uploads.test.ts` überträgt jeweils 200 MiB über einen echten lokalen HTTP-Server an beide Produktions-Dateischreiber und verifiziert Größe und SHA-256. Außerdem werden der Proxy-Matcher, Upload-CORS und das Verwerfen unvollständiger Daten geprüft. Der Test ersetzt keinen Upload durch den tatsächlichen Hosting-Proxy.
 
