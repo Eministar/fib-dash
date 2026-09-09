@@ -18,6 +18,9 @@ import { Modal } from '@/components/ui/modal'
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { InvestigationsNavigation } from './investigations-navigation'
+import { SpotPickerField, type PickedSpot } from '@/components/map/spot-picker'
+import { Wizard, type WizardStep } from '@/components/ui/wizard'
+import { mapCategory } from '@/lib/map-spots'
 import { PhotoField } from './photo-catalog'
 import { PriorityBadge, StatusBadge } from './investigation-badges'
 import { Badge } from '@/components/ui/badge'
@@ -33,7 +36,8 @@ type Dossier = {
   investigations?: { id: string; title: string; caseNumber: string; status: InvestigationStatusKey; priority: InvestigationPriorityKey; classified: boolean; updatedAt: string; createdBy?: { displayName: string } | null }[];
   vehicles?: { id: string; vehicleNumber: string; plate: string | null; model: string | null }[];
   clips?: { id: string; title: string; recordedAt: string | null }[];
-  _count?: { children: number; persons: number; investigations: number; vehicles: number; clips: number };
+  mapSpots?: PickedSpot[];
+  _count?: { children: number; persons: number; investigations: number; vehicles: number; clips: number; mapSpots: number };
 }
 
 /** Die vier Aktenarten, die eine Dauerakte als Register zusammenfasst. */
@@ -125,13 +129,18 @@ function DossierView({ id }: { id: string | null }) {
         : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{detailCards.map(card => <RegisterCard key={card.key} card={card} />)}</div>}
       {(list.data?.total ?? 0) > 30 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
 
-      {current && <div className="mt-7 grid gap-5 sm:grid-cols-3">
+      {current && <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <RegisterSection title="Personen / Familienmitglieder" empty="Keine Personen verknüpft." manage={manage} onAdd={() => setQuick('persons')}
           entries={current.persons?.map(person => ({ id: person.id, href: `/investigations/persons?person=${person.id}`, label: `${person.firstName} ${person.lastName} · ${person.personNumber}` }))} />
         <RegisterSection title="Fahrzeugakten" empty="Keine Fahrzeuge verknüpft." manage={manage} onAdd={() => setQuick('vehicles')}
           entries={current.vehicles?.map(vehicle => ({ id: vehicle.id, href: '/investigations/vehicles', label: [vehicle.plate, vehicle.model].filter(Boolean).join(' · ') || vehicle.vehicleNumber, hint: vehicle.vehicleNumber }))} />
         <RegisterSection title="Bodycams" empty="Keine sichtbaren Bodycams verknüpft." manage={manage} onAdd={() => setQuick('clips')}
           entries={current.clips?.map(clip => ({ id: clip.id, href: '/investigations/clips', label: clip.title, hint: clip.recordedAt ? new Date(clip.recordedAt).toLocaleDateString('de-DE') : undefined }))} />
+        {/* Kartenpunkte laufen über den Wizard-Schritt statt über den
+            Schnelldialog: der Picker braucht die Karte, und die passt nicht
+            in das schmale Modal. */}
+        <RegisterSection title="Kartenpunkte" empty="Keine Kartenpunkte verknüpft." manage={manage} onAdd={() => setEditor('edit')}
+          entries={current.mapSpots?.map(spot => ({ id: spot.id, href: '/map', label: spot.title, hint: mapCategory(spot.category).label }))} />
       </div>}
     </> : <>
       <h2 className="mb-3 text-base font-semibold text-white">Aktenübersicht</h2>
@@ -221,7 +230,17 @@ function RelationPicker({ label, options, value, onChange }: { label: string; op
   return <div className="space-y-2"><p className="text-sm text-[#a6a6a6]">{label}</p><div className="flex flex-wrap gap-1">{value.map(id => <Button type="button" key={id} variant="secondary" size="sm" onClick={() => onChange(value.filter(v => v !== id))}>{options.find(o => o.id === id)?.label ?? id} ×</Button>)}</div><Input placeholder={`${label} suchen …`} value={search} onChange={e => setSearch(e.target.value)} /><div className="max-h-36 overflow-y-auto">{options.filter(o => !value.includes(o.id) && o.label.toLowerCase().includes(search.toLowerCase())).slice(0, 30).map(option => <button type="button" key={option.id} className="block w-full rounded px-2 py-1.5 text-left text-xs text-[#c4c4c4] hover:bg-[#232323]" onClick={() => onChange([...value, option.id])}>+ {option.label}</button>)}</div></div>
 }
 
+/** Kurzerklärungen für die Kategorieauswahl im Wizard. Die reinen Labels
+ *  aus `DOSSIER_KINDS` sagen nicht, wofür man welche Art nimmt. */
+const DOSSIER_KIND_HINTS: Record<DossierKind, string> = {
+  FAMILY: 'Eine Familie oder Organisation mit ihren Mitgliedern, Routen und Sammlern.',
+  COLLECTION: 'Eine offene Sammlung, die mehrere Akten unter einem Thema bündelt.',
+  PROPERTY: 'Ein Anwesen oder Objekt mit Adresse, Bewohnern und Beobachtungen.',
+  FILE: 'Eine Unterakte innerhalb einer übergeordneten Akte.',
+}
+
 function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Dossier; parent?: { id: string; title: string }; onClose: () => void; onSaved: () => void }) {
+  const { user } = useAuth()
   const [title, setTitle] = useState(existing?.title ?? '')
   const [kind, setKind] = useState<DossierKind>(existing?.kind ?? (parent ? 'FILE' : 'COLLECTION'))
   const [description, setDescription] = useState(existing?.description ?? '')
@@ -234,6 +253,7 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
   const [investigationIds, setInvestigationIds] = useState(existing?.investigations?.map(i => i.id) ?? [])
   const [vehicleIds, setVehicleIds] = useState(existing?.vehicles?.map(v => v.id) ?? [])
   const [clipIds, setClipIds] = useState(existing?.clips?.map(c => c.id) ?? [])
+  const [mapSpots, setMapSpots] = useState<PickedSpot[]>(existing?.mapSpots ?? [])
   const [failure, setFailure] = useState('')
   const persons = useRegisterOptions('persons')
   const cases = useRegisterOptions('investigations')
@@ -243,21 +263,121 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
   const optionsError = persons.error || cases.error || vehicles.error || clips.error
   const parents = useFetch<List>(chooseParent ? `/api/investigations/dossiers?search=${encodeURIComponent(parentSearch)}` : null)
   const { execute, loading } = useApi()
-  return <Modal open onClose={loading ? () => {} : onClose} title={existing ? 'Dauerakte bearbeiten' : 'Dauerakte anlegen'} size="xl"><form className="space-y-4" onSubmit={async event => { event.preventDefault(); setFailure(''); try { await execute(`/api/investigations/dossiers${existing ? `/${existing.id}` : ''}`, { method: existing ? 'PATCH' : 'POST', body: JSON.stringify({ title, kind, description: description || null, address: address || null, photoId, parentId: selectedParent?.id ?? null, personIds, investigationIds, vehicleIds, clipIds }) }); onSaved() } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen') } }}>
-    <Input label="Titel" value={title} onChange={e => setTitle(e.target.value)} required maxLength={200} placeholder="z. B. Familie Moretti" />
-    <Select label="Kategorie" value={kind} onValueChange={value => setKind(value as DossierKind)} options={Object.entries(DOSSIER_KINDS).map(([value, label]) => ({ value, label }))} />
-    <div className="space-y-2"><p className="text-sm text-[#a6a6a6]">Übergeordnete Akte: {selectedParent?.title ?? 'Keine · Hauptakte'}</p><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setChooseParent(!chooseParent)}>Übergeordnete Akte wählen</Button>{selectedParent && <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedParent(null)}>Als Hauptakte führen</Button>}</div>{chooseParent && <><Input placeholder="Akte suchen …" value={parentSearch} onChange={e => setParentSearch(e.target.value)} />{parents.error && <p role="alert" className="text-xs text-red-300">{parents.error}</p>}<div className="max-h-32 overflow-y-auto">{parents.data?.items.filter(item => item.id !== existing?.id).map(item => <button type="button" className="block w-full p-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323]" key={item.id} onClick={() => { setSelectedParent(item); setChooseParent(false) }}>{item.title}</button>)}</div></>}</div>
-    <Input label="Adresse / Standort" value={address} onChange={e => setAddress(e.target.value)} maxLength={300} placeholder="z. B. Anwesen am Lake Vinewood" />
-    <PhotoField value={photoId ? photoUrl(photoId) : null} onChange={photo => setPhotoId(photo?.id ?? null)} />
-    <Textarea label="Informationen und Notizen" value={description} onChange={e => setDescription(e.target.value)} maxLength={30000} rows={6} placeholder="Hintergründe, Bewohner, Eigentümer, Beobachtungen …" />
-    {optionsError && <p role="alert" className="text-sm text-red-300">{optionsError}</p>}
-    <RelationPicker label="Personen / Familienmitglieder" options={persons.options} value={personIds} onChange={setPersonIds} />
-    <RelationPicker label="Einsatzakten" options={cases.options} value={investigationIds} onChange={setInvestigationIds} />
-    <RelationPicker label="Fahrzeugakten" options={vehicles.options} value={vehicleIds} onChange={setVehicleIds} />
-    <RelationPicker label="Bodycams" options={clips.options} value={clipIds} onChange={setClipIds} />
-    {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
-    <div className="flex justify-end gap-2"><Button type="button" variant="ghost" disabled={loading} onClick={onClose}>Abbrechen</Button><Button type="submit" loading={loading} disabled={optionsLoading || !!optionsError}>Speichern</Button></div>
-  </form></Modal>
+
+  const save = async () => {
+    setFailure('')
+    try {
+      await execute(`/api/investigations/dossiers${existing ? `/${existing.id}` : ''}`, {
+        method: existing ? 'PATCH' : 'POST',
+        body: JSON.stringify({
+          title, kind,
+          description: description || null,
+          address: address || null,
+          photoId,
+          parentId: selectedParent?.id ?? null,
+          personIds, investigationIds, vehicleIds, clipIds,
+          mapSpotIds: mapSpots.map(spot => spot.id),
+        }),
+      })
+      onSaved()
+    } catch (cause) {
+      setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen')
+    }
+  }
+
+  const steps: WizardStep[] = [
+    {
+      id: 'art',
+      label: 'Art & Titel',
+      invalid: title.trim() ? undefined : 'Bitte einen Titel für die Akte angeben.',
+      content: <div className="space-y-4">
+        <div className="grid gap-2 sm:grid-cols-2">
+          {Object.entries(DOSSIER_KINDS).map(([value, label]) => <button type="button" key={value} onClick={() => setKind(value as DossierKind)} aria-pressed={kind === value}
+            className={`rounded-[10px] border p-3 text-left ${kind === value ? 'border-[#a78bfa] bg-[#a78bfa]/10' : 'border-[#282828] hover:border-[#404040]'}`}>
+            <span className="block text-[13px] font-medium text-white">{label}</span>
+            <span className="mt-0.5 block text-[11.5px] leading-relaxed text-[#808080]">{DOSSIER_KIND_HINTS[value as DossierKind]}</span>
+          </button>)}
+        </div>
+        <Input label="Titel" value={title} onChange={e => setTitle(e.target.value)} maxLength={200} placeholder="z. B. Familie Moretti" />
+        <div className="space-y-2">
+          <p className="text-sm text-[#a6a6a6]">Übergeordnete Akte: {selectedParent?.title ?? 'Keine · Hauptakte'}</p>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setChooseParent(!chooseParent)}>Übergeordnete Akte wählen</Button>
+            {selectedParent && <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedParent(null)}>Als Hauptakte führen</Button>}
+          </div>
+          {chooseParent && <>
+            <Input placeholder="Akte suchen …" value={parentSearch} onChange={e => setParentSearch(e.target.value)} />
+            {parents.error && <p role="alert" className="text-xs text-red-300">{parents.error}</p>}
+            <div className="max-h-32 overflow-y-auto">{parents.data?.items.filter(item => item.id !== existing?.id).map(item => <button type="button" className="block w-full p-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323]" key={item.id} onClick={() => { setSelectedParent(item); setChooseParent(false) }}>{item.title}</button>)}</div>
+          </>}
+        </div>
+      </div>,
+    },
+    {
+      id: 'beschreibung',
+      label: 'Beschreibung',
+      optional: true,
+      content: <div className="space-y-4">
+        <Input label="Adresse / Standort" value={address} onChange={e => setAddress(e.target.value)} maxLength={300} placeholder="z. B. Anwesen am Lake Vinewood" />
+        <PhotoField value={photoId ? photoUrl(photoId) : null} onChange={photo => setPhotoId(photo?.id ?? null)} />
+        <Textarea label="Informationen und Notizen" value={description} onChange={e => setDescription(e.target.value)} maxLength={30000} rows={6} placeholder="Hintergründe, Bewohner, Eigentümer, Beobachtungen …" />
+      </div>,
+    },
+    {
+      id: 'karte',
+      label: 'Kartenpunkte',
+      optional: true,
+      content: <div className="space-y-3">
+        <p className="text-[12.5px] text-[#a6a6a6]">Routen, Sammler und Anwesen, die zu dieser Akte gehören.</p>
+        <SpotPickerField value={mapSpots} onChange={setMapSpots} canCreate={hasPermission(user, 'map:manage')} />
+      </div>,
+    },
+    {
+      id: 'verknuepfungen',
+      label: 'Verknüpfungen',
+      optional: true,
+      content: <div className="space-y-4">
+        {optionsError && <p role="alert" className="text-sm text-red-300">{optionsError}</p>}
+        <RelationPicker label="Personen / Familienmitglieder" options={persons.options} value={personIds} onChange={setPersonIds} />
+        <RelationPicker label="Einsatzakten" options={cases.options} value={investigationIds} onChange={setInvestigationIds} />
+        <RelationPicker label="Fahrzeugakten" options={vehicles.options} value={vehicleIds} onChange={setVehicleIds} />
+        <RelationPicker label="Bodycams" options={clips.options} value={clipIds} onChange={setClipIds} />
+      </div>,
+    },
+    {
+      id: 'pruefen',
+      label: 'Prüfen',
+      content: <dl className="grid gap-2.5 text-[12.5px]">
+        {([
+          ['Kategorie', DOSSIER_KINDS[kind]],
+          ['Titel', title || '—'],
+          ['Übergeordnet', selectedParent?.title ?? 'Hauptakte'],
+          ['Adresse', address || '—'],
+          ['Kartenpunkte', mapSpots.length ? mapSpots.map(spot => spot.title).join(', ') : 'Keine'],
+          ['Personen', String(personIds.length)],
+          ['Einsatzakten', String(investigationIds.length)],
+          ['Fahrzeuge', String(vehicleIds.length)],
+          ['Bodycams', String(clipIds.length)],
+        ] as [string, string][]).map(([label, value]) => <div key={label} className="flex flex-wrap gap-x-3 border-b border-[#1e1e1e] pb-2">
+          <dt className="w-36 shrink-0 text-[#808080]">{label}</dt>
+          <dd className="min-w-0 text-[#d4d4d4]">{value}</dd>
+        </div>)}
+      </dl>,
+    },
+  ]
+
+  return <Modal open onClose={loading ? () => {} : onClose} title={existing ? 'Dauerakte bearbeiten' : 'Dauerakte anlegen'} size="xl">
+    <Wizard
+      steps={steps}
+      // Beim Bearbeiten darf jeder Schritt direkt angesprungen werden.
+      mode={existing ? 'free' : 'linear'}
+      submitLabel="Speichern"
+      saving={loading || optionsLoading}
+      failure={failure}
+      onCancel={onClose}
+      onSubmit={save}
+    />
+  </Modal>
 }
 
 /** Auswahl einer bestehenden Dauerakte. Ohne Suchbegriff liefert die API nur

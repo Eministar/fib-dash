@@ -30,6 +30,9 @@ import {
   labelOptions,
 } from '@/components/investigations/investigation-badges'
 import { AgentPicker } from '@/components/investigations/agent-picker'
+import { Wizard, type WizardStep } from '@/components/ui/wizard'
+import { SpotPickerField, type PickedSpot } from '@/components/map/spot-picker'
+import { PhotoPicker, type CatalogPhoto } from '@/components/investigations/photo-catalog'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
 import type { AgentLite, InvestigationListItem } from '@/components/investigations/types'
@@ -53,17 +56,23 @@ type CreateForm = {
   classified: boolean
   leadAgentId: string
   assigneeIds: string[]
+  mapSpots: PickedSpot[]
+  photos: CatalogPhoto[]
 }
 
+/** Neue Akten sind standardmäßig Verschlusssache: die Öffnung für alle
+ *  Ermittler soll eine bewusste Entscheidung sein, nicht der Normalfall. */
 function emptyForm(): CreateForm {
   return {
     title: '',
     summary: '',
     status: 'OPEN',
     priority: 'NORMAL',
-    classified: false,
+    classified: true,
     leadAgentId: '',
     assigneeIds: [],
+    mapSpots: [],
+    photos: [],
   }
 }
 
@@ -74,6 +83,7 @@ export function InvestigationsWorkspace() {
 
   const canView = hasPermission(user, 'investigations:view')
   const canManage = hasPermission(user, 'investigations:manage')
+  const canPlaceSpots = hasPermission(user, 'map:manage')
 
   const [status, setStatus] = useState('OPEN_ONLY')
   const [priority, setPriority] = useState('ALL')
@@ -123,6 +133,8 @@ export function InvestigationsWorkspace() {
           classified: form.classified,
           leadAgentId: form.leadAgentId || null,
           assigneeIds: form.assigneeIds,
+          mapSpotIds: form.mapSpots.map((spot) => spot.id),
+          photoIds: form.photos.map((photo) => photo.id),
         }),
       })
       toastSuccess('Akte angelegt', 'Die Ermittlungsakte wurde erstellt.')
@@ -135,6 +147,130 @@ export function InvestigationsWorkspace() {
   }
 
   const investigations = data ?? []
+
+  const steps: WizardStep[] = [
+    {
+      id: 'anlass',
+      label: 'Anlass',
+      invalid: form.title.trim() ? undefined : 'Bitte einen Titel für die Akte angeben.',
+      content: (
+        <div className="space-y-4">
+          <Input
+            label="Titel"
+            value={form.title}
+            onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
+            placeholder="z. B. Waffenhandel Sandy Shores"
+          />
+          <Textarea
+            label="Zusammenfassung"
+            value={form.summary}
+            onChange={(event) => setForm((prev) => ({ ...prev, summary: event.target.value }))}
+            placeholder="Ermittlungslage, Anlass, erste Erkenntnisse"
+            rows={4}
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              label="Status"
+              options={labelOptions(INVESTIGATION_STATUS_LABELS)}
+              value={form.status}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, status: value }))}
+            />
+            <Select
+              label="Priorität"
+              options={labelOptions(INVESTIGATION_PRIORITY_LABELS)}
+              value={form.priority}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, priority: value }))}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'zustaendigkeit',
+      label: 'Zuständigkeit',
+      content: (
+        <div className="space-y-4">
+          <Select
+            label="Fallführung"
+            options={agentOptions}
+            value={form.leadAgentId}
+            onValueChange={(value) => setForm((prev) => ({ ...prev, leadAgentId: value }))}
+          />
+          <AgentPicker
+            agents={agents ?? []}
+            value={form.assigneeIds}
+            onChange={(assigneeIds) => setForm((prev) => ({ ...prev, assigneeIds }))}
+            description="Zugewiesene Ermittler sehen die Akte auch dann, wenn sie als Verschlusssache geführt wird."
+          />
+          <div className="rounded-[10px] border border-[#2a2a2a] bg-[#141414] p-3.5">
+            <Checkbox
+              checked={form.classified}
+              onCheckedChange={(checked) => setForm((prev) => ({ ...prev, classified: checked }))}
+              label="Als Verschlusssache führen"
+            />
+            <p className="mt-2 text-[12px] leading-relaxed text-[#a6a6a6]">
+              {form.classified
+                ? 'Voreingestellt. Nur Ersteller, Fallführung, zugewiesene Ermittler und Berechtigte sehen die Akte samt Clips.'
+                : 'Abgewählt: die Akte ist für alle Ermittler mit Akteneinsicht sichtbar.'}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'karte',
+      label: 'Kartenpunkte',
+      optional: true,
+      content: (
+        <div className="space-y-3">
+          <p className="text-[12.5px] text-[#a6a6a6]">
+            Fand der Einsatz an einer bekannten Route, einem Sammler oder einem Anwesen statt? Verknüpfe die Punkte hier.
+          </p>
+          <SpotPickerField
+            value={form.mapSpots}
+            onChange={(mapSpots) => setForm((prev) => ({ ...prev, mapSpots }))}
+            canCreate={canPlaceSpots}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'bilder',
+      label: 'Bilder',
+      optional: true,
+      content: (
+        <div className="space-y-3">
+          <p className="text-[12.5px] text-[#a6a6a6]">
+            Bilder landen im Bildkatalog und lassen sich danach auch an Personen- und Anwesenakten verwenden.
+          </p>
+          <PhotoPicker value={form.photos} onChange={(photos) => setForm((prev) => ({ ...prev, photos }))} />
+        </div>
+      ),
+    },
+    {
+      id: 'pruefen',
+      label: 'Prüfen',
+      content: (
+        <dl className="grid gap-2.5 text-[12.5px]">
+          {([
+            ['Titel', form.title || '—'],
+            ['Status', INVESTIGATION_STATUS_LABELS[form.status as keyof typeof INVESTIGATION_STATUS_LABELS] ?? form.status],
+            ['Priorität', INVESTIGATION_PRIORITY_LABELS[form.priority as keyof typeof INVESTIGATION_PRIORITY_LABELS] ?? form.priority],
+            ['Fallführung', agentOptions.find((option) => option.value === form.leadAgentId)?.label ?? 'Keine Fallführung'],
+            ['Ermittler', form.assigneeIds.length ? `${form.assigneeIds.length} zugewiesen` : 'Keine'],
+            ['Verschlusssache', form.classified ? 'Ja' : 'Nein'],
+            ['Kartenpunkte', form.mapSpots.length ? form.mapSpots.map((spot) => spot.title).join(', ') : 'Keine'],
+            ['Bilder', form.photos.length ? `${form.photos.length} ausgewählt` : 'Keine'],
+          ] as [string, string][]).map(([label, value]) => (
+            <div key={label} className="flex flex-wrap gap-x-3 border-b border-[#1e1e1e] pb-2">
+              <dt className="w-36 shrink-0 text-[#808080]">{label}</dt>
+              <dd className="min-w-0 text-[#d4d4d4]">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ),
+    },
+  ]
 
   return (
     <div className="mx-auto max-w-6xl pb-2">
@@ -236,65 +372,17 @@ export function InvestigationsWorkspace() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         title="Neue Ermittlungsakte"
-        description="Das Aktenzeichen wird automatisch vergeben."
-        size="lg"
+        description="In fünf Schritten. Das Aktenzeichen wird automatisch vergeben."
+        size="xl"
       >
-        <div className="space-y-4">
-          <Input
-            label="Titel"
-            value={form.title}
-            onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-            placeholder="z. B. Waffenhandel Sandy Shores"
-          />
-          <Textarea
-            label="Zusammenfassung"
-            value={form.summary}
-            onChange={(event) => setForm((prev) => ({ ...prev, summary: event.target.value }))}
-            placeholder="Ermittlungslage, Anlass, erste Erkenntnisse"
-            rows={4}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Select
-              label="Status"
-              options={labelOptions(INVESTIGATION_STATUS_LABELS)}
-              value={form.status}
-              onValueChange={(value) => setForm((prev) => ({ ...prev, status: value }))}
-            />
-            <Select
-              label="Priorität"
-              options={labelOptions(INVESTIGATION_PRIORITY_LABELS)}
-              value={form.priority}
-              onValueChange={(value) => setForm((prev) => ({ ...prev, priority: value }))}
-            />
-          </div>
-          <Select
-            label="Fallführung"
-            options={agentOptions}
-            value={form.leadAgentId}
-            onValueChange={(value) => setForm((prev) => ({ ...prev, leadAgentId: value }))}
-          />
-          <AgentPicker
-            agents={agents ?? []}
-            value={form.assigneeIds}
-            onChange={(assigneeIds) => setForm((prev) => ({ ...prev, assigneeIds }))}
-            description="Zugewiesene Ermittler sehen die Akte auch dann, wenn sie als Verschlusssache geführt wird."
-          />
-
-          <Checkbox
-            checked={form.classified}
-            onCheckedChange={(checked) => setForm((prev) => ({ ...prev, classified: checked }))}
-            label="Verschlusssache – nur für Ersteller, Fallführung, zugewiesene Ermittler und Berechtigte sichtbar"
-          />
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="ghost" onClick={() => setCreateOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleCreate} loading={saving}>
-              Akte anlegen
-            </Button>
-          </div>
-        </div>
+        <Wizard
+          steps={steps}
+          mode="linear"
+          submitLabel="Akte anlegen"
+          saving={saving}
+          onCancel={() => setCreateOpen(false)}
+          onSubmit={handleCreate}
+        />
       </Modal>
     </div>
   )

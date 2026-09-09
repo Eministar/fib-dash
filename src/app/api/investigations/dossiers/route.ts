@@ -15,7 +15,7 @@ export async function GET(req: Request) {
       ...(query.personId ? { persons: { some: { id: query.personId } } } : query.investigationId ? { investigations: { some: { id: query.investigationId } } } : query.parentId ? { parentId: query.parentId } : !query.kind && !query.search ? { parentId: null } : {}),
     }
     const [items, total] = await Promise.all([
-      prisma.dossier.findMany({ where, take: 30, skip: (query.page - 1) * 30, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], include: { photo: { select: { id: true, title: true } }, parent: { select: { id: true, title: true } }, createdBy: { select: { id: true, displayName: true } }, _count: { select: { children: true, persons: true, vehicles: true, investigations: { where: investigationVisibilityWhere(user) }, clips: { where: { investigation: investigationVisibilityWhere(user) } } } } } }),
+      prisma.dossier.findMany({ where, take: 30, skip: (query.page - 1) * 30, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], include: { photo: { select: { id: true, title: true } }, parent: { select: { id: true, title: true } }, createdBy: { select: { id: true, displayName: true } }, _count: { select: { children: true, persons: true, vehicles: true, mapSpots: true, investigations: { where: investigationVisibilityWhere(user) }, clips: { where: { investigation: investigationVisibilityWhere(user) } } } } } }),
       prisma.dossier.count({ where }),
     ])
     return success({ items, total, page: query.page })

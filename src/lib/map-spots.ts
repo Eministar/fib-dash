@@ -47,6 +47,10 @@ export interface MapSpot {
   /** Position in Prozent der Kartenbreite bzw. -höhe (0–100). */
   x: number
   y: number
+  /** Dauerakten, die diesen Punkt als Route, Sammler oder Anwesen führen. */
+  dossiers: { id: string; title: string; kind: string }[]
+  /** Einsatzakten an diesem Punkt – bereits sichtbarkeitsgefiltert. */
+  investigations: { id: string; caseNumber: string; title: string; classified: boolean }[]
   createdById: string | null
   createdByName: string
   createdAt: string

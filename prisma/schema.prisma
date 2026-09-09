@@ -188,6 +188,7 @@ model User {
   updatedAt            DateTime          @updatedAt
 
   mapSpotsCreated   MapSpot[]            @relation("MapSpotCreator")
+  photosUploaded    InvestigationPhoto[] @relation("PhotoUploader")
   codenamesCreated  Codename[]           @relation("CodenameCreator")
   dossiersCreated   Dossier[]            @relation("DossierCreator")
   codenamesAssigned CodenameAssignment[] @relation("CodenameAssigner")
@@ -1583,6 +1584,8 @@ enum InvestigationPersonRole {
 /// Personen und die zugehörigen Bodycam-Clips unter einem Aktenzeichen.
 model Investigation {
   dossiers   Dossier[]             @relation("DossierInvestigations")
+  mapSpots   MapSpot[]             @relation("InvestigationMapSpots")
+  photos     InvestigationPhoto[]  @relation("InvestigationPhotos")
   id         String                @id @default(cuid())
   /// Fortlaufendes Aktenzeichen, z. B. "ERM-0001".
   caseNumber String                @unique @db.VarChar(24)
@@ -1959,18 +1962,26 @@ model CodenameAssignment {
 }
 
 model InvestigationPhoto {
-  id        String    @id @default(cuid())
-  sourceKey String    @unique @db.VarChar(191)
-  channelId String    @db.VarChar(30)
-  messageId String    @db.VarChar(30)
-  title     String    @db.VarChar(200)
-  filename  String    @unique @db.VarChar(80)
-  mimeType  String    @db.VarChar(80)
+  id String @id @default(cuid())
+  /// Discord-Herkunft. `null` bedeutet: das Bild wurde hochgeladen.
+  sourceKey String?  @unique @db.VarChar(191)
+  channelId String?  @db.VarChar(30)
+  messageId String?  @db.VarChar(30)
+  title     String   @db.VarChar(200)
+  filename  String   @unique @db.VarChar(80)
+  mimeType  String   @db.VarChar(80)
   sizeBytes Int
-  createdAt DateTime  @default(now())
-  dossiers  Dossier[]
+  createdAt DateTime @default(now())
+
+  /// Nur bei Uploads gesetzt; beim Discord-Import bleibt das Feld leer.
+  uploadedById String?
+  uploadedBy   User?   @relation("PhotoUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  dossiers       Dossier[]
+  investigations Investigation[] @relation("InvestigationPhotos")
 
   @@index([createdAt])
+  @@index([uploadedById])
 }
 
 model Dossier {
@@ -1988,6 +1999,7 @@ model Dossier {
   persons        Person[]            @relation("DossierPersons")
   investigations Investigation[]     @relation("DossierInvestigations")
   vehicles       Vehicle[]           @relation("DossierVehicles")
+  mapSpots       MapSpot[]           @relation("DossierMapSpots")
   clips          BodycamClip[]       @relation("DossierClips")
   createdById    String?
   createdBy      User?               @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -2127,6 +2139,10 @@ model MapSpot {
   /// Pixel, damit die Punkte unabhängig von der Auflösung des Kartenbilds sind.
   x           Float
   y           Float
+
+  /// Akten, die diesen Punkt als Route, Sammler, Anwesen oder Einsatzort führen.
+  dossiers       Dossier[]       @relation("DossierMapSpots")
+  investigations Investigation[] @relation("InvestigationMapSpots")
 
   createdById String?
   createdBy   User?    @relation("MapSpotCreator", fields: [createdById], references: [id], onDelete: SetNull)

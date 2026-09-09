@@ -47,6 +47,10 @@ interface CityMapProps {
   onCancelMove: () => void
   /** Vorschaunadel für die noch nicht gespeicherte Markierung. */
   pendingPosition: { x: number; y: number } | null
+  /** Im Auswahlmodus markierte Punkte. */
+  selectedIds?: string[]
+  /** Klick auf eine Nadel wählt aus, statt die Detailansicht zu öffnen. */
+  selectable?: boolean
 }
 
 export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
@@ -60,6 +64,8 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
     onMoveTo,
     onCancelMove,
     pendingPosition,
+    selectedIds = [],
+    selectable = false,
   },
   ref,
 ) {
@@ -216,6 +222,9 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation()
+                        // Im Auswahlmodus hakt der Linksklick an; ein Rechtsklick
+                        // zum Auswählen fände niemand.
+                        if (selectable) return onOpenDetail(spot)
                         focusSpot(spot.id)
                       }}
                       onContextMenu={(event) => {
@@ -228,14 +237,15 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
                       onMouseLeave={() => setHovered(null)}
                       className={`group absolute z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-full outline-none ${
                         relocating ? 'animate-pulse' : ''
-                      }`}
+                      } ${selectable && selectedIds.includes(spot.id) ? 'ring-4 ring-[#a78bfa]' : ''}`}
                       style={{
                         left: `${spot.x}%`,
                         top: `${spot.y}%`,
                         transform: 'translate(-50%, -100%) scale(var(--marker-scale, 1))',
                         transformOrigin: '50% 100%',
                       }}
-                      aria-label={`${spot.title}. Rechtsklick für Details.`}
+                      aria-label={selectable ? `${spot.title} auswählen` : `${spot.title}. Rechtsklick für Details.`}
+                      aria-pressed={selectable ? selectedIds.includes(spot.id) : undefined}
                     >
                       <MapNeedle color={category.hex} icon={spot.icon} pending={relocating} />
                       {hovered === spot.id && (

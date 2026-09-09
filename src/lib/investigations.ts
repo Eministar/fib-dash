@@ -181,6 +181,14 @@ export const investigationDetailInclude = {
     orderBy: [{ createdAt: 'asc' }],
     include: { vehicle: { include: { ownerPerson: true } } },
   },
+  mapSpots: {
+    orderBy: [{ title: 'asc' }],
+    select: { id: true, title: true, category: true, icon: true, x: true, y: true },
+  },
+  photos: {
+    orderBy: [{ createdAt: 'desc' }],
+    select: { id: true, title: true, createdAt: true, uploadedById: true },
+  },
   linksFrom: {
     orderBy: [{ createdAt: 'asc' }],
     include: { to: { select: linkedCaseSelect } },
@@ -316,4 +324,18 @@ export function sanitizeTags(value: unknown): string[] {
     if (seen.size >= 20) break
   }
   return Array.from(seen)
+}
+
+/**
+ * Prüft eine Liste von Fremdschlüsseln aus dem Request-Body. Duplikate
+ * fliegen raus, damit ein doppelt geschickter Eintrag nicht als
+ * Verknüpfungsfehler beim Datenbankschreiben endet.
+ */
+export function validateIdList(value: unknown, max = 200): string[] {
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) throw new Error('Ungültige Liste')
+  if (value.length > max) throw new Error(`Zu viele Einträge (max. ${max})`)
+  const ids = value.map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+  if (ids.some((entry) => !entry || entry.length > 191)) throw new Error('Ungültige Liste')
+  return [...new Set(ids)]
 }

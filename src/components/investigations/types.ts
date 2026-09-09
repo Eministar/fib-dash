@@ -194,6 +194,8 @@ export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assign
   clips: BodycamClip[]
   evidence: Evidence[]
   vehicles: InvestigationVehicleLink[]
+  mapSpots: { id: string; title: string; category: string; icon: string | null; x: number; y: number }[]
+  photos: { id: string; title: string; createdAt: string; uploadedById: string | null }[]
   linksFrom: InvestigationCrossLink[]
   linksTo: InvestigationCrossLink[]
 }

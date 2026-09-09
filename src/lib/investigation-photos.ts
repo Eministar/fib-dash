@@ -7,7 +7,7 @@ import { uploadDir } from './uploads'
 import { withoutChangeTracking } from './change-history-context'
 import { deleteDiscordHrEventMessage, getDiscordConfig, getDiscordLatestMessageId, getDiscordPhotoMessages, postDiscordChannelMessage, type DiscordPhotoMessage } from './discord-integration'
 
-const MAX_IMAGE_BYTES = 20 * 1024 * 1024
+export const MAX_IMAGE_BYTES = 20 * 1024 * 1024
 export function photoPath(filename: string) {
   if (!/^[a-f0-9-]{36}\.(jpg|png|webp|gif)$/.test(filename)) throw new Error('Ungültige Bilddatei')
   return path.join(/*turbopackIgnore: true*/ uploadDir(), 'investigation-photos', filename)

@@ -15,6 +15,7 @@ import {
   isInvestigationPriority,
   isInvestigationStatus,
   serializeBigInts,
+  validateIdList,
 } from '@/lib/investigations'
 import {
   agentDisplayName,
@@ -109,6 +110,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         deleteMany: {},
         create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })),
       }
+    }
+
+    if (body.mapSpotIds !== undefined) {
+      const mapSpotIds = validateIdList(body.mapSpotIds)
+      if (mapSpotIds.length && (await prisma.mapSpot.count({ where: { id: { in: mapSpotIds } } })) !== mapSpotIds.length) {
+        return notFound('Kartenpunkt')
+      }
+      // `set` genügt: Kartenpunkte sind nicht sichtbarkeitsbeschränkt, ein
+      // Update kann also nichts trennen, was der Bearbeiter nicht sieht.
+      data.mapSpots = { set: mapSpotIds.map((id) => ({ id })) }
+    }
+
+    if (body.photoIds !== undefined) {
+      const photoIds = validateIdList(body.photoIds)
+      if (photoIds.length && (await prisma.investigationPhoto.count({ where: { id: { in: photoIds } } })) !== photoIds.length) {
+        return notFound('Bild')
+      }
+      data.photos = { set: photoIds.map((id) => ({ id })) }
     }
 
     const investigation = await prisma.investigation.update({
