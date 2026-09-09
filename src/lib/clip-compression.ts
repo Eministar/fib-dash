@@ -67,7 +67,7 @@ export async function compressNextClip() {
     // A commit can succeed even if its acknowledgement is lost. Never remove
     // the candidate unless the database confirms it still belongs to this job.
     const failed = await prisma.bodycamClip.updateMany({ where: owned, data: {
-      compressionStatus: 'FAILED', compressionError: 'Komprimierung fehlgeschlagen. Original bleibt erhalten.',
+      compressionStatus: 'FAILED', compressionError: compressionFailureText(cause),
     } })
     if (failed.count) {
       await removeFile(output)
@@ -97,4 +97,23 @@ export function ensureClipCompressionWorker() {
   runtime.clipCompressionTimer = setInterval(queueClipCompression, 60_000)
   runtime.clipCompressionTimer.unref?.()
   queueClipCompression()
+}
+
+/**
+ * Der eigentliche Grund gehört in den Datensatz, nicht nur ins Serverlog.
+ * Vorher stand hier ein fester Text — damit war jeder Fehlschlag von außen
+ * ununterscheidbar und nicht diagnostizierbar.
+ *
+ * ffmpeg-Meldungen enthalten den Dateipfad; der wird entfernt, bevor die
+ * Meldung in der Oberfläche landet. Das Feld fasst 300 Zeichen.
+ */
+export function compressionFailureText(cause: unknown) {
+  const raw = cause instanceof Error ? cause.message : String(cause)
+  const withoutPaths = raw
+    .replace(/[A-Za-z]:\\[^\s'"]+/g, '<Datei>')
+    .replace(/\/[^\s'"]*\/[^\s'"]+/g, '<Datei>')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const detail = withoutPaths.slice(0, 220)
+  return `Komprimierung fehlgeschlagen. Original bleibt erhalten. Grund: ${detail || 'unbekannt'}`.slice(0, 300)
 }
