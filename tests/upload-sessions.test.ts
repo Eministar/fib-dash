@@ -110,3 +110,20 @@ test('Chunks werden nur bei passender Länge und Prüfsumme abgelegt', async () 
   assert.deepEqual(await receivedChunkIndexes(session), [0])
   assert.deepEqual((await readdir(incomingDir(session))).sort(), ['0.part'])
 })
+
+test('Fingerabdruck und Anzeigeformate', async () => {
+  const { fingerprintFor, formatRate, formatRemaining } = await import('../src/lib/chunked-upload')
+
+  // Nur Metadaten — ein Hash ueber 400 MB kostet im Browser mehr als der Upload.
+  const file = { name: 'zugriff.mp4', size: 214958080, lastModified: 1757320145000 } as File
+  assert.equal(fingerprintFor(file), 'zugriff.mp4:214958080:1757320145000')
+
+  assert.equal(formatRate(0), null)
+  assert.equal(formatRate(12.4 * 1024 * 1024), '12.4 MB/s')
+  assert.equal(formatRate(400 * 1024), '400 KB/s')
+
+  assert.equal(formatRemaining(null), null)
+  assert.equal(formatRemaining(0), null)
+  assert.equal(formatRemaining(45), 'noch 45 s')
+  assert.equal(formatRemaining(125), 'noch 2:05 min')
+})

@@ -11,11 +11,12 @@ import { MAX_IMAGE_BYTES } from './investigation-photos'
 import { prisma } from './prisma'
 import { matchesFileSignature } from './upload-signatures'
 import { uploadDir, uploadMaxBytes } from './uploads'
+import type { UploadKind } from './upload-kinds'
 import type { UploadSession } from '@/generated/prisma'
 
 export const DEFAULT_UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024
 
-export type UploadKind = 'CLIP' | 'EVIDENCE' | 'PHOTO' | 'RESOURCE'
+export type { UploadKind }
 
 export class UploadSessionError extends Error {
   status: number
