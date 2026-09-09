@@ -1,7 +1,25 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-09T19:45:06.595Z",
+  "generatedAt": "2026-09-09T20:45:02.536Z",
   "entries": [
+    {
+      "buildId": "build-9f41012133",
+      "commit": "9f410121337ee4f081fd2bd896e43160894465c3",
+      "shortCommit": "9f41012133",
+      "subject": "fix: fehlendes ffmpeg blockierte die Komprimierung lautlos",
+      "author": "Eministar",
+      "date": "2026-09-09T20:44:21Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/9f410121337ee4f081fd2bd896e43160894465c3"
+    },
+    {
+      "buildId": "build-d891cdf451",
+      "commit": "d891cdf4512b71b532bd68c5a800879e24ef4125",
+      "shortCommit": "d891cdf451",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-09T19:45:06Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/d891cdf4512b71b532bd68c5a800879e24ef4125"
+    },
     {
       "buildId": "build-0455f80a58",
       "commit": "0455f80a58a27df9c88290b64cd22103b6c5b2dc",
