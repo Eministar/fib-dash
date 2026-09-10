@@ -197,7 +197,7 @@ model User {
   updatedAt            DateTime          @updatedAt
 
   /// Agent-Personalakte, die zu diesem Dashboard-Account gehört.
-  agentProfile      Agent?               @relation("AgentAccount")
+  agentProfile Agent? @relation("AgentAccount")
 
   mapSpotsCreated   MapSpot[]            @relation("MapSpotCreator")
   observationsMade  MapSpotObservation[] @relation("ObservationCreator")
@@ -267,6 +267,8 @@ model User {
   personLinksCreated           PersonLink[]            @relation("PersonLinkCreator")
   investigationLinksCreated    InvestigationLink[]     @relation("InvestigationLinkCreator")
   uploadSessions               UploadSession[]         @relation("UploadSessionOwner")
+  uploadKeysCreated            UploadKey[]             @relation("UploadKeyCreator")
+  fileUploadsCreated           FileUpload[]            @relation("FileUploadUploader")
 }
 
 model UserGroupMembership {
@@ -1393,25 +1395,25 @@ model ContractTemplate {
 /// Vorlage dürfen einen bereits versendeten oder unterschriebenen Vertrag nicht
 /// nachträglich verändern.
 model Contract {
-  id            String            @id @default(cuid())
-  templateId    String?
-  template      ContractTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  id         String            @id @default(cuid())
+  templateId String?
+  template   ContractTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
   /// AGENT | AGENCY — ein Arbeitsvertrag hängt an einem Agent, ein
   /// Behördenvertrag an einer frei eingetragenen Gegenpartei.
-  kind          String            @default("AGENT") @db.VarChar(20)
+  kind String @default("AGENT") @db.VarChar(20)
 
   /// Nur bei kind = AGENT gesetzt. Bewusst SetNull statt Cascade: ein
   /// unterschriebener Vertrag darf nicht verschwinden, weil ein Agent
   /// gelöscht wird.
-  agentId       String?
-  agent         Agent?            @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
 
   /// Kopfdaten der Gegenseite bei kind = AGENCY, je Vertrag frei eingetragen.
-  counterpartyName String? @db.VarChar(200)
-  counterpartyRole String? @db.VarChar(200)
-  applicationId String?
-  application   JobApplication?   @relation("JobApplicationContracts", fields: [applicationId], references: [id], onDelete: SetNull)
+  counterpartyName String?         @db.VarChar(200)
+  counterpartyRole String?         @db.VarChar(200)
+  applicationId    String?
+  application      JobApplication? @relation("JobApplicationContracts", fields: [applicationId], references: [id], onDelete: SetNull)
 
   title   String
   content String  @db.Text
@@ -1740,26 +1742,26 @@ model InvestigationEntry {
 
 /// Fallübergreifendes Personenregister (Zivilisten, keine FIB-Agents).
 model Person {
-  dossiers     Dossier[] @relation("DossierPersons")
-  id           String    @id @default(cuid())
+  dossiers     Dossier[]           @relation("DossierPersons")
+  id           String              @id @default(cuid())
   /// Fortlaufende Personenaktennummer, z. B. "PER-0001".
-  personNumber String    @unique @db.VarChar(24)
-  firstName    String    @db.VarChar(100)
-  lastName     String    @db.VarChar(100)
-  alias        String?   @db.VarChar(100)
+  personNumber String              @unique @db.VarChar(24)
+  firstName    String              @db.VarChar(100)
+  lastName     String              @db.VarChar(100)
+  alias        String?             @db.VarChar(100)
   /// Ausweis-/Spielerkennung.
-  identifier   String?   @db.VarChar(100)
+  identifier   String?             @db.VarChar(100)
   dateOfBirth  DateTime?
-  phone        String?   @db.VarChar(64)
+  phone        String?             @db.VarChar(64)
   /// Externe Bild-URL. Bleibt als Rückfall für Altbestände; neue Fotos
   /// kommen über `photoId` aus dem Bildkatalog.
-  photoUrl     String?   @db.VarChar(2048)
+  photoUrl     String?             @db.VarChar(2048)
   photoId      String?
   photo        InvestigationPhoto? @relation("PersonPhoto", fields: [photoId], references: [id], onDelete: SetNull)
   /// Freie Notizen (Markdown).
-  notes        String?   @db.Text
-  wanted       Boolean   @default(false)
-  dangerous    Boolean   @default(false)
+  notes        String?             @db.Text
+  wanted       Boolean             @default(false)
+  dangerous    Boolean             @default(false)
 
   createdById String?
   createdBy   User?    @relation("PersonCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -1908,17 +1910,17 @@ model Evidence {
 
 /// Fallübergreifendes Fahrzeugregister.
 model Vehicle {
-  id            String  @id @default(cuid())
+  id            String              @id @default(cuid())
   /// Fortlaufende Registernummer, z. B. "FZG-0001".
-  vehicleNumber String  @unique @db.VarChar(24)
-  plate         String? @db.VarChar(32)
-  model         String? @db.VarChar(120)
-  color         String? @db.VarChar(60)
-  notes         String? @db.Text
+  vehicleNumber String              @unique @db.VarChar(24)
+  plate         String?             @db.VarChar(32)
+  model         String?             @db.VarChar(120)
+  color         String?             @db.VarChar(60)
+  notes         String?             @db.Text
   photoId       String?
   photo         InvestigationPhoto? @relation("VehiclePhoto", fields: [photoId], references: [id], onDelete: SetNull)
-  stolen        Boolean @default(false)
-  wanted        Boolean @default(false)
+  stolen        Boolean             @default(false)
+  wanted        Boolean             @default(false)
 
   /// Halter aus dem Personenregister.
   ownerPersonId String?
@@ -1930,7 +1932,7 @@ model Vehicle {
   updatedAt   DateTime @updatedAt
 
   investigations InvestigationVehicle[]
-  dossiers       Dossier[]             @relation("DossierVehicles")
+  dossiers       Dossier[]              @relation("DossierVehicles")
 
   @@index([plate])
   @@index([ownerPersonId])
@@ -2037,7 +2039,7 @@ model CodenameAssignment {
 }
 
 model InvestigationPhoto {
-  id String @id @default(cuid())
+  id        String   @id @default(cuid())
   /// Discord-Herkunft. `null` bedeutet: das Bild wurde hochgeladen.
   sourceKey String?  @unique @db.VarChar(191)
   channelId String?  @db.VarChar(30)
@@ -2211,7 +2213,7 @@ model MapSpotObservation {
   spotId String
   spot   MapSpot @relation(fields: [spotId], references: [id], onDelete: Cascade)
 
-  note String @db.Text
+  note       String   @db.Text
   /// Zeitpunkt der Beobachtung, nicht der Erfassung.
   observedAt DateTime
 
@@ -2237,8 +2239,8 @@ model MapSpot {
   y           Float
 
   /// Akten, die diesen Punkt als Route, Sammler, Anwesen oder Einsatzort führen.
-  dossiers       Dossier[]       @relation("DossierMapSpots")
-  investigations Investigation[] @relation("InvestigationMapSpots")
+  dossiers       Dossier[]            @relation("DossierMapSpots")
+  investigations Investigation[]      @relation("InvestigationMapSpots")
   observations   MapSpotObservation[]
 
   createdById String?
@@ -2309,7 +2311,7 @@ model ContractSignature {
   sortOrder Int     @default(0)
 
   /// Eigener Link-Token dieser Partei.
-  token String @unique
+  token           String  @unique
   /// Nur bei internen Parteien: dann darf genau dieser Discord-Account
   /// unterschreiben. Eine externe Behörde weist sich allein über den Link aus.
   signerDiscordId String?
@@ -2330,4 +2332,74 @@ model ContractSignature {
   updatedAt DateTime @updatedAt
 
   @@index([contractId, sortOrder])
+}
+
+/// Schlüssel für die Datei-Upload-API. Bewusst unabhängig von `ApiToken`:
+/// externe Systeme (z. B. das Ticketboard) laden damit Dateien hoch, ohne
+/// einen Dashboard-Account oder dessen Rechte zu besitzen.
+model UploadKey {
+  id              String    @id @default(cuid())
+  name            String
+  /// Erste Zeichen des Schlüssels ("fibup_p4A8xKz…") für die Anzeige in Listen.
+  prefix          String
+  /// SHA-256-Hash des Klartexts. Der Klartext wird nie gespeichert und nur
+  /// einmalig beim Anlegen zurückgegeben.
+  keyHash         String    @unique
+  description     String?   @db.Text
+  /// Vorbelegte Kategorie für Uploads über diesen Schlüssel.
+  defaultCategory String?
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  revokedReason   String?   @db.Text
+  lastUsedAt      DateTime?
+  usageCount      Int       @default(0)
+  createdById     String?
+  createdBy       User?     @relation("UploadKeyCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  uploads FileUpload[]
+
+  @@index([createdAt])
+}
+
+/// Eine über die Upload-API oder das Dashboard abgelegte Datei samt Metadaten.
+/// Eigenständig — keine Verbindung zu Ermittlungen, Bodycam oder Asservaten.
+model FileUpload {
+  id           String  @id @default(cuid())
+  title        String
+  description  String? @db.Text
+  category     String?
+  /// Freie Schlagworte als JSON-Array von Strings.
+  tags         Json    @default("[]")
+  /// Referenz im Fremdsystem, z. B. die Ticketnummer.
+  externalRef  String?
+  /// Link zurück ins Fremdsystem.
+  externalUrl  String? @db.Text
+  /// Wer im Fremdsystem hochgeladen hat (dort freier Text, kein FIB-Account).
+  externalUser String?
+  /// Beliebige Zusatzfelder des Fremdsystems.
+  metadata     Json    @default("{}")
+
+  /// Gespeicherter Dateiname ("<uuid>.<ext>") unterhalb von uploads/files.
+  filename     String @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  /// SHA-256 des Inhalts — erkennt doppelte Uploads.
+  sha256       String
+
+  /// Herkunft: entweder ein API-Schlüssel oder ein angemeldeter Nutzer.
+  uploadKeyId  String?
+  uploadKey    UploadKey? @relation(fields: [uploadKeyId], references: [id], onDelete: SetNull)
+  uploadedById String?
+  uploadedBy   User?      @relation("FileUploadUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([category])
+  @@index([sha256])
+  @@index([externalRef])
 }

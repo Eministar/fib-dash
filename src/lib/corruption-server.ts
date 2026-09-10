@@ -34,6 +34,20 @@ export function officialSearch(search: string): Prisma.PublicOfficialWhereInput 
   ] })) }
 }
 
+/**
+ * Filter der Beamtenakten-Liste. Ohne Suchbegriff darf hier KEIN `OR` stehen:
+ * `officialSearch('')` ist eine leere Bedingung, und ein leerer Zweig in einem
+ * `OR` matcht in Prisma nichts — die Liste kam dadurch immer leer zurück.
+ */
+export function officialListWhere(search: string, agency: string): Prisma.PublicOfficialWhereInput {
+  const term = search.trim()
+  return {
+    mergedIntoId: null,
+    ...(term ? { OR: [officialSearch(term), { mergedFrom: { some: officialSearch(term) } }] } : {}),
+    ...(agency.trim() ? { agency: { contains: agency.trim() } } : {}),
+  }
+}
+
 export async function createCorruptionCheck(tx: Prisma.TransactionClient, input: CorruptionInput, userId: string) {
   const existing = await tx.corruptionCheck.findUnique({ where: { requestId: input.requestId }, include: corruptionInclude })
   if (existing) {

@@ -9,7 +9,7 @@ import {
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, CalendarDays, Download,
   FileText, Gavel, Scale, FolderSearch, Map,
-  History,
+  History, FolderUp,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -52,6 +52,7 @@ const mainNav: NavItem[] = [
   { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
   { name: 'Karte', href: '/map', icon: Map, permission: 'map:view' },
   { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
+  { name: 'Uploads', href: '/uploads', icon: FolderUp, permission: 'uploads:view' },
   { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
 ]
 

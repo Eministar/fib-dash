@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { DEFAULT_FILE_UPLOAD_MAX_BYTES } from '@/lib/file-upload-types'
 
 export async function getBadgePrefix(): Promise<string> {
   const row = await prisma.systemSetting.findUnique({ where: { key: 'badgePrefix' } })
@@ -31,4 +32,15 @@ export async function getApiTokensMaxPerUser(): Promise<number | null> {
   const n = Number.parseInt(v, 10)
   if (!Number.isFinite(n) || n <= 0) return null
   return n
+}
+
+/**
+ * Größenlimit der Datei-Upload-API in Bytes. Ohne Einstellung 100 MB;
+ * ein unbrauchbarer Wert fällt ebenfalls auf den Standard zurück, damit
+ * ein Tippfehler die API nicht stilllegt.
+ */
+export async function getFileUploadMaxBytes(): Promise<number> {
+  const row = await prisma.systemSetting.findUnique({ where: { key: 'fileUploadMaxBytes' } })
+  const parsed = Number.parseInt(row?.value?.trim() ?? '', 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_FILE_UPLOAD_MAX_BYTES
 }

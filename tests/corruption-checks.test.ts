@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Prisma } from '../src/generated/prisma'
 import { corruptionCheckSchema, corruptionQuerySchema, officialNumber, parseOfficialNumber } from '../src/lib/corruption-validation'
-import { createCorruptionCheck, officialSearch } from '../src/lib/corruption-server'
+import { createCorruptionCheck, officialListWhere, officialSearch } from '../src/lib/corruption-server'
 
 const input = () => corruptionCheckSchema.parse({
   requestId: '12bd0238-36f6-42d3-882a-ce9048a5d60a',
@@ -86,4 +86,17 @@ test('Number and multi-part name search work without merging people with equal n
   assert.equal(parseOfficialNumber('2147483648'), null)
   assert.deepEqual(officialSearch('BEA-000042'), { id: 42 })
   assert.equal((officialSearch('Alex Miller').AND as unknown[]).length, 2)
+})
+
+test('Die Beamtenakten-Liste filtert ohne Suchbegriff nicht — ein leerer OR-Zweig liefert in Prisma null Treffer', () => {
+  const all = officialListWhere('', '')
+  assert.deepEqual(all, { mergedIntoId: null })
+  assert.ok(!('OR' in all), 'Ohne Suchbegriff darf kein OR gebaut werden')
+
+  const byAgency = officialListWhere('   ', 'LSPD')
+  assert.deepEqual(byAgency, { mergedIntoId: null, agency: { contains: 'LSPD' } })
+
+  const bySearch = officialListWhere('BEA-000042', '')
+  assert.deepEqual(bySearch.OR, [{ id: 42 }, { mergedFrom: { some: { id: 42 } } }])
+  assert.equal(bySearch.mergedIntoId, null)
 })
