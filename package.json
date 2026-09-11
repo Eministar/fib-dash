@@ -26,6 +26,7 @@
     "db:restore-discord-settings": "npx tsx scripts/restore-discord-settings.ts",
     "db:seed-sanktionskatalog": "npx tsx scripts/seed-sanktionskatalog.ts",
     "db:link-users-to-agents": "npx tsx scripts/link-users-to-agents.ts",
+    "db:grant-role-permissions": "npx tsx scripts/grant-role-permissions.ts",
     "test:sanction-catalog": "tsx --test tests/sanction-catalog.test.ts",
     "release:sync": "tsx scripts/sync-commit-legend.ts",
     "db:studio": "npx prisma studio",

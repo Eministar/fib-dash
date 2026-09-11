@@ -13,6 +13,7 @@ import { TierManager } from '@/components/settings/tier-manager'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { cn } from '@/lib/utils'
+import { PERMISSIONS, PERMISSION_LABELS, type Permission } from '@/lib/permissions'
 
 interface DiscordRole {
   id: string
@@ -70,6 +71,7 @@ interface DiscordConfigResponse {
     applicantRoleIds: string[]
     contractAuditorRoleIds: string[]
     authGroupRoleMap: Record<string, string[]>
+    authRolePermissionMap: Record<string, Permission[]>
     rankRoleMap: Record<string, string>
     trainingRoleMap: Record<string, string>
     unitRoleMap: Record<string, string>
@@ -155,6 +157,7 @@ export default function SettingsPage() {
     applicantRoleIds: [],
     contractAuditorRoleIds: [],
     authGroupRoleMap: {},
+    authRolePermissionMap: {},
     rankRoleMap: {},
     trainingRoleMap: {},
     unitRoleMap: {},
@@ -352,6 +355,32 @@ export default function SettingsPage() {
       if (remaining.length > 0) next[groupId] = remaining
       else delete next[groupId]
       return { ...prev, authGroupRoleMap: next }
+    })
+  }
+
+  const addRolePermissionRole = (roleId: string) => {
+    if (!roleId) return
+    setDiscordForm((prev) => {
+      if (prev.authRolePermissionMap[roleId]) return prev
+      return { ...prev, authRolePermissionMap: { ...prev.authRolePermissionMap, [roleId]: [] } }
+    })
+  }
+
+  const removeRolePermissionRole = (roleId: string) => {
+    setDiscordForm((prev) => {
+      const next = { ...prev.authRolePermissionMap }
+      delete next[roleId]
+      return { ...prev, authRolePermissionMap: next }
+    })
+  }
+
+  const toggleRolePermission = (roleId: string, permission: Permission, checked: boolean) => {
+    setDiscordForm((prev) => {
+      const current = prev.authRolePermissionMap[roleId] ?? []
+      const nextPermissions = checked
+        ? Array.from(new Set([...current, permission]))
+        : current.filter((item) => item !== permission)
+      return { ...prev, authRolePermissionMap: { ...prev.authRolePermissionMap, [roleId]: nextPermissions } }
     })
   }
 
@@ -840,6 +869,61 @@ export default function SettingsPage() {
                         </div>
                     )
                   })}
+                </div>
+              </div>
+              <div>
+                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Rechte direkt an Discord-Rollen</p>
+                <p className="text-[11px] text-[#6f6f6f] mb-3">
+                  Rollen mit hinterlegten Rechten zählen automatisch als Login-Rollen: eine separate Login-Rolle ist dann nicht nötig. Die Rechte gelten zusätzlich zu Gruppen- und Unit-Rechten und werden bei jedem Discord-Login neu übernommen.
+                </p>
+                <div className="max-w-md">
+                  <Select
+                      value=""
+                      onValueChange={addRolePermissionRole}
+                      options={[
+                        { value: '', label: 'Rolle hinzufügen' },
+                        ...(discordData?.roles
+                            .filter((role) => !discordForm.authRolePermissionMap[role.id])
+                            .map((role) => ({ value: role.id, label: role.name })) || []),
+                      ]}
+                      size="sm"
+                  />
+                </div>
+                <div className="mt-3 space-y-3">
+                  {Object.keys(discordForm.authRolePermissionMap).length === 0 && (
+                      <span className="text-[12px] text-[#808080]">Keine Rolle konfiguriert</span>
+                  )}
+                  {Object.entries(discordForm.authRolePermissionMap).map(([roleId, permissions]) => (
+                      <div key={roleId} className="rounded-[9px] border border-[#343434]/60 bg-[#181818]/40 p-3">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <div>
+                            <p className="text-[13px] text-[#f4f4f4]">{roleName(roleId)}</p>
+                            <p className="text-[11px] text-[#6f6f6f]">
+                              {permissions.length > 0 ? `${permissions.length} Recht(e)` : 'Noch keine Rechte – die Rolle gewährt dann keinen Zugriff'}
+                            </p>
+                          </div>
+                          <button
+                              type="button"
+                              onClick={() => removeRolePermissionRole(roleId)}
+                              className="rounded-[7px] border border-[#404040] bg-[#181818]/70 px-2.5 py-1.5 text-[12px] text-[#f4f4f4] hover:border-[#d4d4d4]/50"
+                              title="Rolle entfernen"
+                          >
+                            Entfernen
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+                          {PERMISSIONS.map((permission) => (
+                              <Checkbox
+                                  key={permission}
+                                  checked={permissions.includes(permission)}
+                                  onCheckedChange={(checked) => toggleRolePermission(roleId, permission, checked)}
+                                  label={PERMISSION_LABELS[permission]}
+                                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                              />
+                          ))}
+                        </div>
+                      </div>
+                  ))}
                 </div>
               </div>
               <div>

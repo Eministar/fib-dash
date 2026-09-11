@@ -5,6 +5,7 @@ import { getActiveAbsenceNotices, runAgentStatusAutomation } from './absence-sta
 import { getBadgePrefix } from './settings-helpers'
 import { formatLinkedAgentDisplayName, syncLinkedUserDisplayNameForAgent } from './user-display-name'
 import { queueDiscordWebhookEvent } from './discord-webhook'
+import { sanitizePermissions, type Permission } from './permissions'
 import {
   actionRow,
   componentMessage,
@@ -94,6 +95,10 @@ export type DiscordConfig = {
   /// Rollen, die JEDEN Arbeitsvertrag über dessen Link einsehen dürfen (nur lesend).
   contractAuditorRoleIds: string[]
   authGroupRoleMap: Record<string, string[]>
+  /// Direkte Rechtevergabe pro Discord-Rolle (Rollen-ID -> Rechte). Wer eine
+  /// dieser Rollen hat, darf sich auch ohne separate Login-Rolle anmelden und
+  /// erhaelt die hinterlegten Rechte zusaetzlich zu Gruppen- und Unit-Rechten.
+  authRolePermissionMap: Record<string, Permission[]>
   rankRoleMap: Record<string, string>
   trainingRoleMap: Record<string, string>
   unitRoleMap: Record<string, string>
@@ -216,6 +221,7 @@ export const DISCORD_SETTING_KEYS = {
   adminRoleIds: 'discord.adminRoleIds',
   contractAuditorRoleIds: 'discord.contractAuditorRoleIds',
   authGroupRoleMap: 'discord.authGroupRoleMap',
+  authRolePermissionMap: 'discord.authRolePermissionMap',
   legacyAuthRoleGroupMap: 'discord.authRoleGroupMap',
   rankRoleMap: 'discord.rankRoleMap',
   trainingRoleMap: 'discord.trainingRoleMap',
@@ -568,6 +574,24 @@ function cleanGroupRoleMap(value: unknown): Record<string, string[]> {
   )
 }
 
+/**
+ * Rollen-ID -> Rechte. Unbekannte Rechte und ungueltige Rollen-IDs fallen weg,
+ * leere Rechtelisten werden nicht gespeichert (sonst wuerde eine Rolle ohne
+ * Rechte trotzdem Login-Zugriff gewaehren).
+ */
+function cleanRolePermissionMap(value: unknown): Record<string, Permission[]> {
+  if (!value || typeof value !== 'object') return {}
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([roleId, permissions]) => {
+        if (!snowflake(roleId)) return null
+        const cleaned = sanitizePermissions(Array.isArray(permissions) ? permissions : [permissions])
+        return cleaned.length > 0 ? [roleId, cleaned] as const : null
+      })
+      .filter((entry): entry is readonly [string, Permission[]] => Boolean(entry)),
+  )
+}
+
 function cleanLegacyRoleGroupMap(value: unknown): Record<string, string> {
   if (!value || typeof value !== 'object') return {}
   return Object.fromEntries(
@@ -841,6 +865,7 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
       parseJson(map[DISCORD_SETTING_KEYS.authGroupRoleMap], {}),
       parseJson(map[DISCORD_SETTING_KEYS.legacyAuthRoleGroupMap], {}),
     ),
+    authRolePermissionMap: cleanRolePermissionMap(parseJson(map[DISCORD_SETTING_KEYS.authRolePermissionMap], {})),
     rankRoleMap: cleanRoleMap(parseJson(map[DISCORD_SETTING_KEYS.rankRoleMap], {})),
     trainingRoleMap: cleanRoleMap(parseJson(map[DISCORD_SETTING_KEYS.trainingRoleMap], {})),
     unitRoleMap,
@@ -878,6 +903,7 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.adminRoleIds !== undefined) data[DISCORD_SETTING_KEYS.adminRoleIds] = JSON.stringify(cleanRoleIds(input.adminRoleIds))
   if (input.contractAuditorRoleIds !== undefined) data[DISCORD_SETTING_KEYS.contractAuditorRoleIds] = JSON.stringify(cleanRoleIds(input.contractAuditorRoleIds))
   if (input.authGroupRoleMap !== undefined) data[DISCORD_SETTING_KEYS.authGroupRoleMap] = JSON.stringify(cleanGroupRoleMap(input.authGroupRoleMap))
+  if (input.authRolePermissionMap !== undefined) data[DISCORD_SETTING_KEYS.authRolePermissionMap] = JSON.stringify(cleanRolePermissionMap(input.authRolePermissionMap))
   if (input.rankRoleMap !== undefined) data[DISCORD_SETTING_KEYS.rankRoleMap] = JSON.stringify(cleanRoleMap(input.rankRoleMap))
   if (input.trainingRoleMap !== undefined) data[DISCORD_SETTING_KEYS.trainingRoleMap] = JSON.stringify(cleanRoleMap(input.trainingRoleMap))
   if (input.unitRoleMap !== undefined) data[DISCORD_SETTING_KEYS.unitRoleMap] = JSON.stringify(cleanRoleMap(input.unitRoleMap))

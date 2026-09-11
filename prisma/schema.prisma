@@ -193,6 +193,11 @@ model User {
   groupId              String?
   group                UserGroup?        @relation(fields: [groupId], references: [id], onDelete: SetNull)
   permissions          Json?
+  /// Beim Discord-Login gespiegelte Rechte aus `discord.authRolePermissionMap`
+  /// (Discord-Rolle -> Rechte). Wird bei jedem Login neu gesetzt und getrennt von
+  /// `permissions` gehalten, damit manuell vergebene Rechte nicht überschrieben werden.
+  /// Nullable, damit additive MariaDB-Updates bestehende Zeilen nicht brechen.
+  discordRolePermissions Json?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 

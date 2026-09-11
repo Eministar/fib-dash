@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getDiscordConfig, getDiscordGuildMember, getDiscordGuildMembers, type DiscordApiUser } from '@/lib/discord-integration'
-import { sanitizePermissions } from '@/lib/permissions'
+import { sanitizePermissions, type Permission } from '@/lib/permissions'
 import { resolveUserDisplayName } from '@/lib/user-display-name'
 
 const API_BASE = 'https://discord.com/api/v10'
@@ -113,10 +113,32 @@ function matchingGroupIds(roleIds: string[], groupRoleMap: Record<string, string
   ))
 }
 
-function hasLoginRole(roleIds: string[], loginRoleIds: string[], groupRoleMap: Record<string, string[]>) {
+/**
+ * Rechte, die dem Mitglied allein aufgrund seiner Discord-Rollen zustehen
+ * (`discord.authRolePermissionMap`). Mehrere passende Rollen werden gestapelt.
+ */
+function matchingRolePermissions(roleIds: string[], rolePermissionMap: Record<string, Permission[]>) {
+  const roles = new Set(roleIds)
+  const permissions = new Set<Permission>()
+  for (const [roleId, rolePermissions] of Object.entries(rolePermissionMap)) {
+    if (!roles.has(roleId)) continue
+    for (const permission of rolePermissions) permissions.add(permission)
+  }
+  return Array.from(permissions)
+}
+
+function hasLoginRole(
+  roleIds: string[],
+  loginRoleIds: string[],
+  groupRoleMap: Record<string, string[]>,
+  rolePermissionMap: Record<string, Permission[]> = {},
+) {
   const roles = new Set(roleIds)
   const groupRoleIds = Object.values(groupRoleMap).flat()
-  const allowedRoles = Array.from(new Set([...loginRoleIds, ...groupRoleIds]))
+  // Rollen mit direkt hinterlegten Rechten sind ebenfalls Login-Rollen: sonst
+  // muesste man jede solche Rolle zusaetzlich als Login-Rolle pflegen.
+  const permissionRoleIds = Object.keys(rolePermissionMap)
+  const allowedRoles = Array.from(new Set([...loginRoleIds, ...groupRoleIds, ...permissionRoleIds]))
   if (allowedRoles.length === 0) throw new DiscordAuthError('Discord-Login ist nicht konfiguriert')
   return allowedRoles.some((roleId) => roles.has(roleId))
 }
@@ -242,10 +264,11 @@ export async function upsertDiscordContractSigner(profile: DiscordMemberProfile)
 
 export async function upsertDiscordUser(profile: DiscordMemberProfile) {
   const config = await getDiscordConfig()
-  if (!hasLoginRole(profile.roles, config.authLoginRoleIds, config.authGroupRoleMap)) {
+  if (!hasLoginRole(profile.roles, config.authLoginRoleIds, config.authGroupRoleMap, config.authRolePermissionMap)) {
     throw new DiscordAuthError('Dir fehlt die benötigte Discord-Rolle für dieses Dashboard')
   }
 
+  const rolePermissions = matchingRolePermissions(profile.roles, config.authRolePermissionMap)
   const groupIds = matchingGroupIds(profile.roles, config.authGroupRoleMap)
   const existingGroups = groupIds.length
     ? await prisma.userGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true } })
@@ -269,6 +292,9 @@ export async function upsertDiscordUser(profile: DiscordMemberProfile) {
     discordAvatar: profile.user.avatar ?? null,
     discordDiscriminator: profile.user.discriminator ?? null,
     groupId: safeGroupIds[0] ?? null,
+    // Rollenrechte werden bei jedem Login neu gespiegelt, damit entzogene
+    // Discord-Rollen auch die Rechte wieder entziehen.
+    discordRolePermissions: rolePermissions,
     lastLoginAt: new Date(),
   }
 
@@ -402,7 +428,7 @@ export async function listDiscordAuthMembers() {
     .filter((member): member is DiscordMemberProfile => Boolean(member.user?.id))
     .filter((member) => {
       try {
-        return hasLoginRole(member.roles ?? [], config.authLoginRoleIds, config.authGroupRoleMap)
+        return hasLoginRole(member.roles ?? [], config.authLoginRoleIds, config.authGroupRoleMap, config.authRolePermissionMap)
       } catch {
         return false
       }
@@ -415,6 +441,7 @@ export async function listDiscordAuthMembers() {
         avatar: member.avatar,
       },
       groupIds: matchingGroupIds(member.roles ?? [], config.authGroupRoleMap),
+      rolePermissions: matchingRolePermissions(member.roles ?? [], config.authRolePermissionMap),
       avatarUrl: discordAvatarUrl(member.user),
       displayName: profileDisplayName({
         user: member.user,

@@ -41,6 +41,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
         discordGlobalName: true,
         lastLoginAt: true,
         permissions: true,
+        discordRolePermissions: true,
         group: { select: { id: true, name: true, permissions: true } },
         groupMemberships: {
           select: { group: { select: { id: true, name: true, permissions: true } } },
@@ -55,7 +56,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     const groups = Array.from(groupsById.values())
     const permissions = resolveEffectivePermissions(
       user.permissions,
-      groups.map((g) => g.permissions),
+      [user.discordRolePermissions, ...groups.map((g) => g.permissions)],
     )
 
     return success({

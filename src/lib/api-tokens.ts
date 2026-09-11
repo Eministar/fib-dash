@@ -278,6 +278,7 @@ async function loadUserFromCookieToken(token: string): Promise<CurrentUser | nul
       discordAvatar: true,
       discordDiscriminator: true,
       permissions: true,
+      discordRolePermissions: true,
       group: { select: { id: true, name: true, permissions: true } },
       groupMemberships: {
         select: { group: { select: { id: true, name: true, permissions: true } } },
@@ -288,7 +289,7 @@ async function loadUserFromCookieToken(token: string): Promise<CurrentUser | nul
   const groupsById = new Map(user.groupMemberships.map((m) => [m.group.id, m.group]))
   if (user.group && !groupsById.has(user.group.id)) groupsById.set(user.group.id, user.group)
   const groups = Array.from(groupsById.values())
-  const permissions = resolveEffectivePermissions(user.permissions, groups.map((g) => g.permissions))
+  const permissions = resolveEffectivePermissions(user.permissions, [user.discordRolePermissions, ...groups.map((g) => g.permissions)])
   return {
     id: user.id,
     username: user.username,
@@ -305,13 +306,14 @@ async function loadUserPermissions(userId: string): Promise<Permission[]> {
     where: { id: userId },
     select: {
       permissions: true,
+      discordRolePermissions: true,
       group: { select: { permissions: true } },
       groupMemberships: { select: { group: { select: { permissions: true } } } },
     },
   })
   if (!user) return []
   const groupPerms = user.groupMemberships.map((m) => m.group.permissions)
-  return resolveEffectivePermissions(user.permissions, groupPerms)
+  return resolveEffectivePermissions(user.permissions, [user.discordRolePermissions, ...groupPerms])
 }
 
 function buildAvatarUrl(

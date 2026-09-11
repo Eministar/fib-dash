@@ -302,6 +302,7 @@ async function loadUserByDiscordId(discordId: string): Promise<CurrentUser | nul
       discordAvatar: true,
       discordDiscriminator: true,
       permissions: true,
+      discordRolePermissions: true,
       group: { select: { id: true, name: true, permissions: true } },
       groupMemberships: {
         select: { group: { select: { id: true, name: true, permissions: true } } },
@@ -317,6 +318,7 @@ async function loadUserByDiscordId(discordId: string): Promise<CurrentUser | nul
   const permissions = resolveEffectivePermissions(
     user.permissions,
     [
+      user.discordRolePermissions,
       ...groups.map((g) => g.permissions),
       automaticPermissionsForRoleNames(groups.map((g) => g.name)),
       ...unitPerms,
@@ -351,6 +353,7 @@ async function loadUserForAuth(userId: string): Promise<CurrentUser | null> {
       discordAvatar: true,
       discordDiscriminator: true,
       permissions: true,
+      discordRolePermissions: true,
       group: { select: { id: true, name: true, permissions: true } },
       groupMemberships: {
         select: { group: { select: { id: true, name: true, permissions: true } } },
@@ -367,6 +370,7 @@ async function loadUserForAuth(userId: string): Promise<CurrentUser | null> {
   let effectivePermissions = resolveEffectivePermissions(
     user.permissions,
     [
+      user.discordRolePermissions,
       ...groups.map((g) => g.permissions),
       automaticPermissionsForRoleNames(groups.map((g) => g.name)),
       ...unitPerms,
@@ -403,6 +407,7 @@ async function loadUserPermissions(userId: string): Promise<Permission[]> {
     select: {
       discordId: true,
       permissions: true,
+      discordRolePermissions: true,
       group: { select: { name: true, permissions: true } },
       groupMemberships: { select: { group: { select: { name: true, permissions: true } } } },
     },
@@ -414,6 +419,7 @@ async function loadUserPermissions(userId: string): Promise<Permission[]> {
   return resolveEffectivePermissions(
     user.permissions,
     [
+      user.discordRolePermissions,
       ...groups.map((group) => group.permissions),
       automaticPermissionsForRoleNames(groups.map((group) => group.name)),
       ...unitPerms,
