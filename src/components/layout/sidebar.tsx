@@ -127,6 +127,7 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
 }
 
 function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
+  const { data: leadershipAccess } = useFetch<{ allowed: boolean }>(user ? '/api/leadership/groups/access' : null)
   const { data: bodycamAccess } = useFetch<{ allowed: boolean }>(user ? '/api/investigations/clips/access' : null)
   const { data: navigationUnits } = useFetch<NavigationUnit[]>(user ? '/api/navigation/units' : null)
   const unitNav: NavItem[] = (navigationUnits ?? []).map((unit) => ({
@@ -177,6 +178,12 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
             {unitNav.map((item) => <NavLink key={`${item.href}:${item.name}`} item={item} pathname={pathname} onNavigate={onNavigate} />)}
           </>
         )}
+
+        {leadershipAccess?.allowed && <>
+          <SectionDivider />
+          <SectionLabel>Leadership</SectionLabel>
+          <NavLink item={{ name: 'Ermittlungsgruppen', href: '/leadership/groups', icon: Users }} pathname={pathname} onNavigate={onNavigate} />
+        </>}
 
         {showAdmin && (
           <>

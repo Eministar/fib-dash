@@ -42,7 +42,7 @@ function isTrackableRequest(input: RequestInfo | URL, init?: RequestInit): {
 
   const sameOrigin = url.origin === window.location.origin
   const isApi = url.pathname.startsWith('/api/')
-  const excluded = isHistoryRequest(url.pathname) || url.pathname.startsWith('/api/auth/')
+  const excluded = isHistoryRequest(url.pathname) || url.pathname.startsWith('/api/auth/') || url.pathname.startsWith('/api/leadership/')
   return { track: sameOrigin && isApi && MUTATION_METHODS.has(method) && !excluded, method, url }
 }
 

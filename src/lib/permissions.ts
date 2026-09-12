@@ -1,4 +1,5 @@
 export const PERMISSIONS = [
+  'leadership-groups:manage',
   'codenames:view',
   'codenames:manage',
   'dashboard:view',
@@ -73,6 +74,7 @@ export const PERMISSIONS = [
 export type Permission = (typeof PERMISSIONS)[number]
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
+  'leadership-groups:manage': 'Leadership – Ermittlungsgruppen verwalten (vertraulich)',
   'codenames:view': 'Decknamen ansehen',
   'codenames:manage': 'Decknamen verwalten',
   'dashboard:view': 'Dashboard ansehen',

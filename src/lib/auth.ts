@@ -124,11 +124,17 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   return auth?.user ?? null
 }
 
+/** Confidential modules authenticate without creating general change-history entries. */
+export async function getConfidentialUser(): Promise<CurrentUser | null> {
+  const auth = await getCurrentAuth(false)
+  return auth?.user ?? null
+}
+
 /**
  * Wie {@link getCurrentUser}, liefert aber zusätzlich den Auth-Kontext
  * (Cookie vs. API-Token) — nützlich für Usage-Tracking und Rate-Limiting.
  */
-export async function getCurrentAuth(): Promise<CurrentAuth | null> {
+export async function getCurrentAuth(trackChanges = true): Promise<CurrentAuth | null> {
   const cookieStore = await cookies()
   const headerStore = await headers()
 
@@ -170,7 +176,7 @@ export async function getCurrentAuth(): Promise<CurrentAuth | null> {
 
       if (!effectiveUser) return null
 
-      return attachRequestedChangeTracking({
+      const resolvedAuth: CurrentAuth = {
         kind: 'api',
         user: effectiveUser,
         api: {
@@ -181,7 +187,8 @@ export async function getCurrentAuth(): Promise<CurrentAuth | null> {
           scopes: effectiveScopes,
         },
         impersonation,
-      }, headerStore)
+      }
+      return trackChanges ? attachRequestedChangeTracking(resolvedAuth, headerStore) : resolvedAuth
     }
     return null
   }
@@ -191,7 +198,7 @@ export async function getCurrentAuth(): Promise<CurrentAuth | null> {
     const payload = verifyToken(cookieToken)
     if (payload) {
       const user = await loadUserForAuth(payload.userId)
-      if (user) return attachRequestedChangeTracking({ kind: 'cookie', user }, headerStore)
+      if (user) return trackChanges ? attachRequestedChangeTracking({ kind: 'cookie', user }, headerStore) : { kind: 'cookie', user }
     }
   }
 

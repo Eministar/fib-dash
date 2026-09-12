@@ -10,6 +10,41 @@ datasource db {
   provider = "mysql"
 }
 
+// Confidential: never include these models in general audit/change history.
+model LeadershipGroup {
+  id String @id @default(cuid())
+  name String @db.VarChar(100)
+  families Json
+  version Int @default(1)
+  channelId String? @unique
+  guildId String?
+  syncPending Boolean @default(true)
+  syncLeaseUntil DateTime?
+  nextSyncAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members LeadershipGroupMember[]
+  events LeadershipGroupEvent[]
+}
+
+model LeadershipGroupMember {
+  groupId String
+  userId String
+  group LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  @@id([groupId, userId])
+  @@index([userId])
+}
+
+model LeadershipGroupEvent {
+  id String @id @default(cuid())
+  groupId String
+  text String @db.Text
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+  group LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  @@index([groupId, sentAt])
+}
+
 enum AgentStatus {
   ACTIVE
   AWAY
