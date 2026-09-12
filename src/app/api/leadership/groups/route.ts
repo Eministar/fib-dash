@@ -9,11 +9,10 @@ export async function GET() {
     const user = await groupUser()
     const groups = await listGroups(user)
     const manage = canManageLeadershipGroups(user)
-    const [members, families] = manage ? await Promise.all([
-      prisma.user.findMany({ where: { discordId: { not: null } }, select: { id: true, displayName: true }, orderBy: { displayName: 'asc' } }),
-      prisma.dossier.findMany({ where: { kind: 'FAMILY' }, select: { id: true, title: true }, orderBy: { title: 'asc' } }),
-    ]) : [[], []]
-    return groupResponse({ manage, groups, members, families })
+    const members = manage
+      ? await prisma.user.findMany({ where: { discordId: { not: null } }, select: { id: true, displayName: true }, orderBy: { displayName: 'asc' } })
+      : []
+    return groupResponse({ manage, groups, members })
   } catch (error) { return groupError(error) }
 }
 

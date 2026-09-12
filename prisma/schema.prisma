@@ -18,6 +18,7 @@ model LeadershipGroup {
   version Int @default(1)
   channelId String? @unique
   guildId String?
+  channelManaged Boolean @default(true)
   syncPending Boolean @default(true)
   syncLeaseUntil DateTime?
   nextSyncAt DateTime @default(now())
@@ -38,6 +39,7 @@ model LeadershipGroupMember {
 model LeadershipGroupEvent {
   id String @id @default(cuid())
   groupId String
+  kind String @db.VarChar(20) @default("info")
   text String @db.Text
   sentAt DateTime?
   createdAt DateTime @default(now())
