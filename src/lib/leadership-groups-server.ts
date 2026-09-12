@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from './prisma'
 import { getConfidentialUser } from './auth'
 import { getDiscordConfig } from './discord-integration'
-import { canManageLeadershipGroups, leadershipGroupVisibility, privateChannelOverwrites, groupEventEmbed, type LeadershipGroupFamily, type LeadershipGroupInput } from './leadership-groups'
+import { canManageLeadershipGroups, leadershipGroupVisibility, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, type LeadershipGroupFamily, type LeadershipGroupInput } from './leadership-groups'
 
 class GroupError extends Error {
   constructor(message: string, public status = 400) { super(message) }
@@ -70,9 +70,10 @@ export async function saveGroup(id: string | undefined, input: LeadershipGroupIn
     const oldIds = old?.members.map(m => m.userId) ?? []
     const removed = await tx.user.findMany({ where: { id: { in: oldIds.filter(memberId => !input.memberIds.includes(memberId)) } }, select: { displayName: true } })
     // An adopted channel replaces the current one; clearing the field creates an own private channel again.
+    const resetOverview = { overviewMessageId: null, overviewPinned: false }
     const channel = adopted
-      ? { channelId: adopted, channelManaged: false, ...(old?.channelId === adopted ? {} : { guildId: null }) }
-      : old?.channelManaged === false ? { channelId: null, channelManaged: true, guildId: null } : {}
+      ? { channelId: adopted, channelManaged: false, ...(old?.channelId === adopted ? {} : { guildId: null, ...resetOverview }) }
+      : old?.channelManaged === false ? { channelId: null, channelManaged: true, guildId: null, ...resetOverview } : {}
     const events: { kind: string; text: string }[] = [
       ...(!old ? [{ kind: 'created', text: `${actor.displayName} hat die Gruppe „${input.name}“ erstellt.` }]
         : old.name !== input.name ? [{ kind: 'renamed', text: `${actor.displayName} hat die Gruppe „${old.name}“ in „${input.name}“ umbenannt.` }] : []),
@@ -117,13 +118,15 @@ export async function deleteGroup(id: string, actor: Awaited<ReturnType<typeof g
   try {
     if (group.channelId) {
       const bot = await discord<{ id: string }>('/users/@me')
-      await discord(`/channels/${group.channelId}/messages`, 'POST', {
-        embeds: [groupEventEmbed({ kind: 'deleted', text: `${actor.displayName} hat die Gruppe aufgelöst.`, createdAt: new Date() }, group.name)],
-        allowed_mentions: { parse: [] },
-      })
+      await discord(`/channels/${group.channelId}/messages`, 'POST',
+        groupEventMessage({ kind: 'deleted', text: `${actor.displayName} hat die Gruppe aufgelöst.`, createdAt: new Date() }, group.name))
       if (group.channelManaged) await discord(`/channels/${group.channelId}`, 'DELETE')
       // An adopted channel stays, but every member grant this module set is withdrawn.
-      else if (group.guildId) await discord(`/channels/${group.channelId}`, 'PATCH', { permission_overwrites: privateChannelOverwrites(group.guildId, bot.id, []) })
+      else if (group.guildId) {
+        // The pinned overview would keep the membership readable in a channel that stays.
+        if (group.overviewMessageId) await discord(`/channels/${group.channelId}/messages/${group.overviewMessageId}`, 'DELETE').catch(() => undefined)
+        await discord(`/channels/${group.channelId}`, 'PATCH', { permission_overwrites: privateChannelOverwrites(group.guildId, bot.id, []) })
+      }
     }
   } catch { discordCleaned = false }
   // Dashboard access ends regardless of Discord: confidentiality comes first.
@@ -170,7 +173,10 @@ export async function syncGroup(id: string) {
     }
     guildId = guildId || (await getDiscordConfig()).guildId
     if (!guildId) throw new GroupError('Discord-Server fehlt.')
-    const members = await prisma.user.findMany({ where: { id: { in: group.members.map(m => m.userId) } }, select: { discordId: true } })
+    const members = await prisma.user.findMany({
+      where: { id: { in: group.members.map(m => m.userId) } },
+      select: { id: true, displayName: true, discordId: true }, orderBy: { displayName: 'asc' },
+    })
     const overwrites = privateChannelOverwrites(guildId, bot.id, members.flatMap(m => m.discordId ? [m.discordId] : []))
     if (!channelId) {
       // A private marker lets retries recover a channel after a lost create response.
@@ -189,9 +195,27 @@ export async function syncGroup(id: string) {
     const events = await prisma.leadershipGroupEvent.findMany({ where: { groupId: id, sentAt: null }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], take: 5 })
     for (const event of events) {
       await send(`/channels/${channelId}/messages`, 'POST', {
-        embeds: [groupEventEmbed(event, group.name)], allowed_mentions: { parse: [] }, nonce: event.id, enforce_nonce: true,
+        ...groupEventMessage(event, group.name), nonce: event.id, enforce_nonce: true,
       })
       await prisma.leadershipGroupEvent.update({ where: { id: event.id }, data: { sentAt: new Date() } })
+    }
+    // The pinned overview is rewritten on every sync, so it always shows the current state.
+    const overview = groupOverviewMessage({ name: group.name, families: group.families as LeadershipGroupFamily[], members })
+    let overviewMessageId = group.overviewMessageId
+    let pinned = group.overviewPinned
+    if (overviewMessageId) {
+      // A manually deleted overview is replaced instead of failing the whole sync.
+      await send(`/channels/${channelId}/messages/${overviewMessageId}`, 'PATCH', { ...overview, content: null, embeds: [] })
+        .catch(() => { overviewMessageId = null; pinned = false })
+    }
+    if (!overviewMessageId) {
+      overviewMessageId = (await send<{ id: string }>(`/channels/${channelId}/messages`, 'POST', overview)).id
+      pinned = false
+      await prisma.leadershipGroup.updateMany({ where: { id, syncLeaseUntil: lease }, data: { overviewMessageId, overviewPinned: false } })
+    }
+    if (!pinned) {
+      await send(`/channels/${channelId}/pins/${overviewMessageId}`, 'PUT')
+      await prisma.leadershipGroup.updateMany({ where: { id, syncLeaseUntil: lease }, data: { overviewPinned: true } })
     }
     const remaining = await prisma.leadershipGroupEvent.count({ where: { groupId: id, sentAt: null } })
     await prisma.leadershipGroup.updateMany({ where: { id, syncLeaseUntil: lease }, data: { syncPending: remaining > 0, nextSyncAt: new Date(Date.now() + (remaining > 0 ? 30_000 : 300_000)) } })

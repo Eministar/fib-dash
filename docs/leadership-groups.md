@@ -6,17 +6,21 @@ Unter **Leadership → Ermittlungsgruppen** können berechtigte Nutzer benannte 
 
 1. Das additive Prisma-Schema mit dem üblichen, gesicherten Projektworkflow anwenden: `npm run db:push`. Anschließend `npm run db:generate` und Anwendung neu starten.
 2. Der Leadership-Benutzergruppe unter Administration → Benutzergruppen das Recht **Leadership – Ermittlungsgruppen verwalten (vertraulich)** (`leadership-groups:manage`) geben. Bestehende Administratoren mit Vollzugriff erhalten dieses Recht automatisch. Andere Unit-Leitungsrechte gewähren keinen Zugriff.
-3. Vorhandenen Discord-Bot und Server konfigurieren (`DISCORD_BOT_TOKEN` / `FIB_DISCORD_BOT_TOKEN`, bestehende Server-Einstellung). Der Bot benötigt Kanalverwaltung, Rechteverwaltung, Kanalansicht, Nachrichten senden und Nachrichtenverlauf lesen. Mitglieder müssen dem Server bereits angehören.
+3. Vorhandenen Discord-Bot und Server konfigurieren (`DISCORD_BOT_TOKEN` / `FIB_DISCORD_BOT_TOKEN`, bestehende Server-Einstellung). Der Bot benötigt Kanalverwaltung, Rechteverwaltung, Kanalansicht, Nachrichten senden, Nachrichtenverlauf lesen und Nachrichten verwalten (zum Anpinnen der Übersicht). Mitglieder müssen dem Server bereits angehören.
 
 ## Discord-Kanal
 
 Bleibt das Feld **Discord-Kanal-ID** leer, legt das Modul einen eigenen privaten Kanal an und verwaltet ihn vollständig. Wird eine Kanal-ID eingetragen, nutzt die Gruppe diesen bestehenden Textkanal: Name, Thema und Verlauf bleiben unverändert, die **Berechtigungsüberschreibungen werden jedoch vollständig durch die Gruppenfreigabe ersetzt** (`@everyone` gesperrt, Einzelfreigaben für Bot und Mitglieder). Vorher dort vergebene Rollen- und Nutzerrechte gehen damit verloren. Ein Kanal kann nur einer Gruppe zugeordnet sein. Wird die ID später wieder geleert, legt das Modul einen neuen eigenen Kanal an; der zuvor genutzte Kanal bleibt unangetastet.
 
-Nachrichten werden als Embeds zugestellt (Titel je Ereignisart, farbliche Unterscheidung, Zeitstempel, Gruppenname in der Fußzeile): Gruppe erstellt, Gruppe umbenannt, Mitglied hinzugefügt, Mitglied entfernt, Familien & Leitungen aktualisiert, Gruppe aufgelöst.
+Nachrichten nutzen dasselbe Components-V2-Design wie der Rest der App (`src/lib/discord-components.ts`): Container mit `# Icon Titel · Gruppenname`, Zitatzeile und `-#`-Fußzeile mit Discord-Zeitstempel. Ereignisarten: 🗂️ Ermittlungsgruppe erstellt, ✏️ Gruppe umbenannt, ➕ Mitglied hinzugefügt, ➖ Mitglied entfernt, 👪 Familien & Leitungen aktualisiert, 🗑️ Gruppe aufgelöst.
+
+## Angepinnte Übersicht
+
+In jedem Kanal hält der Bot eine Übersichtsnachricht mit allen Familien samt zuständiger Leitung und dem aktuellen Mitgliederstand. Sie wird bei jedem Abgleich neu geschrieben (also nach jeder Änderung) und beim ersten Anlegen automatisch angepinnt; das Pinnen wird wiederholt, solange es nicht bestätigt ist. Mitglieder und Leitungen werden als Discord-Erwähnung dargestellt, ohne dass Benachrichtigungen ausgelöst werden (`allowed_mentions: { parse: [] }`). Wird die Nachricht manuell gelöscht, legt der nächste Abgleich eine neue an und pinnt sie erneut. Dafür braucht der Bot zusätzlich das Recht **Nachrichten verwalten** im Kanal.
 
 ## Löschen
 
-Beim Löschen wird zunächst ein Abschluss-Embed im Kanal gepostet. Ein selbst angelegter Kanal wird anschließend gelöscht, ein übernommener bestehender Kanal bleibt erhalten und verliert nur alle Mitgliederfreigaben. Der Datenbankeintrag wird in jedem Fall entfernt, auch wenn Discord nicht erreichbar ist — der Dashboard-Zugriff endet sofort; die Oberfläche weist in diesem Fall auf die nötige manuelle Prüfung in Discord hin.
+Beim Löschen wird zunächst eine Abschlussnachricht im Kanal gepostet und bei einem übernommenen Kanal die angepinnte Übersicht entfernt. Ein selbst angelegter Kanal wird anschließend gelöscht, ein übernommener bestehender Kanal bleibt erhalten und verliert nur alle Mitgliederfreigaben. Der Datenbankeintrag wird in jedem Fall entfernt, auch wenn Discord nicht erreichbar ist — der Dashboard-Zugriff endet sofort; die Oberfläche weist in diesem Fall auf die nötige manuelle Prüfung in Discord hin.
 
 ## Vertraulichkeit
 
@@ -36,4 +40,4 @@ Bei Discord-Ausfall bleibt der Dashboard-Zugriff sofort auf den neuen Mitglieder
 
 `npx tsc --noEmit`
 
-Für die Abnahme mit einem Testserver: Gruppe mit zwei Konten und vier Familien erstellen, Fremdkonto über API prüfen, Mitglied entfernen und Kanalzugriff überprüfen, bestehenden Kanal per ID übernehmen, Gruppe löschen und Kanalzustand prüfen, Bot-Rechte temporär entziehen und automatische Wiederaufnahme prüfen. Diese Aktionen benötigen eine erreichbare Testdatenbank und einen konfigurierten Testbot.
+Für die Abnahme mit einem Testserver: Gruppe mit zwei Konten und vier Familien erstellen, Fremdkonto über API prüfen, Mitglied entfernen und Kanalzugriff überprüfen, bestehenden Kanal per ID übernehmen, angepinnte Übersicht nach einer Änderung prüfen, Gruppe löschen und Kanalzustand prüfen, Bot-Rechte temporär entziehen und automatische Wiederaufnahme prüfen. Diese Aktionen benötigen eine erreichbare Testdatenbank und einen konfigurierten Testbot.

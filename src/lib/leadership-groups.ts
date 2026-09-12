@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { hasPermission } from './permissions'
+import { componentMessage, markdownHeader, markdownMeta, markdownQuote, markdownTextDisplays } from './discord-components'
 
 export function canManageLeadershipGroups(user: { permissions?: string[] | null } | null) {
   return hasPermission(user, 'leadership-groups:manage')
@@ -47,24 +48,59 @@ export function privateChannelOverwrites(guildId: string, botId: string, memberI
 }
 
 export const EVENT_KINDS = {
-  created: { title: 'Gruppe erstellt', color: 0x3ba55d },
-  renamed: { title: 'Gruppe umbenannt', color: 0x5865f2 },
-  added: { title: 'Mitglied hinzugefügt', color: 0x3ba55d },
-  removed: { title: 'Mitglied entfernt', color: 0xed4245 },
-  families: { title: 'Familien & Leitungen aktualisiert', color: 0x5865f2 },
-  deleted: { title: 'Gruppe aufgelöst', color: 0xed4245 },
-  info: { title: 'Ermittlungsgruppe', color: 0x5865f2 },
+  created: { icon: '🗂️', title: 'Ermittlungsgruppe erstellt' },
+  renamed: { icon: '✏️', title: 'Gruppe umbenannt' },
+  added: { icon: '➕', title: 'Mitglied hinzugefügt' },
+  removed: { icon: '➖', title: 'Mitglied entfernt' },
+  families: { icon: '👪', title: 'Familien & Leitungen aktualisiert' },
+  deleted: { icon: '🗑️', title: 'Gruppe aufgelöst' },
+  info: { icon: 'ℹ️', title: 'Ermittlungsgruppe' },
 } as const
 
 export type LeadershipEventKind = keyof typeof EVENT_KINDS
 
-export function groupEventEmbed(event: { kind: string; text: string; createdAt: Date }, groupName: string) {
+/** Discord-Zeitstempel wie im übrigen Dashboard-Design (`<t:…:f>`). */
+function discordTimestamp(date: Date, style: 'f' | 'R' = 'f') {
+  return `<t:${Math.floor(date.getTime() / 1000)}:${style}>`
+}
+
+function mention(discordId: string | null | undefined) {
+  return discordId && /^\d{17,22}$/.test(discordId) ? `<@${discordId}>` : null
+}
+
+export function groupEventMessage(event: { kind: string; text: string; createdAt: Date }, groupName: string) {
   const kind = EVENT_KINDS[event.kind as LeadershipEventKind] ?? EVENT_KINDS.info
-  return {
-    title: kind.title,
-    description: event.text.slice(0, 4000),
-    color: kind.color,
-    timestamp: event.createdAt.toISOString(),
-    footer: { text: `Ermittlungsgruppe ${groupName}`.slice(0, 2048) },
+  return componentMessage(markdownTextDisplays([
+    markdownHeader(kind.icon, kind.title, groupName),
+    markdownQuote(event.text),
+    markdownMeta([discordTimestamp(event.createdAt)]),
+  ]))
+}
+
+export type LeadershipOverviewMember = { id: string; displayName: string; discordId?: string | null }
+
+/** Angepinnte Übersicht: Familien mit Leitung und der aktuelle Mitgliederstand. */
+export function groupOverviewMessage(group: { name: string; families: LeadershipGroupFamily[]; members: LeadershipOverviewMember[] }) {
+  const label = (id: string) => {
+    const member = group.members.find(m => m.id === id)
+    return member ? mention(member.discordId) ?? member.displayName : 'Nicht mehr in der Gruppe'
   }
+  const families = group.families.length
+    ? group.families.map(family => `- **${family.name}** — ${family.leadIds.map(label).join(' & ') || 'Keine Leitung'}`).join('\n')
+    : '-# Noch keine Familien zugewiesen.'
+  const members = group.members.length
+    ? group.members.map(member => `- ${mention(member.discordId) ?? member.displayName}`).join('\n')
+    : '-# Noch keine Mitglieder.'
+  return componentMessage(markdownTextDisplays([
+    markdownHeader('🗂️', 'Ermittlungsgruppe', group.name),
+    '### Familien & Leitungen',
+    families,
+    '### Mitglieder',
+    members,
+    markdownMeta([
+      `${group.families.length} Familien`,
+      `${group.members.length} Mitglieder`,
+      `Stand ${discordTimestamp(new Date())}`,
+    ]),
+  ]))
 }

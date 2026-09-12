@@ -19,6 +19,8 @@ model LeadershipGroup {
   channelId String? @unique
   guildId String?
   channelManaged Boolean @default(true)
+  overviewMessageId String?
+  overviewPinned Boolean @default(false)
   syncPending Boolean @default(true)
   syncLeaseUntil DateTime?
   nextSyncAt DateTime @default(now())

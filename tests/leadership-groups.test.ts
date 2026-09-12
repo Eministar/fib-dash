@@ -1,8 +1,23 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventEmbed } from '../src/lib/leadership-groups'
+import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventMessage, groupOverviewMessage } from '../src/lib/leadership-groups'
+import { DISCORD_COMPONENTS_V2_FLAG } from '../src/lib/discord-components'
 import { activateChangeTracking } from '../src/lib/change-history-context'
 import { prepareMutationCapture, type SnapshotClient } from '../src/lib/change-history-tracking'
+
+/** Collects the text of every text display inside the message container. */
+function renderComponents(message: { components: unknown[] }): string {
+  const texts: string[] = []
+  const walk = (node: unknown) => {
+    if (Array.isArray(node)) return node.forEach(walk)
+    if (!node || typeof node !== 'object') return
+    const item = node as { type?: number; content?: string; components?: unknown }
+    if (item.type === 10 && typeof item.content === 'string') texts.push(item.content)
+    if (item.components) walk(item.components)
+  }
+  walk(message.components)
+  return texts.join('\n')
+}
 
 test('ordinary agents and other department managers only query their own memberships', () => {
   for (const permissions of [[], ['agents:view', 'logs:view'], ['unit-leadership:manage'], ['investigations:manage']]) {
@@ -59,16 +74,45 @@ test('Discord overwrites deny everyone and give access only to bot and current m
   assert.deepEqual(privateChannelOverwrites('guild', 'bot', []).map(o => o.id), ['guild', 'bot'])
 })
 
-test('events are delivered as embeds with their own title, colour and group footer', () => {
+test('events use the app-wide component message design, not raw embeds', () => {
   const createdAt = new Date('2026-01-02T03:04:05.000Z')
-  const added = groupEventEmbed({ kind: 'added', text: 'A hat B zur Gruppe hinzugefügt.', createdAt }, 'Nord')
-  assert.equal(added.title, 'Mitglied hinzugefügt')
-  assert.equal(added.description, 'A hat B zur Gruppe hinzugefügt.')
-  assert.equal(added.footer.text, 'Ermittlungsgruppe Nord')
-  assert.equal(added.timestamp, createdAt.toISOString())
-  assert.notEqual(added.color, groupEventEmbed({ kind: 'removed', text: 'x', createdAt }, 'Nord').color)
-  // An unknown kind must still produce a valid embed rather than throw.
-  assert.equal(groupEventEmbed({ kind: 'kaputt', text: 'x', createdAt }, 'Nord').title, 'Ermittlungsgruppe')
+  const added = groupEventMessage({ kind: 'added', text: 'A hat B zur Gruppe hinzugefügt.', createdAt }, 'Nord')
+  assert.equal(added.flags, DISCORD_COMPONENTS_V2_FLAG)
+  assert.deepEqual(added.allowed_mentions, { parse: [] })
+  const text = renderComponents(added)
+  assert.match(text, /# ➕ Mitglied hinzugefügt · Nord/)
+  assert.match(text, /> A hat B zur Gruppe hinzugefügt\./)
+  assert.match(text, new RegExp(`-# <t:${Math.floor(createdAt.getTime() / 1000)}:f>`))
+  assert.match(renderComponents(groupEventMessage({ kind: 'removed', text: 'x', createdAt }, 'Nord')), /# ➖ Mitglied entfernt/)
+  // An unknown kind must still produce a valid message rather than throw.
+  assert.match(renderComponents(groupEventMessage({ kind: 'kaputt', text: 'x', createdAt }, 'Nord')), /# ℹ️ Ermittlungsgruppe/)
+})
+
+test('the pinned overview lists every family with its leadership and all members', () => {
+  const text = renderComponents(groupOverviewMessage({
+    name: 'Nord',
+    families: [
+      { name: 'Familie Cabrera', leadIds: ['a'] },
+      { name: 'Familie Okafor', leadIds: ['a', 'b'] },
+      { name: 'Familie Petrov', leadIds: ['weg'] },
+    ],
+    members: [
+      { id: 'a', displayName: 'Alice', discordId: '111111111111111111' },
+      { id: 'b', displayName: 'Bob', discordId: null },
+    ],
+  }))
+  assert.match(text, /# 🗂️ Ermittlungsgruppe · Nord/)
+  assert.match(text, /\*\*Familie Cabrera\*\* — <@111111111111111111>/)
+  // A member without a linked Discord account falls back to the display name.
+  assert.match(text, /\*\*Familie Okafor\*\* — <@111111111111111111> & Bob/)
+  assert.match(text, /\*\*Familie Petrov\*\* — Nicht mehr in der Gruppe/)
+  assert.match(text, /3 Familien · 2 Mitglieder · Stand <t:\d+:f>/)
+})
+
+test('an empty overview stays valid so the pinned message can always be written', () => {
+  const text = renderComponents(groupOverviewMessage({ name: 'Nord', families: [], members: [] }))
+  assert.match(text, /Noch keine Familien zugewiesen\./)
+  assert.match(text, /Noch keine Mitglieder\./)
 })
 
 test('confidential models never enter automatic history even with active tracking', async () => {
