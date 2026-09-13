@@ -27,7 +27,10 @@ test('Dossier moves reject self-parenting, descendants, corrupt cycles and missi
 
 test('Dossiers accept fixed categories and reject invalid or unbounded fields', () => {
   assert.equal(dossierSchema.parse({ title: ' Familie Moretti ', kind: 'FAMILY', photoId: null }).title, 'Familie Moretti')
-  for (const value of [{ title: '', kind: 'FILE' }, { title: 'A', kind: 'UNKNOWN' }, { title: 'A', kind: 'FILE', titleExtra: true }, { title: 'A', kind: 'FILE', personIds: Array(201).fill('x') }]) {
+  // `FILE` (die alte Unterakte) ist seit der Zusammenführung mit den Einsatzakten
+  // keine gültige Kategorie mehr – die übrigen Zeilen prüfen weiterhin Titel,
+  // Fremdfelder und Obergrenzen und benutzen dafür eine gültige Kategorie.
+  for (const value of [{ title: '', kind: 'FAMILY' }, { title: 'A', kind: 'UNKNOWN' }, { title: 'A', kind: 'FILE' }, { title: 'A', kind: 'PROPERTY', titleExtra: true }, { title: 'A', kind: 'COLLECTION', personIds: Array(201).fill('x') }]) {
     assert.equal(dossierSchema.safeParse(value).success, false)
   }
 })

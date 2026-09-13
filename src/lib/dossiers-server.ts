@@ -9,7 +9,7 @@ import { investigationVisibilityWhere } from './investigations'
 const id = z.string().trim().min(1).max(191)
 export const dossierSchema = z.object({
   title: z.string().trim().min(1).max(200),
-  kind: z.enum(['FAMILY', 'COLLECTION', 'PROPERTY', 'FILE']),
+  kind: z.enum(['FAMILY', 'COLLECTION', 'PROPERTY']),
   description: z.string().trim().max(30000).nullable().optional(),
   address: z.string().trim().max(300).nullable().optional(),
   photoId: id.nullable().optional(),
@@ -43,8 +43,8 @@ export async function validateDossierParent(id: string | undefined, parentId: st
   const visited = new Set<string>()
   let current = parentId
   while (current) {
-    if (current === id || visited.has(current)) throw new DossierError('Eine Akte darf nicht unter sich selbst oder einer ihrer Unterakten liegen')
-    if (visited.size >= 30) throw new DossierError('Maximal 30 Ebenen für Unterakten erlaubt')
+    if (current === id || visited.has(current)) throw new DossierError('Eine Akte darf nicht unter sich selbst oder einer ihrer untergeordneten Akten liegen')
+    if (visited.size >= 30) throw new DossierError('Maximal 30 Ebenen für untergeordnete Akten erlaubt')
     visited.add(current)
     const parent = await getParent(current)
     if (!parent) throw new DossierError('Übergeordnete Akte nicht gefunden', 404)

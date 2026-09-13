@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const SHARE_KINDS = { DOSSIER: 'Dauerakten / Unterakten', CASE: 'Einzelakten / Einsatzakten', PERSON: 'Personenakten', VEHICLE: 'Fahrzeugakten', CLIP: 'Bodycams' } as const
+export const SHARE_KINDS = { DOSSIER: 'Dauerakten', CASE: 'Einzelakten / Einsatzakten', PERSON: 'Personenakten', VEHICLE: 'Fahrzeugakten', CLIP: 'Bodycams' } as const
 export type ShareKind = keyof typeof SHARE_KINDS
 export const shareKindSchema = z.enum(['DOSSIER', 'CASE', 'PERSON', 'VEHICLE', 'CLIP'])
 export const shareSelectionSchema = z.object({ kind: shareKindSchema, recordId: z.string().min(1).max(191) }).strict()

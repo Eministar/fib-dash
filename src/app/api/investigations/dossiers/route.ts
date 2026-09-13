@@ -8,7 +8,7 @@ import { investigationVisibilityWhere } from '@/lib/investigations'
 export async function GET(req: Request) {
   try {
     const user = await requirePermission('investigations:view')
-    const query = z.object({ search: z.string().trim().max(200).default(''), kind: z.enum(['FAMILY', 'COLLECTION', 'PROPERTY', 'FILE']).optional(), parentId: z.string().max(191).optional(), personId: z.string().max(191).optional(), investigationId: z.string().max(191).optional(), page: z.coerce.number().int().min(1).max(100000).default(1) }).parse(Object.fromEntries(new URL(req.url).searchParams))
+    const query = z.object({ search: z.string().trim().max(200).default(''), kind: z.enum(['FAMILY', 'COLLECTION', 'PROPERTY']).optional(), parentId: z.string().max(191).optional(), personId: z.string().max(191).optional(), investigationId: z.string().max(191).optional(), page: z.coerce.number().int().min(1).max(100000).default(1) }).parse(Object.fromEntries(new URL(req.url).searchParams))
     const where = {
       ...(query.search ? { title: { contains: query.search } } : {}),
       ...(query.kind ? { kind: query.kind } : {}),

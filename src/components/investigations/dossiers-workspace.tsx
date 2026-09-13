@@ -81,13 +81,13 @@ function DossierView({ id }: { id: string | null }) {
   const current = detail.data
   const refresh = () => { setEditor(null); void list.refetch(); void detail.refetch() }
 
-  // Unterakten und Einsatzakten sind verschiedene Dinge und liegen deshalb
-  // auf getrennten Reitern statt gemischt in einem Raster.
+  // Untergeordnete Akten gliedern eine Dauerakte (Anwesen in einer Familienakte);
+  // Einsatzakten sind die einzelnen Vorgänge. Getrennte Reiter statt ein Raster.
   const childCards: RegisterCardData[] = (list.data?.items ?? []).map(item => ({
     key: `d-${item.id}`, href: href(item.id), variant: 'dossier' as const,
     kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId,
     code: item.address ?? undefined,
-    facts: [`${item._count?.children ?? 0} Unterakten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
+    facts: [`${item._count?.children ?? 0} untergeordnete Akten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
     author: item.createdBy?.displayName, date: item.updatedAt,
   }))
   const caseCards: RegisterCardData[] = (current?.investigations ?? []).map(item => ({
@@ -98,7 +98,7 @@ function DossierView({ id }: { id: string | null }) {
   }))
 
   const tabs: TabItem[] = [
-    { id: 'unterakten', label: 'Unterakten', count: list.data?.total ?? childCards.length },
+    { id: 'unterakten', label: 'Untergeordnete Akten', count: list.data?.total ?? childCards.length },
     { id: 'einsatzakten', label: 'Einsatzakten', count: caseCards.length },
     { id: 'beteiligte', label: 'Beteiligte', count: (current?.persons?.length ?? 0) + (current?.vehicles?.length ?? 0) },
     { id: 'medien', label: 'Medien & Orte', count: (current?.clips?.length ?? 0) + (current?.mapSpots?.length ?? 0) },
@@ -112,7 +112,7 @@ function DossierView({ id }: { id: string | null }) {
 
   const factRows: [string, string][] = current ? [
     ['Übergeordnet', current.parent?.title ?? 'Hauptakte'],
-    ['Unterakten', String(list.data?.total ?? 0)],
+    ['Untergeordnete Akten', String(list.data?.total ?? 0)],
     ['Einsatzakten', String(caseCards.length)],
     ['Angelegt von', current.createdBy?.displayName ?? 'Unbekannt'],
   ] : []
@@ -132,7 +132,7 @@ function DossierView({ id }: { id: string | null }) {
       action={manage && <>
         {!id && <Button onClick={() => setEditor('new')}><Plus size={14} />Akte anlegen</Button>}
         {current && <>
-          <Button onClick={() => setEditor('new')}><Plus size={14} />Unterakte anlegen</Button>
+          <Button onClick={() => setEditor('new')}><Plus size={14} />Untergeordnete Akte anlegen</Button>
           <ActionMenu items={menuItems} />
         </>}
       </>}
@@ -163,16 +163,16 @@ function DossierView({ id }: { id: string | null }) {
       <TabBar tabs={tabs} active={activeTab} onSelect={selectTab} label="Bereiche der Dauerakte" />
 
       {activeTab === 'unterakten' && <SectionCard
-        title="Unterakten"
+        title="Untergeordnete Akten"
         count={childCards.length}
-        empty="Noch keine Unterakten. Eine Unterakte gliedert eine große Akte – etwa ein Anwesen innerhalb einer Familienakte."
+        empty="Noch keine untergeordneten Akten. Eine untergeordnete Akte gliedert eine große Akte – etwa ein Anwesen innerhalb einer Familienakte."
         action={manage && current ? <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="ghost" onClick={() => setAttaching(true)}><FolderInput size={13} />Bestehende einhängen</Button>
-          <Button size="sm" variant="ghost" onClick={() => setEditor('new')}><Plus size={13} />Unterakte anlegen</Button>
+          <Button size="sm" variant="ghost" onClick={() => setEditor('new')}><Plus size={13} />Untergeordnete Akte anlegen</Button>
         </div> : null}
       >
         {list.loading
-          ? <p className="py-6 text-sm text-[#808080]">Unterakten werden geladen …</p>
+          ? <p className="py-6 text-sm text-[#808080]">Untergeordnete Akten werden geladen …</p>
           : <>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{childCards.map(card => <RegisterCard key={card.key} card={card} />)}</div>
             {(list.data?.total ?? 0) > 30 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
@@ -236,7 +236,7 @@ function DossierView({ id }: { id: string | null }) {
         : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{list.data.items.map(item => <RegisterCard key={item.id} card={{
             key: item.id, href: href(item.id), variant: 'dossier', kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId,
             code: item.address ?? undefined, parentTitle: item.parent?.title,
-            facts: [`${item._count?.children ?? 0} Unterakten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
+            facts: [`${item._count?.children ?? 0} untergeordnete Akten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
             author: item.createdBy?.displayName, date: item.updatedAt,
           }} />)}</div>}
       {(list.data?.items.length ?? 0) > 0 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
@@ -321,13 +321,12 @@ const DOSSIER_KIND_HINTS: Record<DossierKind, string> = {
   FAMILY: 'Eine Familie oder Organisation mit ihren Mitgliedern, Routen und Sammlern.',
   COLLECTION: 'Eine offene Sammlung, die mehrere Akten unter einem Thema bündelt.',
   PROPERTY: 'Ein Anwesen oder Objekt mit Adresse, Bewohnern und Beobachtungen.',
-  FILE: 'Eine Unterakte innerhalb einer übergeordneten Akte.',
 }
 
 function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Dossier; parent?: { id: string; title: string }; onClose: () => void; onSaved: () => void }) {
   const { user } = useAuth()
   const [title, setTitle] = useState(existing?.title ?? '')
-  const [kind, setKind] = useState<DossierKind>(existing?.kind ?? (parent ? 'FILE' : 'COLLECTION'))
+  const [kind, setKind] = useState<DossierKind>(existing?.kind ?? 'COLLECTION')
   const [description, setDescription] = useState(existing?.description ?? '')
   const [address, setAddress] = useState(existing?.address ?? '')
   const [photoId, setPhotoId] = useState(existing?.photoId ?? null)

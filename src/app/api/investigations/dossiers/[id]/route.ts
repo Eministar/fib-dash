@@ -31,7 +31,7 @@ export async function DELETE(_req: Request, { params }: Context) {
     const user = await requirePermission('investigations:delete')
     const { id } = await params
     await prisma.$transaction(async tx => {
-      if (await tx.dossier.count({ where: { parentId: id } })) throw new DossierError('Diese Akte enthält Unterakten. Bitte zuerst verschieben oder entfernen.')
+      if (await tx.dossier.count({ where: { parentId: id } })) throw new DossierError('Diese Akte enthält untergeordnete Akten. Bitte zuerst verschieben oder entfernen.')
       const deleted = await tx.dossier.delete({ where: { id } })
       await createAuditLog({ action: 'DOSSIER_DELETED', userId: user.id, oldValue: JSON.stringify(deleted) }, tx)
     })
