@@ -84,8 +84,8 @@
 - Modify: `src/lib/record-shares.ts` oder `src/components/investigations/share-manager.tsx` — abhängig vom Befund.
 - Test: `tests/record-shares.test.ts`
 
-- [ ] **Step 1: Reproduktion.** Datenbankseitig bereits ausgeschlossen (11 Einsatzakten, `findMany` liefert alle). Verbleibende Kandidaten: Zustandswechsel des Bereichs-Dropdowns im Modal, oder ein veralteter Stand auf dem Server. Ohne Reproduktion wird nichts geändert.
-- [ ] **Step 2: Fix plus Regressionstest — erst nach Schritt 1.**
+- [x] **Step 1: Reproduktion — nicht gelungen, Ursache liegt nicht im Backend.** Gegen die echte Datenbank geprüft: 11 Einsatzakten (jetzt 16), die Query aus `shareCandidates` liefert mit Verschluss-Recht alle 11, ohne Verschluss-Recht 5, mit Suchbegriff 2. `CASE` steht seit Einführung der Freigaben im Bereichs-Dropdown, und ein Fehler würde in der Oberfläche angezeigt statt verschluckt. Eine leere Liste ist von hier aus nicht erklärbar.
+- [ ] **Step 2: Offen — braucht eine Beobachtung aus der laufenden Anwendung.** Konkret: öffnet sich die Bereichsauswahl im Modal überhaupt, und was steht nach der Wahl von „Einzelakten / Einsatzakten" im Feld? Ohne diese Angabe wird nichts geändert; ein Fix ins Blaue verschlimmert es nur.
 
 ## Reihenfolge
 
