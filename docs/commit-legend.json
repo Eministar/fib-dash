@@ -1,7 +1,79 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-12T19:00:09.580Z",
+  "generatedAt": "2026-09-13T13:50:12.964Z",
   "entries": [
+    {
+      "buildId": "build-d2daedc4dc",
+      "commit": "d2daedc4dcfcfed9678640dd4584b5e74edfa234",
+      "shortCommit": "d2daedc4dc",
+      "subject": "Merge branch 'main' of https://github.com/Eministar/fib-dash",
+      "author": "Eministar",
+      "date": "2026-09-13T13:49:19Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/d2daedc4dcfcfed9678640dd4584b5e74edfa234"
+    },
+    {
+      "buildId": "build-58c5bdb27e",
+      "commit": "58c5bdb27e8b1e07a34f04e2aa36e861073e20a5",
+      "shortCommit": "58c5bdb27e",
+      "subject": "docs: record the share-candidate findings in the plan",
+      "author": "Eministar",
+      "date": "2026-09-13T13:48:48Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/58c5bdb27e8b1e07a34f04e2aa36e861073e20a5"
+    },
+    {
+      "buildId": "build-5c9b9f18ee",
+      "commit": "5c9b9f18eec187e070deb9544ff84ba7e08b9015",
+      "shortCommit": "5c9b9f18ee",
+      "subject": "feat: make vehicle records editable from the register",
+      "author": "Eministar",
+      "date": "2026-09-13T13:47:33Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/5c9b9f18eec187e070deb9544ff84ba7e08b9015"
+    },
+    {
+      "buildId": "build-23163052cb",
+      "commit": "23163052cbfb8597404540d9ad990aeb79d04030",
+      "shortCommit": "23163052cb",
+      "subject": "feat: drop the Unterakte category now that its records are Einsatzakten",
+      "author": "Eministar",
+      "date": "2026-09-13T13:45:45Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/23163052cbfb8597404540d9ad990aeb79d04030"
+    },
+    {
+      "buildId": "build-c6e483e3cb",
+      "commit": "c6e483e3cbe0240385de7b8db7000a0d30afc726",
+      "shortCommit": "c6e483e3cb",
+      "subject": "feat: add migration script converting Unterakten to Einsatzakten",
+      "author": "Eministar",
+      "date": "2026-09-13T13:42:45Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/c6e483e3cbe0240385de7b8db7000a0d30afc726"
+    },
+    {
+      "buildId": "build-726ae440ce",
+      "commit": "726ae440cecace83a82ae386e68e13948060663e",
+      "shortCommit": "726ae440ce",
+      "subject": "feat: add pure migration logic for merging Unterakten into Einsatzakten",
+      "author": "Eministar",
+      "date": "2026-09-13T13:41:21Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/726ae440cecace83a82ae386e68e13948060663e"
+    },
+    {
+      "buildId": "build-686572b479",
+      "commit": "686572b4794c6d4865a811b3c5af99ba8115d223",
+      "shortCommit": "686572b479",
+      "subject": "docs: spec for merging Unterakten into Einsatzakten",
+      "author": "Eministar",
+      "date": "2026-09-13T13:37:17Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/686572b4794c6d4865a811b3c5af99ba8115d223"
+    },
+    {
+      "buildId": "build-18ac9ec7e2",
+      "commit": "18ac9ec7e2872cbe005c69f2d58b9a9835cfdc87",
+      "shortCommit": "18ac9ec7e2",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-12T19:00:09Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/18ac9ec7e2872cbe005c69f2d58b9a9835cfdc87"
+    },
     {
       "buildId": "build-fe14af1dd6",
       "commit": "fe14af1dd62c198707409adcc10336ea6b2463dc",
