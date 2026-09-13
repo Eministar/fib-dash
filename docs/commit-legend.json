@@ -1,7 +1,61 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-13T13:50:12.964Z",
+  "generatedAt": "2026-09-13T14:13:56.987Z",
   "entries": [
+    {
+      "buildId": "build-db9b7a4a5c",
+      "commit": "db9b7a4a5c538d3d7ae3a3556344cc46ca1e166c",
+      "shortCommit": "db9b7a4a5c",
+      "subject": "Merge branch 'main' of https://github.com/Eministar/fib-dash",
+      "author": "Eministar",
+      "date": "2026-09-13T14:13:08Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/db9b7a4a5c538d3d7ae3a3556344cc46ca1e166c"
+    },
+    {
+      "buildId": "build-73d522b5ad",
+      "commit": "73d522b5adc66a8aaaeeda5e8160c1b35509e5b7",
+      "shortCommit": "73d522b5ad",
+      "subject": "docs: simplify the access-group spec after the tree was removed",
+      "author": "Eministar",
+      "date": "2026-09-13T14:12:17Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/73d522b5adc66a8aaaeeda5e8160c1b35509e5b7"
+    },
+    {
+      "buildId": "build-4aeaae8cb0",
+      "commit": "4aeaae8cb02343730e1c845951bc870614b4a42b",
+      "shortCommit": "4aeaae8cb0",
+      "subject": "feat: flatten Dauerakten to persons, cases and vehicles",
+      "author": "Eministar",
+      "date": "2026-09-13T14:11:34Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/4aeaae8cb02343730e1c845951bc870614b4a42b"
+    },
+    {
+      "buildId": "build-dcbe6a9a47",
+      "commit": "dcbe6a9a47b3ac88e9ccc9702005c0daf99be8f5",
+      "shortCommit": "dcbe6a9a47",
+      "subject": "docs: spec for assigning Ermittlungsgruppen to Dauerakten",
+      "author": "Eministar",
+      "date": "2026-09-13T14:03:12Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/dcbe6a9a47b3ac88e9ccc9702005c0daf99be8f5"
+    },
+    {
+      "buildId": "build-415a5ea3d7",
+      "commit": "415a5ea3d775157967f611549c555f374e5534c5",
+      "shortCommit": "415a5ea3d7",
+      "subject": "feat: allow several images per Dauerakte",
+      "author": "Eministar",
+      "date": "2026-09-13T14:01:27Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/415a5ea3d775157967f611549c555f374e5534c5"
+    },
+    {
+      "buildId": "build-36179f6290",
+      "commit": "36179f6290bbd63025116a010dd47da7c45ab69d",
+      "shortCommit": "36179f6290",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-13T13:50:13Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/36179f6290bbd63025116a010dd47da7c45ab69d"
+    },
     {
       "buildId": "build-d2daedc4dc",
       "commit": "d2daedc4dcfcfed9678640dd4584b5e74edfa234",
