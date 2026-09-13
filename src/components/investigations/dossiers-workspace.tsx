@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { EyeOff, FolderInput, FolderOpen, Folders, FolderSearch, Image as ImageIcon, ImageOff, Plus, Pencil, MapPin, Trash2 } from 'lucide-react'
+import { EyeOff, FolderOpen, Folders, FolderSearch, Image as ImageIcon, ImageOff, Plus, Pencil, MapPin, Trash2 } from 'lucide-react'
 import { DOSSIER_KINDS, type DossierKind } from '@/lib/dossiers'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
@@ -36,18 +36,17 @@ import type { InvestigationPriorityKey, InvestigationStatusKey } from '@/lib/inv
 
 type Dossier = {
   id: string; title: string; kind: DossierKind; description: string | null; address: string | null;
-  photoId: string | null; photos?: { id: string; title: string }[]; parentId: string | null; parent?: { id: string; title: string } | null;
+  photoId: string | null; photos?: { id: string; title: string }[];
   updatedAt?: string; createdBy?: { displayName: string } | null;
   persons?: { id: string; firstName: string; lastName: string; personNumber: string }[];
   investigations?: { id: string; title: string; caseNumber: string; status: InvestigationStatusKey; priority: InvestigationPriorityKey; classified: boolean; updatedAt: string; createdBy?: { displayName: string } | null }[];
   vehicles?: { id: string; vehicleNumber: string; plate: string | null; model: string | null }[];
-  clips?: { id: string; title: string; recordedAt: string | null }[];
   mapSpots?: PickedSpot[];
-  _count?: { children: number; persons: number; investigations: number; vehicles: number; clips: number; mapSpots: number };
+  _count?: { persons: number; investigations: number; vehicles: number; mapSpots: number };
 }
 
-/** Die vier Aktenarten, die eine Dauerakte als Register zusammenfasst. */
-type RegisterField = 'persons' | 'investigations' | 'vehicles' | 'clips';
+/** Die drei Aktenarten, die eine Dauerakte als Register zusammenfasst. */
+type RegisterField = 'persons' | 'investigations' | 'vehicles';
 type List = { items: Dossier[]; total: number }
 const href = (id: string) => `/investigations/dossiers?id=${encodeURIComponent(id)}`
 const photoUrl = (id: string) => `/api/investigations/photos/${id}/image`
@@ -70,28 +69,19 @@ function DossierView({ id }: { id: string | null }) {
   const [page, setPage] = useState(1)
   const [editor, setEditor] = useState<'new' | 'edit' | null>(null)
   const [quick, setQuick] = useState<RegisterField | null>(null)
-  const [attaching, setAttaching] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const { execute, loading: saving } = useApi()
   const detail = useFetch<Dossier>(id ? `/api/investigations/dossiers/${id}` : null)
+  // Die Liste gibt es nur in der Übersicht – eine Dauerakte führt keine
+  // Akten mehr unter sich, sondern Personen-, Einsatz- und Fahrzeugakten.
   const listQuery = new URLSearchParams({ search, page: String(page) })
-  if (id) listQuery.set('parentId', id)
   if (kind) listQuery.set('kind', kind)
-  const list = useFetch<List>(`/api/investigations/dossiers?${listQuery}`)
+  const list = useFetch<List>(id ? null : `/api/investigations/dossiers?${listQuery}`)
   const current = detail.data
   const refresh = () => { setEditor(null); void list.refetch(); void detail.refetch() }
 
-  // Untergeordnete Akten gliedern eine Dauerakte (Anwesen in einer Familienakte);
-  // Einsatzakten sind die einzelnen Vorgänge. Getrennte Reiter statt ein Raster.
-  const childCards: RegisterCardData[] = (list.data?.items ?? []).map(item => ({
-    key: `d-${item.id}`, href: href(item.id), variant: 'dossier' as const,
-    kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId,
-    code: item.address ?? undefined,
-    facts: [`${item._count?.children ?? 0} untergeordnete Akten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
-    author: item.createdBy?.displayName, date: item.updatedAt,
-  }))
   const galleryImages = (current?.photos ?? []).map(photo => ({ id: photo.id, title: photo.title, url: photoUrl(photo.id) }))
   const caseCards: RegisterCardData[] = (current?.investigations ?? []).map(item => ({
     key: `i-${item.id}`, href: `/investigations/${item.id}`, variant: 'investigation' as const,
@@ -101,10 +91,10 @@ function DossierView({ id }: { id: string | null }) {
   }))
 
   const tabs: TabItem[] = [
-    { id: 'unterakten', label: 'Untergeordnete Akten', count: list.data?.total ?? childCards.length },
     { id: 'einsatzakten', label: 'Einsatzakten', count: caseCards.length },
-    { id: 'beteiligte', label: 'Beteiligte', count: (current?.persons?.length ?? 0) + (current?.vehicles?.length ?? 0) },
-    { id: 'medien', label: 'Medien & Orte', count: (current?.photos?.length ?? 0) + (current?.clips?.length ?? 0) + (current?.mapSpots?.length ?? 0) },
+    { id: 'personen', label: 'Personenakten', count: current?.persons?.length ?? 0 },
+    { id: 'fahrzeuge', label: 'Fahrzeugakten', count: current?.vehicles?.length ?? 0 },
+    { id: 'medien', label: 'Medien & Orte', count: (current?.photos?.length ?? 0) + (current?.mapSpots?.length ?? 0) },
   ]
   const activeTab = resolveTab(params.get('tab'), tabs)
   const selectTab = (tab: string) => {
@@ -114,15 +104,14 @@ function DossierView({ id }: { id: string | null }) {
   }
 
   const factRows: [string, string][] = current ? [
-    ['Übergeordnet', current.parent?.title ?? 'Hauptakte'],
-    ['Untergeordnete Akten', String(list.data?.total ?? 0)],
     ['Einsatzakten', String(caseCards.length)],
+    ['Personenakten', String(current.persons?.length ?? 0)],
+    ['Fahrzeugakten', String(current.vehicles?.length ?? 0)],
     ['Angelegt von', current.createdBy?.displayName ?? 'Unbekannt'],
   ] : []
 
   const menuItems: ActionMenuItem[] = current ? [
     { id: 'edit', label: 'Akte bearbeiten', icon: Pencil, onSelect: () => setEditor('edit') },
-    { id: 'attach', label: 'Bestehende Akte einhängen', icon: FolderInput, onSelect: () => setAttaching(true) },
     ...(hasPermission(user, 'investigations:delete')
       ? [{ id: 'delete', label: 'Akte löschen', icon: Trash2, danger: true, onSelect: () => setDeleting(true) }]
       : []),
@@ -134,14 +123,11 @@ function DossierView({ id }: { id: string | null }) {
       description={id ? undefined : 'Familien, Sammlungen und Anwesen dauerhaft dokumentieren – über einzelne Einsätze hinweg.'}
       action={manage && <>
         {!id && <Button onClick={() => setEditor('new')}><Plus size={14} />Akte anlegen</Button>}
-        {current && <>
-          <Button onClick={() => setEditor('new')}><Plus size={14} />Untergeordnete Akte anlegen</Button>
-          <ActionMenu items={menuItems} />
-        </>}
+        {current && <ActionMenu items={menuItems} />}
       </>}
     />
     <InvestigationsNavigation active="dossiers" />
-    {id && <nav className="mb-4 flex flex-wrap gap-2 text-sm text-[#c4b5fd]" aria-label="Aktenpfad"><Link href="/investigations/dossiers">Dauerakten</Link>{current?.parent && <><span>/</span><Link href={href(current.parent.id)}>{current.parent.title}</Link></>}<span>/</span><span className="text-[#a6a6a6]">{current?.title ?? '…'}</span></nav>}
+    {id && <nav className="mb-4 flex flex-wrap gap-2 text-sm text-[#c4b5fd]" aria-label="Aktenpfad"><Link href="/investigations/dossiers">Dauerakten</Link><span>/</span><span className="text-[#a6a6a6]">{current?.title ?? '…'}</span></nav>}
     {(message || detail.error || list.error) && <p role="alert" className="mb-4 text-sm text-red-300">{message || detail.error || list.error}</p>}
 
     {/* Stammdaten der Akte selbst – ohne Aktionen, die woanders hingehören. */}
@@ -165,23 +151,6 @@ function DossierView({ id }: { id: string | null }) {
     {id ? <>
       <TabBar tabs={tabs} active={activeTab} onSelect={selectTab} label="Bereiche der Dauerakte" />
 
-      {activeTab === 'unterakten' && <SectionCard
-        title="Untergeordnete Akten"
-        count={childCards.length}
-        empty="Noch keine untergeordneten Akten. Eine untergeordnete Akte gliedert eine große Akte – etwa ein Anwesen innerhalb einer Familienakte."
-        action={manage && current ? <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="ghost" onClick={() => setAttaching(true)}><FolderInput size={13} />Bestehende einhängen</Button>
-          <Button size="sm" variant="ghost" onClick={() => setEditor('new')}><Plus size={13} />Untergeordnete Akte anlegen</Button>
-        </div> : null}
-      >
-        {list.loading
-          ? <p className="py-6 text-sm text-[#808080]">Untergeordnete Akten werden geladen …</p>
-          : <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{childCards.map(card => <RegisterCard key={card.key} card={card} />)}</div>
-            {(list.data?.total ?? 0) > 30 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
-          </>}
-      </SectionCard>}
-
       {activeTab === 'einsatzakten' && <SectionCard
         title="Einsatzakten"
         count={caseCards.length}
@@ -191,16 +160,15 @@ function DossierView({ id }: { id: string | null }) {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{caseCards.map(card => <RegisterCard key={card.key} card={card} />)}</div>
       </SectionCard>}
 
-      {activeTab === 'beteiligte' && current && <>
-        <SectionCard title="Personen / Familienmitglieder" count={current.persons?.length ?? 0} empty="Keine Personen verknüpft."
-          action={manage ? <Button size="sm" variant="ghost" onClick={() => setQuick('persons')}><Plus size={13} />Verknüpfen</Button> : null}>
-          <RegisterList entries={current.persons?.map(person => ({ id: person.id, href: `/investigations/persons?person=${person.id}`, label: `${person.firstName} ${person.lastName}`, hint: person.personNumber }))} />
-        </SectionCard>
-        <SectionCard title="Fahrzeugakten" count={current.vehicles?.length ?? 0} empty="Keine Fahrzeuge verknüpft."
-          action={manage ? <Button size="sm" variant="ghost" onClick={() => setQuick('vehicles')}><Plus size={13} />Verknüpfen</Button> : null}>
-          <RegisterList entries={current.vehicles?.map(vehicle => ({ id: vehicle.id, href: '/investigations/vehicles', label: [vehicle.plate, vehicle.model].filter(Boolean).join(' · ') || vehicle.vehicleNumber, hint: vehicle.vehicleNumber }))} />
-        </SectionCard>
-      </>}
+      {activeTab === 'personen' && current && <SectionCard title="Personenakten" count={current.persons?.length ?? 0} empty="Keine Personen verknüpft."
+        action={manage ? <Button size="sm" variant="ghost" onClick={() => setQuick('persons')}><Plus size={13} />Verknüpfen</Button> : null}>
+        <RegisterList entries={current.persons?.map(person => ({ id: person.id, href: `/investigations/persons?person=${person.id}`, label: `${person.firstName} ${person.lastName}`, hint: person.personNumber }))} />
+      </SectionCard>}
+
+      {activeTab === 'fahrzeuge' && current && <SectionCard title="Fahrzeugakten" count={current.vehicles?.length ?? 0} empty="Keine Fahrzeuge verknüpft."
+        action={manage ? <Button size="sm" variant="ghost" onClick={() => setQuick('vehicles')}><Plus size={13} />Verknüpfen</Button> : null}>
+        <RegisterList entries={current.vehicles?.map(vehicle => ({ id: vehicle.id, href: '/investigations/vehicles', label: [vehicle.plate, vehicle.model].filter(Boolean).join(' · ') || vehicle.vehicleNumber, hint: vehicle.vehicleNumber }))} />
+      </SectionCard>}
 
       {activeTab === 'medien' && current && <>
         <SectionCard title="Bilder" count={current.photos?.length ?? 0}
@@ -209,10 +177,6 @@ function DossierView({ id }: { id: string | null }) {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {galleryImages.map(photo => <LightboxThumb key={photo.id} image={photo} onOpen={setLightboxId} />)}
           </div>
-        </SectionCard>
-        <SectionCard title="Bodycams" count={current.clips?.length ?? 0} empty="Keine sichtbaren Bodycams verknüpft."
-          action={manage ? <Button size="sm" variant="ghost" onClick={() => setQuick('clips')}><Plus size={13} />Verknüpfen</Button> : null}>
-          <RegisterList entries={current.clips?.map(clip => ({ id: clip.id, href: '/investigations/clips', label: clip.title, hint: clip.recordedAt ? new Date(clip.recordedAt).toLocaleDateString('de-DE') : undefined }))} />
         </SectionCard>
         <SectionCard title="Kartenpunkte" count={current.mapSpots?.length ?? 0} empty="Keine Kartenpunkte verknüpft – hier stehen die Routen, Sammler und Anwesen dieser Akte."
           action={manage ? <Button size="sm" variant="ghost" onClick={() => setEditor('edit')}><Plus size={13} />Verknüpfen</Button> : null}>
@@ -245,18 +209,17 @@ function DossierView({ id }: { id: string | null }) {
           />
         : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{list.data.items.map(item => <RegisterCard key={item.id} card={{
             key: item.id, href: href(item.id), variant: 'dossier', kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId,
-            code: item.address ?? undefined, parentTitle: item.parent?.title,
-            facts: [`${item._count?.children ?? 0} untergeordnete Akten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
+            code: item.address ?? undefined,
+            facts: [`${item._count?.investigations ?? 0} Einsatzakten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.vehicles ?? 0} Fahrzeuge`],
             author: item.createdBy?.displayName, date: item.updatedAt,
           }} />)}</div>}
       {(list.data?.items.length ?? 0) > 0 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
     </>}
 
-    {editor && <DossierEditor existing={editor === 'edit' ? current ?? undefined : undefined} parent={editor === 'new' && current ? { id: current.id, title: current.title } : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
+    {editor && <DossierEditor existing={editor === 'edit' ? current ?? undefined : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
     {quick && current && <QuickRelationEditor dossier={current} field={quick} onClose={() => setQuick(null)} onSaved={refresh} />}
-    {attaching && current && <AttachExistingDossier dossier={current} onClose={() => setAttaching(false)} onSaved={() => { setAttaching(false); refresh() }} />}
     <ImageLightbox images={galleryImages} startId={lightboxId} onClose={() => setLightboxId(null)} />
-    <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen, Einsatzakten, Fahrzeuge und Bodycams bleiben bestehen. Akten, unter denen weitere Akten hängen, können nicht gelöscht werden.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push(current?.parentId ? href(current.parentId) : '/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
+    <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen-, Einsatz- und Fahrzeugakten bleiben bestehen.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push('/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
   </div>
 }
 
@@ -265,7 +228,6 @@ type RegisterCardData = {
   kind: string; title: string; photoId: string | null
   /** Aktenzeichen bei Einsatzakten, Adresse bei Dauerakten. */
   code?: string
-  parentTitle?: string
   status?: InvestigationStatusKey; priority?: InvestigationPriorityKey; classified?: boolean
   facts?: string[]
   author?: string; date?: string
@@ -299,7 +261,6 @@ function RegisterCard({ card }: { card: RegisterCardData }) {
       </div>}
 
       {card.code && <p className="truncate font-mono text-[11px] text-[#d4af37]">{card.code}</p>}
-      {card.parentTitle && <p className="truncate text-[11px] text-[#808080]">In {card.parentTitle}</p>}
       {card.facts?.length ? <p className="truncate text-[11px] text-[#808080]">{card.facts.join(' · ')}</p> : null}
 
       {(card.author || card.date) && <p className="mt-auto truncate border-t border-[#232323] pt-2 text-[10.5px] text-[#6a6a6a]">
@@ -334,7 +295,7 @@ const DOSSIER_KIND_HINTS: Record<DossierKind, string> = {
   PROPERTY: 'Ein Anwesen oder Objekt mit Adresse, Bewohnern und Beobachtungen.',
 }
 
-function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Dossier; parent?: { id: string; title: string }; onClose: () => void; onSaved: () => void }) {
+function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onClose: () => void; onSaved: () => void }) {
   const { user } = useAuth()
   const [title, setTitle] = useState(existing?.title ?? '')
   const [kind, setKind] = useState<DossierKind>(existing?.kind ?? 'COLLECTION')
@@ -342,22 +303,16 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
   const [address, setAddress] = useState(existing?.address ?? '')
   const [photoId, setPhotoId] = useState(existing?.photoId ?? null)
   const [photos, setPhotos] = useState<CatalogPhoto[]>(existing?.photos?.map(photo => ({ id: photo.id, title: photo.title, url: photoUrl(photo.id) })) ?? [])
-  const [selectedParent, setSelectedParent] = useState<{ id: string; title: string } | null>(existing?.parent ?? parent ?? null)
-  const [parentSearch, setParentSearch] = useState('')
-  const [chooseParent, setChooseParent] = useState(false)
   const [personIds, setPersonIds] = useState(existing?.persons?.map(p => p.id) ?? [])
   const [investigationIds, setInvestigationIds] = useState(existing?.investigations?.map(i => i.id) ?? [])
   const [vehicleIds, setVehicleIds] = useState(existing?.vehicles?.map(v => v.id) ?? [])
-  const [clipIds, setClipIds] = useState(existing?.clips?.map(c => c.id) ?? [])
   const [mapSpots, setMapSpots] = useState<PickedSpot[]>(existing?.mapSpots ?? [])
   const [failure, setFailure] = useState('')
   const persons = useRegisterOptions('persons')
   const cases = useRegisterOptions('investigations')
   const vehicles = useRegisterOptions('vehicles')
-  const clips = useRegisterOptions('clips')
-  const optionsLoading = persons.loading || cases.loading || vehicles.loading || clips.loading
-  const optionsError = persons.error || cases.error || vehicles.error || clips.error
-  const parents = useFetch<List>(chooseParent ? `/api/investigations/dossiers?search=${encodeURIComponent(parentSearch)}` : null)
+  const optionsLoading = persons.loading || cases.loading || vehicles.loading
+  const optionsError = persons.error || cases.error || vehicles.error
   const { execute, loading } = useApi()
 
   const save = async () => {
@@ -371,8 +326,7 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
           address: address || null,
           photoId,
           photoIds: photos.map(photo => photo.id),
-          parentId: selectedParent?.id ?? null,
-          personIds, investigationIds, vehicleIds, clipIds,
+          personIds, investigationIds, vehicleIds,
           mapSpotIds: mapSpots.map(spot => spot.id),
         }),
       })
@@ -396,18 +350,6 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
           </button>)}
         </div>
         <Input label="Titel" value={title} onChange={e => setTitle(e.target.value)} maxLength={200} placeholder="z. B. Familie Moretti" />
-        <div className="space-y-2">
-          <p className="text-sm text-[#a6a6a6]">Übergeordnete Akte: {selectedParent?.title ?? 'Keine · Hauptakte'}</p>
-          <div className="flex gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setChooseParent(!chooseParent)}>Übergeordnete Akte wählen</Button>
-            {selectedParent && <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedParent(null)}>Als Hauptakte führen</Button>}
-          </div>
-          {chooseParent && <>
-            <Input placeholder="Akte suchen …" value={parentSearch} onChange={e => setParentSearch(e.target.value)} />
-            {parents.error && <p role="alert" className="text-xs text-red-300">{parents.error}</p>}
-            <div className="max-h-32 overflow-y-auto">{parents.data?.items.filter(item => item.id !== existing?.id).map(item => <button type="button" className="block w-full p-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323]" key={item.id} onClick={() => { setSelectedParent(item); setChooseParent(false) }}>{item.title}</button>)}</div>
-          </>}
-        </div>
       </div>,
     },
     {
@@ -443,7 +385,6 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
         <RelationPicker label="Personen / Familienmitglieder" options={persons.options} value={personIds} onChange={setPersonIds} />
         <RelationPicker label="Einsatzakten" options={cases.options} value={investigationIds} onChange={setInvestigationIds} />
         <RelationPicker label="Fahrzeugakten" options={vehicles.options} value={vehicleIds} onChange={setVehicleIds} />
-        <RelationPicker label="Bodycams" options={clips.options} value={clipIds} onChange={setClipIds} />
       </div>,
     },
     {
@@ -453,13 +394,11 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
         {([
           ['Kategorie', DOSSIER_KINDS[kind]],
           ['Titel', title || '—'],
-          ['Übergeordnet', selectedParent?.title ?? 'Hauptakte'],
           ['Adresse', address || '—'],
           ['Kartenpunkte', mapSpots.length ? mapSpots.map(spot => spot.title).join(', ') : 'Keine'],
           ['Personen', String(personIds.length)],
           ['Einsatzakten', String(investigationIds.length)],
           ['Fahrzeuge', String(vehicleIds.length)],
-          ['Bodycams', String(clipIds.length)],
         ] as [string, string][]).map(([label, value]) => <div key={label} className="flex flex-wrap gap-x-3 border-b border-[#1e1e1e] pb-2">
           <dt className="w-36 shrink-0 text-[#808080]">{label}</dt>
           <dd className="min-w-0 text-[#d4d4d4]">{value}</dd>
@@ -482,17 +421,16 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
   </Modal>
 }
 
-/** Auswahl einer bestehenden Dauerakte. Ohne Suchbegriff liefert die API nur
- *  Hauptakten – deshalb der Hinweis im Platzhalter. */
+/** Auswahl einer bestehenden Dauerakte. */
 function DossierPicker({ title, excludeIds, busy, failure, onPick, onClose }: { title: string; excludeIds: string[]; busy: boolean; failure?: string; onPick: (dossier: Dossier) => void; onClose: () => void }) {
   const [search, setSearch] = useState('')
   const list = useFetch<List>(`/api/investigations/dossiers?search=${encodeURIComponent(search)}`)
   const options = (list.data?.items ?? []).filter(item => !excludeIds.includes(item.id))
   return <Modal open onClose={busy ? () => {} : onClose} title={title} size="lg">
     <div className="space-y-3">
-      <Input aria-label="Dauerakte suchen" placeholder="Akte suchen … (leer = nur Hauptakten)" value={search} onChange={e => setSearch(e.target.value)} />
+      <Input aria-label="Dauerakte suchen" placeholder="Akte suchen …" value={search} onChange={e => setSearch(e.target.value)} />
       {(failure || list.error) && <p role="alert" className="text-sm text-red-300">{failure || list.error}</p>}
-      {list.loading ? <p className="text-sm text-[#808080]">Akten werden geladen …</p> : !options.length ? <p className="text-sm text-[#808080]">Keine passende Akte gefunden.</p> : <ul className="max-h-72 space-y-1 overflow-y-auto">{options.map(item => <li key={item.id}><button type="button" disabled={busy} className="block w-full rounded px-2 py-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323] disabled:opacity-50" onClick={() => onPick(item)}>{DOSSIER_KINDS[item.kind]} · {item.title}{item.parent ? <span className="text-[#808080]"> · in {item.parent.title}</span> : null}</button></li>)}</ul>}
+      {list.loading ? <p className="text-sm text-[#808080]">Akten werden geladen …</p> : !options.length ? <p className="text-sm text-[#808080]">Keine passende Akte gefunden.</p> : <ul className="max-h-72 space-y-1 overflow-y-auto">{options.map(item => <li key={item.id}><button type="button" disabled={busy} className="block w-full rounded px-2 py-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323] disabled:opacity-50" onClick={() => onPick(item)}>{DOSSIER_KINDS[item.kind]} · {item.title}</button></li>)}</ul>}
       <div className="flex justify-end border-t border-[#232323] pt-3"><Button type="button" variant="ghost" disabled={busy} onClick={onClose}>Abbrechen</Button></div>
     </div>
   </Modal>
@@ -538,14 +476,13 @@ function LinkedDossiers({ relation, recordId, heading }: { relation: 'person' | 
 /**
  * Beschreibt eine Registerrubrik einmal zentral: woher die Auswahl kommt, wie
  * ein Eintrag heißt und unter welchem Feld die API sie erwartet. Editor und
- * Schnellzuordnung greifen beide darauf zu, damit die vier Aktenarten nicht
+ * Schnellzuordnung greifen beide darauf zu, damit die drei Aktenarten nicht
  * an zwei Stellen getrennt gepflegt werden müssen.
  */
 const REGISTER_FIELDS: Record<RegisterField, { label: string; endpoint: string; payloadKey: string }> = {
   persons: { label: 'Personen / Familienmitglieder', endpoint: '/api/persons', payloadKey: 'personIds' },
   investigations: { label: 'Einsatzakten', endpoint: '/api/investigations', payloadKey: 'investigationIds' },
   vehicles: { label: 'Fahrzeugakten', endpoint: '/api/vehicles', payloadKey: 'vehicleIds' },
-  clips: { label: 'Bodycams', endpoint: '/api/investigations/clips', payloadKey: 'clipIds' },
 }
 
 type RegisterRow = { id: string; firstName?: string; lastName?: string; personNumber?: string; caseNumber?: string; title?: string; vehicleNumber?: string; plate?: string | null; model?: string | null; recordedAt?: string | null }
@@ -553,12 +490,11 @@ type RegisterRow = { id: string; firstName?: string; lastName?: string; personNu
 function registerLabel(field: RegisterField, row: RegisterRow): string {
   if (field === 'persons') return `${row.firstName} ${row.lastName} (${row.personNumber})`
   if (field === 'investigations') return `${row.caseNumber} · ${row.title}`
-  if (field === 'vehicles') return `${[row.plate, row.model].filter(Boolean).join(' · ') || row.vehicleNumber} (${row.vehicleNumber})`
-  return row.recordedAt ? `${row.title} · ${new Date(row.recordedAt).toLocaleDateString('de-DE')}` : (row.title ?? row.id)
+  return `${[row.plate, row.model].filter(Boolean).join(' · ') || row.vehicleNumber} (${row.vehicleNumber})`
 }
 
 function currentIds(dossier: Dossier, field: RegisterField): string[] {
-  const entries = field === 'persons' ? dossier.persons : field === 'investigations' ? dossier.investigations : field === 'vehicles' ? dossier.vehicles : dossier.clips
+  const entries = field === 'persons' ? dossier.persons : field === 'investigations' ? dossier.investigations : dossier.vehicles
   return entries?.map(entry => entry.id) ?? []
 }
 
@@ -582,21 +518,6 @@ function QuickRelationEditor({ dossier, field, onClose, onSaved }: { dossier: Do
       <div className="flex justify-end gap-2"><Button type="button" variant="ghost" disabled={loading} onClick={onClose}>Abbrechen</Button><Button type="submit" loading={loading} disabled={optionsLoading || !!optionsError}>Speichern</Button></div>
     </form>
   </Modal>
-}
-
-/** Hängt eine bereits bestehende Dauerakte unter die aktuelle. Zyklen und
- *  Tiefenlimit prüft `validateDossierParent` serverseitig. */
-function AttachExistingDossier({ dossier, onClose, onSaved }: { dossier: Dossier; onClose: () => void; onSaved: () => void }) {
-  const [failure, setFailure] = useState('')
-  const { execute, loading } = useApi()
-  return <DossierPicker
-    title={`Bestehende Akte unter „${dossier.title}“ einhängen`}
-    excludeIds={[dossier.id]}
-    busy={loading}
-    failure={failure}
-    onClose={onClose}
-    onPick={async child => { setFailure(''); try { await execute(`/api/investigations/dossiers/${child.id}`, { method: 'PATCH', body: JSON.stringify({ parentId: dossier.id }) }); onSaved() } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Einhängen fehlgeschlagen') } }}
-  />
 }
 
 export function PersonDossiers({ personId }: { personId: string }) {

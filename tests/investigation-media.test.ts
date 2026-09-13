@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { validateDossierParent, dossierSchema } from '../src/lib/dossiers-server'
+import { dossierSchema } from '../src/lib/dossiers-server'
 import { validateIdList } from '../src/lib/investigations'
 import { detectPhotoType, isDiscordImageUrl, photoPath } from '../src/lib/investigation-photos'
 import { activateChangeTracking, currentChangeTracking, withoutChangeTracking } from '../src/lib/change-history-context'
@@ -12,17 +12,6 @@ test('Background jobs do not become part of a request undo snapshot', async () =
     assert.equal(currentChangeTracking(), undefined)
   })
   assert.equal(currentChangeTracking()?.changeSetId, 'request')
-})
-
-test('Dossier moves reject self-parenting, descendants, corrupt cycles and missing parents', async () => {
-  const parents: Record<string, string | null> = { family: null, property: 'family', room: 'property', cycleA: 'cycleB', cycleB: 'cycleA' }
-  const lookup = async (id: string) => id in parents ? { parentId: parents[id] } : null
-  await validateDossierParent('room', 'family', lookup)
-  await validateDossierParent('family', null, lookup)
-  await assert.rejects(validateDossierParent('family', 'family', lookup), /selbst/)
-  await assert.rejects(validateDossierParent('family', 'room', lookup), /selbst/)
-  await assert.rejects(validateDossierParent('family', 'cycleA', lookup), /selbst/)
-  await assert.rejects(validateDossierParent('family', 'missing', lookup), /nicht gefunden/)
 })
 
 test('Dossiers accept fixed categories and reject invalid or unbounded fields', () => {
@@ -40,6 +29,13 @@ test('Dossiers nehmen Kartenpunkte an und begrenzen ihre Zahl', () => {
   assert.deepEqual(parsed.mapSpotIds, ['spot-1', 'spot-2'])
   assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', mapSpotIds: Array(201).fill('x') }).success, false)
   assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', mapSpotIds: [''] }).success, false)
+})
+
+test('Dauerakten führen weder eine Elternakte noch Bodycams', () => {
+  // Der Aktenbaum und die Bodycam-Kuratierung sind entfallen: eine Dauerakte
+  // führt Personen-, Einsatz- und Fahrzeugakten sowie Kartenpunkte und Bilder.
+  assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', parentId: 'x' }).success, false)
+  assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', clipIds: ['x'] }).success, false)
 })
 
 test('Dauerakten nehmen mehrere Bilder an und begrenzen ihre Zahl', () => {

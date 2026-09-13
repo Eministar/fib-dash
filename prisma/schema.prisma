@@ -1884,8 +1884,6 @@ model BodycamClip {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  dossiers Dossier[] @relation("DossierClips")
-
   @@index([investigationId, recordedAt])
   @@index([compressionStatus, createdAt])
   @@index([entryId])
@@ -2124,20 +2122,15 @@ model Dossier {
   /// Weitere Bilder neben dem Titelbild. Die Kacheln zeigen `photo`, damit das
   /// Bild dort stabil bleibt – eine n:m-Relation hat keine feste Reihenfolge.
   photos         InvestigationPhoto[] @relation("DossierPhotos")
-  parentId       String?
-  parent         Dossier?             @relation("DossierTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  children       Dossier[]            @relation("DossierTree")
   persons        Person[]             @relation("DossierPersons")
   investigations Investigation[]      @relation("DossierInvestigations")
   vehicles       Vehicle[]            @relation("DossierVehicles")
   mapSpots       MapSpot[]            @relation("DossierMapSpots")
-  clips          BodycamClip[]        @relation("DossierClips")
   createdById    String?
   createdBy      User?                @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
-  @@index([parentId, kind])
   @@index([kind, updatedAt])
 }
 
