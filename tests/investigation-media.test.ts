@@ -42,6 +42,16 @@ test('Dossiers nehmen Kartenpunkte an und begrenzen ihre Zahl', () => {
   assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', mapSpotIds: [''] }).success, false)
 })
 
+test('Dauerakten nehmen mehrere Bilder an und begrenzen ihre Zahl', () => {
+  const parsed = dossierSchema.parse({ title: 'Familie Moretti', kind: 'FAMILY', photoId: 'titel', photoIds: ['a', 'b'] })
+  assert.deepEqual(parsed.photoIds, ['a', 'b'])
+  // Das Titelbild bleibt ein eigenes Feld – die Kacheln brauchen ein stabiles Bild.
+  assert.equal(parsed.photoId, 'titel')
+  assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', photoIds: Array(101).fill('x') }).success, false)
+  assert.equal(dossierSchema.safeParse({ title: 'A', kind: 'FAMILY', photoIds: [''] }).success, false)
+  assert.equal(dossierSchema.parse({ title: 'A', kind: 'FAMILY' }).photoIds, undefined)
+})
+
 test('Photo imports restrict remote addresses, file paths and image types', () => {
   assert.equal(isDiscordImageUrl('https://cdn.discordapp.com/attachments/1/2/photo.png?ex=123'), true)
   for (const url of ['http://cdn.discordapp.com/attachments/x', 'https://cdn.discordapp.com.evil.test/attachments/x', 'https://user@cdn.discordapp.com/attachments/x', 'https://127.0.0.1/attachments/x', 'https://cdn.discordapp.com:444/attachments/x', 'https://cdn.discordapp.com/other']) assert.equal(isDiscordImageUrl(url), false)

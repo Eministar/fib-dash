@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { EyeOff, FolderInput, FolderOpen, Folders, FolderSearch, ImageOff, Plus, Pencil, MapPin, Trash2 } from 'lucide-react'
+import { EyeOff, FolderInput, FolderOpen, Folders, FolderSearch, Image as ImageIcon, ImageOff, Plus, Pencil, MapPin, Trash2 } from 'lucide-react'
 import { DOSSIER_KINDS, type DossierKind } from '@/lib/dossiers'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
@@ -26,7 +26,8 @@ import { TabBar, resolveTab, type TabItem } from '@/components/ui/tab-bar'
 import { SpotPickerField, type PickedSpot } from '@/components/map/spot-picker'
 import { Wizard, type WizardStep } from '@/components/ui/wizard'
 import { mapCategory } from '@/lib/map-spots'
-import { PhotoField } from './photo-catalog'
+import { PhotoField, PhotoPicker, type CatalogPhoto } from './photo-catalog'
+import { ImageLightbox, LightboxThumb } from '@/components/ui/image-lightbox'
 import { PriorityBadge, StatusBadge } from './investigation-badges'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
@@ -35,7 +36,7 @@ import type { InvestigationPriorityKey, InvestigationStatusKey } from '@/lib/inv
 
 type Dossier = {
   id: string; title: string; kind: DossierKind; description: string | null; address: string | null;
-  photoId: string | null; parentId: string | null; parent?: { id: string; title: string } | null;
+  photoId: string | null; photos?: { id: string; title: string }[]; parentId: string | null; parent?: { id: string; title: string } | null;
   updatedAt?: string; createdBy?: { displayName: string } | null;
   persons?: { id: string; firstName: string; lastName: string; personNumber: string }[];
   investigations?: { id: string; title: string; caseNumber: string; status: InvestigationStatusKey; priority: InvestigationPriorityKey; classified: boolean; updatedAt: string; createdBy?: { displayName: string } | null }[];
@@ -71,6 +72,7 @@ function DossierView({ id }: { id: string | null }) {
   const [quick, setQuick] = useState<RegisterField | null>(null)
   const [attaching, setAttaching] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [lightboxId, setLightboxId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const { execute, loading: saving } = useApi()
   const detail = useFetch<Dossier>(id ? `/api/investigations/dossiers/${id}` : null)
@@ -90,6 +92,7 @@ function DossierView({ id }: { id: string | null }) {
     facts: [`${item._count?.children ?? 0} untergeordnete Akten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.investigations ?? 0} Einsatzakten`],
     author: item.createdBy?.displayName, date: item.updatedAt,
   }))
+  const galleryImages = (current?.photos ?? []).map(photo => ({ id: photo.id, title: photo.title, url: photoUrl(photo.id) }))
   const caseCards: RegisterCardData[] = (current?.investigations ?? []).map(item => ({
     key: `i-${item.id}`, href: `/investigations/${item.id}`, variant: 'investigation' as const,
     kind: 'Einsatzakte', title: item.title, photoId: null,
@@ -101,7 +104,7 @@ function DossierView({ id }: { id: string | null }) {
     { id: 'unterakten', label: 'Untergeordnete Akten', count: list.data?.total ?? childCards.length },
     { id: 'einsatzakten', label: 'Einsatzakten', count: caseCards.length },
     { id: 'beteiligte', label: 'Beteiligte', count: (current?.persons?.length ?? 0) + (current?.vehicles?.length ?? 0) },
-    { id: 'medien', label: 'Medien & Orte', count: (current?.clips?.length ?? 0) + (current?.mapSpots?.length ?? 0) },
+    { id: 'medien', label: 'Medien & Orte', count: (current?.photos?.length ?? 0) + (current?.clips?.length ?? 0) + (current?.mapSpots?.length ?? 0) },
   ]
   const activeTab = resolveTab(params.get('tab'), tabs)
   const selectTab = (tab: string) => {
@@ -200,6 +203,13 @@ function DossierView({ id }: { id: string | null }) {
       </>}
 
       {activeTab === 'medien' && current && <>
+        <SectionCard title="Bilder" count={current.photos?.length ?? 0}
+          empty="Noch keine weiteren Bilder. Das Titelbild steht oben in den Stammdaten."
+          action={manage ? <Button size="sm" variant="ghost" onClick={() => setEditor('edit')}><ImageIcon size={13} />Bilder verwalten</Button> : null}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {galleryImages.map(photo => <LightboxThumb key={photo.id} image={photo} onOpen={setLightboxId} />)}
+          </div>
+        </SectionCard>
         <SectionCard title="Bodycams" count={current.clips?.length ?? 0} empty="Keine sichtbaren Bodycams verknüpft."
           action={manage ? <Button size="sm" variant="ghost" onClick={() => setQuick('clips')}><Plus size={13} />Verknüpfen</Button> : null}>
           <RegisterList entries={current.clips?.map(clip => ({ id: clip.id, href: '/investigations/clips', label: clip.title, hint: clip.recordedAt ? new Date(clip.recordedAt).toLocaleDateString('de-DE') : undefined }))} />
@@ -245,6 +255,7 @@ function DossierView({ id }: { id: string | null }) {
     {editor && <DossierEditor existing={editor === 'edit' ? current ?? undefined : undefined} parent={editor === 'new' && current ? { id: current.id, title: current.title } : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
     {quick && current && <QuickRelationEditor dossier={current} field={quick} onClose={() => setQuick(null)} onSaved={refresh} />}
     {attaching && current && <AttachExistingDossier dossier={current} onClose={() => setAttaching(false)} onSaved={() => { setAttaching(false); refresh() }} />}
+    <ImageLightbox images={galleryImages} startId={lightboxId} onClose={() => setLightboxId(null)} />
     <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen, Einsatzakten, Fahrzeuge und Bodycams bleiben bestehen. Akten, unter denen weitere Akten hängen, können nicht gelöscht werden.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push(current?.parentId ? href(current.parentId) : '/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
   </div>
 }
@@ -330,6 +341,7 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
   const [description, setDescription] = useState(existing?.description ?? '')
   const [address, setAddress] = useState(existing?.address ?? '')
   const [photoId, setPhotoId] = useState(existing?.photoId ?? null)
+  const [photos, setPhotos] = useState<CatalogPhoto[]>(existing?.photos?.map(photo => ({ id: photo.id, title: photo.title, url: photoUrl(photo.id) })) ?? [])
   const [selectedParent, setSelectedParent] = useState<{ id: string; title: string } | null>(existing?.parent ?? parent ?? null)
   const [parentSearch, setParentSearch] = useState('')
   const [chooseParent, setChooseParent] = useState(false)
@@ -358,6 +370,7 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
           description: description || null,
           address: address || null,
           photoId,
+          photoIds: photos.map(photo => photo.id),
           parentId: selectedParent?.id ?? null,
           personIds, investigationIds, vehicleIds, clipIds,
           mapSpotIds: mapSpots.map(spot => spot.id),
@@ -404,6 +417,11 @@ function DossierEditor({ existing, parent, onClose, onSaved }: { existing?: Doss
       content: <div className="space-y-4">
         <Input label="Adresse / Standort" value={address} onChange={e => setAddress(e.target.value)} maxLength={300} placeholder="z. B. Anwesen am Lake Vinewood" />
         <PhotoField value={photoId ? photoUrl(photoId) : null} onChange={photo => setPhotoId(photo?.id ?? null)} />
+        <div className="space-y-2">
+          <p className="text-[12.5px] font-medium text-[#aeaeae]">Weitere Bilder</p>
+          <p className="text-[11.5px] text-[#808080]">Stehen in der Akte unter „Medien & Orte“. Auf den Kacheln bleibt das Titelbild.</p>
+          <PhotoPicker value={photos} onChange={setPhotos} />
+        </div>
         <Textarea label="Informationen und Notizen" value={description} onChange={e => setDescription(e.target.value)} maxLength={30000} rows={6} placeholder="Hintergründe, Bewohner, Eigentümer, Beobachtungen …" />
       </div>,
     },

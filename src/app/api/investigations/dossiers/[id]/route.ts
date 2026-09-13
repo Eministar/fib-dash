@@ -11,6 +11,7 @@ export async function GET(_req: Request, { params }: Context) {
     const user = await requirePermission('investigations:view')
     const item = await prisma.dossier.findUnique({ where: { id: (await params).id }, include: {
       photo: { select: { id: true, title: true } }, parent: { select: { id: true, title: true } },
+      photos: { select: { id: true, title: true }, orderBy: { createdAt: 'desc' } },
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
       investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, classified: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
       vehicles: { select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' } },

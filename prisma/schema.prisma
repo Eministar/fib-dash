@@ -12,40 +12,42 @@ datasource db {
 
 // Confidential: never include these models in general audit/change history.
 model LeadershipGroup {
-  id String @id @default(cuid())
-  name String @db.VarChar(100)
-  families Json
-  version Int @default(1)
-  channelId String? @unique
-  guildId String?
-  channelManaged Boolean @default(true)
+  id                String                  @id @default(cuid())
+  name              String                  @db.VarChar(100)
+  families          Json
+  version           Int                     @default(1)
+  channelId         String?                 @unique
+  guildId           String?
+  channelManaged    Boolean                 @default(true)
   overviewMessageId String?
-  overviewPinned Boolean @default(false)
-  syncPending Boolean @default(true)
-  syncLeaseUntil DateTime?
-  nextSyncAt DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  members LeadershipGroupMember[]
-  events LeadershipGroupEvent[]
+  overviewPinned    Boolean                 @default(false)
+  syncPending       Boolean                 @default(true)
+  syncLeaseUntil    DateTime?
+  nextSyncAt        DateTime                @default(now())
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  members           LeadershipGroupMember[]
+  events            LeadershipGroupEvent[]
 }
 
 model LeadershipGroupMember {
   groupId String
-  userId String
-  group LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId  String
+  group   LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   @@id([groupId, userId])
   @@index([userId])
 }
 
 model LeadershipGroupEvent {
-  id String @id @default(cuid())
-  groupId String
-  kind String @db.VarChar(20) @default("info")
-  text String @db.Text
-  sentAt DateTime?
-  createdAt DateTime @default(now())
-  group LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  id        String          @id @default(cuid())
+  groupId   String
+  kind      String          @default("info") @db.VarChar(20)
+  text      String          @db.Text
+  sentAt    DateTime?
+  createdAt DateTime        @default(now())
+  group     LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   @@index([groupId, sentAt])
 }
 
@@ -216,29 +218,29 @@ model UserGroup {
 }
 
 model User {
-  recordShares         RecordShare[]
-  corruptionChecks     CorruptionCheck[] @relation("CorruptionCheckCreator")
-  id                   String            @id @default(cuid())
-  username             String            @unique
-  passwordHash         String?
-  displayName          String
-  discordId            String?
-  discordUsername      String?
-  discordGlobalName    String?
-  discordAvatar        String?
-  discordDiscriminator String?
-  lastLoginAt          DateTime?
-  role                 UserRole          @default(READONLY)
-  groupId              String?
-  group                UserGroup?        @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  permissions          Json?
+  recordShares           RecordShare[]
+  corruptionChecks       CorruptionCheck[] @relation("CorruptionCheckCreator")
+  id                     String            @id @default(cuid())
+  username               String            @unique
+  passwordHash           String?
+  displayName            String
+  discordId              String?
+  discordUsername        String?
+  discordGlobalName      String?
+  discordAvatar          String?
+  discordDiscriminator   String?
+  lastLoginAt            DateTime?
+  role                   UserRole          @default(READONLY)
+  groupId                String?
+  group                  UserGroup?        @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  permissions            Json?
   /// Beim Discord-Login gespiegelte Rechte aus `discord.authRolePermissionMap`
   /// (Discord-Rolle -> Rechte). Wird bei jedem Login neu gesetzt und getrennt von
   /// `permissions` gehalten, damit manuell vergebene Rechte nicht überschrieben werden.
   /// Nullable, damit additive MariaDB-Updates bestehende Zeilen nicht brechen.
   discordRolePermissions Json?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
 
   /// Agent-Personalakte, die zu diesem Dashboard-Account gehört.
   agentProfile Agent? @relation("AgentAccount")
@@ -2098,36 +2100,42 @@ model InvestigationPhoto {
   uploadedById String?
   uploadedBy   User?   @relation("PhotoUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
 
-  dossiers       Dossier[]
-  investigations Investigation[] @relation("InvestigationPhotos")
-  persons        Person[]        @relation("PersonPhoto")
-  vehicles       Vehicle[]       @relation("VehiclePhoto")
+  /// Titelbild-Zuordnung (1:n) – genau ein Titelbild je Akte.
+  dossiers         Dossier[]
+  /// Weitere Bilder einer Dauerakte (n:m) – die Galerie neben dem Titelbild.
+  dossierGalleries Dossier[]       @relation("DossierPhotos")
+  investigations   Investigation[] @relation("InvestigationPhotos")
+  persons          Person[]        @relation("PersonPhoto")
+  vehicles         Vehicle[]       @relation("VehiclePhoto")
 
   @@index([createdAt])
   @@index([uploadedById])
 }
 
 model Dossier {
-  id             String              @id @default(cuid())
-  title          String              @db.VarChar(200)
+  id             String               @id @default(cuid())
+  title          String               @db.VarChar(200)
   /// FAMILY | COLLECTION | PROPERTY | FILE
-  kind           String              @default("COLLECTION") @db.VarChar(20)
-  description    String?             @db.Text
-  address        String?             @db.VarChar(300)
+  kind           String               @default("COLLECTION") @db.VarChar(20)
+  description    String?              @db.Text
+  address        String?              @db.VarChar(300)
   photoId        String?
-  photo          InvestigationPhoto? @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  photo          InvestigationPhoto?  @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  /// Weitere Bilder neben dem Titelbild. Die Kacheln zeigen `photo`, damit das
+  /// Bild dort stabil bleibt – eine n:m-Relation hat keine feste Reihenfolge.
+  photos         InvestigationPhoto[] @relation("DossierPhotos")
   parentId       String?
-  parent         Dossier?            @relation("DossierTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  children       Dossier[]           @relation("DossierTree")
-  persons        Person[]            @relation("DossierPersons")
-  investigations Investigation[]     @relation("DossierInvestigations")
-  vehicles       Vehicle[]           @relation("DossierVehicles")
-  mapSpots       MapSpot[]           @relation("DossierMapSpots")
-  clips          BodycamClip[]       @relation("DossierClips")
+  parent         Dossier?             @relation("DossierTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  children       Dossier[]            @relation("DossierTree")
+  persons        Person[]             @relation("DossierPersons")
+  investigations Investigation[]      @relation("DossierInvestigations")
+  vehicles       Vehicle[]            @relation("DossierVehicles")
+  mapSpots       MapSpot[]            @relation("DossierMapSpots")
+  clips          BodycamClip[]        @relation("DossierClips")
   createdById    String?
-  createdBy      User?               @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdBy      User?                @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([parentId, kind])
   @@index([kind, updatedAt])

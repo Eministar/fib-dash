@@ -13,6 +13,7 @@ export const dossierSchema = z.object({
   description: z.string().trim().max(30000).nullable().optional(),
   address: z.string().trim().max(300).nullable().optional(),
   photoId: id.nullable().optional(),
+  photoIds: z.array(id).max(100).optional(),
   parentId: id.nullable().optional(),
   personIds: z.array(id).max(200).optional(),
   investigationIds: z.array(id).max(200).optional(),
@@ -58,6 +59,8 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
     if (id && !existing) throw new DossierError('Akte nicht gefunden', 404)
     if (input.parentId !== undefined) await validateDossierParent(id, input.parentId, parentId => tx.dossier.findUnique({ where: { id: parentId }, select: { parentId: true } }))
     if (input.photoId && !await tx.investigationPhoto.findUnique({ where: { id: input.photoId }, select: { id: true } })) throw new DossierError('Bild nicht gefunden', 404)
+    const photoIds = input.photoIds ? [...new Set(input.photoIds)] : undefined
+    if (photoIds && await tx.investigationPhoto.count({ where: { id: { in: photoIds } } }) !== photoIds.length) throw new DossierError('Bild nicht gefunden', 404)
     const personIds = input.personIds ? [...new Set(input.personIds)] : undefined
     if (personIds && await tx.person.count({ where: { id: { in: personIds } } }) !== personIds.length) throw new DossierError('Person nicht gefunden', 404)
     const investigationIds = input.investigationIds ? [...new Set(input.investigationIds)] : undefined
@@ -74,10 +77,13 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
     // Updating visible links must not disconnect classified cases hidden from this user.
     const visibleLinks = id && investigationIds ? await tx.investigation.findMany({ where: { AND: [investigationVisibilityWhere(user), { dossiers: { some: { id } } }] }, select: { id: true } }) : []
     const visibleClipLinks = id && clipIds ? await tx.bodycamClip.findMany({ where: { AND: [clipVisibility, { dossiers: { some: { id } } }] }, select: { id: true } }) : []
-    const { personIds: _persons, investigationIds: _investigations, vehicleIds: _vehicles, clipIds: _clips, mapSpotIds: _mapSpots, ...fields } = input
-    void _persons; void _investigations; void _vehicles; void _clips; void _mapSpots
+    const { personIds: _persons, investigationIds: _investigations, vehicleIds: _vehicles, clipIds: _clips, mapSpotIds: _mapSpots, photoIds: _photos, ...fields } = input
+    void _persons; void _investigations; void _vehicles; void _clips; void _mapSpots; void _photos
     const relations = {
       ...(personIds ? { persons: { set: personIds.map(id => ({ id })) } } : {}),
+      // Bilder sind nicht sichtbarkeitsbeschränkt – `set` kann nichts trennen,
+      // was der Bearbeiter nicht sieht.
+      ...(photoIds ? { photos: { set: photoIds.map(id => ({ id })) } } : {}),
       ...(investigationIds ? { investigations: { disconnect: visibleLinks, connect: investigationIds.map(id => ({ id })) } } : {}),
       ...(vehicleIds ? { vehicles: { set: vehicleIds.map(id => ({ id })) } } : {}),
       // `set` genügt: Kartenpunkte sind nicht sichtbarkeitsbeschränkt, ein
@@ -93,6 +99,7 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
           investigations: { connect: (investigationIds ?? []).map(id => ({ id })) },
           vehicles: { connect: (vehicleIds ?? []).map(id => ({ id })) },
           mapSpots: { connect: (mapSpotIds ?? []).map(id => ({ id })) },
+          photos: { connect: (photoIds ?? []).map(id => ({ id })) },
           clips: { connect: (clipIds ?? []).map(id => ({ id })) },
         } })
     await createAuditLog({ action: id ? 'DOSSIER_UPDATED' : 'DOSSIER_CREATED', userId: user.id, oldValue: existing ? JSON.stringify(existing) : undefined, newValue: JSON.stringify(dossier) }, tx)
