@@ -13,16 +13,19 @@ nachgetragen werden — und bei jeder neuen Akte wieder.
 ## Ziel
 
 Eine Dauerakte kann Ermittlungsgruppen führen. Wer Mitglied einer solchen Gruppe
-ist, sieht alle Einsatzakten dieser Dauerakte **und aller Akten darunter**,
-Verschlusssachen eingeschlossen. Tritt jemand der Gruppe bei, hat er den Zugriff
-sofort; tritt er aus, ist er sofort weg.
+ist, sieht alle Einsatzakten dieser Dauerakte, Verschlusssachen eingeschlossen.
+Tritt jemand der Gruppe bei, hat er den Zugriff sofort; tritt er aus, ist er
+sofort weg.
 
 ## Entscheidungen (vom Nutzer bestätigt)
 
 - Zugewiesen werden **ganze Ermittlungsgruppen** (`LeadershipGroup`), keine
   einzelnen Agents.
 - Der Zugriff umfasst **Verschlusssachen**.
-- Der Zugriff **vererbt sich im Aktenbaum nach unten**.
+- ~~Der Zugriff vererbt sich im Aktenbaum nach unten.~~ **Hinfällig:** der
+  Aktenbaum ist am 2026-09-13 entfallen (0 von 13 Dauerakten waren verschachtelt).
+  Dauerakten liegen flach nebeneinander, es gibt nichts zu vererben. Das
+  vereinfacht diese Spec erheblich — siehe unten.
 
 ## Nicht-Ziele
 
@@ -59,9 +62,8 @@ Schemaänderung über `npm run db:push` (sichert vorher). Kein SQL-Patch nötig.
 ## Die Sichtbarkeitsprüfung
 
 `investigationVisibilityWhere(user)` ist heute synchron und baut die Bedingung
-allein aus dem User-Objekt. Beide Anforderungen sprengen das: die
-Gruppenmitgliedschaft steht nicht im User-Objekt, und „ein Vorfahre im Aktenbaum
-ist zugewiesen" lässt sich in einem Prisma-`where` nicht ausdrücken.
+allein aus dem User-Objekt. Das reicht nicht: die Gruppenmitgliedschaft steht
+nicht im User-Objekt und muss nachgeschlagen werden.
 
 Die Funktion wird deshalb **`async`** und behält ihren Namen. Der geänderte
 Rückgabetyp (`Promise<…>`) lässt jede der 18 Aufrufstellen (in 13 Dateien) im
@@ -93,25 +95,12 @@ export async function investigationVisibilityWhere(user: CurrentUser): Promise<P
 
 1. Ermittlungsgruppen des Nutzers aus `LeadershipGroupMember`. Keine → `[]`,
    kein weiterer Aufwand.
-2. Deren Dauerakten aus `DossierAccessGroup`. Keine → `[]`.
-3. `Dossier(id, parentId)` in einem Rutsch laden und den Baum in JS nach unten
-   aufklappen.
+2. Deren Dauerakten aus `DossierAccessGroup`.
 
-Für Nutzer ohne `investigations:classified` und ohne Gruppe kostet das eine
-zusätzliche Abfrage, mit Gruppe drei. Alle drei sind klein. `accessibleDossierIds`
-wird mit Reacts `cache()` umschlossen, damit mehrere Prüfungen innerhalb einer
-Anfrage sie nur einmal ausführen.
-
-Das Aufklappen des Baums ist eine **reine Funktion** und damit ohne Datenbank
-prüfbar:
-
-```ts
-export function expandDescendants(rootIds: string[], tree: { id: string; parentId: string | null }[]): string[]
-```
-
-Sie muss Zyklen aushalten: `validateDossierParent` verhindert sie nur beim
-Speichern über die API, Altdaten können andere Wege genommen haben. Ein Zyklus
-darf die Prüfung nicht aufhängen — das wäre ein Totalausfall der Ermittlungen.
+Zwei kleine Abfragen, und für Nutzer ohne Gruppe nur eine. Mit dem entfallenen
+Aktenbaum braucht es weder eine Baumtraversierung noch einen Zyklenschutz.
+`accessibleDossierIds` wird mit Reacts `cache()` umschlossen, damit mehrere
+Prüfungen innerhalb einer Anfrage sie nur einmal ausführen.
 
 ### Fallstrick: Transaktionen
 
@@ -147,47 +136,35 @@ keine Gruppe auswählen. Der Nutzer hat sie bestätigt.
 
 ## Oberfläche
 
-**Dauerakte, Reiter „Beteiligte"** — Rubrik *Ermittlungsgruppen*: Liste der
-zugewiesenen Gruppen mit Entfernen-Knopf, darüber eine Auswahl zum Hinzufügen.
-Sichtbar für alle mit `investigations:view`, änderbar mit `investigations:manage`.
-Ein Hinweissatz benennt die Tragweite: *„Mitglieder dieser Gruppen lesen alle
-Einsatzakten dieser Akte und aller Akten darunter — auch Verschlusssachen."*
+**Dauerakte** — ein eigener Reiter *Ermittlungsgruppen* neben Einsatzakten,
+Personenakten und Fahrzeugakten: Liste der zugewiesenen Gruppen mit
+Entfernen-Knopf, darüber eine Auswahl zum Hinzufügen. Sichtbar für alle mit
+`investigations:view`, änderbar mit `investigations:manage`. Ein Hinweissatz
+benennt die Tragweite: *„Mitglieder dieser Gruppen lesen alle Einsatzakten dieser
+Akte — auch Verschlusssachen."*
 
 **Einsatzakte** — eine Zeile in den Eckdaten, woher ein Zugriff sonst noch kommt:
 *„Zugriff auch über Dauerakte Gruppierung Elite → Ermittlungsgruppe Nord"*. Bei
 einer Rechtevergabe, die nicht an der Akte selbst steht, ist das kein Luxus:
-sonst kann niemand beantworten, wer die Akte lesen darf. Die Auflösung läuft den
-Baum **nach oben** — eine Einsatzakte an Akte D ist über Zuweisungen an D und an
-jedem Vorfahren von D erreichbar. Auch das ist eine reine Funktion:
-
-```ts
-export function accessPathsFor(
-  dossierIds: string[],
-  tree: { id: string; parentId: string | null; title: string }[],
-  grants: { dossierId: string; groupId: string; groupName: string }[],
-): { dossierTitle: string; groupName: string }[]
-```
+sonst kann niemand beantworten, wer die Akte lesen darf. Ohne Baum ist das ein
+direkter Abruf: die Dauerakten der Einsatzakte samt ihrer `accessGroups`.
 
 ## Tests
 
 Reine Funktionen in `tests/dossier-access.test.ts`, ohne Datenbank:
 
-- `expandDescendants`: eine Ebene, mehrere Ebenen, Geschwister bleiben draußen,
-  zwei Wurzeln überlappen, Zyklus bricht ab, leere Eingabe.
-- `accessPathsFor`: Zuweisung an der Akte selbst, an einem Vorfahren, an mehreren
-  Vorfahren, keine Zuweisung.
 - `investigationVisibilityWhere`: mit `investigations:classified` unverändert
   `{}`; ohne Gruppen identisch zum heutigen Ergebnis (Regressionsschutz); mit
   Gruppen kommt genau ein `dossiers`-Zweig hinzu.
 
 ## Reihenfolge
 
-1. Reine Funktionen `expandDescendants` und `accessPathsFor` samt Tests.
-2. Schema plus `db:push`.
-3. `investigationVisibilityWhere` auf `async` umstellen, alle 18 Aufrufstellen
+1. Schema plus `db:push` (danach `prisma generate` — `db push` erneuert den
+   Client unter `src/generated/prisma` nicht von selbst).
+2. `investigationVisibilityWhere` auf `async` umstellen, alle 18 Aufrufstellen
    nachziehen, `saveDossier` vor die Transaktion ziehen.
-4. Routen für Vergabe und Entzug, Gruppenauswahl.
-5. Oberfläche an Dauerakte und Einsatzakte.
+3. Routen für Vergabe und Entzug, Gruppenauswahl.
+4. Oberfläche an Dauerakte und Einsatzakte.
 
 ## Risiken
 
@@ -196,11 +173,9 @@ Reine Funktionen in `tests/dossier-access.test.ts`, ohne Datenbank:
   jede einzelne in den Typcheck; trotzdem gehört nach der Umstellung ein Blick
   auf jede Stelle, ob das `await` an der richtigen Stelle sitzt und das Ergebnis
   wiederverwendet statt neu berechnet wird.
-- **Vererbung ist scharf.** Wer an einer Hauptakte hängt, liest jede
-  Verschlusssache darunter, auch die, die später jemand anders dort anlegt. Das
-  ist gewollt und steht so in der Oberfläche.
-- **Zyklen im Baum** dürfen die Prüfung nicht aufhängen. Deshalb der
-  Zyklenschutz in `expandDescendants` und ein Test dafür.
+- **Die Vergabe wirkt auch nach vorn.** Wer an einer Dauerakte hängt, liest auch
+  die Verschlusssachen, die später jemand anders dort verknüpft. Das ist gewollt
+  und steht so in der Oberfläche.
 - **Kein Rückweg über die Freigabelinks.** `record-shares.ts` benutzt dieselbe
   Prüfung; ein Gruppenmitglied kann damit künftig Verschlusssachen in einen
   öffentlichen Leselink legen. Das entspricht der heutigen Logik für zugewiesene
