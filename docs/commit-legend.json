@@ -1,7 +1,25 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-13T14:13:56.987Z",
+  "generatedAt": "2026-09-15T14:02:48.628Z",
   "entries": [
+    {
+      "buildId": "build-acbc223795",
+      "commit": "acbc223795925329b552493f64e7760968a18020",
+      "shortCommit": "acbc223795",
+      "subject": "feat: implement expandSharedItems to automatically include related cases, persons, and vehicles in shared dossiers",
+      "author": "Eministar",
+      "date": "2026-09-15T14:01:55Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/acbc223795925329b552493f64e7760968a18020"
+    },
+    {
+      "buildId": "build-a88dd5ba74",
+      "commit": "a88dd5ba7434ddb4fa5550f0b2efddc56e5759aa",
+      "shortCommit": "a88dd5ba74",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-13T14:13:57Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/a88dd5ba7434ddb4fa5550f0b2efddc56e5759aa"
+    },
     {
       "buildId": "build-db9b7a4a5c",
       "commit": "db9b7a4a5c538d3d7ae3a3556344cc46ca1e166c",
