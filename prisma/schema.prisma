@@ -294,6 +294,8 @@ model User {
   contractsCreated           Contract[]                @relation("ContractCreator")
   contractsSigned            Contract[]                @relation("ContractSigner")
   contractSignaturesSigned   ContractSignature[]       @relation("ContractSignatureSigner")
+  agreementsCreated          Agreement[]               @relation("AgreementCreator")
+  agreementTemplatesCreated  AgreementTemplate[]       @relation("AgreementTemplateCreator")
   agentSearchesCreated       AgentSearch[]             @relation("AgentSearchCreator")
   internalAffairsDawsCreated InternalAffairsDaw[]      @relation("IaDawCreator")
   legalCasesCreated          LegalCase[]               @relation("LegalCaseCreator")
@@ -2447,4 +2449,76 @@ model FileUpload {
   @@index([category])
   @@index([sha256])
   @@index([externalRef])
+}
+
+/// Frei aufgesetzter Vertrag, unabhängig von HR und Agents.
+model Agreement {
+  id          String             @id @default(cuid())
+  title       String             @db.VarChar(200)
+  /// DRAFT | OPEN | SIGNED | DECLINED | CANCELLED
+  status      String             @default("DRAFT") @db.VarChar(20)
+  /// FIB | NEUTRAL
+  letterhead  String             @default("FIB") @db.VarChar(20)
+  /// Präambel (Markdown).
+  content     String             @db.Text
+  /// [{ id, title, body, sortOrder }] – gleiche Form wie ContractClause.
+  clauses     Json
+  closing     String?            @db.Text
+  /// Nur Herkunftsanzeige, keine Bindung an die Vorlage.
+  templateId  String?
+  template    AgreementTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  releasedAt  DateTime?
+  cancelledAt DateTime?
+  createdById String?
+  createdBy   User?              @relation("AgreementCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  parties AgreementParty[]
+
+  @@index([status, updatedAt])
+  @@index([templateId])
+  @@index([createdById])
+}
+
+/// Vertragspartei mit eigenem Unterschrifts-Link.
+model AgreementParty {
+  id          String    @id @default(cuid())
+  agreementId String
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(200)
+  role        String?   @db.VarChar(200)
+  sortOrder   Int       @default(0)
+  /// base64url aus 32 Byte, bewusst im Klartext (Link jederzeit kopierbar).
+  token       String    @unique @db.VarChar(64)
+
+  signedAt        DateTime?
+  signedName      String?   @db.VarChar(200)
+  signedIp        String?   @db.VarChar(64)
+  signedUserAgent String?   @db.VarChar(200)
+  declinedAt      DateTime?
+  declineReason   String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([agreementId, sortOrder])
+}
+
+/// Vorlage für freie Verträge – getrennt von ContractTemplate.
+model AgreementTemplate {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(120)
+  letterhead  String   @default("FIB") @db.VarChar(20)
+  content     String   @db.Text
+  clauses     Json
+  closing     String?  @db.Text
+  createdById String?
+  createdBy   User?    @relation("AgreementTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agreements Agreement[]
+
+  @@index([createdById])
 }
