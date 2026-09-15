@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { agreementInputSchema, deriveAgreementStatus, linkActionSchema } from '../src/lib/agreements'
+import { loadPartyByToken, type LinkParty } from '../src/lib/agreement-service'
 
 const open = { signedAt: null, declinedAt: null }
 const signed = { signedAt: new Date(), declinedAt: null }
@@ -32,4 +33,13 @@ test('Unterschrift braucht vollständigen Namen und Lesebestätigung, Ablehnen n
   assert.equal(linkActionSchema.safeParse({ action: 'sign', name: 'Jane Doe', confirmed: false }).success, false)
   assert.equal(linkActionSchema.safeParse({ action: 'sign', name: 'Jane Doe', confirmed: true }).success, true)
   assert.equal(linkActionSchema.safeParse({ action: 'decline' }).success, true)
+})
+
+test('Ein Token mit abweichender Groß-/Kleinschreibung führt nie zu einer Partei', async () => {
+  const stored = 'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCdE'
+  const lookup = async () => ({ token: stored }) as unknown as LinkParty
+  assert.equal(await loadPartyByToken(stored.toLowerCase(), lookup), null)
+  assert.notEqual(await loadPartyByToken(stored, lookup), null)
+  assert.notEqual(await loadPartyByToken(`https://x.example/unterschrift/${stored}.`, lookup), null)
+  assert.equal(await loadPartyByToken('', lookup), null)
 })
