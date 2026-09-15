@@ -53,6 +53,20 @@ test('Public case projection contains chronology but no unselected relations, cr
   assert.notEqual(await sharedHeading({ kind: 'CASE', recordId: 'c', classifiedAtGrant: true }, client), null)
 })
 
+test('Person links are only exposed when the linked person is part of the same share', async () => {
+  const people: Record<string, { personNumber: string; firstName: string; lastName: string }> = { p2: { personNumber: 'PER-2', firstName: 'Shared', lastName: 'Friend' }, p3: { personNumber: 'PER-3', firstName: 'Hidden', lastName: 'Person' } }
+  const client = { person: { findUnique: async ({ where, select }: { where: { id: string }; select: Record<string, unknown> }) => {
+    if (where.id !== 'p1') return people[where.id] ?? null
+    if ('linksFrom' in select) return { dossiers: [], investigations: [], vehiclesOwned: [], linksFrom: [{ toPersonId: 'p2', type: 'FAMILY' }], linksTo: [{ fromPersonId: 'p3', type: 'ASSOCIATE' }] }
+    if ('photo' in select) return { photoUrl: null, photo: null }
+    return { personNumber: 'PER-1', firstName: 'Main', lastName: 'Person' }
+  }, findUniqueOrThrow: async () => ({ alias: null, identifier: null, dateOfBirth: null, phone: null, notes: null, wanted: false, dangerous: false }) } } as unknown as Prisma.TransactionClient
+  const shared = [{ kind: 'PERSON', recordId: 'p1', classifiedAtGrant: false }, { kind: 'PERSON', recordId: 'p2', classifiedAtGrant: false }]
+  const result = await publicRecord(shared[0], client, shared)
+  assert.deepEqual(result.related, [{ kind: 'PERSON', label: 'Personenakten · Familie', recordId: 'p2', title: 'PER-2 · Shared Friend' }])
+  assert.doesNotMatch(JSON.stringify(result), /Hidden|p3/)
+})
+
 test('Public photos only use the selected record catalog photo; arbitrary URLs are not fetched', async () => {
   let photoUrl = 'https://untrusted.example/private.png'
   let reads = 0

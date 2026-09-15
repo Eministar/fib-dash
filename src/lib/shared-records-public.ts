@@ -3,7 +3,7 @@ import { ShareError } from './record-shares'
 import { SHARE_KINDS, type ShareKind } from './record-share-validation'
 import type { Prisma } from '@/generated/prisma'
 import { DOSSIER_KINDS } from './dossiers'
-import { INVESTIGATION_STATUS_LABELS, INVESTIGATION_ENTRY_KIND_LABELS } from './investigations'
+import { INVESTIGATION_STATUS_LABELS, INVESTIGATION_ENTRY_KIND_LABELS, PERSON_LINK_TYPE_LABELS } from './investigations'
 
 export type SharedItem = { kind: string; recordId: string; classifiedAtGrant: boolean }
 type PublicClient = Pick<Prisma.TransactionClient, 'dossier' | 'person' | 'vehicle' | 'investigation' | 'bodycamClip' | 'investigationPhoto'>
@@ -79,13 +79,16 @@ export async function sharedPhoto(item: SharedItem, client: PublicClient = prism
 /** Verknüpfte Einträge, aber nur solche, die in derselben Freigabe stecken. */
 async function sharedRelations(item: SharedItem, shared: SharedItem[], client: PublicClient) {
   const id = item.recordId
-  const refs: { kind: ShareKind; recordId: string }[] = []
+  const refs: { kind: ShareKind; recordId: string; relation?: string }[] = []
   const push = (kind: ShareKind, ids: string[]) => ids.forEach(recordId => refs.push({ kind, recordId }))
+  const linkLabel = (type: string) => PERSON_LINK_TYPE_LABELS[type as keyof typeof PERSON_LINK_TYPE_LABELS] ?? type
   if (item.kind === 'DOSSIER') {
     const d = await client.dossier.findUnique({ where: { id }, select: { persons: { select: { id: true } }, investigations: { select: { id: true } }, vehicles: { select: { id: true } } } })
     push('PERSON', d?.persons.map(r => r.id) ?? []); push('CASE', d?.investigations.map(r => r.id) ?? []); push('VEHICLE', d?.vehicles.map(r => r.id) ?? [])
   } else if (item.kind === 'PERSON') {
-    const p = await client.person.findUnique({ where: { id }, select: { dossiers: { select: { id: true } }, investigations: { select: { investigationId: true } }, vehiclesOwned: { select: { id: true } } } })
+    const p = await client.person.findUnique({ where: { id }, select: { dossiers: { select: { id: true } }, investigations: { select: { investigationId: true } }, vehiclesOwned: { select: { id: true } }, linksFrom: { select: { toPersonId: true, type: true } }, linksTo: { select: { fromPersonId: true, type: true } } } })
+    p?.linksFrom.forEach(l => refs.push({ kind: 'PERSON', recordId: l.toPersonId, relation: linkLabel(l.type) }))
+    p?.linksTo.forEach(l => refs.push({ kind: 'PERSON', recordId: l.fromPersonId, relation: linkLabel(l.type) }))
     push('DOSSIER', p?.dossiers.map(r => r.id) ?? []); push('CASE', p?.investigations.map(r => r.investigationId) ?? []); push('VEHICLE', p?.vehiclesOwned.map(r => r.id) ?? [])
   } else if (item.kind === 'VEHICLE') {
     const v = await client.vehicle.findUnique({ where: { id }, select: { ownerPersonId: true, dossiers: { select: { id: true } }, investigations: { select: { investigationId: true } } } })
@@ -97,7 +100,7 @@ async function sharedRelations(item: SharedItem, shared: SharedItem[], client: P
   const related = await Promise.all(refs.map(async ref => {
     const allowed = shared.find(s => s.kind === ref.kind && s.recordId === ref.recordId)
     const title = allowed && await sharedHeading(allowed, client)
-    return title ? { kind: ref.kind, label: SHARE_KINDS[ref.kind], recordId: ref.recordId, title } : null
+    return title ? { kind: ref.kind, label: ref.relation ? `${SHARE_KINDS[ref.kind]} · ${ref.relation}` : SHARE_KINDS[ref.kind], recordId: ref.recordId, title } : null
   }))
   return related.filter(r => r !== null)
 }
