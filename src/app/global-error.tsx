@@ -51,7 +51,7 @@ export default function GlobalError({
             <Button type="button" onClick={reset} className="h-[38px] w-full">
               Erneut versuchen
             </Button>
-            <StatusLink href="/" variant="secondary">Zum Dashboard</StatusLink>
+            <StatusLink href="/dashboard" variant="secondary">Zum Dashboard</StatusLink>
           </div>
         </StatusPageFrame>
       </body>

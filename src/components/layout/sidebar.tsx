@@ -36,7 +36,7 @@ interface NavContentProps {
 }
 
 const mainNav: NavItem[] = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard, permission: 'dashboard:view' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
   { name: 'Statistiken', href: '/statistics', icon: ChartNoAxesCombined, permission: 'dashboard:view' },
   { name: 'Ordnungen', href: '/ordnungen', icon: FileText },
   { name: 'Kalender', href: '/calendar', icon: CalendarDays, permission: 'calendar:view' },
@@ -73,7 +73,7 @@ const accountNav: NavItem[] = [
 ]
 
 function isActivePath(pathname: string, href: string) {
-  if (href === '/') return pathname === '/'
+  if (href === '/dashboard') return pathname === '/dashboard'
   return pathname.startsWith(href)
 }
 

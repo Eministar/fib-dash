@@ -13,7 +13,7 @@ export function NotFoundContent() {
       description="Diese Seite existiert nicht, wurde verschoben oder der Link ist veraltet."
     >
       <div className="mt-6 flex flex-col gap-2.5">
-        <StatusLink href="/" variant="primary">Zum Dashboard</StatusLink>
+        <StatusLink href="/dashboard" variant="primary">Zum Dashboard</StatusLink>
         <StatusLink href="/login" variant="secondary">Zur Anmeldung</StatusLink>
       </div>
     </StatusPageFrame>

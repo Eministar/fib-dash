@@ -47,19 +47,62 @@ export async function sharedHeading(item: SharedItem, client: PublicClient = pri
   return null
 }
 
-export async function sharedPhoto(item: SharedItem, client: PublicClient = prisma) {
+type SharedPhoto = { id: string; title: string; filename: string; mimeType: string }
+const PHOTO_SELECT = { id: true, title: true, filename: true, mimeType: true } as const
+
+/** Alle Katalogbilder eines freigegebenen Eintrags, Titelbild zuerst. Externe
+ *  URLs werden nie abgerufen – nur Katalogfotos dieses Eintrags. */
+export async function sharedPhotos(item: SharedItem, client: PublicClient = prisma): Promise<SharedPhoto[]> {
+  const id = item.recordId
+  let photos: (SharedPhoto | null | undefined)[] = []
   if (item.kind === 'DOSSIER') {
-    return (await client.dossier.findUnique({ where: { id: item.recordId }, select: { photo: { select: { filename: true, mimeType: true } } } }))?.photo ?? null
+    const d = await client.dossier.findUnique({ where: { id }, select: { photo: { select: PHOTO_SELECT }, photos: { select: PHOTO_SELECT, orderBy: { createdAt: 'asc' } } } })
+    photos = [d?.photo, ...(d?.photos ?? [])]
+  } else if (item.kind === 'PERSON') {
+    const p = await client.person.findUnique({ where: { id }, select: { photoUrl: true, photo: { select: PHOTO_SELECT } } })
+    // Altbestände verweisen per `photoUrl` auf den Katalog.
+    const legacyId = !p?.photo && /^\/api\/investigations\/photos\/([^/]+)\/image$/.exec(p?.photoUrl ?? '')?.[1]
+    photos = [p?.photo ?? (legacyId ? await client.investigationPhoto.findUnique({ where: { id: legacyId }, select: PHOTO_SELECT }) : null)]
+  } else if (item.kind === 'VEHICLE') {
+    photos = [(await client.vehicle.findUnique({ where: { id }, select: { photo: { select: PHOTO_SELECT } } }))?.photo]
+  } else if (item.kind === 'CASE') {
+    photos = (await client.investigation.findUnique({ where: { id }, select: { photos: { select: PHOTO_SELECT, orderBy: { createdAt: 'asc' } } } }))?.photos ?? []
   }
-  if (item.kind === 'PERSON') {
-    const p = await client.person.findUnique({ where: { id: item.recordId }, select: { photoUrl: true } })
-    const photoId = /^\/api\/investigations\/photos\/([^/]+)\/image$/.exec(p?.photoUrl ?? '')?.[1]
-    return photoId ? client.investigationPhoto.findUnique({ where: { id: photoId }, select: { filename: true, mimeType: true } }) : null
-  }
-  return null
+  const seen = new Set<string>()
+  return photos.filter((photo): photo is SharedPhoto => !!photo && !seen.has(photo.id) && !!seen.add(photo.id))
 }
 
-export async function publicRecord(item: SharedItem, client: PublicClient = prisma) {
+export async function sharedPhoto(item: SharedItem, client: PublicClient = prisma) {
+  return (await sharedPhotos(item, client))[0] ?? null
+}
+
+/** Verknüpfte Einträge, aber nur solche, die in derselben Freigabe stecken. */
+async function sharedRelations(item: SharedItem, shared: SharedItem[], client: PublicClient) {
+  const id = item.recordId
+  const refs: { kind: ShareKind; recordId: string }[] = []
+  const push = (kind: ShareKind, ids: string[]) => ids.forEach(recordId => refs.push({ kind, recordId }))
+  if (item.kind === 'DOSSIER') {
+    const d = await client.dossier.findUnique({ where: { id }, select: { persons: { select: { id: true } }, investigations: { select: { id: true } }, vehicles: { select: { id: true } } } })
+    push('PERSON', d?.persons.map(r => r.id) ?? []); push('CASE', d?.investigations.map(r => r.id) ?? []); push('VEHICLE', d?.vehicles.map(r => r.id) ?? [])
+  } else if (item.kind === 'PERSON') {
+    const p = await client.person.findUnique({ where: { id }, select: { dossiers: { select: { id: true } }, investigations: { select: { investigationId: true } }, vehiclesOwned: { select: { id: true } } } })
+    push('DOSSIER', p?.dossiers.map(r => r.id) ?? []); push('CASE', p?.investigations.map(r => r.investigationId) ?? []); push('VEHICLE', p?.vehiclesOwned.map(r => r.id) ?? [])
+  } else if (item.kind === 'VEHICLE') {
+    const v = await client.vehicle.findUnique({ where: { id }, select: { ownerPersonId: true, dossiers: { select: { id: true } }, investigations: { select: { investigationId: true } } } })
+    push('PERSON', v?.ownerPersonId ? [v.ownerPersonId] : []); push('DOSSIER', v?.dossiers.map(r => r.id) ?? []); push('CASE', v?.investigations.map(r => r.investigationId) ?? [])
+  } else if (item.kind === 'CASE') {
+    const c = await client.investigation.findUnique({ where: { id }, select: { dossiers: { select: { id: true } }, persons: { select: { personId: true } }, vehicles: { select: { vehicleId: true } }, clips: { select: { id: true } } } })
+    push('DOSSIER', c?.dossiers.map(r => r.id) ?? []); push('PERSON', c?.persons.map(r => r.personId) ?? []); push('VEHICLE', c?.vehicles.map(r => r.vehicleId) ?? []); push('CLIP', c?.clips.map(r => r.id) ?? [])
+  }
+  const related = await Promise.all(refs.map(async ref => {
+    const allowed = shared.find(s => s.kind === ref.kind && s.recordId === ref.recordId)
+    const title = allowed && await sharedHeading(allowed, client)
+    return title ? { kind: ref.kind, label: SHARE_KINDS[ref.kind], recordId: ref.recordId, title } : null
+  }))
+  return related.filter(r => r !== null)
+}
+
+export async function publicRecord(item: SharedItem, client: PublicClient = prisma, shared: SharedItem[] = []) {
   const title = await sharedHeading(item, client)
   if (!title) throw new ShareError('Eintrag nicht verfügbar', 404)
   const id = item.recordId
@@ -85,5 +128,7 @@ export async function publicRecord(item: SharedItem, client: PublicClient = pris
     const c = await client.bodycamClip.findUniqueOrThrow({ where: { id }, select: { description: true, recordedAt: true, location: true, durationSeconds: true } })
     add('Beschreibung', c.description); add('Aufgenommen', c.recordedAt); add('Ort', c.location); add('Dauer (Sekunden)', c.durationSeconds)
   }
-  return { kind: item.kind, label: SHARE_KINDS[item.kind as ShareKind], recordId: id, title, fields, entries, hasPhoto: !!await sharedPhoto(item, client), hasVideo: item.kind === 'CLIP' }
+  const photos = (await sharedPhotos(item, client)).map(photo => ({ id: photo.id, title: photo.title }))
+  const related = shared.length ? await sharedRelations(item, shared, client) : []
+  return { kind: item.kind, label: SHARE_KINDS[item.kind as ShareKind], recordId: id, title, fields, entries, photos, related, hasPhoto: photos.length > 0, hasVideo: item.kind === 'CLIP' }
 }

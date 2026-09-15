@@ -126,7 +126,7 @@ export function VisitorPortal() {
             {user ? (
               <>
                 {user.permissions.some((permission) => permission !== 'password:change') && (
-                  <Link href="/" className="portal-nav-link">Dashboard</Link>
+                  <Link href="/dashboard" className="portal-nav-link">Dashboard</Link>
                 )}
                 <button type="button" onClick={logout} className="portal-nav-link">
                   <LogOut size={13} />

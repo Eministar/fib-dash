@@ -5,7 +5,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   try {
     const { token, kind, recordId } = await params
     const share = await resolveShare(token)
-    const item = requireSharedSelection(await expandSharedItems(share.items), kind, recordId)
-    return publicShareHeaders(success(await publicRecord(item)))
+    const shared = await expandSharedItems(share.items)
+    const item = requireSharedSelection(shared, kind, recordId)
+    return publicShareHeaders(success(await publicRecord(item, undefined, shared)))
   } catch (cause) { return publicShareHeaders(shareError(cause)) }
 }

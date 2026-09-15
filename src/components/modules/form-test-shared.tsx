@@ -72,7 +72,7 @@ export function modulePath(module: ModuleKey) {
   if (module === 'SRU') return '/sru'
   if (module === 'AIR_SUPPORT') return '/air-support'
   if (module === 'DETECTIVE') return '/detective'
-  return '/'
+  return '/dashboard'
 }
 
 export function responseScore(response: Pick<FormResponse, 'score' | 'maxScore'>) {

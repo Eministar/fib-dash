@@ -23,8 +23,8 @@ function safeRedirectPath(value: string | undefined) {
 
 function defaultPathForMode(mode: LoginMode) {
   if (mode === 'application') return '/bewerbung'
-  if (mode === 'contract') return '/'
-  return '/'
+  if (mode === 'contract') return '/dashboard'
+  return '/dashboard'
 }
 
 function firstForwardedValue(value: string | null) {

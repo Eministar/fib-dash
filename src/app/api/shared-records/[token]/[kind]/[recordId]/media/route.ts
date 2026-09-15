@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { resolveShare, shareError, publicShareHeaders, ShareError } from '@/lib/record-shares'
-import { expandSharedItems, sharedHeading, sharedPhoto, requireSharedSelection } from '@/lib/shared-records-public'
+import { expandSharedItems, sharedHeading, sharedPhotos, requireSharedSelection } from '@/lib/shared-records-public'
 import { clipFileResponse } from '@/lib/clips'
 import { investigationPhotoResponse } from '@/lib/investigation-photos'
 export async function GET(req: Request, { params }: { params: Promise<{ token: string; kind: string; recordId: string }> }) {
@@ -13,7 +13,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
       const clip = await prisma.bodycamClip.findUniqueOrThrow({ where: { id: recordId }, select: { filename: true, mimeType: true } })
       return publicShareHeaders(await clipFileResponse(clip.filename, clip.mimeType, req.headers.get('range')))
     }
-    const photo = await sharedPhoto(item)
+    // `?photo=` wählt ein Galeriebild – aber nur aus den Bildern dieses Eintrags.
+    const photoId = new URL(req.url).searchParams.get('photo')
+    const photos = await sharedPhotos(item)
+    const photo = photoId ? photos.find(p => p.id === photoId) : photos[0]
     if (!photo) throw new ShareError('Kein freigegebenes Bild', 404)
     return publicShareHeaders(await investigationPhotoResponse(photo.filename, photo.mimeType))
   } catch (cause) {
