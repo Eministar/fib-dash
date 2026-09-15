@@ -12,6 +12,31 @@ export function requireSharedSelection<T extends { kind: string; recordId: strin
   if (!item) throw new ShareError('Eintrag nicht freigegeben', 404)
   return item
 }
+/** Eine freigegebene Dauerakte gibt ihre Personen-, Einsatz- und Fahrzeugakten
+ *  mit frei. Verschlusssachen bleiben außen vor, solange sie nicht einzeln
+ *  ausgewählt wurden. Ausdrücklich gewählte Einträge stehen vorne. */
+export async function expandSharedItems(items: SharedItem[], client: PublicClient = prisma): Promise<SharedItem[]> {
+  const result = [...items]
+  const seen = new Set(items.map(item => `${item.kind}:${item.recordId}`))
+  const add = (kind: ShareKind, recordId: string) => {
+    if (seen.has(`${kind}:${recordId}`)) return
+    seen.add(`${kind}:${recordId}`)
+    result.push({ kind, recordId, classifiedAtGrant: false })
+  }
+  const dossierIds = items.filter(item => item.kind === 'DOSSIER').map(item => item.recordId)
+  if (!dossierIds.length) return result
+  const dossiers = await client.dossier.findMany({
+    where: { id: { in: dossierIds } },
+    select: { persons: { select: { id: true } }, investigations: { where: { classified: false }, select: { id: true } }, vehicles: { select: { id: true } } },
+  })
+  for (const d of dossiers) {
+    d.investigations.forEach(r => add('CASE', r.id))
+    d.persons.forEach(r => add('PERSON', r.id))
+    d.vehicles.forEach(r => add('VEHICLE', r.id))
+  }
+  return result
+}
+
 export async function sharedHeading(item: SharedItem, client: PublicClient = prisma) {
   const id = item.recordId
   if (item.kind === 'DOSSIER') return (await client.dossier.findUnique({ where: { id }, select: { title: true } }))?.title ?? null

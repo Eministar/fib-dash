@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Prisma } from '../src/generated/prisma'
 import { createShareToken, resolveShare, tokenHash, validateShareItems, publicShareHeaders } from '../src/lib/record-shares'
-import { requireSharedSelection, publicRecord, sharedHeading, sharedPhoto } from '../src/lib/shared-records-public'
+import { expandSharedItems, requireSharedSelection, publicRecord, sharedHeading, sharedPhoto } from '../src/lib/shared-records-public'
 import { shareSchema } from '../src/lib/record-share-validation'
 import type { CurrentUser } from '../src/lib/auth'
 
@@ -27,6 +27,18 @@ test('Selection is scoped by both type and ID; unselected children and media do 
   const items = [{ kind: 'DOSSIER', recordId: 'parent' }, { kind: 'PERSON', recordId: 'same-id' }]
   assert.equal(requireSharedSelection(items, 'DOSSIER', 'parent').recordId, 'parent')
   for (const [kind, id] of [['DOSSIER', 'child'], ['CLIP', 'parent'], ['VEHICLE', 'same-id'], ['PERSON', 'other']]) assert.throws(() => requireSharedSelection(items, kind, id), /nicht freigegeben/)
+})
+
+test('A shared dossier releases its cases, persons and vehicles but queries only non-classified cases', async () => {
+  let where: unknown
+  const client = { dossier: { findMany: async (args: { select: { investigations: { where: unknown } } }) => { where = args.select.investigations.where; return [{ investigations: [{ id: 'c1' }], persons: [{ id: 'p1' }], vehicles: [{ id: 'v1' }] }] } } } as unknown as Prisma.TransactionClient
+  const items = [{ kind: 'DOSSIER', recordId: 'd', classifiedAtGrant: false }, { kind: 'PERSON', recordId: 'p1', classifiedAtGrant: false }]
+  const expanded = await expandSharedItems(items, client)
+  assert.deepEqual(expanded.map(i => `${i.kind}:${i.recordId}`), ['DOSSIER:d', 'PERSON:p1', 'CASE:c1', 'VEHICLE:v1'])
+  assert.deepEqual(where, { classified: false })
+  assert.equal(requireSharedSelection(expanded, 'CASE', 'c1').recordId, 'c1')
+  assert.throws(() => requireSharedSelection(expanded, 'CLIP', 'c1'), /nicht freigegeben/)
+  assert.deepEqual(await expandSharedItems([{ kind: 'CASE', recordId: 'x', classifiedAtGrant: false }], {} as Prisma.TransactionClient), [{ kind: 'CASE', recordId: 'x', classifiedAtGrant: false }])
 })
 
 test('Public case projection contains chronology but no unselected relations, creator IDs or internal metadata', async () => {
