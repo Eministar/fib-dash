@@ -13,27 +13,34 @@ export function requireSharedSelection<T extends { kind: string; recordId: strin
   return item
 }
 /** Eine freigegebene Dauerakte gibt ihre Personen-, Einsatz- und Fahrzeugakten
- *  mit frei. Verschlusssachen bleiben außen vor, solange sie nicht einzeln
- *  ausgewählt wurden. Ausdrücklich gewählte Einträge stehen vorne. */
+ *  mit frei, jede freigegebene Einsatzakte ihre Bodycam-Clips. Verschlusssachen
+ *  bleiben außen vor, solange sie nicht einzeln ausgewählt wurden. Ausdrücklich
+ *  gewählte Einträge stehen vorne. */
 export async function expandSharedItems(items: SharedItem[], client: PublicClient = prisma): Promise<SharedItem[]> {
   const result = [...items]
   const seen = new Set(items.map(item => `${item.kind}:${item.recordId}`))
-  const add = (kind: ShareKind, recordId: string) => {
+  const add = (kind: ShareKind, recordId: string, classifiedAtGrant = false) => {
     if (seen.has(`${kind}:${recordId}`)) return
     seen.add(`${kind}:${recordId}`)
-    result.push({ kind, recordId, classifiedAtGrant: false })
+    result.push({ kind, recordId, classifiedAtGrant })
   }
   const dossierIds = items.filter(item => item.kind === 'DOSSIER').map(item => item.recordId)
-  if (!dossierIds.length) return result
-  const dossiers = await client.dossier.findMany({
-    where: { id: { in: dossierIds } },
-    select: { persons: { select: { id: true } }, investigations: { where: { classified: false }, select: { id: true } }, vehicles: { select: { id: true } } },
-  })
-  for (const d of dossiers) {
-    d.investigations.forEach(r => add('CASE', r.id))
-    d.persons.forEach(r => add('PERSON', r.id))
-    d.vehicles.forEach(r => add('VEHICLE', r.id))
+  if (dossierIds.length) {
+    const dossiers = await client.dossier.findMany({
+      where: { id: { in: dossierIds } },
+      select: { persons: { select: { id: true } }, investigations: { where: { classified: false }, select: { id: true } }, vehicles: { select: { id: true } } },
+    })
+    for (const d of dossiers) {
+      d.investigations.forEach(r => add('CASE', r.id))
+      d.persons.forEach(r => add('PERSON', r.id))
+      d.vehicles.forEach(r => add('VEHICLE', r.id))
+    }
   }
+  // Clips erben die Freigabe ihrer Einsatzakte – inklusive VS-Freigabe.
+  const cases = new Map(result.filter(item => item.kind === 'CASE').map(item => [item.recordId, item.classifiedAtGrant]))
+  if (!cases.size) return result
+  const clips = await client.bodycamClip.findMany({ where: { investigationId: { in: [...cases.keys()] } }, select: { id: true, investigationId: true }, orderBy: { recordedAt: 'asc' } })
+  clips.forEach(clip => add('CLIP', clip.id, cases.get(clip.investigationId) ?? false))
   return result
 }
 
