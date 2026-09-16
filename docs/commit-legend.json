@@ -1,7 +1,124 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-15T18:26:42.174Z",
+  "generatedAt": "2026-09-15T18:58:01.042Z",
   "entries": [
+    {
+      "buildId": "build-1eb998c84c",
+      "commit": "1eb998c84c36b662f30c4aa926960575680c803c",
+      "shortCommit": "1eb998c84c",
+      "subject": "Merge branch 'feat/freie-vertraege'",
+      "author": "Eministar",
+      "date": "2026-09-15T18:56:37Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/1eb998c84c36b662f30c4aa926960575680c803c"
+    },
+    {
+      "buildId": "build-4a492f71ab",
+      "commit": "4a492f71aba150d482662119514fa244bb97f0c9",
+      "shortCommit": "4a492f71ab",
+      "subject": "Merge branch 'main' of https://github.com/Eministar/fib-dash",
+      "author": "Eministar",
+      "date": "2026-09-15T18:56:37Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/4a492f71aba150d482662119514fa244bb97f0c9"
+    },
+    {
+      "buildId": "build-f4ab3f14cd",
+      "commit": "f4ab3f14cd336d3437bf9f328d56abb493ae97fa",
+      "shortCommit": "f4ab3f14cd",
+      "subject": "feat(agreements): add agreements workspace, editor and sidebar entry",
+      "author": "Eministar",
+      "date": "2026-09-15T18:54:47Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/f4ab3f14cd336d3437bf9f328d56abb493ae97fa"
+    },
+    {
+      "buildId": "build-11640b4eff",
+      "commit": "11640b4eff0b089cd0d3ac834747f376a02a24a8",
+      "shortCommit": "11640b4eff",
+      "subject": "feat(agreements): add public signing page",
+      "author": "Eministar",
+      "date": "2026-09-15T18:54:47Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/11640b4eff0b089cd0d3ac834747f376a02a24a8"
+    },
+    {
+      "buildId": "build-8ae5d59442",
+      "commit": "8ae5d59442dcbdaa49f4df14bd005c988bf105c4",
+      "shortCommit": "8ae5d59442",
+      "subject": "feat(agreements): add agreement document renderer",
+      "author": "Eministar",
+      "date": "2026-09-15T18:51:32Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/8ae5d59442dcbdaa49f4df14bd005c988bf105c4"
+    },
+    {
+      "buildId": "build-9c2b6c5b10",
+      "commit": "9c2b6c5b10b1d3e739495f50a02a76a3615c7739",
+      "shortCommit": "9c2b6c5b10",
+      "subject": "feat(agreements): add public signing link API",
+      "author": "Eministar",
+      "date": "2026-09-15T18:51:31Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/9c2b6c5b10b1d3e739495f50a02a76a3615c7739"
+    },
+    {
+      "buildId": "build-e91286d3ec",
+      "commit": "e91286d3ece74f55a2c069b223342031728f8cb4",
+      "shortCommit": "e91286d3ec",
+      "subject": "feat(agreements): add internal agreement and template API",
+      "author": "Eministar",
+      "date": "2026-09-15T18:51:30Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/e91286d3ece74f55a2c069b223342031728f8cb4"
+    },
+    {
+      "buildId": "build-f438e7119f",
+      "commit": "f438e7119f2b532a924e9a31ec0c3007073c6f95",
+      "shortCommit": "f438e7119f",
+      "subject": "feat(agreements): add agreement service with signing, tokens and templates",
+      "author": "Eministar",
+      "date": "2026-09-15T18:51:30Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/f438e7119f2b532a924e9a31ec0c3007073c6f95"
+    },
+    {
+      "buildId": "build-71d4446a2d",
+      "commit": "71d4446a2d88e720945d9a2f5c8dbfa478bd6ad2",
+      "shortCommit": "71d4446a2d",
+      "subject": "feat(agreements): add status derivation and input schemas",
+      "author": "Eministar",
+      "date": "2026-09-15T18:49:04Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/71d4446a2d88e720945d9a2f5c8dbfa478bd6ad2"
+    },
+    {
+      "buildId": "build-018690e95b",
+      "commit": "018690e95be0eb291b8bcfeef16e2ac34cc2edbf",
+      "shortCommit": "018690e95b",
+      "subject": "feat(agreements): add schema and permissions for free agreements",
+      "author": "Eministar",
+      "date": "2026-09-15T18:46:50Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/018690e95be0eb291b8bcfeef16e2ac34cc2edbf"
+    },
+    {
+      "buildId": "build-2ba428fe92",
+      "commit": "2ba428fe92f2523ce7661f6c35122aa7d031f6b0",
+      "shortCommit": "2ba428fe92",
+      "subject": "docs: implementation plan for free agreements module",
+      "author": "Eministar",
+      "date": "2026-09-15T18:44:33Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/2ba428fe92f2523ce7661f6c35122aa7d031f6b0"
+    },
+    {
+      "buildId": "build-a238ede5fd",
+      "commit": "a238ede5fde2153ae50f8aaea4814661ebf8d0e8",
+      "shortCommit": "a238ede5fd",
+      "subject": "docs: spec for standalone free agreements module",
+      "author": "Eministar",
+      "date": "2026-09-15T18:35:38Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/a238ede5fde2153ae50f8aaea4814661ebf8d0e8"
+    },
+    {
+      "buildId": "build-f3d5e11f78",
+      "commit": "f3d5e11f78fff17818c6a350b161f4708c4bbfc4",
+      "shortCommit": "f3d5e11f78",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-15T18:26:42Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/f3d5e11f78fff17818c6a350b161f4708c4bbfc4"
+    },
     {
       "buildId": "build-f31ba106f2",
       "commit": "f31ba106f2c665cf8c54d27b59cb2e75af3a7e80",
