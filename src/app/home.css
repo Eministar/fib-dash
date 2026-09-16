@@ -46,6 +46,7 @@ html:has(.fib-home)::-webkit-scrollbar-thumb:hover{background:#8b9ba6}
 /* Keep the reference composition isolated from the dashboard styles. */
 .fib-home{position:relative;isolation:isolate;min-height:100vh;line-height:normal;font-feature-settings:normal}
 .fib-home .bureau-placeholder{opacity:.16;object-fit:contain;object-position:center 15%;padding:8%;filter:grayscale(1)}
+.fib-home .bureau-photo{object-fit:cover;object-position:center top}
 .fib-home .hero-title h1 span:last-child{margin-left:0}
 .fib-home .contact-link{font-size:clamp(95px,14vw,200px)}
 @media(max-width:700px){.fib-home .contact-link{font-size:26vw}.fib-home .hero-portrait{left:15%;width:110%}.fib-home .hero-title>p{max-width:240px;line-height:1.5}.fib-home .credentials-picture{top:570px}}

@@ -25,14 +25,20 @@ function SharedDetail({ token, item, onOpen }: { token: string; item: Item; onOp
   const url = `/api/shared-records/${encodeURIComponent(token)}/${item.kind}/${encodeURIComponent(item.recordId)}`
   const { data, error, loading } = useFetch<Detail>(url)
   const [videoError, setVideoError] = useState(false)
+  const clipUrl = (id: string) => `/api/shared-records/${encodeURIComponent(token)}/CLIP/${encodeURIComponent(id)}/media`
   if (error) return <p role="alert" className="text-sm text-[#a6a6a6]">Dieser Eintrag ist nicht mehr verfügbar oder nicht mehr freigegeben.</p>
   if (loading || !data) return <p className="text-sm text-[#909090]">Eintrag wird geladen …</p>
   return <article className="space-y-5 rounded-xl border border-[#343434] bg-[#141414] p-5 sm:p-7"><div><p className="text-xs text-[#c4b5fd]">{data.label}</p><h2 className="mt-2 text-xl font-semibold text-white">{data.title}</h2></div>
     {data.photos.length > 0 && <Image unoptimized src={`${url}/media?photo=${encodeURIComponent(data.photos[0].id)}`} alt={data.photos[0].title || 'Aktenfoto'} width={1200} height={800} className="max-h-80 w-full rounded-lg object-contain" />}
     {data.photos.length > 1 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{data.photos.slice(1).map(photo => <a key={photo.id} href={`${url}/media?photo=${encodeURIComponent(photo.id)}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-[#343434] hover:border-[#a78bfa]"><Image unoptimized src={`${url}/media?photo=${encodeURIComponent(photo.id)}`} alt={photo.title || 'Galeriebild'} width={480} height={320} className="h-36 w-full object-cover" /></a>)}</div>}
     {data.hasVideo && <><video controls playsInline preload="metadata" src={`${url}/media`} className="max-h-[65vh] w-full rounded-lg bg-black" onError={() => setVideoError(true)} />{videoError && <p className="text-sm text-[#a6a6a6]">Video nicht verfügbar oder von diesem Browser nicht unterstützt.</p>}</>}
+    {data.related.some(rel => rel.kind === 'CLIP') && <section className="space-y-4"><h3 className="font-semibold text-white">Bodycam-Aufnahmen</h3>{data.related.filter(rel => rel.kind === 'CLIP').map(clip => <SharedClip key={clip.recordId} title={clip.title} src={clipUrl(clip.recordId)} />)}</section>}
     <dl className="space-y-4">{data.fields.map(field => <div key={field.label}><dt className="mb-1 text-xs font-semibold text-[#909090]">{field.label}</dt><dd className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#d4d4d4]">{field.value}</dd></div>)}</dl>
     {!!data.entries.length && <section className="space-y-3 border-t border-[#343434] pt-5"><h3 className="font-semibold text-white">Chronologie</h3>{data.entries.map((entry,index) => <div key={index} className="rounded-lg border border-[#343434] p-4"><p className="text-xs text-[#909090]">{entry.kind} · {new Date(entry.occurredAt).toLocaleString('de-DE')}</p><h4 className="mt-2 font-medium text-white">{entry.title}</h4><p className="mt-2 whitespace-pre-wrap break-words text-sm text-[#c4c4c4]">{entry.content}</p></div>)}</section>}
     {!!data.related.length && <section className="space-y-3 border-t border-[#343434] pt-5"><h3 className="font-semibold text-white">Verknüpfte Einträge</h3><div className="grid gap-3 sm:grid-cols-2">{data.related.map(rel => <button key={`${rel.kind}:${rel.recordId}`} onClick={() => onOpen(rel)} className="rounded-lg border border-[#343434] p-4 text-left hover:border-[#a78bfa]"><p className="text-xs text-[#c4b5fd]">{rel.label}</p><p className="mt-1 break-words font-medium text-white">{rel.title}</p></button>)}</div></section>}
   </article>
+}
+function SharedClip({ title, src }: { title: string; src: string }) {
+  const [failed, setFailed] = useState(false)
+  return <figure className="space-y-2"><video controls playsInline preload="metadata" src={src} className="max-h-[65vh] w-full rounded-lg bg-black" onError={() => setFailed(true)} /><figcaption className="break-words text-sm text-[#d4d4d4]">{title}</figcaption>{failed && <p className="text-sm text-[#a6a6a6]">Video nicht verfügbar oder von diesem Browser nicht unterstützt.</p>}</figure>
 }

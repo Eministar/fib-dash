@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 
 // Replace these image slots with the supplied FIB photos when available.
 function BureauImage({ hero = false }: { hero?: boolean }) {
+  if (hero) return <Image src="/home/banner.png" alt="" fill sizes="(max-width: 700px) 100vw, 70vw" priority className="bureau-photo" />
   return <Image src="/home/fib-seal.png" alt="" fill sizes="(max-width: 700px) 100vw, 60vw" priority={hero} className="bureau-placeholder" />
 }
 
