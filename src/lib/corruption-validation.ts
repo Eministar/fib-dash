@@ -8,15 +8,29 @@ export function parseOfficialNumber(value: string) {
 }
 
 const officialId = z.number().int().positive().max(2147483647)
+
+/**
+ * Stammdaten einer Beamtenakte. Bewusst an einer Stelle definiert: Anlegen
+ * (ueber eine Kontrolle) und spaeteres Bearbeiten muessen dieselben Grenzen
+ * haben, sonst laesst sich per Korrektur ein Wert speichern, den das Anlegen
+ * abgelehnt haette.
+ */
+export const officialFieldsSchema = z.object({
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
+  agency: z.string().trim().min(1).max(150),
+  badgeNumber: z.string().trim().max(100).optional(),
+}).strict()
+
+export const officialEditSchema = officialFieldsSchema.extend({
+  version: z.number().int().positive(),
+  reason: z.string().trim().min(3).max(1000),
+}).strict()
+
 export const corruptionCheckSchema = z.object({
   requestId: z.uuid(),
   officialId: officialId.optional(),
-  official: z.object({
-    firstName: z.string().trim().min(1).max(100),
-    lastName: z.string().trim().min(1).max(100),
-    agency: z.string().trim().min(1).max(150),
-    badgeNumber: z.string().trim().max(100).optional(),
-  }).strict().optional(),
+  official: officialFieldsSchema.optional(),
   conductedAt: z.iso.datetime({ offset: true }).refine(v => new Date(v).getTime() <= Date.now() + 60_000, 'Eine durchgeführte Kontrolle darf nicht in der Zukunft liegen'),
   agentIds: z.array(z.string().trim().min(1).max(191)).min(1, 'Mindestens einen durchführenden Agent auswählen').max(30).transform(ids => [...new Set(ids)]),
   result: z.enum(['CLEAR', 'FINDINGS']),
@@ -41,3 +55,4 @@ export const corruptionQuerySchema = z.object({
 }).refine(q => !q.from || !q.to || new Date(q.from) <= new Date(q.to), 'Der Beginn muss vor dem Ende des Zeitraums liegen')
 
 export type CorruptionInput = z.infer<typeof corruptionCheckSchema>
+export type OfficialEditInput = z.infer<typeof officialEditSchema>

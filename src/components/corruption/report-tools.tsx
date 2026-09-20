@@ -13,7 +13,7 @@ import { useApi } from '@/hooks/use-api'
 import { officialNumber } from '@/lib/corruption-validation'
 import { uploadInChunks, formatRate, formatRemaining, type UploadProgress } from '@/lib/chunked-upload'
 import { formatDateTime } from '@/lib/utils'
-import type { Agent, Check, Official } from './corruption-workspace'
+import type { Agent, Check, Official, OfficialRevision, OfficialSnapshot } from './corruption-workspace'
 
 type Snapshot = { conductedAt: string; result: string; findings: string; location: string | null; notes: string | null; agents: { name: string; badgeNumber: string }[] }
 type Evidence = { id: string; title: string; mimeType: string | null; clipId: string | null; uploadedByName: string; createdAt: string }
@@ -30,7 +30,7 @@ export function MergeOfficial({ source }: { source: Official }) {
   const router = useRouter()
   const { execute, loading } = useApi<{ target: Official }>()
   const { data, error } = useFetch<{ items: Official[] }>(open ? `/api/corruption-checks/officials?search=${encodeURIComponent(search)}` : null)
-  return <div className="mb-3"><Button variant="outline" size="sm" onClick={() => setOpen(true)}>Doppelte Akte zusammenführen</Button>
+  return <><Button variant="outline" size="sm" onClick={() => setOpen(true)}>Doppelte Akte zusammenführen</Button>
     <Modal open={open} onClose={loading ? () => {} : () => setOpen(false)} title="Beamtenakten zusammenführen" size="lg"><div className="space-y-4">
       <p className="text-sm text-[#c4c4c4]">Alle Kontrollen von <strong>{personLabel(source)}</strong> in die folgende Zielakte übernehmen. Deren Stammdaten bleiben bestehen; die bisherige Nummer verweist anschließend auf die Zielakte.</p>
       <Input label="Zielakte suchen" value={search} onChange={e => setSearch(e.target.value)} maxLength={200} placeholder="Nummer oder Name" />
@@ -40,7 +40,77 @@ export function MergeOfficial({ source }: { source: Official }) {
       {target && <p className="rounded-lg border border-amber-400/20 p-3 text-sm text-amber-200">Ziel: {personLabel(target)}. Sämtliche Kontrollen beider Akten bleiben erhalten.</p>}
       <Button loading={loading} disabled={!target || reason.trim().length < 3} onClick={async () => { try { const result = await execute(`/api/corruption-checks/officials/${source.id}/merge`, { method: 'POST', body: JSON.stringify({ targetId: target!.id, reason }) }); setOpen(false); router.push(`/corruption-checks?official=${result!.target.id}`) } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Zusammenführen fehlgeschlagen') } }}>In diese Zielakte zusammenführen</Button>
     </div></Modal>
-  </div>
+  </>
+}
+
+const snapshotLine = (data: OfficialSnapshot) => `${data.firstName} ${data.lastName} · ${data.agency}${data.badgeNumber ? ` · ${data.badgeNumber}` : ' · ohne Dienstnummer'}`
+
+/** Vorher/Nachher der Stammdaten, im selben Stil wie die Berichtshistorie. */
+export function OfficialHistory({ revisions }: { revisions: OfficialRevision[] }) {
+  if (!revisions.length) return null
+  return <section className="mt-4 space-y-2 border-t border-[#343434] pt-4">
+    <h3 className="text-sm font-semibold text-white">Änderungen an den Stammdaten</h3>
+    {revisions.map(revision => <details key={revision.id} className="rounded-lg border border-[#343434] p-3">
+      <summary className="cursor-pointer text-sm text-[#c4c4c4]">Version {revision.version} · {revision.actorName} · {formatDateTime(revision.createdAt)}</summary>
+      <p className="my-3 whitespace-pre-wrap break-words text-sm text-[#c4c4c4]">{revision.reason}</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div><h4 className="mb-1 text-xs font-semibold text-white">Vorher</h4><p className="text-sm text-[#c4c4c4]">{snapshotLine(revision.before)}</p></div>
+        <div><h4 className="mb-1 text-xs font-semibold text-white">Nachher</h4><p className="text-sm text-[#c4c4c4]">{snapshotLine(revision.after)}</p></div>
+      </div>
+    </details>)}
+  </section>
+}
+
+/**
+ * Stammdaten einer Beamtenakte korrigieren. Die Begruendung ist Pflicht und
+ * `version` faehrt mit, damit zwei gleichzeitige Korrekturen sich nicht
+ * gegenseitig ueberschreiben.
+ */
+export function EditOfficial({ official, onSaved }: { official: Official; onSaved: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [firstName, setFirstName] = useState(official.firstName)
+  const [lastName, setLastName] = useState(official.lastName)
+  const [agency, setAgency] = useState(official.agency)
+  const [badgeNumber, setBadgeNumber] = useState(official.badgeNumber ?? '')
+  const [reason, setReason] = useState('')
+  const [failure, setFailure] = useState('')
+  const { execute, loading } = useApi<Official>()
+
+  // Beim Oeffnen aus den Props neu befuellen: sonst zeigt ein zweites Oeffnen
+  // noch die Eingaben des letzten, abgebrochenen Versuchs.
+  const start = () => {
+    setFirstName(official.firstName); setLastName(official.lastName)
+    setAgency(official.agency); setBadgeNumber(official.badgeNumber ?? '')
+    setReason(''); setFailure(''); setOpen(true)
+  }
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (loading) return
+    try {
+      await execute(`/api/corruption-checks/officials/${official.id}`, { method: 'PATCH', body: JSON.stringify({ version: official.version, firstName, lastName, agency, badgeNumber, reason }) })
+      setOpen(false)
+      onSaved()
+    } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Korrektur fehlgeschlagen') }
+  }
+
+  // Ohne `version` liefe die Korrektur in einen Validierungsfehler statt in
+  // die optimistische Sperre — dann lieber gar nicht erst anbieten.
+  return <><Button variant="outline" size="sm" disabled={!official.version} onClick={start}>Stammdaten bearbeiten</Button>
+    <Modal open={open} onClose={loading ? () => {} : () => setOpen(false)} title="Beamtenakte bearbeiten" size="lg">
+      <form className="space-y-4" onSubmit={submit}>
+        <p className="text-sm text-[#c4c4c4]">{officialNumber(official.id)} · Die Nummer bleibt bestehen; die Korrektur gilt rückwirkend für alle Kontrollen dieser Akte.</p>
+        <Input label="Vorname" required maxLength={100} value={firstName} onChange={e => setFirstName(e.target.value)} />
+        <Input label="Nachname" required maxLength={100} value={lastName} onChange={e => setLastName(e.target.value)} />
+        <Input label="Behörde" required maxLength={150} value={agency} onChange={e => setAgency(e.target.value)} />
+        <Input label="Dienstnummer" maxLength={100} value={badgeNumber} onChange={e => setBadgeNumber(e.target.value)} placeholder="Optional" />
+        <Textarea label="Begründung der Korrektur" required minLength={3} maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} placeholder="Warum werden die Stammdaten geändert?" />
+        <p className="text-xs text-[#909090]">Die bisherige Fassung bleibt mit Bearbeiter, Zeitpunkt und Begründung in der Historie erhalten.</p>
+        {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
+        <Button type="submit" loading={loading} disabled={!firstName.trim() || !lastName.trim() || !agency.trim() || reason.trim().length < 3}>Korrektur speichern</Button>
+      </form>
+    </Modal>
+  </>
 }
 
 function SnapshotView({ data }: { data: Snapshot }) {

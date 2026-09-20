@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Prisma } from '@/generated/prisma'
-import { corruptionCheckSchema } from './corruption-validation'
+import { corruptionCheckSchema, officialNumber, type OfficialEditInput } from './corruption-validation'
 import { CorruptionError, corruptionInclude, resolveOfficial } from './corruption-server'
 import { createAuditLog } from './audit'
 
@@ -42,6 +42,43 @@ export async function correctReport(tx: Prisma.TransactionClient, id: string, in
   const after = await tx.corruptionCheck.findUniqueOrThrow({ where: { id }, include: corruptionInclude })
   await tx.corruptionRevision.create({ data: { checkId: id, version: after.version, before: reportSnapshot(before), after: reportSnapshot(after), reason: input.reason, actorId: user.id, actorName: user.displayName } })
   await createAuditLog({ action: 'CORRUPTION_CHECK_CORRECTED', userId: user.id, details: `${id}: ${input.reason}` }, tx)
+  return after
+}
+
+/** Die Stammdaten, die eine Revision festhaelt. */
+export function officialSnapshot(person: { firstName: string; lastName: string; agency: string; badgeNumber: string | null }) {
+  return { firstName: person.firstName, lastName: person.lastName, agency: person.agency, badgeNumber: person.badgeNumber }
+}
+
+/**
+ * Korrigiert die Stammdaten einer Beamtenakte. Aufgebaut wie `correctReport`:
+ * Pflicht-Begruendung, optimistisches Sperren ueber `version` und eine
+ * Revision mit Vorher/Nachher, damit nachvollziehbar bleibt, wer den Namen
+ * einer Akte geaendert hat.
+ */
+export async function editOfficial(tx: Prisma.TransactionClient, id: number, input: OfficialEditInput, user: { id: string; displayName: string }) {
+  // Eine zusammengefuehrte Nummer zeigt auf die Zielakte — bearbeitet wird
+  // immer die lebende Akte, sonst pflegt man Daten in eine tote Nummer.
+  const before = await resolveOfficial(tx, id)
+  if (!before) throw new CorruptionError('Beamtenakte nicht gefunden', 404)
+  if (before.version !== input.version) throw new CorruptionError('Diese Beamtenakte wurde bereits geändert. Bitte neu laden.', 409)
+  const changed = await tx.publicOfficial.updateMany({ where: { id: before.id, version: input.version }, data: {
+    version: { increment: 1 },
+    firstName: input.firstName, lastName: input.lastName, agency: input.agency,
+    badgeNumber: input.badgeNumber || null,
+  } })
+  if (changed.count !== 1) throw new CorruptionError('Diese Beamtenakte wurde gleichzeitig geändert. Bitte neu laden.', 409)
+  const after = await tx.publicOfficial.findUniqueOrThrow({ where: { id: before.id } })
+  await tx.officialRevision.create({ data: {
+    officialId: after.id, version: after.version,
+    before: officialSnapshot(before), after: officialSnapshot(after),
+    reason: input.reason, actorId: user.id, actorName: user.displayName,
+  } })
+  await createAuditLog({
+    action: 'CORRUPTION_OFFICIAL_EDITED', userId: user.id,
+    oldValue: JSON.stringify(officialSnapshot(before)), newValue: JSON.stringify(officialSnapshot(after)),
+    details: `${officialNumber(after.id)}: ${input.reason}`,
+  }, tx)
   return after
 }
 

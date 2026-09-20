@@ -1,22 +1,42 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Prisma } from '../src/generated/prisma'
-import { correctReport, correctionSchema, mergeOfficials } from '../src/lib/corruption-edits'
+import { correctReport, correctionSchema, editOfficial, mergeOfficials } from '../src/lib/corruption-edits'
 import { resolveOfficial } from '../src/lib/corruption-server'
 import { matchesEvidenceType, evidencePath } from '../src/lib/corruption-evidence'
-import { resolveBodycamAccess } from '../src/lib/bodycam-access'
+import { officialEditSchema } from '../src/lib/corruption-validation'
+import { canAccessBodycamClip, resolveBodycamAccess } from '../src/lib/bodycam-access'
 import type { CurrentAuth } from '../src/lib/auth'
 
-test('Bodycam role is read-only, excludes classified cases and cannot bypass token scopes', async () => {
+test('Bodycam role is read-only, sees the whole catalog and cannot bypass token scopes', async () => {
   const auth: CurrentAuth = { kind: 'cookie', user: { id: 'u', username: 'user', displayName: 'User', discordId: '123456789012345678', avatarUrl: null, groups: [], permissions: [] } }
   const access = await resolveBodycamAccess(auth, async () => true)
   assert.equal(access.full, false)
-  assert.deepEqual(access.where, { classified: false })
+  assert.equal(access.roleOnly, true)
+  // Die Leserolle gibt bewusst den kompletten Katalog frei, auch Clips aus
+  // Verschlusssachen — deshalb keine Einschraenkung im Where.
+  assert.deepEqual(access.where, {})
   await assert.rejects(resolveBodycamAccess(auth, async () => false), /Forbidden/)
   await assert.rejects(resolveBodycamAccess({ ...auth, kind: 'api' }, async () => true), /Forbidden/)
   await assert.rejects(resolveBodycamAccess(null, async () => true), /Unauthorized/)
   const full = await resolveBodycamAccess({ ...auth, user: { ...auth.user, permissions: ['investigations:view'] } }, async () => { throw new Error('Should not need Discord') })
   assert.equal(full.full, true)
+  assert.equal(full.roleOnly, false)
+})
+
+test('Clip access follows the role for role viewers and the case rules for everyone else', async () => {
+  const user = { id: 'u', username: 'user', displayName: 'User', discordId: '123456789012345678', avatarUrl: null, groups: [], permissions: [] }
+  const classified = { classified: true, createdById: 'someone-else', leadAgent: null, assignees: [] }
+  const open = { classified: false, createdById: 'someone-else', leadAgent: null, assignees: [] }
+
+  assert.equal(canAccessBodycamClip({ user, full: false, roleOnly: true }, classified), true)
+  assert.equal(canAccessBodycamClip({ user, full: false, roleOnly: true }, open), true)
+  // Ohne die Rolle bleibt es bei den Aktenrechten.
+  assert.equal(canAccessBodycamClip({ user, full: false, roleOnly: false }, classified), false)
+  assert.equal(canAccessBodycamClip({ user, full: true, roleOnly: false }, classified), false)
+  assert.equal(canAccessBodycamClip({ user, full: true, roleOnly: false }, open), true)
+  const lead = { ...classified, leadAgent: { discordId: user.discordId } }
+  assert.equal(canAccessBodycamClip({ user, full: true, roleOnly: false }, lead), true)
 })
 
 test('Merge moves all controls, retains aliases and rejects self/repeated merges', async () => {
@@ -66,6 +86,57 @@ test('Correction records before/after and actor, keeps historical agent names an
   assert.equal(check.agents[1].name, 'Deleted Agent')
   await assert.rejects(correctReport(tx, 'c', input, { id: 'u', displayName: 'Editor' }), /bereits geändert/)
   assert.equal(revisions.length, 1)
+})
+
+test('Editing an official records before/after, bumps the version and rejects stale writes', async () => {
+  const officials = [
+    { id: 1, version: 1, mergedIntoId: null as number | null, firstName: 'Alex', lastName: 'Miller', agency: 'LSPD', badgeNumber: '123' },
+    { id: 2, version: 4, mergedIntoId: null as number | null, firstName: 'Sam', lastName: 'Stone', agency: 'LSPD', badgeNumber: null as string | null },
+    { id: 3, version: 1, mergedIntoId: 2 as number | null, firstName: 'Duplicate', lastName: 'Stone', agency: 'LSPD', badgeNumber: null as string | null },
+  ]
+  const revisions: { officialId: number; version: number; before: Record<string, unknown>; after: Record<string, unknown>; reason: string; actorName: string }[] = []
+  const audits: unknown[] = []
+  const tx = {
+    publicOfficial: {
+      findUnique: async ({ where }: { where: { id: number } }) => structuredClone(officials.find(p => p.id === where.id)) ?? null,
+      updateMany: async ({ where, data }: { where: { id: number; version: number }; data: Record<string, unknown> }) => {
+        const person = officials.find(p => p.id === where.id && p.version === where.version)
+        if (!person) return { count: 0 }
+        Object.assign(person, data, { version: person.version + 1 })
+        return { count: 1 }
+      },
+      findUniqueOrThrow: async ({ where }: { where: { id: number } }) => structuredClone(officials.find(p => p.id === where.id)!),
+    },
+    officialRevision: { create: async ({ data }: { data: typeof revisions[number] }) => revisions.push(data) },
+    auditLog: { create: async (data: unknown) => audits.push(data) },
+  } as unknown as Prisma.TransactionClient
+  const actor = { id: 'u', displayName: 'Editor' }
+
+  const input = officialEditSchema.parse({ version: 1, reason: 'Nachname falsch geschrieben', firstName: 'Alex', lastName: 'Müller', agency: 'LSPD', badgeNumber: '123' })
+  const updated = await editOfficial(tx, 1, input, actor)
+  assert.equal(updated.lastName, 'Müller')
+  assert.equal(updated.version, 2)
+  assert.deepEqual(revisions[0].before, { firstName: 'Alex', lastName: 'Miller', agency: 'LSPD', badgeNumber: '123' })
+  assert.deepEqual(revisions[0].after, { firstName: 'Alex', lastName: 'Müller', agency: 'LSPD', badgeNumber: '123' })
+  assert.equal(revisions[0].version, 2)
+  assert.equal(revisions[0].actorName, 'Editor')
+  assert.equal(audits.length, 1)
+
+  // Dieselbe Version ein zweites Mal ist ein verlorenes Update.
+  await assert.rejects(editOfficial(tx, 1, input, actor), /bereits geändert/)
+  assert.equal(revisions.length, 1)
+
+  // Eine leere Dienstnummer wird zu null, nicht zum Leerstring.
+  await editOfficial(tx, 2, officialEditSchema.parse({ version: 4, reason: 'Behörde korrigiert', firstName: 'Sam', lastName: 'Stone', agency: 'BCSO', badgeNumber: '' }), actor)
+  assert.equal(officials[1].agency, 'BCSO')
+  assert.equal(officials[1].badgeNumber, null)
+
+  // Eine zusammengeführte Nummer bearbeitet die Zielakte, nicht die tote Akte.
+  await editOfficial(tx, 3, officialEditSchema.parse({ version: 5, reason: 'Vorname ergänzt', firstName: 'Samuel', lastName: 'Stone', agency: 'BCSO' }), actor)
+  assert.equal(officials[1].firstName, 'Samuel')
+  assert.equal(officials[2].firstName, 'Duplicate')
+
+  await assert.rejects(editOfficial(tx, 99, input, actor), /nicht gefunden/)
 })
 
 test('Evidence uploads reject forged content types and traversal', async () => {

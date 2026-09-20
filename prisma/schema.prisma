@@ -2139,18 +2139,37 @@ model Dossier {
 /// Eigenständige Staatsbeamtenakte; öffentliche Nummer wird als BEA-000001 dargestellt.
 model PublicOfficial {
   mergedIntoId Int?
-  mergedInto   PublicOfficial?   @relation("OfficialMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  mergedFrom   PublicOfficial[]  @relation("OfficialMerge")
-  id           Int               @id @default(autoincrement())
-  firstName    String            @db.VarChar(100)
-  lastName     String            @db.VarChar(100)
-  agency       String            @db.VarChar(150)
-  badgeNumber  String?           @db.VarChar(100)
-  createdAt    DateTime          @default(now())
+  mergedInto   PublicOfficial?    @relation("OfficialMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  mergedFrom   PublicOfficial[]   @relation("OfficialMerge")
+  id           Int                @id @default(autoincrement())
+  version      Int                @default(1)
+  firstName    String             @db.VarChar(100)
+  lastName     String             @db.VarChar(100)
+  agency       String             @db.VarChar(150)
+  badgeNumber  String?            @db.VarChar(100)
+  createdAt    DateTime           @default(now())
   checks       CorruptionCheck[]
+  revisions    OfficialRevision[]
 
   @@index([lastName, firstName])
   @@index([agency])
+}
+
+/// Stammdaten-Korrekturen an einer Beamtenakte. Gleiche Bauart wie
+/// `CorruptionRevision`, damit Bericht und Akte dieselbe Nachweiskette haben.
+model OfficialRevision {
+  id         String         @id @default(cuid())
+  officialId Int
+  official   PublicOfficial @relation(fields: [officialId], references: [id], onDelete: Restrict)
+  version    Int
+  before     Json
+  after      Json
+  reason     String         @db.VarChar(1000)
+  actorId    String         @db.VarChar(191)
+  actorName  String         @db.VarChar(220)
+  createdAt  DateTime       @default(now())
+
+  @@unique([officialId, version])
 }
 
 model CorruptionCheck {

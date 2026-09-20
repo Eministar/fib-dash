@@ -715,7 +715,7 @@ export default function SettingsPage() {
                     onValueChange={(bodycamViewerRoleId) => setDiscordForm({ ...discordForm, bodycamViewerRoleId })}
                     options={roleOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#909090]">Gewährt angemeldeten Rollenmitgliedern Zugriff auf nicht vertrauliche Bodycam-Clips. Bestehende Ermittlungsrechte gelten weiterhin.</p>
+                <p className="mt-1.5 text-[11px] text-[#909090]">Gewährt angemeldeten Rollenmitgliedern Lesezugriff auf den gesamten Bodycam-Katalog — auch auf Clips aus Verschlusssachen. Die Akten selbst bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select

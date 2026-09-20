@@ -14,13 +14,16 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { formatDateTime, cn } from '@/lib/utils'
 import { officialNumber } from '@/lib/corruption-validation'
-import { ReportDetail, MergeOfficial } from './report-tools'
+import { ReportDetail, MergeOfficial, EditOfficial, OfficialHistory } from './report-tools'
 
 export type Agent = { id: string; firstName: string; lastName: string; badgeNumber: string; status: string }
+export type OfficialSnapshot = { firstName: string; lastName: string; agency: string; badgeNumber: string | null }
+export type OfficialRevision = { id: string; version: number; reason: string; actorName: string; createdAt: string; before: OfficialSnapshot; after: OfficialSnapshot }
 export type Official = {
   mergedFrom?: { id: number; firstName: string; lastName: string }[];
-  id: number; firstName: string; lastName: string; agency: string; badgeNumber: string | null;
+  id: number; version?: number; firstName: string; lastName: string; agency: string; badgeNumber: string | null;
   _count?: { checks: number }; checks?: { conductedAt: string; result: string }[];
+  revisions?: OfficialRevision[];
 }
 export type Check = {
   id: string; official: Official; conductedAt: string; result: 'CLEAR' | 'FINDINGS'; findings: string;
@@ -89,10 +92,10 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
     </nav>
     {saved && <div role="status" className="mb-5 rounded-lg border border-emerald-400/20 bg-emerald-400/5 p-4 text-sm text-emerald-200">Kontrolle gespeichert. Beamtennummer: <Link className="font-semibold underline" href={officialHref(saved.official.id)}>{officialNumber(saved.official.id)} · {saved.official.firstName} {saved.official.lastName}</Link></div>}
     {officialId && <section className="mb-5 rounded-xl border border-[#343434] bg-[#141414] p-5">
-      {official.data && <MergeOfficial source={official.data} />}
+      {official.data && <div className="mb-3 flex flex-wrap gap-2"><EditOfficial official={official.data} onSaved={() => { void official.refetch(); void controls.refetch(); void officials.refetch() }} /><MergeOfficial source={official.data} /></div>}
       {!!official.data?.mergedFrom?.length && <p className="mb-3 text-xs text-[#909090]">Zusammengeführte Nummern: {official.data.mergedFrom.map(p => officialNumber(p.id)).join(', ')}</p>}
       <Link href="/corruption-checks?tab=officials" className="mb-3 inline-flex items-center gap-1 text-xs text-[#a6a6a6]"><ArrowLeft size={13} />Alle Beamtenakten</Link>
-      {official.data ? <><p className="font-mono text-xs text-[#a6a6a6]">{officialNumber(official.data.id)}</p><h2 className="mt-1 text-xl font-semibold text-white">{official.data.firstName} {official.data.lastName}</h2><p className="mt-2 text-sm text-[#a6a6a6]">{official.data.agency}{official.data.badgeNumber ? ` · Dienstnummer ${official.data.badgeNumber}` : ''} · {official.data._count?.checks ?? 0} Kontrollen</p></> : <p className="text-sm text-[#909090]">{official.loading ? 'Beamtenakte wird geladen …' : 'Beamtenakte nicht verfügbar.'}</p>}
+      {official.data ? <><p className="font-mono text-xs text-[#a6a6a6]">{officialNumber(official.data.id)}</p><h2 className="mt-1 text-xl font-semibold text-white">{official.data.firstName} {official.data.lastName}</h2><p className="mt-2 text-sm text-[#a6a6a6]">{official.data.agency}{official.data.badgeNumber ? ` · Dienstnummer ${official.data.badgeNumber}` : ''} · {official.data._count?.checks ?? 0} Kontrollen</p><OfficialHistory revisions={official.data.revisions ?? []} /></> : <p className="text-sm text-[#909090]">{official.loading ? 'Beamtenakte wird geladen …' : 'Beamtenakte nicht verfügbar.'}</p>}
     </section>}
     <section aria-label="Filter" className="mb-5 space-y-3 rounded-xl border border-[#343434] bg-[#141414] p-4">
       <div className="grid gap-3 sm:grid-cols-2"><Input label="Suche" placeholder={tab === 'archive' ? 'BEA-Nummer, Vorname, Nachname, Befund …' : 'BEA-Nummer, Vorname, Nachname …'} maxLength={200} value={search} onChange={e => changed(setSearch, e.target.value)} /><Input label="Behörde" placeholder="Alle Behörden" maxLength={150} value={agency} onChange={e => changed(setAgency, e.target.value)} /></div>
