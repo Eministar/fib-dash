@@ -30,7 +30,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { data: activeSession, loading: activeSessionLoading } = useFetch<ActiveTestSession | null>(
     !loading && user ? '/api/form-test-sessions/active' : null,
   )
+  // Der Bodycam-Lesezugriff haengt an einer Discord-Rolle, nicht an einer
+  // Permission. Ohne diese Abfrage waere ein reiner Katalog-Leser `visitorOnly`
+  // und wuerde ins Besucherportal geschoben, obwohl der Katalog fuer ihn offen ist.
+  const { data: bodycamAccess, loading: bodycamAccessLoading } = useFetch<{ allowed: boolean }>(
+    !loading && user ? '/api/investigations/clips/access' : null,
+  )
   const visitorOnly = Boolean(user && !user.permissions.some((permission) => permission !== 'password:change'))
+  const bodycamOnly = visitorOnly && bodycamAccess?.allowed === true
+  const isBodycamCatalog = pathname === '/investigations/clips' || pathname.startsWith('/investigations/clips/')
   // Ein geteilter Testlink (/form-tests/<token>) ist bewusst KEINE reguläre
   // Dashboard-Seite: Bewerber und frisch eingeladene Agent haben oft noch
   // gar keine Rechte. Vorher landeten genau die im Besucherportal und konnten
@@ -38,10 +46,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const isSharedFormTestLink = /^\/form-tests\/(?!manage(?:\/|$))[^/]+\/?$/.test(pathname)
 
   useEffect(() => {
-    if (!loading && !activeSessionLoading && visitorOnly && !isSharedFormTestLink) {
-      router.replace('/besucherportal')
+    if (loading || activeSessionLoading || bodycamAccessLoading || !visitorOnly || isSharedFormTestLink) return
+    // Katalog-Leser bleiben im Dashboard, aber ausschliesslich im Bodycam-Katalog.
+    if (bodycamOnly) {
+      if (!isBodycamCatalog) router.replace('/investigations/clips')
+      return
     }
-  }, [activeSessionLoading, isSharedFormTestLink, loading, router, visitorOnly])
+    router.replace('/besucherportal')
+  }, [
+    activeSessionLoading,
+    bodycamAccessLoading,
+    bodycamOnly,
+    isBodycamCatalog,
+    isSharedFormTestLink,
+    loading,
+    router,
+    visitorOnly,
+  ])
 
   if (loading) return <PageLoader />
   if (!user) {
@@ -78,11 +99,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       />
     )
   }
-  if (activeSessionLoading) return <PageLoader />
+  if (activeSessionLoading || bodycamAccessLoading) return <PageLoader />
+
+  // Katalog-Leser bekommen die normale Shell; die Seitenleiste blendet fuer sie
+  // ohnehin nur den Bodycam-Katalog ein.
+  if (bodycamOnly && !isBodycamCatalog) return <PageLoader />
 
   // Nutzer ohne Dashboard-Rechte bekommen den Test ohne Seitenleiste — die
   // hätte für sie ohnehin keinen Inhalt.
-  if (visitorOnly) {
+  if (visitorOnly && !bodycamOnly) {
     if (!isSharedFormTestLink) return <PageLoader />
     return (
       <main className="min-h-screen bg-[#080808] px-3 pb-10 pt-6 sm:px-6 lg:px-8">{children}</main>

@@ -132,13 +132,18 @@ function hasLoginRole(
   loginRoleIds: string[],
   groupRoleMap: Record<string, string[]>,
   rolePermissionMap: Record<string, Permission[]> = {},
+  bodycamViewerRoleId = '',
 ) {
   const roles = new Set(roleIds)
   const groupRoleIds = Object.values(groupRoleMap).flat()
   // Rollen mit direkt hinterlegten Rechten sind ebenfalls Login-Rollen: sonst
   // muesste man jede solche Rolle zusaetzlich als Login-Rolle pflegen.
   const permissionRoleIds = Object.keys(rolePermissionMap)
-  const allowedRoles = Array.from(new Set([...loginRoleIds, ...groupRoleIds, ...permissionRoleIds]))
+  // Die Bodycam-Leserolle traegt keine Permissions und keine Gruppe — ohne sie
+  // hier kaeme ein reiner Katalog-Leser gar nicht erst durch den Login und
+  // koennte den fuer ihn freigeschalteten Katalog nie oeffnen.
+  const bodycamRoleIds = bodycamViewerRoleId ? [bodycamViewerRoleId] : []
+  const allowedRoles = Array.from(new Set([...loginRoleIds, ...groupRoleIds, ...permissionRoleIds, ...bodycamRoleIds]))
   if (allowedRoles.length === 0) throw new DiscordAuthError('Discord-Login ist nicht konfiguriert')
   return allowedRoles.some((roleId) => roles.has(roleId))
 }
@@ -264,7 +269,7 @@ export async function upsertDiscordContractSigner(profile: DiscordMemberProfile)
 
 export async function upsertDiscordUser(profile: DiscordMemberProfile) {
   const config = await getDiscordConfig()
-  if (!hasLoginRole(profile.roles, config.authLoginRoleIds, config.authGroupRoleMap, config.authRolePermissionMap)) {
+  if (!hasLoginRole(profile.roles, config.authLoginRoleIds, config.authGroupRoleMap, config.authRolePermissionMap, config.bodycamViewerRoleId)) {
     throw new DiscordAuthError('Dir fehlt die benötigte Discord-Rolle für dieses Dashboard')
   }
 
