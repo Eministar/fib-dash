@@ -27,6 +27,10 @@ function clientIp(req: NextRequest) {
 /**
  * Vertrag ausfüllen und unterschreiben.
  *
+ * **Der Link ist der Nachweis** — ein Login wird nicht verlangt. Besteht eine
+ * Session, wird sie zusammen mit IP, User-Agent und dem getippten Namen als
+ * Beleg an der Unterschrift festgehalten.
+ *
  * Geschrieben wird immer in **eine** Unterschriftszeile — die, zu der der Token
  * gehört. Der Vertragsstatus ergibt sich anschließend aus allen Zeilen; bei
  * einem Behördenvertrag ist er also erst geschlossen, wenn beide Seiten
@@ -42,13 +46,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     if (!link) return notFound('Vertrag')
 
     const { contract, signature } = link
-    const access = await resolveSignatureAccess(signature, contract.agent?.discordId ?? null, await getCurrentUser())
-    if (!access.ok) return error(access.message, access.status)
-    if (access.access !== 'signer') {
-      return error('Diese Seite darf den Vertrag nur einsehen.', 403)
-    }
-
     const user = await getCurrentUser()
+
+    // Der Link allein berechtigt zum Unterschreiben. Nur HR, die gerade einen
+    // fremden Vertrag ansieht, wird hier gebremst — damit aus dem Nachschauen
+    // keine Unterschrift für den Agenten wird.
+    const access = await resolveSignatureAccess(signature, contract.agent?.discordId ?? null, user)
+    if (access !== 'signer') {
+      return error('Du siehst diesen Vertrag nur zur Einsicht — unterschreiben kann ihn die benannte Partei über ihren Link.', 403)
+    }
 
     if (contract.status === 'CANCELLED') {
       return error('Dieser Vertrag wurde zurückgezogen. Bitte melde dich bei der Personalabteilung.', 409)

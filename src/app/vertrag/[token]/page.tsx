@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Eye,
   FileSignature,
-  Lock,
   Printer,
   ShieldX,
 } from 'lucide-react'
@@ -26,7 +25,7 @@ import {
 interface ContractPayload extends ContractDocumentData {
   id: string
   token: string
-  /** 'signer' = der Agent selbst, 'auditor' = Einsicht über Prüfrolle/HR. */
+  /** 'signer' = wer den Link hat, 'auditor' = HR sieht einen fremden Vertrag. */
   access: 'signer' | 'auditor'
   fields: ContractField[]
   values: ContractValues
@@ -37,7 +36,6 @@ interface ContractPayload extends ContractDocumentData {
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'ready'; contract: ContractPayload }
-  | { kind: 'login' }
   | { kind: 'error'; status: number; message: string }
 
 function paramToken(value: string | string[] | undefined) {
@@ -65,10 +63,6 @@ export default function ContractSigningPage() {
       try {
         const res = await fetch(`/api/contract-links/${encodeURIComponent(token)}`, { cache: 'no-store' })
         const json = await res.json()
-        if (res.status === 401) {
-          setState({ kind: 'login' })
-          return
-        }
         if (!res.ok || !json.success) {
           setState({ kind: 'error', status: res.status, message: json.error || 'Vertrag konnte nicht geladen werden.' })
           return
@@ -167,23 +161,6 @@ export default function ContractSigningPage() {
     )
   }
 
-  if (state.kind === 'login') {
-    const target = `/api/auth/discord/login?mode=contract&redirect=${encodeURIComponent(`/vertrag/${token}`)}`
-    return (
-      <Shell>
-        <Notice
-          icon={Lock}
-          title="Bitte mit Discord anmelden"
-          description="Dein Arbeitsvertrag ist persönlich. Melde dich mit dem Discord-Account an, an den der Vertrag geschickt wurde — nur dieser Account kann ihn öffnen und unterschreiben."
-        >
-          <a href={target}>
-            <Button size="lg">Mit Discord anmelden</Button>
-          </a>
-        </Notice>
-      </Shell>
-    )
-  }
-
   if (state.kind === 'error') {
     return (
       <Shell>
@@ -227,8 +204,9 @@ export default function ContractSigningPage() {
             <div>
               <p className="text-[13px] font-semibold text-white">Einsicht</p>
               <p className="mt-1 text-[12.5px] leading-5 text-[#a6a6a6]">
-                Du siehst diesen Vertrag über deine Berechtigung zur Vertragseinsicht. Ändern oder
-                unterschreiben kann ihn ausschließlich der Agent selbst.
+                Du siehst diesen Vertrag über deine Berechtigung zur Vertragseinsicht. Damit du
+                nicht versehentlich für die Gegenseite zeichnest, kannst du ihn hier nur lesen —
+                unterschreiben kann ihn jeder, der den Vertragslink erhalten hat.
               </p>
             </div>
           </div>
@@ -352,7 +330,7 @@ function Notice({
   description,
   children,
 }: {
-  icon: typeof Lock
+  icon: typeof AlertTriangle
   title: string
   description: string
   children?: React.ReactNode

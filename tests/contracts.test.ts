@@ -169,20 +169,7 @@ test('Der Vertragsstatus wird aus den einzelnen Unterschriften abgeleitet', asyn
   assert.equal(deriveContractStatus([], 'SENT'), 'SENT')
 })
 
-test('Eine externe Partei weist sich allein ueber den Link aus', async () => {
-  const { signatureRequiresDiscord } = await import('../src/lib/contract-signatures')
-
-  // Interne Partei: die hinterlegte Discord-Identität muss stimmen.
-  assert.equal(signatureRequiresDiscord({ side: 'INTERNAL', signerDiscordId: '42' }), true)
-
-  // Externe Behörde: kein Account, kein Discord. Wer den Link hat, unterschreibt.
-  assert.equal(signatureRequiresDiscord({ side: 'EXTERNAL', signerDiscordId: null }), false)
-
-  // Ein Altvertrag ist EXTERNAL, traegt aber eine Discord-ID - die gilt weiter.
-  assert.equal(signatureRequiresDiscord({ side: 'EXTERNAL', signerDiscordId: '42' }), true)
-})
-
-test('Wer unterschreiben darf, haengt an der Identitaet - nur extern reicht der Link', async () => {
+test('signerMatches erkennt die benannte Partei - es entscheidet nicht mehr ueber den Zugang', async () => {
   const { signerMatches } = await import('../src/lib/contract-signatures')
 
   const internal = { side: 'INTERNAL', signerDiscordId: '42' }
@@ -208,4 +195,63 @@ test('Wer unterschreiben darf, haengt an der Identitaet - nur extern reicht der 
   // Eine externe Zeile mit Agent dahinter bleibt an die Identität gebunden.
   assert.equal(signerMatches(external, '77', null), false)
   assert.equal(signerMatches(external, '77', '77'), true)
+})
+
+test('Wer den Link hat, unterschreibt - nur lesende HR sieht den Vertrag als Pruefer', async () => {
+  const { resolveLinkAccess } = await import('../src/lib/contract-signatures')
+
+  // Der Regelfall: jemand oeffnet den Link, ohne angemeldet zu sein.
+  assert.equal(
+    resolveLinkAccess({
+      hasNamedSigner: true,
+      isNamedSigner: false,
+      canViewContracts: false,
+      isAuditorRole: false,
+    }),
+    'signer',
+  )
+
+  // Die benannte Partei selbst - auch wenn sie nebenbei HR-Rechte hat.
+  assert.equal(
+    resolveLinkAccess({
+      hasNamedSigner: true,
+      isNamedSigner: true,
+      canViewContracts: true,
+      isAuditorRole: true,
+    }),
+    'signer',
+  )
+
+  // HR oeffnet den Vertrag eines anderen: nur lesen, damit niemand aus
+  // Versehen fuer den Agenten zeichnet.
+  assert.equal(
+    resolveLinkAccess({
+      hasNamedSigner: true,
+      isNamedSigner: false,
+      canViewContracts: true,
+      isAuditorRole: false,
+    }),
+    'auditor',
+  )
+  assert.equal(
+    resolveLinkAccess({
+      hasNamedSigner: true,
+      isNamedSigner: false,
+      canViewContracts: false,
+      isAuditorRole: true,
+    }),
+    'auditor',
+  )
+
+  // Ohne benannte Partei gibt es niemanden, fuer den man versehentlich
+  // zeichnen koennte - dann darf auch HR unterschreiben.
+  assert.equal(
+    resolveLinkAccess({
+      hasNamedSigner: false,
+      isNamedSigner: true,
+      canViewContracts: true,
+      isAuditorRole: true,
+    }),
+    'signer',
+  )
 })

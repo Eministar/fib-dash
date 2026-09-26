@@ -3,7 +3,12 @@ import type { CurrentUser } from '@/lib/auth'
 import { isDiscordContractAuditor } from '@/lib/discord-integration'
 import { hasAnyPermission } from '@/lib/permissions'
 import { loadSignatureByToken } from '@/lib/contract-signature-service'
-import { signatureStateLabel, signerMatches } from '@/lib/contract-signatures'
+import {
+  resolveLinkAccess,
+  signatureStateLabel,
+  signerMatches,
+  type ContractLinkAccess as ContractLinkAccessValue,
+} from '@/lib/contract-signatures'
 import { getBadgePrefix } from '@/lib/settings-helpers'
 import {
   CONTRACT_PLACE,
@@ -122,73 +127,10 @@ export async function loadContractLinkByToken(token: string) {
 }
 
 /**
- * Wie jemand auf einen Vertragslink zugreifen darf.
- *
- * - `signer`  — der Agent selbst: darf ausfüllen, unterschreiben, ablehnen
- * - `auditor` — Aufsichtsrolle oder HR: darf den Vertrag nur einsehen
+ * Wie jemand einen Vertragslink benutzen darf — die Regel steht in
+ * `contract-signatures.ts`, damit sie ohne Datenbank prüfbar bleibt.
  */
-export type ContractLinkAccess = 'signer' | 'auditor'
-
-export type ContractAccessResult =
-  | { ok: true; access: ContractLinkAccess }
-  | { ok: false; status: number; message: string }
-
-/**
- * Entscheidet, ob und wie ein eingeloggter Nutzer diesen Vertrag sehen darf.
- *
- * Der Link allein reicht nie: entweder gehört der Discord-Account zum Vertrag,
- * oder er hat eine Prüfrolle bzw. das Recht, Verträge im Dashboard zu sehen.
- */
-export async function resolveContractAccess(
-  contract: Pick<ContractLinkRecord, 'signerDiscordId' | 'agent'>,
-  user: CurrentUser | null,
-): Promise<ContractAccessResult> {
-  if (!user) {
-    return {
-      ok: false,
-      status: 401,
-      message: 'Bitte melde dich mit Discord an, um diesen Vertrag zu öffnen.',
-    }
-  }
-
-  // Der Agent selbst darf unterschreiben, wenn seine Discord-ID zum Vertrag
-  // passt. Bewusst in zwei Stufen geprüft: erst der Snapshot, dann die aktuelle
-  // Agent-Akte. HR kann die Discord-ID nachträglich korrigieren — ohne diesen
-  // Fallback bliebe sonst auch der richtige Account dauerhaft ausgesperrt (403).
-  const signerDiscordId = contract.signerDiscordId?.trim() || null
-  const agentDiscordId = contract.agent?.discordId?.trim() || null
-  const ownsContract = Boolean(user.discordId && (
-    (signerDiscordId && user.discordId === signerDiscordId) ||
-    (agentDiscordId && user.discordId === agentDiscordId)
-  ))
-  if (ownsContract) {
-    return { ok: true, access: 'signer' }
-  }
-
-  // HR sieht Verträge ohnehin im Dashboard — dann darf der Link nicht strenger sein.
-  if (hasAnyPermission(user, ['contracts:view', 'contracts:manage'])) {
-    return { ok: true, access: 'auditor' }
-  }
-
-  if (await isDiscordContractAuditor(user.discordId)) {
-    return { ok: true, access: 'auditor' }
-  }
-
-  if (!signerDiscordId && !agentDiscordId) {
-    return {
-      ok: false,
-      status: 409,
-      message:
-        'Für diesen Vertrag ist keine Discord-ID hinterlegt. Bitte melde dich bei der Personalabteilung.',
-    }
-  }
-
-  return {
-    ok: false,
-    status: 403,
-    message: 'Dieser Vertrag gehört zu einem anderen Discord-Account.',
-  }
-}
+export type { ContractLinkAccess } from '@/lib/contract-signatures'
 
 /**
  * Bereitet den Vertrag für die Anzeige auf: Ort und Datum werden erst hier
@@ -230,7 +172,7 @@ export interface ContractDocumentSignature {
 export async function serializeContractDocument(
   contract: ContractDocumentSource,
   signature: ContractDocumentSignature,
-  access: ContractLinkAccess = 'signer',
+  access: ContractLinkAccessValue = 'signer',
 ) {
   const documentDate = signature.signedAt ?? new Date()
   const resolve = (value: string | null | undefined) =>
@@ -284,47 +226,33 @@ export async function serializeContractDocument(
 export type ContractDocument = Awaited<ReturnType<typeof serializeContractDocument>>
 
 /**
- * Entscheidet, ob und wie jemand diese Unterschriftszeile öffnen darf.
+ * Entscheidet, wie jemand diese Unterschriftszeile öffnen darf.
  *
- * Gegenüber {@link resolveContractAccess} ist der Unterschied, dass eine
- * externe Partei ohne hinterlegte Identität allein über den Link zugreift —
- * eine fremde Behörde hat keinen Account in diesem Dashboard.
+ * **Der Link ist der Nachweis.** Es gibt hier keinen Fehlerfall mehr: wer den
+ * Token hat, sieht den Vertrag und darf unterschreiben — mit oder ohne Login.
+ * Die Identität wird weiterhin mitgeschrieben (Session, IP, User-Agent,
+ * getippter Name), sie entscheidet nur nicht mehr über den Zutritt.
+ *
+ * Die einzige Unterscheidung ist die Aufsicht: eingeloggte HR, die nicht die
+ * benannte Partei ist, bekommt den fremden Vertrag nur zu lesen.
  */
 export async function resolveSignatureAccess(
   signature: { side: string; signerDiscordId: string | null },
   agentDiscordId: string | null,
   user: CurrentUser | null,
-): Promise<ContractAccessResult> {
-  const linkIsProof = !signature.signerDiscordId?.trim() && !agentDiscordId?.trim()
+): Promise<ContractLinkAccessValue> {
+  const hasNamedSigner = Boolean(signature.signerDiscordId?.trim() || agentDiscordId?.trim())
 
-  // Externer Vertragspartner: kein Login nötig, der Link ist der Nachweis.
-  if (linkIsProof) return { ok: true, access: 'signer' }
+  // Ohne Login und ohne benannte Partei steht die Antwort schon fest — dann
+  // braucht es auch keine Discord-Abfrage für die Prüfrolle.
+  if (!user || !hasNamedSigner) return 'signer'
 
-  if (!user) {
-    return {
-      ok: false,
-      status: 401,
-      message: 'Bitte melde dich mit Discord an, um diesen Vertrag zu öffnen.',
-    }
-  }
-
-  if (signerMatches(signature, agentDiscordId, user.discordId)) {
-    return { ok: true, access: 'signer' }
-  }
-
-  // HR sieht Verträge ohnehin im Dashboard — dann darf der Link nicht strenger sein.
-  if (hasAnyPermission(user, ['contracts:view', 'contracts:manage'])) {
-    return { ok: true, access: 'auditor' }
-  }
-  if (await isDiscordContractAuditor(user.discordId)) {
-    return { ok: true, access: 'auditor' }
-  }
-
-  return {
-    ok: false,
-    status: 403,
-    message: 'Dieser Vertrag gehört zu einem anderen Discord-Account.',
-  }
+  return resolveLinkAccess({
+    hasNamedSigner,
+    isNamedSigner: signerMatches(signature, agentDiscordId, user.discordId),
+    canViewContracts: hasAnyPermission(user, ['contracts:view', 'contracts:manage']),
+    isAuditorRole: await isDiscordContractAuditor(user.discordId),
+  })
 }
 
 /** Die Parteien eines Vertrags für die Anzeige — eigene Zeile zuerst markiert. */

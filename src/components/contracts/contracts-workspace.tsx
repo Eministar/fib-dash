@@ -275,7 +275,14 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
     const url = `${window.location.origin}/vertrag/${contract.token}`
     try {
       await navigator.clipboard.writeText(url)
-      addToast({ type: 'success', title: 'Vertragslink kopiert' })
+      // Der Link ist seit dem Wegfall der Discord-Pruefung der einzige
+      // Nachweis — wer ihn weiterleitet, verschenkt die Unterschrift. Das
+      // gehoert genau hierhin, wo der Link die Hand wechselt.
+      addToast({
+        type: 'success',
+        title: 'Vertragslink kopiert',
+        message: 'Wer diesen Link hat, kann den Vertrag unterschreiben — nur an die richtige Person weitergeben.',
+      })
     } catch {
       addToast({ type: 'error', title: 'Kopieren fehlgeschlagen', message: url })
     }
