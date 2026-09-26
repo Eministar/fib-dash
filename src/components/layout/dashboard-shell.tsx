@@ -12,6 +12,7 @@ import { SessionRecoveryScreen } from '@/components/auth/session-recovery-screen
 import { Button } from '@/components/ui/button'
 import { useFetch } from '@/hooks/use-fetch'
 import { ChangeHistoryControls } from '@/components/layout/change-history-controls'
+import { visitorRedirectTarget, type BodycamAnswer } from '@/lib/visitor-routing'
 import { GlobalSearch } from '@/components/layout/global-search'
 
 interface ActiveTestSession {
@@ -33,11 +34,24 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   // Der Bodycam-Lesezugriff haengt an einer Discord-Rolle, nicht an einer
   // Permission. Ohne diese Abfrage waere ein reiner Katalog-Leser `visitorOnly`
   // und wuerde ins Besucherportal geschoben, obwohl der Katalog fuer ihn offen ist.
-  const { data: bodycamAccess, loading: bodycamAccessLoading } = useFetch<{ allowed: boolean }>(
+  const {
+    data: bodycamAccess,
+    loading: bodycamAccessLoading,
+    error: bodycamAccessError,
+  } = useFetch<{ allowed: boolean }>(
     !loading && user ? '/api/investigations/clips/access' : null,
   )
   const visitorOnly = Boolean(user && !user.permissions.some((permission) => permission !== 'password:change'))
-  const bodycamOnly = visitorOnly && bodycamAccess?.allowed === true
+  // Nicht an `bodycamAccessLoading` haengen: das meldet `false`, solange die
+  // URL noch `null` war, und wuerde eine unbeantwortete Abfrage als "kein
+  // Zugriff" durchgehen lassen. Entschieden ist erst, wenn eine Antwort oder
+  // ein Fehler vorliegt — ein 403 ist eine Antwort.
+  const bodycam: BodycamAnswer = bodycamAccess
+    ? (bodycamAccess.allowed ? 'allowed' : 'denied')
+    : bodycamAccessError
+      ? 'denied'
+      : 'pending'
+  const bodycamOnly = visitorOnly && bodycam === 'allowed'
   const isBodycamCatalog = pathname === '/investigations/clips' || pathname.startsWith('/investigations/clips/')
   // Ein geteilter Testlink (/form-tests/<token>) ist bewusst KEINE reguläre
   // Dashboard-Seite: Bewerber und frisch eingeladene Agent haben oft noch
@@ -46,17 +60,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const isSharedFormTestLink = /^\/form-tests\/(?!manage(?:\/|$))[^/]+\/?$/.test(pathname)
 
   useEffect(() => {
-    if (loading || activeSessionLoading || bodycamAccessLoading || !visitorOnly || isSharedFormTestLink) return
-    // Katalog-Leser bleiben im Dashboard, aber ausschliesslich im Bodycam-Katalog.
-    if (bodycamOnly) {
-      if (!isBodycamCatalog) router.replace('/investigations/clips')
-      return
-    }
-    router.replace('/besucherportal')
+    if (loading || activeSessionLoading) return
+    const target = visitorRedirectTarget({
+      visitorOnly,
+      bodycam,
+      isBodycamCatalog,
+      isSharedFormTestLink,
+    })
+    if (target) router.replace(target)
   }, [
     activeSessionLoading,
-    bodycamAccessLoading,
-    bodycamOnly,
+    bodycam,
     isBodycamCatalog,
     isSharedFormTestLink,
     loading,
@@ -99,7 +113,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       />
     )
   }
-  if (activeSessionLoading || bodycamAccessLoading) return <PageLoader />
+  if (activeSessionLoading || bodycamAccessLoading || (visitorOnly && bodycam === 'pending')) return <PageLoader />
 
   // Katalog-Leser bekommen die normale Shell; die Seitenleiste blendet fuer sie
   // ohnehin nur den Bodycam-Katalog ein.

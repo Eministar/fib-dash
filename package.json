@@ -73,7 +73,7 @@
     "dotenv": "^17.4.2",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.4",
-    "prisma": "^8.0.0-rc.15",
+    "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
