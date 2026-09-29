@@ -1,3 +1,5 @@
+import { getDutyMode } from '@/lib/duty-mode'
+import { detachTerminatedAgent } from '@/lib/terminated-memberships'
 import { NextRequest } from 'next/server'
 import { releaseTerminatedCodename, codenameTransaction } from '@/lib/codenames'
 import { queueCodenameBoardUpdate } from '@/lib/discord-integration'
@@ -150,7 +152,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const hiredBy = hireAudit
     ? { displayName: hireAudit.user?.displayName ?? null, createdAt: hireAudit.createdAt }
     : null
-  await syncAgentPlayerPlaytime(id)
+  if (await getDutyMode() === 'api') await syncAgentPlayerPlaytime(id)
   const discordId = validDiscordId(agent.discordId)
   const canCheckDiscordMembers = await canCheckDiscordGuildMembers()
   const [dutyTime, playtime, absences, discordGuildMember] = await Promise.all([
@@ -280,6 +282,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (parsed.data.status === 'TERMINATED') {
         await releaseTerminatedBadgeNumber(agent, tx)
         await releaseTerminatedCodename(tx, id, user.id)
+    await detachTerminatedAgent(tx, id)
       }
       return agent
     })

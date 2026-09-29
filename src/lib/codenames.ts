@@ -1,3 +1,4 @@
+import { displayBadgeNumber } from '@/lib/badge-number'
 import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { createAuditLog } from '@/lib/audit'
@@ -66,7 +67,7 @@ export async function assignCodenameInTransaction(tx: Prisma.TransactionClient, 
   const entry = await findCodename(tx, codenameId)
   if (entry.retired) throw new CodenameError('Deckname ist gesperrt')
   if (entry.currentAgentId === agentId) return entry
-  if (entry.currentAgent && !force) throw new CodenameError(`Deckname ist bereits an ${entry.currentAgent.firstName} ${entry.currentAgent.lastName} (${entry.currentAgent.badgeNumber}) vergeben`)
+  if (entry.currentAgent && !force) throw new CodenameError(`Deckname ist bereits an ${entry.currentAgent.firstName} ${entry.currentAgent.lastName} (${displayBadgeNumber(entry.currentAgent.badgeNumber)}) vergeben`)
   if (entry.currentAgentId) await closeCodenameAssignment(tx, codenameId, actorId, 'REASSIGNED')
   const previous = await tx.codename.findUnique({ where: { currentAgentId: agentId } })
   if (previous) await closeCodenameAssignment(tx, previous.id, actorId, 'REASSIGNED')

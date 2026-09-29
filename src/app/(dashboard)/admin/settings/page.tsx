@@ -128,6 +128,8 @@ export default function SettingsPage() {
   const { data: discordData, loading: discordLoading, refetch: refetchDiscord } = useFetch<DiscordConfigResponse>('/api/discord/config')
   const { execute } = useApi()
   const { addToast } = useToast()
+  const { data: dutyModeData, refetch: refetchDutyMode } = useFetch<{ mode: 'api' | 'manual' }>('/api/duty-times/mode')
+  const [dutyModeSaving, setDutyModeSaving] = useState(false)
 
   const [orgName, setOrgName] = useState('FIB')
   const [badgePrefix, setBadgePrefix] = useState('')
@@ -191,6 +193,19 @@ export default function SettingsPage() {
       await refetch()
     } catch (err) {
       addToast({ type: 'error', title: 'Fehler', message: err instanceof Error ? err.message : '' })
+    }
+  }
+
+  const changeDutyMode = async (mode: 'api' | 'manual') => {
+    setDutyModeSaving(true)
+    try {
+      await execute('/api/duty-times/mode', { method: 'PUT', body: JSON.stringify({ mode }) })
+      addToast({ type: 'success', title: mode === 'manual' ? 'Manuelles Einstempeln aktiv' : 'Automatische Erfassung aktiv', message: 'Mitarbeiter wurden im Dienstzeiten-Channel informiert.' })
+      await refetchDutyMode()
+    } catch (err) {
+      addToast({ type: 'error', title: 'Umstellen fehlgeschlagen', message: err instanceof Error ? err.message : '' })
+    } finally {
+      setDutyModeSaving(false)
     }
   }
 
@@ -465,6 +480,7 @@ export default function SettingsPage() {
             {[
               { id: 'general', label: 'Allgemein', icon: Building2 },
               { id: 'badges', label: 'Dienstnummern', icon: Hash },
+              { id: 'duty-mode', label: 'Dienstzeiten', icon: Clock },
               { id: 'discord-basics', label: 'Discord', icon: MessagesSquare },
               { id: 'channels', label: 'Channels', icon: Terminal },
               { id: 'roles', label: 'Rollen', icon: ShieldCheck },
@@ -556,6 +572,37 @@ export default function SettingsPage() {
                   <Save size={13} /> Speichern
                 </Button>
               </div>
+            </div>
+          </div>
+
+          <div id="duty-mode" className="glass-panel-elevated rounded-[14px] p-5 scroll-mt-section">
+            <h3 className="text-[13.5px] font-semibold text-[#eee] mb-1 flex items-center gap-2">
+              <Clock size={15} className="text-[#d4d4d4]" /> Dienstzeit-Erfassung
+            </h3>
+            <p className="text-[11.5px] text-[#909090] mb-4">
+              Falls die Dienstzeiten-API ausfällt, auf manuelles Einstempeln umschalten. Beim Umschalten werden offene Sitzungen beendet, das Panel im Dienstzeiten-Channel neu gesetzt und die Mitarbeiter einmal gepingt.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Dienstzeit-Erfassung">
+              {([
+                { mode: 'api', title: 'Automatisch (API)', text: 'Dienstzeit kommt aus der Player-Online-API.' },
+                { mode: 'manual', title: 'Manuell einstempeln', text: 'Ein-/Ausstempeln im Dashboard oder per Discord-Button. Nach 8 Stunden fragt der Bot nach; ohne Antwort binnen einer Minute wird automatisch ausgestempelt.' },
+              ] as const).map((option) => {
+                const active = dutyModeData?.mode === option.mode
+                return (
+                  <button
+                    key={option.mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    disabled={dutyModeSaving || !dutyModeData || active}
+                    onClick={() => changeDutyMode(option.mode)}
+                    className={cn('rounded-[10px] border p-3 text-left transition-colors disabled:cursor-default', active ? 'border-[#a6a6a6] bg-[#262626]' : 'border-[#343434] hover:bg-[#1f1f1f]')}
+                  >
+                    <span className="block text-[13px] font-medium text-white">{option.title}{active ? ' · aktiv' : ''}</span>
+                    <span className="mt-1 block text-[11.5px] leading-relaxed text-[#909090]">{option.text}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -743,7 +790,7 @@ export default function SettingsPage() {
                     options={channelOptions}
                 />
                 <p className="text-[11px] text-[#6f6f6f] mt-1.5">
-                  Öffentliches Panel ohne Stempelbuttons; zeigt automatisch, wer als Police online ist.
+                  Öffentliches Panel mit allen Agents im Dienst. Im manuellen Modus mit Ein-/Ausstempel-Buttons.
                 </p>
               </div>
               <div className="sm:col-span-2">

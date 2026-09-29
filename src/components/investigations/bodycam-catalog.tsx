@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useMemo, useState } from 'react'
 import { Video } from 'lucide-react'
 
@@ -53,7 +55,7 @@ export function BodycamCatalog() {
       { value: '', label: 'Alle Bodycams' },
       ...(agents ?? []).map((agent) => ({
         value: agent.id,
-        label: `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})`,
+        label: `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`,
       })),
     ],
     [agents],

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 import path from "path";
 import { execFileSync } from "child_process";
+import { readFileSync } from "fs";
+import { createHash } from "crypto";
 
 function configuredBuildId(value: string | undefined): string {
   const trimmed = value?.trim() ?? '';
@@ -33,6 +35,7 @@ function resolveBuildId(): string {
 }
 
 const resolvedBuildId = resolveBuildId();
+const mapVersion = createHash('sha256').update(readFileSync(path.join(__dirname, 'src/assets/map.png'))).digest('hex').slice(0, 16);
 
 const nextConfig: NextConfig = {
   turbopack: {
@@ -53,7 +56,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/((?!_next/static|favicon.ico|shield.webp|logo.webp|logo-og.png|op-image.png|opengraph-image|twitter-image|uploads).*)',
+        source: '/((?!_next/static|api/map/image|icon.svg|apple-icon.png|favicon.ico|shield.webp|logo.webp|logo-og.png|op-image.png|opengraph-image|twitter-image|uploads).*)',
         headers: [
           { key: 'Cache-Control', value: 'no-store, max-age=0' },
         ],
@@ -62,6 +65,7 @@ const nextConfig: NextConfig = {
   },
   env: {
     NEXT_PUBLIC_BUILD_ID: resolvedBuildId,
+    NEXT_PUBLIC_MAP_VERSION: mapVersion,
     NEXT_PUBLIC_COMMIT_SHA: resolvedBuildId,
   },
 };

@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
@@ -267,7 +269,7 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
                     {selectedAgent.firstName} {selectedAgent.lastName}
                   </p>
                   <p className="truncate text-[11.5px] text-[#a6a6a6]">
-                    {selectedAgent.badgeNumber} · {selectedAgent.rank?.name ?? 'Ohne Rang'}
+                    {displayBadgeNumber(selectedAgent.badgeNumber)} · {selectedAgent.rank?.name ?? 'Ohne Rang'}
                   </p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setAgentId('')}>Ändern</Button>
@@ -291,7 +293,7 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
                       onClick={() => setAgentId(agent.id)}
                       className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-2 text-left transition-colors hover:bg-[#232323]/70"
                     >
-                      <span className="font-mono text-[11px] text-[#d4d4d4]">{agent.badgeNumber}</span>
+                      <span className="font-mono text-[11px] text-[#d4d4d4]">{displayBadgeNumber(agent.badgeNumber)}</span>
                       <span className="min-w-0 flex-1 truncate text-[13px] text-white">
                         {agent.firstName} {agent.lastName}
                       </span>

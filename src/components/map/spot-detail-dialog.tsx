@@ -81,7 +81,7 @@ export function SpotDetailDialog({
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: 'url(/api/map/image)',
+                backgroundImage: `url(/api/map/image?v=${process.env.NEXT_PUBLIC_MAP_VERSION})`,
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: '420%',
                 backgroundPosition: `${spot.x}% ${spot.y}%`,

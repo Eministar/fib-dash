@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
 
     if (!body.key || body.value === undefined) return error('Key und Value sind erforderlich')
+    // Der Moduswechsel beendet offene Sessions und informiert Discord – nur über die eigene Route.
+    if (body.key === 'duty.mode') return error('Die Dienstzeit-Erfassung wird über /api/duty-times/mode umgestellt')
     if (body.key === 'codenames.prefix' && (typeof body.value !== 'string' || body.value.trim().length > 40 || /[\r\n`]/.test(body.value))) return error('Decknamen-Präfix muss ein einzeiliger Text mit höchstens 40 Zeichen sein')
 
     await prisma.systemSetting.upsert({

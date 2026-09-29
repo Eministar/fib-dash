@@ -1,7 +1,10 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { FileVideo, FolderOpen, Plus, Users } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
@@ -51,6 +54,8 @@ const PRIORITY_FILTER_OPTIONS = [
 
 type CreateForm = {
   title: string
+  dossierId: string
+  affiliation: '' | 'yes' | 'no'
   summary: string
   status: string
   priority: string
@@ -66,6 +71,8 @@ type CreateForm = {
 function emptyForm(): CreateForm {
   return {
     title: '',
+    dossierId: '',
+    affiliation: '',
     summary: '',
     status: 'OPEN',
     priority: 'NORMAL',
@@ -78,6 +85,7 @@ function emptyForm(): CreateForm {
 }
 
 export function InvestigationsWorkspace() {
+  const router = useRouter()
   const { user } = useAuth()
   const { toastSuccess, toastError } = useInvestigationToast()
   const { execute, loading: saving } = useApi()
@@ -90,6 +98,8 @@ export function InvestigationsWorkspace() {
   const [priority, setPriority] = useState('ALL')
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
+  const [chooseType, setChooseType] = useState(false)
+  const [dossierSearch, setDossierSearch] = useState('')
   const [form, setForm] = useState<CreateForm>(emptyForm)
 
   const query = useMemo(() => {
@@ -102,14 +112,15 @@ export function InvestigationsWorkspace() {
   }, [status, priority, search])
 
   const { data, loading, refetch } = useFetch<InvestigationListItem[]>(canView ? query : null)
-  const { data: agents } = useFetch<AgentLite[]>(canManage ? '/api/agents' : null)
+  const { data: agents } = useFetch<AgentLite[]>(canManage && createOpen ? '/api/agents' : null)
+  const dossiers = useFetch<{ items: { id: string; title: string }[] }>(createOpen && form.affiliation === 'yes' ? `/api/investigations/dossiers?search=${encodeURIComponent(dossierSearch)}` : null)
 
   const agentOptions = useMemo(
     () => [
       { value: '', label: 'Keine Fallführung' },
       ...(agents ?? []).map((agent) => ({
         value: agent.id,
-        label: `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})`,
+        label: `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`,
       })),
     ],
     [agents],
@@ -124,10 +135,11 @@ export function InvestigationsWorkspace() {
     }
 
     try {
-      await execute('/api/investigations', {
+      const created = await execute('/api/investigations', {
         method: 'POST',
         body: JSON.stringify({
           title: form.title,
+          dossierId: form.affiliation === 'yes' ? form.dossierId : null,
           summary: form.summary,
           status: form.status,
           priority: form.priority,
@@ -142,6 +154,7 @@ export function InvestigationsWorkspace() {
       setCreateOpen(false)
       setForm(emptyForm())
       await refetch()
+      if (created && typeof created === 'object' && 'id' in created) router.push(`/investigations/${created.id}`)
     } catch (cause) {
       toastError('Anlegen fehlgeschlagen', cause instanceof Error ? cause.message : 'Unbekannter Fehler')
     }
@@ -153,6 +166,27 @@ export function InvestigationsWorkspace() {
   const filtered = Boolean(search.trim()) || status !== 'ALL' || priority !== 'ALL'
 
   const steps: WizardStep[] = [
+    {
+      id: 'zusammenhang', label: 'Zusammenhang',
+      invalid: !form.affiliation ? 'Bitte wähle, ob der Vorfall zu einer bestehenden Dauerakte gehört.' : form.affiliation === 'yes' && !form.dossierId ? 'Bitte die zugehörige Dauerakte auswählen.' : undefined,
+      content: <div className="space-y-4">
+        <h2 className="text-base font-semibold">Gehört der Vorfall zu einer Fraktion, Familie oder einem bekannten Anwesen?</h2>
+        <p className="text-sm leading-6 text-[#a6a6a6]">Die Einsatzakte dokumentiert diesen konkreten Vorfall. Eine Dauerakte sammelt alle zugehörigen Einsätze, Personen und Fahrzeuge über längere Zeit.</p>
+        <div className="grid gap-2 sm:grid-cols-2">{[
+          { id: 'yes' as const, label: 'Ja, einer Dauerakte zuordnen' },
+          { id: 'no' as const, label: 'Nein oder noch unbekannt' },
+        ].map(option => <button type="button" key={option.id} aria-pressed={form.affiliation === option.id}
+          className={`rounded-lg border p-3 text-left text-sm ${form.affiliation === option.id ? 'border-[#a6a6a6] bg-[#303030]' : 'border-[#343434]'}`}
+          onClick={() => setForm(previous => ({ ...previous, affiliation: option.id }))}>{option.label}</button>)}</div>
+        {form.affiliation === 'yes' && <>
+          <Input label="Fraktion oder Dauerakte suchen" value={dossierSearch} onChange={event => setDossierSearch(event.target.value)} placeholder="Name der Fraktion, Familie oder des Anwesens" />
+          {dossiers.error && <p role="alert" className="text-sm text-red-300">{dossiers.error}</p>}
+          <Select label="Zugehörige Dauerakte" value={form.dossierId} onValueChange={value => setForm(previous => ({ ...previous, dossierId: value }))}
+            options={[{ value: '', label: dossiers.loading ? 'Akten werden geladen …' : 'Dauerakte auswählen' }, ...(dossiers.data?.items ?? []).map(item => ({ value: item.id, label: item.title }))]} />
+          <Link href="/investigations/dossiers?new=1&kind=FAMILY" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-[#c4b5fd] underline">Neue Fraktionsakte in einem weiteren Tab anlegen</Link>
+        </>}
+      </div>,
+    },
     {
       id: 'anlass',
       label: 'Anlass',
@@ -286,13 +320,20 @@ export function InvestigationsWorkspace() {
         description="Ermittlungsakten mit Einsatzchronologie, beteiligten Personen und Bodycam-Aufnahmen."
         action={
           canManage ? (
-            <Button onClick={() => setCreateOpen(true)}>
+            <Button onClick={() => setChooseType(true)}>
               <Plus className="h-4 w-4" />
               Neue Akte
             </Button>
           ) : null
         }
       />
+
+      {chooseType && <Modal open onClose={() => setChooseType(false)} title="Was möchtest du dokumentieren?" size="lg">
+        <div className="space-y-3">
+          <button type="button" onClick={() => { setChooseType(false); setCreateOpen(true) }} className="block w-full rounded-lg border border-[#404040] p-4 text-left hover:bg-[#262626]"><span className="block font-medium">Einen konkreten Einsatz oder Vorfall</span><span className="mt-1 block text-sm text-[#a6a6a6]">Einsatzakte mit Ablauf, Beteiligten und Beweisen anlegen.</span></button>
+          <Link href="/investigations/dossiers?new=1" className="block rounded-lg border border-[#404040] p-4 hover:bg-[#262626]"><span className="block font-medium">Informationen langfristig sammeln</span><span className="mt-1 block text-sm text-[#a6a6a6]">Dauerakte für eine Fraktion, Familie, ein Anwesen oder Thema anlegen.</span></Link>
+        </div>
+      </Modal>}
 
       <FilterBar>
         <SearchInput
@@ -325,7 +366,7 @@ export function InvestigationsWorkspace() {
                 Filter zurücksetzen
               </Button>
             ) : canManage ? (
-              <Button onClick={() => setCreateOpen(true)}>
+              <Button onClick={() => setChooseType(true)}>
                 <Plus className="h-4 w-4" />
                 Neue Akte
               </Button>
@@ -379,7 +420,7 @@ export function InvestigationsWorkspace() {
                 <span>
                   Fallführung:{' '}
                   {investigation.leadAgent
-                    ? `${investigation.leadAgent.firstName} ${investigation.leadAgent.lastName} (${investigation.leadAgent.badgeNumber})`
+                    ? `${investigation.leadAgent.firstName} ${investigation.leadAgent.lastName} (${displayBadgeNumber(investigation.leadAgent.badgeNumber)})`
                     : 'nicht zugewiesen'}
                 </span>
                 <span>Aktualisiert {formatDateTime(investigation.updatedAt)}</span>

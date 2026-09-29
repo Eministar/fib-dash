@@ -125,6 +125,9 @@ export async function POST(req: NextRequest) {
       return error('Bild wurde nicht gefunden', 404)
     }
 
+    const dossierId = cleanText(body.dossierId) || null
+    if (dossierId && !await prisma.dossier.findUnique({ where: { id: dossierId }, select: { id: true } })) return error('Dauerakte wurde nicht gefunden', 404)
+
     const caseNumber = await nextInvestigationCaseNumber()
 
     const investigation = await prisma.investigation.create({
@@ -137,6 +140,7 @@ export async function POST(req: NextRequest) {
         classified,
         leadAgentId,
         createdById: user.id,
+        ...(dossierId ? { dossiers: { connect: { id: dossierId } } } : {}),
         assignees: { create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })) },
         mapSpots: { connect: mapSpotIds.map((id) => ({ id })) },
         photos: { connect: photoIds.map((id) => ({ id })) },

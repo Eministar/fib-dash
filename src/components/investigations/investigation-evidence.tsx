@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useState } from 'react'
 import { Boxes, MapPin, Package, Plus, Trash2 } from 'lucide-react'
 
@@ -266,7 +268,7 @@ export function InvestigationEvidence({
                 { value: '', label: 'Nicht zugeordnet' },
                 ...agents.map((agent) => ({
                   value: agent.id,
-                  label: `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})`,
+                  label: `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`,
                 })),
               ]}
               value={form.seizedByAgentId}

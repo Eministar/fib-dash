@@ -202,7 +202,7 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
                 style={{ aspectRatio: `${MAP_WIDTH} / ${MAP_HEIGHT}` }}
               >
                 <Image
-                  src="/api/map/image"
+                  src={`/api/map/image?v=${process.env.NEXT_PUBLIC_MAP_VERSION}`}
                   alt="Stadtkarte"
                   fill
                   priority

@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useMemo, useState } from 'react'
 import { AlertTriangle, Check, Search, X } from 'lucide-react'
 
@@ -8,7 +10,7 @@ import { cn } from '@/lib/utils'
 import type { AgentLite } from '@/components/investigations/types'
 
 function agentLabel(agent: AgentLite) {
-  return `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})`
+  return `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`
 }
 
 function matches(agent: AgentLite, needle: string) {

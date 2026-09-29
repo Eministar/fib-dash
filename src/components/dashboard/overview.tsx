@@ -1,5 +1,7 @@
 'use client'
 
+import { auditActionLabel, auditDetails } from '@/lib/audit-display'
+import { DutyClockCard } from '@/components/duty/duty-clock-card'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useFetch } from '@/hooks/use-fetch'
@@ -180,18 +182,6 @@ const quickActions: { label: string; description: string; href: string; icon: Lu
   { label: 'Rangänderungen', description: 'Rangänderungen vorbereiten', href: '/promotions', icon: TrendingUp, permission: 'rank-changes:view' },
   { label: 'Notizen', description: 'Globale & personenbezogene Notizen', href: '/notes', icon: FileText, permission: 'notes:view' },
 ]
-
-const actionLabels: Record<string, string> = {
-  AGENT_CREATED: 'Agent erstellt',
-  AGENT_UPDATED: 'Agent bearbeitet',
-  AGENT_DELETED: 'Agent gelöscht',
-  AGENT_PROMOTED: 'Beförderung',
-  AGENT_PROMOTION_REVERTED: 'Beförderung rückgängig',
-  AGENT_TERMINATED: 'Kündigung',
-  TRAININGS_UPDATED: 'Ausbildung aktualisiert',
-  NOTE_ADDED: 'Notiz hinzugefügt',
-  INACTIVITY_NOTE_DISMISSED: 'Fehlzeit-Notiz gelöscht',
-}
 
 const activityAccent: Record<string, AccentKey> = {
   AGENT_CREATED: 'mint',
@@ -472,6 +462,7 @@ export default function DashboardPage() {
 
   return (
       <div className="max-w-7xl mx-auto space-y-6 pb-4">
+        <DutyClockCard />
         {/* Tagesübersicht */}
         <section className="border-b border-[#343434]">
           <div className="py-3">
@@ -822,7 +813,7 @@ export default function DashboardPage() {
                   <div className="absolute left-[18px] top-2 bottom-2 w-px bg-gradient-to-b from-[#d4d4d4]/25 via-[#d4d4d4]/8 to-transparent" aria-hidden />
                   <div className="space-y-3.5">
                     {stats.recentActivity.map((entry) => {
-                      const label = actionLabels[entry.action] || entry.action
+                      const label = auditActionLabel(entry.action)
                       const accent = ACCENTS[activityAccent[entry.action] ?? 'gold']
                       return (
                           <div key={entry.id} className="relative flex items-start gap-3.5 pl-0">
@@ -841,7 +832,7 @@ export default function DashboardPage() {
                                     </Link>
                                 )}
                               </div>
-                              {entry.details && <p className="text-[12px] text-[#c3c3c3] mt-0.5">{entry.details}</p>}
+                              {entry.details && <p className="text-[12px] text-[#c3c3c3] mt-0.5">{auditDetails(entry.details)}</p>}
                               {entry.oldValue && entry.newValue && (
                                   <p className="text-[11.5px] text-[#868686] mt-0.5">
                                     <span className="line-through opacity-70">{entry.oldValue}</span>

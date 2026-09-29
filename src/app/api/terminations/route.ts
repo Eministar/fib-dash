@@ -1,3 +1,4 @@
+import { detachTerminatedAgent } from '@/lib/terminated-memberships'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
 
       await releaseTerminatedBadgeNumber(agent, tx)
       await releaseTerminatedCodename(tx, agentId, user.id)
+    await detachTerminatedAgent(tx, agentId)
       return record
     })
     queueCodenameBoardUpdate()

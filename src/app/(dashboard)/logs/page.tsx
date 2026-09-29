@@ -1,5 +1,6 @@
 'use client'
 
+import { auditActionLabel, auditDetails } from '@/lib/audit-display'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ScrollText, ChevronLeft, ChevronRight, Search } from 'lucide-react'
@@ -33,44 +34,6 @@ interface LogResponse {
   skip: number
 }
 
-const actionLabels: Record<string, string> = {
-  AGENT_CREATED: 'Erstellt',
-  AGENT_UPDATED: 'Bearbeitet',
-  AGENT_DELETED: 'Gelöscht',
-  AGENT_PROMOTED: 'Befördert',
-  AGENT_PROMOTION_REVERTED: 'Beförderung rückgängig',
-  AGENT_BADGE_REASSIGNED: 'DN neu vergeben',
-  BADGE_NUMBERS_REASSIGNED: 'DN-Neuverteilung',
-  AGENT_TERMINATED: 'Gekündigt',
-  AGENT_SANCTIONED: 'Sanktioniert',
-  SANCTION_EXECUTED: 'Maßnahme vollzogen',
-  SANCTION_CONFIRMED: 'Sanktion bestätigt (Vier-Augen)',
-  SANCTION_UPHELD: 'Sanktion bestätigt',
-  SANCTION_REVOKED: 'Sanktion aufgehoben',
-  SANCTION_UPDATED: 'Sanktion bearbeitet',
-  SANCTION_DELETED: 'Sanktion gelöscht',
-  TRAININGS_UPDATED: 'Ausbildung',
-  PROBATION_STARTED: 'Probezeit gestartet',
-  PROBATION_UPDATED: 'Probezeit bearbeitet',
-  PROBATION_DELETED: 'Probezeit gelöscht',
-  NOTE_ADDED: 'Notiz',
-  INACTIVITY_NOTE_DISMISSED: 'Fehlzeit-Notiz gelöscht',
-  CALENDAR_EVENT_CREATED: 'Termin erstellt',
-  CALENDAR_EVENT_UPDATED: 'Termin bearbeitet',
-  CALENDAR_EVENT_DELETED: 'Termin gelöscht',
-  AGENT_SEARCH_CREATED: 'Durchsuchung eingetragen',
-  AGENT_SEARCH_DELETED: 'Durchsuchung gelöscht',
-  API_TOKEN_CREATED: 'API-Token erstellt',
-  API_TOKEN_REVOKED: 'API-Token widerrufen',
-  API_TOKEN_HARD_DELETED: 'API-Token gelöscht',
-  API_TOKENS_LIMIT_UPDATED: 'API-Limit geändert',
-  LEGAL_CASE_CREATED: 'Klage erstellt',
-  LEGAL_CASE_UPDATED: 'Klage bearbeitet',
-  LEGAL_CASE_DELETED: 'Klage gelöscht',
-  LEGAL_CASE_BATCH_CREATED: 'Sammelklage erstellt',
-  CHANGE_UNDONE: 'Änderung rückgängig',
-  CHANGE_REDONE: 'Änderung wiederholt',
-}
 
 const groupChipStyles: Record<AuditLogGroupKey | 'other', string> = {
   agent: 'bg-[#232323] text-[#7fb3e8]',
@@ -160,7 +123,7 @@ export default function LogsPage() {
           <>
             <div className="divide-y divide-[#343434]">
               {logs.map((log, i) => {
-                const label = actionLabels[log.action] || log.action
+                const label = auditActionLabel(log.action)
                 const group = groupForAction(log.action)
                 const groupLabel = group === 'other' ? 'Sonstiges' : AUDIT_LOG_GROUPS[group].label
                 return (
@@ -187,7 +150,7 @@ export default function LogsPage() {
                         </p>
                       )}
                       {log.details && (
-                        <p className="text-[12.5px] text-[#888] mt-0.5">{log.details}</p>
+                        <p className="text-[12.5px] text-[#888] mt-0.5">{auditDetails(log.details)}</p>
                       )}
                       {log.oldValue && log.newValue && (
                         <p className="text-[12px] text-[#aaa] mt-0.5">

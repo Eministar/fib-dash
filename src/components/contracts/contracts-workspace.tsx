@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
@@ -535,7 +537,7 @@ function ContractListRow({
           )}
           <p className="mt-0.5 truncate text-[11.5px] text-[#909090]">
             {contract.title}
-            {contract.agent ? ` · DN ${contract.agent.badgeNumber}` : ''}
+            {contract.agent ? ` · DN ${displayBadgeNumber(contract.agent.badgeNumber)}` : ''}
             {contract.counterpartyRole ? ` · ${contract.counterpartyRole}` : ''}
             {contract.application ? ` · Bewerbung: ${contract.application.applicantDisplayName}` : ''}
           </p>
@@ -599,7 +601,7 @@ function PendingAgentListRow({
             {row.firstName} {row.lastName}
           </Link>
           <p className="mt-0.5 truncate text-[11.5px] text-[#909090]">
-            DN {row.badgeNumber} · {row.rank?.name ?? '—'} · seit {formatDateTime(row.hireDate)}
+            DN {displayBadgeNumber(row.badgeNumber)} · {row.rank?.name ?? '—'} · seit {formatDateTime(row.hireDate)}
           </p>
           <p className="mt-0.5 truncate text-[11px] text-[#808080]">
             {hasOpenContract

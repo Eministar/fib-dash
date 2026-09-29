@@ -14,6 +14,7 @@ import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { hasPermission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
+import { DutyClockCard } from '@/components/duty/duty-clock-card'
 
 type ApiStatus = 'online' | 'offline' | 'ignored-job' | 'not-linked' | 'not-configured' | 'error'
 
@@ -71,6 +72,7 @@ interface DutyAgent {
 
 interface DutySnapshot {
   now: string
+  mode: 'api' | 'manual'
   weekStart: string
   sync: {
     configured: boolean
@@ -145,7 +147,7 @@ export default function DutyTimesPage() {
       <div className="max-w-6xl mx-auto space-y-5">
         <PageHeader
             title="Dienstzeiten"
-            description="Automatische Police-Spielzeit über die Player-Online-API"
+            description={data.mode === 'manual' ? 'Manuelle Erfassung: Agents stempeln selbst ein und aus' : 'Automatische Police-Spielzeit über die Player-Online-API'}
             action={
               <div className="flex items-center gap-2">
             <span className="health-pill ok">
@@ -156,7 +158,10 @@ export default function DutyTimesPage() {
             }
         />
 
+        <DutyClockCard onChange={refetch} />
+
         {/* Live status bar */}
+        {data.mode === 'api' && <>
         <div className="glass-panel-elevated rounded-[14px] px-5 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="icon-tile h-11 w-11 rounded-[12px] flex items-center justify-center">
@@ -203,6 +208,8 @@ export default function DutyTimesPage() {
               Die API antwortet, meldet aber keinen aktiven Police-Spieler: {data.sync.statusCounts.offline} offline, {data.sync.statusCounts['ignored-job']} mit anderem Job und {data.sync.statusCounts['not-linked']} ohne Discord-Verknüpfung.
             </div>
         )}
+
+        </>}
 
         {/* KPI grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-3.5">

@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -114,7 +116,7 @@ export function EditOfficial({ official, onSaved }: { official: Official; onSave
 }
 
 function SnapshotView({ data }: { data: Snapshot }) {
-  return <div className="space-y-2 text-sm text-[#c4c4c4]"><p>{formatDateTime(data.conductedAt)} · {data.result === 'CLEAR' ? 'Ohne Befund' : 'Mit Befund'}</p><p>{data.location || 'Kein Ort'}</p><p className="whitespace-pre-wrap break-words">{data.findings}</p>{data.notes && <p className="whitespace-pre-wrap break-words">{data.notes}</p>}<p className="text-xs text-[#909090]">{data.agents.map(a => `${a.name} (${a.badgeNumber})`).join(', ')}</p></div>
+  return <div className="space-y-2 text-sm text-[#c4c4c4]"><p>{formatDateTime(data.conductedAt)} · {data.result === 'CLEAR' ? 'Ohne Befund' : 'Mit Befund'}</p><p>{data.location || 'Kein Ort'}</p><p className="whitespace-pre-wrap break-words">{data.findings}</p>{data.notes && <p className="whitespace-pre-wrap break-words">{data.notes}</p>}<p className="text-xs text-[#909090]">{data.agents.map(a => `${a.name} (${displayBadgeNumber(a.badgeNumber)})`).join(', ')}</p></div>
 }
 
 export function ReportDetail({ id, agents, onClose, onChanged }: { id: string; agents: Agent[]; onClose: () => void; onChanged: () => void }) {
@@ -146,7 +148,7 @@ function CorrectionForm({ report, agents, onClose, onSaved }: { report: Report; 
   return <Modal open onClose={loading ? () => {} : onClose} title="Bericht korrigieren" size="xl"><form className="space-y-4" onSubmit={async e => { e.preventDefault(); if (loading) return; try { await execute(`/api/corruption-checks/${report.id}`, { method: 'PATCH', body: JSON.stringify({ version: report.version, reason, conductedAt: new Date(when).toISOString(), agentIds: ids, result, findings, location, notes }) }); onSaved() } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Korrektur fehlgeschlagen') } }}>
     <Input label="Datum und Uhrzeit (lokal)" type="datetime-local" required value={when} onChange={e => setWhen(e.target.value)} />
     <Input label="Ort" maxLength={200} value={location} onChange={e => setLocation(e.target.value)} />
-    <fieldset className="max-h-40 space-y-2 overflow-auto rounded-lg border border-[#343434] p-3"><legend className="text-sm text-[#a6a6a6]">Durchführende Agents</legend>{agents.map(a => <label key={a.id} className="flex items-center gap-2 text-sm text-[#c4c4c4]"><input type="checkbox" checked={ids.includes(a.id)} onChange={e => setIds(e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))} />{a.firstName} {a.lastName} ({a.badgeNumber})</label>)}</fieldset>
+    <fieldset className="max-h-40 space-y-2 overflow-auto rounded-lg border border-[#343434] p-3"><legend className="text-sm text-[#a6a6a6]">Durchführende Agents</legend>{agents.map(a => <label key={a.id} className="flex items-center gap-2 text-sm text-[#c4c4c4]"><input type="checkbox" checked={ids.includes(a.id)} onChange={e => setIds(e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))} />{a.firstName} {a.lastName} ({displayBadgeNumber(a.badgeNumber)})</label>)}</fieldset>
     <Select label="Ergebnis" value={result} onValueChange={value => setResult(value as 'CLEAR' | 'FINDINGS')} options={[{ value: 'CLEAR', label: 'Ohne Befund' }, { value: 'FINDINGS', label: 'Mit Befund' }]} />
     <Textarea label="Befund" required={result === 'FINDINGS'} maxLength={30000} rows={4} value={findings} onChange={e => setFindings(e.target.value)} />
     <Textarea label="Weitere Informationen" maxLength={30000} rows={3} value={notes} onChange={e => setNotes(e.target.value)} />

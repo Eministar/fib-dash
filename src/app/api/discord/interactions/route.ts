@@ -1,3 +1,4 @@
+import { detachTerminatedAgent } from '@/lib/terminated-memberships'
 import { NextRequest, NextResponse, after } from 'next/server'
 import crypto from 'crypto'
 import { prisma } from '@/lib/prisma'
@@ -19,6 +20,7 @@ import {
   queueDiscordHrEvent,
   queueAgentRoleSync,
 } from '@/lib/discord-integration'
+import { clockIn, clockOut, confirmDutyActivity, DutyClockError, findAgentForDiscord } from '@/lib/manual-duty'
 import { cancelAbsenceNotice, createAbsenceNotice, formatAbsenceDate, parseAbsenceDate } from '@/lib/absence-status'
 import { isUniqueConstraintError } from '@/lib/prisma-errors'
 import { queueDiscordWebhookEvent } from '@/lib/discord-webhook'
@@ -84,7 +86,7 @@ const DEFERRED_UPDATE_MESSAGE = 6
 const FIB_COMMAND_PREFIX = 'fib-'
 const FIB_COMMAND_NAMES = new Set(DISCORD_COMMANDS.map((command) => command.name))
 const FIB_CUSTOM_ID_PREFIX = 'fib_'
-const STALE_DUTY_ACTIVITY_CONFIRM_PREFIX = 'fib_duty_activity_confirm:'
+const DUTY_ACTIVITY_CONFIRM_PREFIX = 'fib_duty_activity_confirm:'
 
 function json(data: unknown) {
   return NextResponse.json(data)
@@ -105,7 +107,6 @@ function silentAck() {
 function isFibCustomId(customId: string | undefined | null) {
   if (!customId) return false
   if (customId.startsWith(FIB_CUSTOM_ID_PREFIX)) return true
-  if (customId.startsWith(STALE_DUTY_ACTIVITY_CONFIRM_PREFIX)) return true
   return false
 }
 
@@ -681,6 +682,7 @@ async function performTermination(options: DiscordOption[] | undefined, actor: R
     })
     await tx.agent.update({ where: { id: agent.id }, data: { status: 'TERMINATED' } })
     await releaseTerminatedBadgeNumber(agent, tx)
+    await detachTerminatedAgent(tx, agent.id)
   })
 
   queueAgentRoleSync(agent.id, 'remove-all')
@@ -887,6 +889,27 @@ async function performAbsenceCancel(interaction: DiscordInteraction) {
   return 'Deine Abmeldung wurde beendet.'
 }
 
+async function performDutyButton(interaction: DiscordInteraction, action: 'clock-in' | 'clock-out' | 'confirm', sessionId?: string) {
+  const discordId = actorFromInteraction(interaction).discordId
+  if (!discordId) return 'Discord-User konnte nicht erkannt werden.'
+  const agent = await findAgentForDiscord(discordId)
+  if (!agent) return 'Dein Discord-Konto ist mit keinem aktiven Agent verknüpft.'
+  try {
+    if (action === 'clock-in') {
+      const { created } = await clockIn(agent.id, 'discord', discordId)
+      return created ? '✅ Du bist jetzt eingestempelt.' : 'Du bist bereits eingestempelt.'
+    }
+    if (action === 'clock-out') {
+      return await clockOut(agent.id, 'discord') ? '⏹️ Du bist jetzt ausgestempelt.' : 'Du bist aktuell nicht eingestempelt.'
+    }
+    await confirmDutyActivity(sessionId ?? '', agent.id)
+    return '✅ Danke – du bleibst eingestempelt.'
+  } catch (e) {
+    if (e instanceof DutyClockError) return e.message
+    throw e
+  }
+}
+
 function handleButton(interaction: DiscordInteraction) {
   const customId = interaction.data?.custom_id
 
@@ -894,8 +917,9 @@ function handleButton(interaction: DiscordInteraction) {
     return unhandledInteraction(interaction, 'Nicht-HR-Button ignoriert')
   }
 
-  if (customId && customId.startsWith(STALE_DUTY_ACTIVITY_CONFIRM_PREFIX)) {
-    return reply('Manuelle Dienstzeit-Bestätigungen sind deaktiviert. Der Dienststatus kommt automatisch aus der Player-Online-API.')
+  if (customId && customId.startsWith(DUTY_ACTIVITY_CONFIRM_PREFIX)) {
+    const sessionId = customId.slice(DUTY_ACTIVITY_CONFIRM_PREFIX.length)
+    return runDeferred(interaction, 'Button: Dienst bestätigen', () => performDutyButton(interaction, 'confirm', sessionId))
   }
 
   if (customId === 'fib_absence_create') {
@@ -917,11 +941,11 @@ function handleButton(interaction: DiscordInteraction) {
   }
 
   if (customId === 'fib_duty_clock_in') {
-    return reply('Manuelles Einstempeln ist deaktiviert. Du wirst automatisch als im Dienst erkannt, wenn du als Police online bist.')
+    return runDeferred(interaction, 'Button: Einstempeln', () => performDutyButton(interaction, 'clock-in'))
   }
 
   if (customId === 'fib_duty_clock_out') {
-    return reply('Manuelles Ausstempeln ist deaktiviert. Der Dienststatus endet automatisch, sobald du nicht mehr als Police online bist.')
+    return runDeferred(interaction, 'Button: Ausstempeln', () => performDutyButton(interaction, 'clock-out'))
   }
 
   return silentAck()

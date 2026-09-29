@@ -1,6 +1,7 @@
 ﻿import { prisma } from './prisma'
 import { agentUnitKeys } from './agent-units'
 import { formatDuration, getDutyTimesSnapshot } from './duty-times'
+import { DUTY_ACTIVITY_RESPONSE_MS, type DutyMode } from './duty-mode'
 import { getActiveAbsenceNotices, runAgentStatusAutomation } from './absence-status'
 import { getBadgePrefix } from './settings-helpers'
 import { formatLinkedAgentDisplayName, syncLinkedUserDisplayNameForAgent } from './user-display-name'
@@ -1950,7 +1951,9 @@ async function dutyStatusPayload() {
   const visible = snapshot.activeRows.slice(0, DUTY_LIST_LIMIT)
   const overflow = Math.max(0, snapshot.activeRows.length - visible.length)
 
+  const manual = snapshot.mode === 'manual'
   const summary = markdownRows([
+    { label: 'Erfassung', value: manual ? 'Manuell – bitte selbst ein- und ausstempeln' : 'Automatisch über die Player-Online-API' },
     { label: 'Im Dienst', value: `\`${snapshot.activeCount}\`` },
     { label: 'Dienstzeit dieser Woche', value: `\`${formatDuration(snapshot.totalWeekDurationMs)}\`` },
   ])
@@ -1974,13 +1977,109 @@ async function dutyStatusPayload() {
     if (overflow > 0) listParts.push(`-# … und ${overflow} weitere`)
   }
 
-  return componentMessage(markdownTextDisplays([
+  const text = markdownTextDisplays([
     markdownHeader('🚓', 'Dienststatus'),
     summary,
     '### Aktuell im Dienst',
     ...listParts,
     markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
-  ]))
+  ])
+  if (!manual) return componentMessage(text)
+  return componentMessage([
+    ...text,
+    actionRow([
+      { type: 2, style: 3, custom_id: 'fib_duty_clock_in', label: 'Einstempeln' },
+      { type: 2, style: 4, custom_id: 'fib_duty_clock_out', label: 'Ausstempeln' },
+      { type: 2, style: 2, custom_id: 'fib_duty_refresh', label: 'Aktualisieren' },
+    ]),
+  ])
+}
+
+function dutyChannelId(config: DiscordConfig) {
+  return config.dutyStatusChannelId || config.announcementsChannelId
+}
+
+/**
+ * Kündigt den Wechsel der Dienstzeit-Erfassung im Dienstzeiten-Channel an,
+ * pingt einmal die Mitarbeiter-Rollen und setzt das Panel (mit bzw. ohne
+ * Stempel-Buttons) direkt darunter neu.
+ */
+export async function announceDutyModeChange(mode: DutyMode, actorName: string) {
+  const config = await getDiscordConfig()
+  const channelId = dutyChannelId(config)
+  if (!channelId || !botToken()) return
+
+  const roleIds = config.employeeRoleIds
+  const ping = roleIds.length > 0 ? roleIds.map((id) => `<@&${id}>`).join(' ') : '@here'
+  const body = mode === 'manual'
+    ? [
+        `${ping}`,
+        '## ⏱️ Ab sofort manuell einstempeln',
+        'Die automatische Erfassung über die Dienstzeiten-API ist pausiert.',
+        '- Zu Dienstbeginn **Einstempeln** klicken, zum Dienstende **Ausstempeln** – hier im Channel oder im Dashboard unter „Dienstzeiten“.',
+        '- Nach längerer Dienstzeit fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
+      ]
+    : [
+        `${ping}`,
+        '## ✅ Dienstzeiten wieder automatisch',
+        'Die Dienstzeit wird wieder automatisch über die Player-Online-API erfasst. Manuelles Ein- und Ausstempeln ist nicht mehr nötig; offene Stempelungen wurden beendet.',
+      ]
+  await postChannelMessage(channelId, {
+    content: [...body, `-# Umgestellt von ${actorName}`].join('\n'),
+    allowed_mentions: roleIds.length > 0 ? { parse: [], roles: roleIds, users: [] } : { parse: ['everyone'] },
+  })
+
+  if (config.dutyStatusMessageId) {
+    await discordFetch<void>(`/channels/${channelId}/messages/${config.dutyStatusMessageId}`, { method: 'DELETE' }).catch(() => undefined)
+  }
+  await syncDiscordDutyStatusMessage({ forceCreate: true })
+}
+
+/** Aktivitätsabfrage per DM, bei geschlossenen DMs als Erwähnung im Dienstzeiten-Channel. */
+export async function sendDutyActivityCheck(input: { sessionId: string; discordId: string | null; agentName: string; clockInAt: Date }) {
+  if (!botToken()) return null
+  const deadline = new Date(Date.now() + DUTY_ACTIVITY_RESPONSE_MS)
+  const payload = (withMention: boolean) => componentMessage([
+    ...markdownTextDisplays([
+      withMention && input.discordId ? mention(input.discordId) : null,
+      markdownHeader('⏱️', 'Bist du noch im Dienst?'),
+      `Du bist seit ${discordTimestamp(input.clockInAt, 'R')} eingestempelt. Bitte bestätige ${discordTimestamp(deadline, 'R')}, sonst wirst du automatisch ausgestempelt.`,
+    ]),
+    actionRow([{ type: 2, style: 3, custom_id: `fib_duty_activity_confirm:${input.sessionId}`, label: 'Ja, ich bin noch im Dienst' }]),
+  ], { allowedMentions: { parse: [], roles: [], users: input.discordId ? [input.discordId] : [] } })
+
+  if (input.discordId) {
+    try {
+      const dm = await discordFetch<{ id: string }>('/users/@me/channels', {
+        method: 'POST',
+        body: JSON.stringify({ recipient_id: input.discordId }),
+      })
+      const message = await postChannelMessage(dm.id, payload(false))
+      return { channelId: dm.id, messageId: message.id }
+    } catch {
+      // DMs geschlossen – auf den Dienstzeiten-Channel ausweichen.
+    }
+  }
+  const channelId = dutyChannelId(await getDiscordConfig())
+  if (!channelId) return null
+  const message = await postChannelMessage(channelId, payload(true))
+  return { channelId, messageId: message.id }
+}
+
+/** Ersetzt die Abfrage durch das Ergebnis, damit der Button nicht erneut benutzt wird. */
+export async function resolveDutyActivityCheck(channelId: string | null, messageId: string | null, text: string) {
+  if (!channelId || !messageId || !botToken()) return
+  await discordFetch<void>(`/channels/${channelId}/messages/${messageId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(componentMessage(markdownTextDisplays([text]))),
+  }).catch(() => undefined)
+}
+
+export async function postDutyAdminLog(text: string) {
+  const config = await getDiscordConfig()
+  const channelId = config.dutyAdminLogChannelId || config.announcementsChannelId
+  if (!channelId || !botToken()) return
+  await postChannelMessage(channelId, { content: text, allowed_mentions: { parse: [] } }).catch(() => undefined)
 }
 
 async function saveDutyStatusMessageId(messageId: string) {

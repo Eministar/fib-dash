@@ -10,5 +10,7 @@ export async function register() {
     ensureHirePingCleanup()
     const { ensureUploadCleanupWorker } = await import('./lib/upload-sessions')
     ensureUploadCleanupWorker()
+    const { ensureManualDutyWorker } = await import('./lib/manual-duty')
+    ensureManualDutyWorker()
   }
 }

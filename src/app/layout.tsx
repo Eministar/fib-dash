@@ -33,11 +33,6 @@ export const metadata: Metadata = {
     'Dienstzeiten',
     'NeroV',
   ],
-  icons: {
-    icon: '/shield.webp',
-    shortcut: '/shield.webp',
-    apple: '/shield.webp',
-  },
   openGraph: {
     type: 'website',
     locale: 'de_DE',

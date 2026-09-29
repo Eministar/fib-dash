@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { FileVideo, UploadCloud, X } from 'lucide-react'
 
@@ -96,7 +98,7 @@ export function ClipUploadDialog({
       { value: '', label: 'Nicht zugeordnet' },
       ...agents.map((agent) => ({
         value: agent.id,
-        label: `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})`,
+        label: `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`,
       })),
     ],
     [agents],

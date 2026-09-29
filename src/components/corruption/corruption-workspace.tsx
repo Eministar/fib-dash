@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -34,7 +36,7 @@ export type Check = {
 type List<T> = { items: T[]; total: number }
 const officialHref = (id: number) => `/corruption-checks?official=${id}`
 const officialLabel = (person: Official) => `${officialNumber(person.id)} · ${person.firstName} ${person.lastName} · ${person.agency}${person.badgeNumber ? ` · ${person.badgeNumber}` : ''}`
-const agentLabel = (agent: Agent) => `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})${agent.status === 'TERMINATED' ? ' · ausgeschieden' : ''}`
+const agentLabel = (agent: Agent) => `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})${agent.status === 'TERMINATED' ? ' · ausgeschieden' : ''}`
 function localDateTime(date = new Date()) { return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16) }
 function dateBoundary(value: string, nextDay = false) {
   const date = new Date(`${value}T00:00:00`)
@@ -115,7 +117,7 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
       {controls.loading ? <p className="py-8 text-sm text-[#909090]">Kontrollen werden geladen …</p> : !controls.data?.items.length ? <Empty text="Keine Kontrollen gefunden." /> : <div className="space-y-3">{controls.data.items.map(check => <article key={check.id} className="rounded-xl border border-[#343434] bg-[#141414] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><Link href={officialHref(check.official.id)} className="font-semibold text-white hover:underline">{check.official.firstName} {check.official.lastName}</Link><p className="mt-1 text-xs text-[#909090]">{officialNumber(check.official.id)} · {check.official.agency} · {formatDateTime(check.conductedAt)}</p></div><ResultBadge result={check.result} /></div>
         <p className="mt-3 line-clamp-2 whitespace-pre-wrap break-words text-sm text-[#c4c4c4]">{check.findings}</p>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-[#909090]">Durchgeführt von {check.agents.map(agent => `${agent.name} (${agent.badgeNumber})`).join(', ')}</p><Button size="sm" variant="outline" onClick={() => setSelected(check)}>Bericht öffnen</Button></div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-[#909090]">Durchgeführt von {check.agents.map(agent => `${agent.name} (${displayBadgeNumber(agent.badgeNumber)})`).join(', ')}</p><Button size="sm" variant="outline" onClick={() => setSelected(check)}>Bericht öffnen</Button></div>
       </article>)}</div>}
       <Pagination page={page} total={controls.data?.total ?? 0} loading={controls.loading} onChange={setPage} />
     </> : <>

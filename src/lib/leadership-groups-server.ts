@@ -1,3 +1,5 @@
+import { detachTerminatedAgent, terminatedGroupUserIds } from './terminated-memberships'
+import { Prisma } from '@/generated/prisma'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from './prisma'
@@ -27,6 +29,7 @@ export function groupError(error: unknown) {
 export async function groupUser(manage = false) {
   const user = await getConfidentialUser()
   if (!user) throw new GroupError('Nicht angemeldet.', 401)
+  if ((await terminatedGroupUserIds(prisma)).includes(user.id)) throw new GroupError('Gekündigte Agents haben keinen Zugriff auf Ermittlungsgruppen.', 403)
   if (manage && !canManageLeadershipGroups(user)) throw new GroupError('Keine Berechtigung.', 403)
   return user
 }
@@ -63,6 +66,8 @@ export async function saveGroup(id: string | undefined, input: LeadershipGroupIn
   }
 
   const group = await prisma.$transaction(async tx => {
+    const blocked = await terminatedGroupUserIds(tx)
+    if (input.memberIds.some(id => blocked.includes(id))) throw new GroupError('Gekündigte Agents können keiner Ermittlungsgruppe zugeordnet werden.', 409)
     const old = id ? await tx.leadershipGroup.findUnique({ where: { id }, include: { members: true } }) : null
     if (id && !old) throw new GroupError('Gruppe nicht gefunden.', 404)
     if (old && (old.version !== input.version || (old.syncLeaseUntil && old.syncLeaseUntil > new Date())))
@@ -99,7 +104,7 @@ export async function saveGroup(id: string | undefined, input: LeadershipGroupIn
       members: { create: input.memberIds.map(userId => ({ userId })) },
       events: { create: events },
     } })
-  })
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
   return { id: group.id, synced: await syncGroup(group.id).catch(() => false) }
 }
 
@@ -160,6 +165,14 @@ export async function syncGroup(id: string) {
     return discord<T>(path, method, body)
   }
   try {
+    // Reconcile older memberships too; retries cannot restore a terminated agent.
+    const oldMembers = await prisma.leadershipGroupMember.findMany({ where: { groupId: id }, select: { userId: true } })
+    const accounts = await prisma.user.findMany({ where: { id: { in: oldMembers.map(member => member.userId) } }, select: { id: true, discordId: true } })
+    const terminated = await prisma.agent.findMany({ where: { status: 'TERMINATED', OR: [
+      { userId: { in: accounts.map(account => account.id) } },
+      { discordId: { in: accounts.flatMap(account => account.discordId ? [account.discordId] : []) } },
+    ] }, select: { id: true } })
+    for (const agent of terminated) await prisma.$transaction(tx => detachTerminatedAgent(tx, agent.id))
     const group = await prisma.leadershipGroup.findUniqueOrThrow({ where: { id }, include: { members: true } })
     const bot = await send<{ id: string }>('/users/@me')
     let channelId = group.channelId
@@ -218,7 +231,7 @@ export async function syncGroup(id: string) {
       await prisma.leadershipGroup.updateMany({ where: { id, syncLeaseUntil: lease }, data: { overviewPinned: true } })
     }
     const remaining = await prisma.leadershipGroupEvent.count({ where: { groupId: id, sentAt: null } })
-    await prisma.leadershipGroup.updateMany({ where: { id, syncLeaseUntil: lease }, data: { syncPending: remaining > 0, nextSyncAt: new Date(Date.now() + (remaining > 0 ? 30_000 : 300_000)) } })
+    await prisma.leadershipGroup.updateMany({ where: { id, syncLeaseUntil: lease, version: group.version }, data: { syncPending: remaining > 0, nextSyncAt: new Date(Date.now() + (remaining > 0 ? 30_000 : 300_000)) } })
     return remaining === 0
   } catch {
     await prisma.leadershipGroup.updateMany({ where: { id, syncLeaseUntil: lease }, data: { syncPending: true } })

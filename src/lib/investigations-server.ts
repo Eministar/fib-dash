@@ -1,3 +1,4 @@
+import { displayBadgeNumber } from '@/lib/badge-number'
 import 'server-only'
 
 import { error, forbidden, unauthorized } from '@/lib/api-response'
@@ -107,5 +108,5 @@ export function agentDisplayName(
   agent: { firstName: string; lastName: string; badgeNumber: string } | null | undefined,
 ) {
   if (!agent) return null
-  return `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})`
+  return `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`
 }

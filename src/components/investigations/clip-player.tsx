@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import Link from 'next/link'
 import { Clock3, MapPin, Trash2, User } from 'lucide-react'
 
@@ -79,7 +81,7 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
             <span className="inline-flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
               {clip.recordedByAgent.firstName} {clip.recordedByAgent.lastName} (
-              {clip.recordedByAgent.badgeNumber})
+              {displayBadgeNumber(clip.recordedByAgent.badgeNumber)})
             </span>
           )}
           <span>{formatClipSize(clip.sizeBytes)}</span>

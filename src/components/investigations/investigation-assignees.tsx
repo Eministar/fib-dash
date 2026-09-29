@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useMemo, useState } from 'react'
 import { AlertTriangle, ShieldCheck, UserPlus, X } from 'lucide-react'
 
@@ -89,7 +91,7 @@ export function InvestigationAssignees({
         <div className="mb-2 flex items-center gap-2 rounded-[9px] border border-[#2a2a2a] bg-[#111111] px-3 py-2">
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#c4b5fd]" />
           <span className="text-[12.5px] text-white">
-            {leadAgent.firstName} {leadAgent.lastName} ({leadAgent.badgeNumber})
+            {leadAgent.firstName} {leadAgent.lastName} ({displayBadgeNumber(leadAgent.badgeNumber)})
           </span>
           <span className="text-[11px] text-[#6a6a6a]">Fallführung</span>
         </div>
@@ -103,7 +105,7 @@ export function InvestigationAssignees({
             <li key={assignee.id} className="flex items-center justify-between gap-3 py-2.5">
               <div className="min-w-0">
                 <p className="truncate text-[13px] text-white">
-                  {assignee.agent.firstName} {assignee.agent.lastName} ({assignee.agent.badgeNumber})
+                  {assignee.agent.firstName} {assignee.agent.lastName} ({displayBadgeNumber(assignee.agent.badgeNumber)})
                   {assignee.agent.rank && (
                     <span className="ml-2 text-[11.5px] text-[#6a6a6a]">{assignee.agent.rank.name}</span>
                   )}

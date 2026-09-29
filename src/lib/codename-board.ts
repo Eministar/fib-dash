@@ -1,3 +1,4 @@
+import { displayBadgeNumber } from '@/lib/badge-number'
 /** Pure rendering: never truncate the roster, even with unusually long names. */
 export function codenameBoardPages(rows: { name: string; currentAgent: { firstName: string; lastName: string; badgeNumber: string } | null }[], prefix: string) {
   const clean = (text: string) => text.replace(/[`\r\n\t]/g, ' ').replace(/\s+/g, ' ').trim()
@@ -5,7 +6,7 @@ export function codenameBoardPages(rows: { name: string; currentAgent: { firstNa
   for (const row of rows) {
     if (!row.currentAgent) continue
     const agent = row.currentAgent
-    const line = `${clean([prefix, row.name].filter(Boolean).join(' '))}  |  ${clean(agent.lastName)}, ${clean(agent.firstName)}  |  ${clean(agent.badgeNumber)}`
+    const line = `${clean([prefix, row.name].filter(Boolean).join(' '))}  |  ${clean(agent.lastName)}, ${clean(agent.firstName)}  |  ${clean(displayBadgeNumber(agent.badgeNumber))}`
     let page = pages[pages.length - 1]
     if (page.length && (page.length >= 30 || page.join('\n').length + line.length + 1 > 3500)) {
       page = []

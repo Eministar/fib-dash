@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     const user = await requirePermission('investigations:view')
     const query = z.object({ search: z.string().trim().max(200).default(''), kind: z.enum(['FAMILY', 'COLLECTION', 'PROPERTY']).optional(), personId: z.string().max(191).optional(), investigationId: z.string().max(191).optional(), page: z.coerce.number().int().min(1).max(100000).default(1) }).parse(Object.fromEntries(new URL(req.url).searchParams))
     const where = {
-      ...(query.search ? { title: { contains: query.search } } : {}),
+      ...(query.search ? { OR: [{ title: { contains: query.search } }, { address: { contains: query.search } }] } : {}),
       ...(query.kind ? { kind: query.kind } : {}),
       ...(query.personId ? { persons: { some: { id: query.personId } } } : query.investigationId ? { investigations: { some: { id: query.investigationId } } } : {}),
     }

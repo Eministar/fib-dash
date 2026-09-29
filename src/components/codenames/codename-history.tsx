@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { useFetch } from '@/hooks/use-fetch'
@@ -23,7 +25,7 @@ export function CodenameHistory({ agentId, codenameId }: { agentId?: string; cod
     {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
     {loading ? <p className="text-sm text-[#909090]">Historie wird geladen …</p> : data?.items.length === 0 ? <p className="text-sm text-[#909090]">Noch keine Zuweisungen.</p> : <ol className="space-y-3">
       {data?.items.map(item => <li key={item.id} className="border-l-2 border-[#404040] pl-3 text-sm">
-        <p className="font-medium text-white">{item.codename ? [data.prefix, item.codename.name].filter(Boolean).join(' ') : item.agent ? `${item.agent.firstName} ${item.agent.lastName} · ${item.agent.badgeNumber}` : 'Agent entfernt'}</p>
+        <p className="font-medium text-white">{item.codename ? [data.prefix, item.codename.name].filter(Boolean).join(' ') : item.agent ? `${item.agent.firstName} ${item.agent.lastName} · ${displayBadgeNumber(item.agent.badgeNumber)}` : 'Agent entfernt'}</p>
         <p className="text-[#a6a6a6]">{formatDateTime(item.assignedAt)} – {item.releasedAt ? formatDateTime(item.releasedAt) : 'aktuell'}</p>
         <p className="text-xs text-[#909090]">Zugewiesen von {item.assignedBy?.displayName ?? 'gelöschtem Benutzer'}{item.releaseReason && ` · ${reasons[item.releaseReason] ?? item.releaseReason} (${item.releasedBy?.displayName ?? 'gelöschter Benutzer'})`}</p>
         {item.note && <p className="mt-1 whitespace-pre-wrap break-words text-[#a6a6a6]">{item.note}</p>}

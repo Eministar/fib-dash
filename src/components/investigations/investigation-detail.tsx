@@ -1,5 +1,7 @@
 'use client'
 
+import { displayBadgeNumber } from '@/lib/badge-number'
+
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -176,7 +178,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
     [
       'Fallführung',
       investigation.leadAgent
-        ? `${investigation.leadAgent.firstName} ${investigation.leadAgent.lastName} (${investigation.leadAgent.badgeNumber})`
+        ? `${investigation.leadAgent.firstName} ${investigation.leadAgent.lastName} (${displayBadgeNumber(investigation.leadAgent.badgeNumber)})`
         : 'nicht zugewiesen',
     ],
     ['Ermittler', investigation.assignees.length ? `${investigation.assignees.length} zugewiesen` : 'keine'],
@@ -782,7 +784,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
               { value: '', label: 'Keine Fallführung' },
               ...(agents ?? []).map((agent) => ({
                 value: agent.id,
-                label: `${agent.firstName} ${agent.lastName} (${agent.badgeNumber})`,
+                label: `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`,
               })),
             ]}
             value={investigation.leadAgent?.id ?? ''}

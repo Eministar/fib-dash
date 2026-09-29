@@ -67,7 +67,7 @@ function DossierView({ id }: { id: string | null }) {
   const [kind, setKind] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [editor, setEditor] = useState<'new' | 'edit' | null>(null)
+  const [editor, setEditor] = useState<'new' | 'edit' | null>(manage && params.get('new') === '1' ? 'new' : null)
   const [quick, setQuick] = useState<RegisterField | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
@@ -207,16 +207,20 @@ function DossierView({ id }: { id: string | null }) {
               ? <Button variant="outline" onClick={() => { setSearch(''); setKind(''); setPage(1) }}>Filter zurücksetzen</Button>
               : manage ? <Button onClick={() => setEditor('new')}><Plus size={14} />Akte anlegen</Button> : null}
           />
-        : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{list.data.items.map(item => <RegisterCard key={item.id} card={{
-            key: item.id, href: href(item.id), variant: 'dossier', kind: DOSSIER_KINDS[item.kind], title: item.title, photoId: item.photoId,
-            code: item.address ?? undefined,
-            facts: [`${item._count?.investigations ?? 0} Einsatzakten`, `${item._count?.persons ?? 0} Personen`, `${item._count?.vehicles ?? 0} Fahrzeuge`],
-            author: item.createdBy?.displayName, date: item.updatedAt,
-          }} />)}</div>}
+        : <div className="overflow-hidden rounded-lg border border-[#343434]">
+          <div className="hidden grid-cols-[minmax(0,2fr)_1fr_1fr_110px] gap-4 border-b border-[#343434] bg-[#212121] px-4 py-2 text-xs text-[#909090] md:grid"><span>Dauerakte</span><span>Kategorie</span><span>Verknüpfungen</span><span>Aktualisiert</span></div>
+          {list.data.items.map(item => <Link key={item.id} href={href(item.id)} className="grid gap-2 border-b border-[#343434] px-4 py-4 last:border-0 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2 md:grid-cols-[minmax(0,2fr)_1fr_1fr_110px] md:items-center md:gap-4">
+            <div className="min-w-0"><h2 className="truncate text-sm font-medium text-white">{item.title}</h2>{item.address && <p className="mt-1 truncate text-xs text-[#909090]">{item.address}</p>}</div>
+            <span className="text-xs text-[#a6a6a6]">{DOSSIER_KINDS[item.kind]}</span>
+            <span className="text-xs text-[#a6a6a6]">{item._count?.investigations ?? 0} Einsätze · {item._count?.persons ?? 0} Personen · {item._count?.vehicles ?? 0} Fahrzeuge</span>
+            <span className="text-xs text-[#909090]">{item.updatedAt ? formatDate(item.updatedAt) : '—'}</span>
+          </Link>)}
+        </div>}
+
       {(list.data?.items.length ?? 0) > 0 && <div className="mt-4 flex items-center justify-between text-xs text-[#808080]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
     </>}
 
-    {editor && <DossierEditor existing={editor === 'edit' ? current ?? undefined : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
+    {editor && <DossierEditor initialKind={params.get('kind') === 'FAMILY' ? 'FAMILY' : undefined} existing={editor === 'edit' ? current ?? undefined : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
     {quick && current && <QuickRelationEditor dossier={current} field={quick} onClose={() => setQuick(null)} onSaved={refresh} />}
     <ImageLightbox images={galleryImages} startId={lightboxId} onClose={() => setLightboxId(null)} />
     <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen-, Einsatz- und Fahrzeugakten bleiben bestehen.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push('/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
@@ -295,10 +299,11 @@ const DOSSIER_KIND_HINTS: Record<DossierKind, string> = {
   PROPERTY: 'Ein Anwesen oder Objekt mit Adresse, Bewohnern und Beobachtungen.',
 }
 
-function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onClose: () => void; onSaved: () => void }) {
+function DossierEditor({ existing, initialKind, onClose, onSaved }: { existing?: Dossier; initialKind?: DossierKind; onClose: () => void; onSaved: () => void }) {
   const { user } = useAuth()
+  const router = useRouter()
   const [title, setTitle] = useState(existing?.title ?? '')
-  const [kind, setKind] = useState<DossierKind>(existing?.kind ?? 'COLLECTION')
+  const [kind, setKind] = useState<DossierKind>(existing?.kind ?? initialKind ?? 'COLLECTION')
   const [description, setDescription] = useState(existing?.description ?? '')
   const [address, setAddress] = useState(existing?.address ?? '')
   const [photoId, setPhotoId] = useState(existing?.photoId ?? null)
@@ -318,7 +323,7 @@ function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onC
   const save = async () => {
     setFailure('')
     try {
-      await execute(`/api/investigations/dossiers${existing ? `/${existing.id}` : ''}`, {
+      const saved = await execute(`/api/investigations/dossiers${existing ? `/${existing.id}` : ''}`, {
         method: existing ? 'PATCH' : 'POST',
         body: JSON.stringify({
           title, kind,
@@ -331,6 +336,7 @@ function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onC
         }),
       })
       onSaved()
+      if (!existing && saved && typeof saved === 'object' && 'id' in saved) router.push(href(String(saved.id)))
     } catch (cause) {
       setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen')
     }
@@ -339,7 +345,7 @@ function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onC
   const steps: WizardStep[] = [
     {
       id: 'art',
-      label: 'Art & Titel',
+      label: 'Worum geht es?' ,
       invalid: title.trim() ? undefined : 'Bitte einen Titel für die Akte angeben.',
       content: <div className="space-y-4">
         <div className="grid gap-2 sm:grid-cols-2">
@@ -349,6 +355,7 @@ function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onC
             <span className="mt-0.5 block text-[11.5px] leading-relaxed text-[#808080]">{DOSSIER_KIND_HINTS[value as DossierKind]}</span>
           </button>)}
         </div>
+        <p className="text-sm leading-6 text-[#a6a6a6]">Eine Dauerakte ist die zentrale Sammlung. Konkrete Vorfälle kommen als Einsatzakten dazu. Personen und Fahrzeuge werden verknüpft, nicht erneut angelegt.</p>
         <Input label="Titel" value={title} onChange={e => setTitle(e.target.value)} maxLength={200} placeholder="z. B. Familie Moretti" />
       </div>,
     },
@@ -361,7 +368,7 @@ function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onC
         <PhotoField value={photoId ? photoUrl(photoId) : null} onChange={photo => setPhotoId(photo?.id ?? null)} />
         <div className="space-y-2">
           <p className="text-[12.5px] font-medium text-[#aeaeae]">Weitere Bilder</p>
-          <p className="text-[11.5px] text-[#808080]">Stehen in der Akte unter „Medien & Orte“. Auf den Kacheln bleibt das Titelbild.</p>
+          <p className="text-[11.5px] text-[#808080]">Stehen in der Akte unter „Medien & Orte“. Das Titelbild steht in den Stammdaten.</p>
           <PhotoPicker value={photos} onChange={setPhotos} />
         </div>
         <Textarea label="Informationen und Notizen" value={description} onChange={e => setDescription(e.target.value)} maxLength={30000} rows={6} placeholder="Hintergründe, Bewohner, Eigentümer, Beobachtungen …" />

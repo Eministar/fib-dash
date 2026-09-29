@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { usePersistentBoolean } from '@/hooks/use-persistent-boolean'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,7 +10,7 @@ import {
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Download,
   FileText, FileSignature, Gavel, FolderSearch, Map,
-  History, FolderUp,
+  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -75,10 +76,16 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="px-3 mb-2 mt-4 text-xs font-medium text-[#808080]">{children}</p>
-  )
+function SavedSection({ name, children }: { name: string; children: ReactNode }) {
+  const { user } = useAuth()
+  const [open, setOpen] = usePersistentBoolean(`fib:nav:${user?.id ?? 'guest'}:${name}`, true)
+  return <section>
+    <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
+      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium text-[#a6a6a6] hover:text-white focus-visible:outline focus-visible:outline-2">
+      {name}<ChevronDown size={13} className={open ? '' : '-rotate-90'} />
+    </button>
+    {open && <div>{children}</div>}
+  </section>
 }
 
 function SectionDivider() {
@@ -163,39 +170,40 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
           { label: 'Unterlagen', paths: ['/ordnungen', '/uploads'] },
         ].map(group => {
           const items = mainNav.filter(item => group.paths.includes(item.href) && (!item.permission || hasPermission(user, item.permission)))
-          return items.length > 0 && <details key={group.label} open={group.label === 'Arbeitsplatz' || items.some(item => isActivePath(pathname, item.href))}>
-            <summary className="cursor-pointer rounded-lg px-3 py-2.5 text-xs font-medium text-[#a6a6a6] hover:text-white focus-visible:outline focus-visible:outline-2">{group.label}</summary>
+          return items.length > 0 && <SavedSection key={group.label} name={group.label}>
             {items.map(item => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
-          </details>
+          </SavedSection>
         })}
           {!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed && <NavLink item={{ name: 'Bodycams', href: '/investigations/clips', icon: FolderSearch }} pathname={pathname} onNavigate={onNavigate} />}
 
         {unitNav.length > 0 && (
           <>
             <SectionDivider />
-            <SectionLabel>Units</SectionLabel>
+            <SavedSection name="Units">
             {unitNav.map((item) => <NavLink key={`${item.href}:${item.name}`} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+            </SavedSection>
           </>
         )}
 
         {leadershipAccess?.allowed && <>
           <SectionDivider />
-          <SectionLabel>Leadership</SectionLabel>
+          <SavedSection name="Leadership">
           <NavLink item={{ name: 'Ermittlungsgruppen', href: '/leadership/groups', icon: Users }} pathname={pathname} onNavigate={onNavigate} />
+          </SavedSection>
         </>}
 
         {showAdmin && (
-          <details open={adminNav.some(item => isActivePath(pathname, item.href))}>
-            <summary className="cursor-pointer rounded-lg px-3 py-2.5 text-xs font-medium text-[#a6a6a6] hover:text-white focus-visible:outline focus-visible:outline-2">Administration</summary>
+          <SavedSection name="Administration">
             {adminNav
               .filter((item) => !item.permission || hasPermission(user, item.permission))
               .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
-          </details>
+          </SavedSection>
         )}
 
         <SectionDivider />
-        <SectionLabel>Konto</SectionLabel>
+        <SavedSection name="Konto">
         {accountNav.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+        </SavedSection>
       </nav>
 
       <div className="px-2.5 pb-2.5 shrink-0">
@@ -237,6 +245,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = usePersistentBoolean(`fib:sidebar:${user?.id ?? 'guest'}`, false)
 
   const closeMobile = () => setMobileOpen(false)
 
@@ -258,8 +267,14 @@ export function Sidebar() {
         <div className="w-9" aria-hidden />
       </div>
 
-      <aside className="hidden lg:flex lg:flex-col lg:w-[244px] lg:min-h-screen sidebar-gradient border-r border-[#d4d4d4]/10 fixed left-0 top-0 bottom-0 z-30">
-        <NavContent pathname={pathname} onNavigate={closeMobile} user={user} logout={logout} />
+      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-[#d4d4d4]/10 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-12' : 'w-[244px]')}>
+        <button type="button" onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
+          title={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
+          className="flex h-11 shrink-0 items-center justify-center gap-2 border-b border-[#343434] text-[#a6a6a6] hover:bg-[#262626] hover:text-white focus-visible:outline focus-visible:outline-2">
+          {collapsed ? <PanelLeftOpen size={18} /> : <><PanelLeftClose size={16} /><span className="text-xs">Navigation minimieren</span></>}
+        </button>
+        {!collapsed && <div className="min-h-0 flex-1"><NavContent pathname={pathname} onNavigate={closeMobile} user={user} logout={logout} /></div>}
       </aside>
 
       <AnimatePresence>
@@ -292,7 +307,7 @@ export function Sidebar() {
         )}
       </AnimatePresence>
 
-      <div className="hidden lg:block lg:w-[244px] lg:shrink-0" />
+      <div className={cn("hidden lg:block lg:shrink-0 transition-[width] duration-200 motion-reduce:transition-none", collapsed ? "lg:w-12" : "lg:w-[244px]")} />
     </>
   )
 }
