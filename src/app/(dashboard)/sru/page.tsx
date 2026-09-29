@@ -1,5 +1,7 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
@@ -30,7 +32,6 @@ import {
   Trash2,
 } from 'lucide-react'
 
-import { TaskBoard } from '@/components/tasks/task-board'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageLoader } from '@/components/ui/loading'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -48,6 +49,8 @@ import { hasPermission } from '@/lib/permissions'
 import { cn, formatDateTime } from '@/lib/utils'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { renderMarkdown } from '@/lib/markdown'
+
+const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: PageLoader })
 
 type Tab = 'documents' | 'tasks' | 'calendar'
 

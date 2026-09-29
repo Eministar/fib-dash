@@ -30,6 +30,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { data: activeSession, loading: activeSessionLoading } = useFetch<ActiveTestSession | null>(
     !loading && user ? '/api/form-test-sessions/active' : null,
+    5_000,
   )
   // Der Bodycam-Lesezugriff haengt an einer Discord-Rolle, nicht an einer
   // Permission. Ohne diese Abfrage waere ein reiner Katalog-Leser `visitorOnly`

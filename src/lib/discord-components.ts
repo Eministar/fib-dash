@@ -24,9 +24,10 @@ export function actionRow(components: DiscordMessageComponent[]): DiscordMessage
   }
 }
 
-export function container(components: DiscordMessageComponent[]): DiscordMessageComponent {
+export function container(components: DiscordMessageComponent[], accentColor?: number): DiscordMessageComponent {
   return {
     type: 17,
+    ...(accentColor === undefined ? {} : { accent_color: accentColor }),
     components,
   }
 }
@@ -43,12 +44,12 @@ export function linkButton(label: string, url: string): DiscordMessageComponent 
 
 export function componentMessage(
   components: DiscordMessageComponent[],
-  options?: { allowedMentions?: Record<string, unknown> },
+  options?: { allowedMentions?: Record<string, unknown>; accentColor?: number },
 ) {
   return {
     flags: DISCORD_COMPONENTS_V2_FLAG,
     allowed_mentions: options?.allowedMentions ?? { parse: [] },
-    components: [container(components)],
+    components: [container(components, options?.accentColor)],
   }
 }
 

@@ -5,10 +5,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText, ChartNoAxesCombined,
+  LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
-  Menu, X, KeyRound, Timer, CalendarDays, Download,
-  FileText, FileSignature, Gavel, Scale, FolderSearch, Map,
+  Menu, X, KeyRound, Timer, Download,
+  FileText, FileSignature, Gavel, FolderSearch, Map,
   History, FolderUp,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -37,27 +37,24 @@ interface NavContentProps {
 
 const mainNav: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
-  { name: 'Statistiken', href: '/statistics', icon: ChartNoAxesCombined, permission: 'dashboard:view' },
   { name: 'Ordnungen', href: '/ordnungen', icon: FileText },
-  { name: 'Kalender', href: '/calendar', icon: CalendarDays, permission: 'calendar:view' },
   { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view' },
   { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view' },
   { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
-  { name: 'Up-/D-Rank-Listen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
+  { name: 'Rangänderungen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
   { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
   // Ohne `permission`: Sanktionen und Katalog sind für jeden eingeloggten Agent einsehbar.
   { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
-  { name: 'Sanktionskatalog', href: '/sanktionen/katalog', icon: Scale },
   { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield },
   { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
   { name: 'Karte', href: '/map', icon: Map, permission: 'map:view' },
   { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
-  { name: 'Verträge', href: '/vertraege', icon: FileSignature, permission: 'agreements:view' },
+  { name: 'Vereinbarungen', href: '/vertraege', icon: FileSignature, permission: 'agreements:view' },
   { name: 'Uploads', href: '/uploads', icon: FolderUp, permission: 'uploads:view' },
-  { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
 ]
 
 const adminNav: NavItem[] = [
+  { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
   { name: 'Ränge', href: '/admin/ranks', icon: Shield, permission: 'ranks:manage' },
   { name: 'Ausbildungen', href: '/admin/trainings', icon: GraduationCap, permission: 'trainings:manage' },
   { name: 'Units verwalten', href: '/admin/units', icon: Briefcase, permission: 'units:manage' },
@@ -75,21 +72,17 @@ const accountNav: NavItem[] = [
 
 function isActivePath(pathname: string, href: string) {
   if (href === '/dashboard') return pathname === '/dashboard'
-  return pathname.startsWith(href)
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-3 mb-1.5 mt-1 text-[9.5px] font-bold text-[#808080] uppercase tracking-[0.16em] flex items-center gap-1.5">
-      <span className="h-px flex-1 bg-gradient-to-r from-[#343434]/60 to-transparent" />
-      <span>{children}</span>
-      <span className="h-px flex-1 bg-gradient-to-l from-[#343434]/60 to-transparent" />
-    </p>
+    <p className="px-3 mb-2 mt-4 text-xs font-medium text-[#808080]">{children}</p>
   )
 }
 
 function SectionDivider() {
-  return <div className="my-3 mx-3 h-px bg-gradient-to-r from-transparent via-[#d4d4d4]/10 to-transparent" />
+  return <div className="my-3 mx-3 h-px bg-[#343434]" />
 }
 
 function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: string; onNavigate: () => void }) {
@@ -99,25 +92,21 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
   return (
     <Link
       href={item.href}
+      prefetch={false}
+      aria-current={active ? 'page' : undefined}
       onClick={onNavigate}
       className={cn(
-        'group relative flex items-center gap-3 px-3 py-[9px] rounded-lg text-[13.5px] transition-all duration-200 overflow-hidden',
+        'group relative flex items-center gap-3 px-3 py-[9px] rounded-lg text-[13.5px] transition-colors duration-150 focus-visible:outline focus-visible:outline-2',
         active
-          ? 'bg-gradient-to-r from-[#d4d4d4] to-[#a4a4a4] text-[#181818] font-semibold shadow-[0_2px_8px_rgba(212,212,212,0.25)]'
-          : 'text-[#a6a6a6] hover:bg-[#212121] hover:text-[#f4f4f4] hover:translate-x-0.5'
+          ? 'bg-[#303030] text-white font-semibold'
+          : 'text-[#a6a6a6] hover:bg-[#212121] hover:text-[#f4f4f4]'
       )}
     >
-      {!active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-0 rounded-r-full bg-[#d4d4d4] transition-all duration-300 group-hover:h-[14px]" />
-      )}
-      {active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-full bg-[#cfcfcf] shadow-[0_0_8px_rgba(207,207,207,0.6)]" />
-      )}
       <Icon
         size={18}
         strokeWidth={active ? 2.25 : 1.75}
         style={!active && item.color ? { color: item.color } : undefined}
-        className={cn('shrink-0 transition-transform duration-200', !active && 'group-hover:scale-110')}
+        className="shrink-0"
       />
       <span className="truncate">{item.name}</span>
       {active && (
@@ -128,9 +117,9 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
 }
 
 function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
-  const { data: leadershipAccess } = useFetch<{ allowed: boolean }>(user ? '/api/leadership/groups/access' : null)
-  const { data: bodycamAccess } = useFetch<{ allowed: boolean }>(user ? '/api/investigations/clips/access' : null)
-  const { data: navigationUnits } = useFetch<NavigationUnit[]>(user ? '/api/navigation/units' : null)
+  const { data: leadershipAccess } = useFetch<{ allowed: boolean }>(user ? '/api/leadership/groups/access' : null, 120_000)
+  const { data: bodycamAccess } = useFetch<{ allowed: boolean }>(user && !hasPermission(user, 'investigations:view') ? '/api/investigations/clips/access' : null, 120_000)
+  const { data: navigationUnits } = useFetch<NavigationUnit[]>(user ? '/api/navigation/units' : null, 120_000)
   const unitNav: NavItem[] = (navigationUnits ?? []).map((unit) => ({
     name: unit.name,
     href: unit.href,
@@ -138,6 +127,7 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
     color: unit.color,
   }))
   const showAdmin = hasAnyPermission(user, [
+    'logs:view',
     'ranks:manage',
     'trainings:manage',
     'units:manage',
@@ -166,11 +156,19 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
       </div>
 
       <nav className="flex-1 space-y-[2px] overflow-y-auto px-2.5 lg:pb-12">
-        <SectionLabel>Navigation</SectionLabel>
-          {mainNav
-          .filter((item) => !item.permission || hasPermission(user, item.permission))
-            .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
-          {bodycamAccess?.allowed && <NavLink item={{ name: 'Bodycam-Katalog', href: '/investigations/clips', icon: FolderSearch }} pathname={pathname} onNavigate={onNavigate} />}
+        {[
+          { label: 'Arbeitsplatz', paths: ['/dashboard', '/duty-times', '/notes'] },
+          { label: 'Personal', paths: ['/agents', '/codenames', '/promotions', '/terminations', '/vertraege'] },
+          { label: 'Ermittlungen & Disziplin', paths: ['/investigations', '/sanktionen', '/corruption-checks', '/map'] },
+          { label: 'Unterlagen', paths: ['/ordnungen', '/uploads'] },
+        ].map(group => {
+          const items = mainNav.filter(item => group.paths.includes(item.href) && (!item.permission || hasPermission(user, item.permission)))
+          return items.length > 0 && <details key={group.label} open={group.label === 'Arbeitsplatz' || items.some(item => isActivePath(pathname, item.href))}>
+            <summary className="cursor-pointer rounded-lg px-3 py-2.5 text-xs font-medium text-[#a6a6a6] hover:text-white focus-visible:outline focus-visible:outline-2">{group.label}</summary>
+            {items.map(item => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+          </details>
+        })}
+          {!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed && <NavLink item={{ name: 'Bodycams', href: '/investigations/clips', icon: FolderSearch }} pathname={pathname} onNavigate={onNavigate} />}
 
         {unitNav.length > 0 && (
           <>
@@ -187,13 +185,12 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
         </>}
 
         {showAdmin && (
-          <>
-            <SectionDivider />
-            <SectionLabel>Administration</SectionLabel>
+          <details open={adminNav.some(item => isActivePath(pathname, item.href))}>
+            <summary className="cursor-pointer rounded-lg px-3 py-2.5 text-xs font-medium text-[#a6a6a6] hover:text-white focus-visible:outline focus-visible:outline-2">Administration</summary>
             {adminNav
               .filter((item) => !item.permission || hasPermission(user, item.permission))
               .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
-          </>
+          </details>
         )}
 
         <SectionDivider />
@@ -284,6 +281,7 @@ export function Sidebar() {
             >
               <button
                 onClick={() => setMobileOpen(false)}
+                aria-label="Menü schließen"
                 className="absolute top-4 right-3 p-1.5 rounded-md text-[#909090] hover:text-[#d4d4d4]"
               >
                 <X size={16} />

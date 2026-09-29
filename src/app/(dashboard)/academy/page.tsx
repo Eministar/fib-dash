@@ -1,16 +1,20 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+import { PageLoader } from '@/components/ui/loading'
+
 import { useState } from 'react'
 import { CalendarDays, FileQuestion, FileText, FolderOpen, GraduationCap, ListChecks } from 'lucide-react'
-import { TaskBoard } from '@/components/tasks/task-board'
-import { ModuleDocuments } from '@/components/modules/module-documents'
-import { ModuleCalendar } from '@/components/modules/module-calendar'
-import { AcademyResources } from '@/components/modules/academy-resources'
-import { FormTests } from '@/components/modules/form-tests'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+
+const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: PageLoader })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
+const ModuleCalendar = dynamic(() => import('@/components/modules/module-calendar').then(mod => mod.ModuleCalendar), { loading: PageLoader })
+const AcademyResources = dynamic(() => import('@/components/modules/academy-resources').then(mod => mod.AcademyResources), { loading: PageLoader })
+const FormTests = dynamic(() => import('@/components/modules/form-tests').then(mod => mod.FormTests), { loading: PageLoader })
 
 type Tab = 'documents' | 'files' | 'training' | 'tests' | 'tasks' | 'calendar'
 

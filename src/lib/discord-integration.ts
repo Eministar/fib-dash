@@ -8,6 +8,8 @@ import { queueDiscordWebhookEvent } from './discord-webhook'
 import { sanitizePermissions, type Permission } from './permissions'
 import {
   actionRow,
+  textDisplay,
+  separator,
   componentMessage,
   linkButton,
   markdownHeader,
@@ -1670,26 +1672,6 @@ function polishedEventDescription(value: string | undefined) {
     .trim()
 }
 
-function officialEventIntroduction(type: keyof typeof EVENT_META, name: string) {
-  const subject = name ? ` **${name}**` : ''
-  switch (type) {
-    case 'hire':
-      return `${subject} ist dem FIB beigetreten. Willkommen im Team!`.trim()
-    case 'promotion':
-      return `Der Dienstgrad von${subject} wurde geändert.`
-    case 'training':
-      return `Der Ausbildungsstand von${subject} wurde aktualisiert.`
-    case 'units':
-      return `Die Unit-Zuordnung von${subject} wurde geändert.`
-    case 'sanction':
-      return `Für${subject} wurde eine Sanktion eingetragen.`
-    case 'termination':
-      return `Das Dienstverhältnis von${subject} wurde beendet.`
-    case 'update':
-      return subject ? `Es gibt eine neue Mitteilung zu${subject}.` : 'Es gibt eine neue Mitteilung.'
-  }
-}
-
 async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: DiscordConfig) {
   const agent = event.agent
   const meta = EVENT_META[event.type]
@@ -1733,29 +1715,23 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
   )
   const pingLine = mentionIds.length ? mentionIds.map((id) => `<@${id}>`).join(' ') : null
   const allowedMentions = mentionIds.length ? { users: mentionIds } : undefined
-  const salutation = event.type === 'sanction' && mentionIds.length === 1
-    ? `Hallo <@${mentionIds[0]}>,`
-    : 'Hallo zusammen,'
   const description = polishedEventDescription(event.description)
-  const message = [officialEventIntroduction(event.type, agentDisplayName), description]
-    .filter(Boolean)
-    .join(' ')
-  const letter = `${salutation}\n\n${message}`
-  const closing = `Mit freundlichen Grüßen\n${event.actor ? actorLabel : '**Human Resources**'}`
-
-  return componentMessage(
-    markdownTextDisplays([
-      markdownHeader(meta.icon, customHeading, headingSubject),
-      event.type === 'sanction' ? null : pingLine,
-      letter,
-      rows.length ? `### Details\n${markdownRows(rows)}` : null,
+  return componentMessage([
+    textDisplay(`## ${customHeading}${headingSubject ? `\n**${headingSubject}**` : ''}`),
+    ...(pingLine ? [textDisplay(pingLine)] : []),
+    separator(),
+    ...markdownTextDisplays([
+      description,
+      rows.length ? markdownRows(rows) : null,
       trainingBlock,
       unitsBlock,
-      closing,
-      markdownMeta([discordTimestamp(now, 'f')]),
     ]),
-    allowedMentions ? { allowedMentions } : undefined,
-  )
+    separator(),
+    textDisplay(markdownMeta([`Erfasst von ${actorLabel}`, discordTimestamp(now, 'f')])),
+  ], {
+    ...(allowedMentions ? { allowedMentions } : {}),
+    accentColor: event.type === 'sanction' ? 0xe0a34a : event.type === 'termination' ? 0xcf6666 : 0x879baa,
+  })
 }
 
 export async function sendDiscordHrEvent(event: DiscordHrEventInput): Promise<DiscordHrEventMessage | null> {
@@ -2052,15 +2028,14 @@ async function absenceStatusPayload() {
   if (visible.length === 0) {
     listParts.push('> Aktuell ist niemand abgemeldet.')
   } else {
-    const lines = visible.map((notice, index) => {
-      const num = String(index + 1).padStart(2, '0')
+    const lines = visible.map((notice) => {
       const agent = notice.agent
       const reason = truncate(notice.reason.replace(/\s+/g, ' '), 180)
       const dn = bracketedServiceNumber(agentBadge(agent), prefix)
       return [
-        `\`${num}\`  **${agentName(agent)}**  ·  ${agent.rank.name}`,
-        `> \`${dn}\`  ·  ${mention(agent.discordId)}  ·  bis ${discordTimestamp(notice.endsAt, 'R')}`,
-        `> *${reason}*`,
+        `**${agentName(agent)}** · \`${dn}\``,
+        `${mention(agent.discordId)} · Rückkehr ${discordTimestamp(notice.endsAt, 'D')} (${discordTimestamp(notice.endsAt, 'R')})`,
+        `Grund: ${reason}`,
       ].join('\n')
     })
     listParts.push(...chunkLines(lines, 3000))
@@ -2069,9 +2044,7 @@ async function absenceStatusPayload() {
 
   return componentMessage([
     ...markdownTextDisplays([
-      markdownHeader('🌴', 'Abmeldungen'),
-      markdownRows([{ label: 'Aktiv', value: `\`${absences.length}\`` }]),
-      '### Aktuelle Abmeldungen',
+      `## Abmeldungen\n${absences.length} aktuell abgemeldet`,
       ...listParts,
       markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
     ]),

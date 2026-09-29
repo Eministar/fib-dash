@@ -2,7 +2,7 @@
 
 export const LIVE_UPDATE_EVENT = 'fib:live-update'
 export const LIVE_UPDATE_CHANNEL = 'fib-live-updates'
-export const LIVE_REFRESH_INTERVAL_MS = 5_000
+export const LIVE_REFRESH_INTERVAL_MS = 30_000
 
 export function notifyLiveUpdate(): void {
   if (typeof window === 'undefined') {

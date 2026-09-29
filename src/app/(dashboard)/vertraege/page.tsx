@@ -12,7 +12,7 @@ export default function AgreementsPage() {
 
   return (
     <div className="mx-auto max-w-6xl pb-2">
-      <PageHeader title="Verträge" description="Frei aufgesetzte Verträge mit beliebigen Parteien, unterschrieben per Link." />
+      <PageHeader title="Vereinbarungen" description="Verträge mit externen Parteien erstellen und unterschreiben lassen." />
       <AgreementsWorkspace canManage={hasPermission(user, 'agreements:manage')} />
     </div>
   )

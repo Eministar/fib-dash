@@ -1,14 +1,18 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+import { PageLoader } from '@/components/ui/loading'
+
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-import { AgentSearches } from '@/components/internal-affairs/agent-searches'
 import { InternalAffairsNavigation, type InternalAffairsSection } from '@/components/internal-affairs/internal-affairs-navigation'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
-import { ModuleDocuments } from '@/components/modules/module-documents'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
+
+const AgentSearches = dynamic(() => import('@/components/internal-affairs/agent-searches').then(mod => mod.AgentSearches), { loading: PageLoader })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
 
 const EMPTY_INTERNAL_AFFAIRS_DOCUMENT = `# Neuer Internal-Affairs-Bericht
 

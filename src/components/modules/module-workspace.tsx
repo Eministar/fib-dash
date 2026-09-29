@@ -1,14 +1,19 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+import { PageLoader } from '@/components/ui/loading'
+
 import { useState } from 'react'
 import { CalendarDays, FileText, ListChecks } from 'lucide-react'
-import { ModuleDocuments } from '@/components/modules/module-documents'
-import { ModuleCalendar, type ModuleCalendarKey } from '@/components/modules/module-calendar'
-import { TaskBoard } from '@/components/tasks/task-board'
+import type { ModuleCalendarKey } from '@/components/modules/module-calendar'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission, type Permission } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
+const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: PageLoader })
+const ModuleCalendar = dynamic(() => import('@/components/modules/module-calendar').then(mod => mod.ModuleCalendar), { loading: PageLoader })
 
 type Tab = 'documents' | 'tasks' | 'calendar'
 

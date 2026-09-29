@@ -1,28 +1,32 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+import { PageLoader } from '@/components/ui/loading'
+
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeftRight, BookOpen, CalendarDays, ClipboardCheck, ClipboardList, FileQuestion, FileSignature, FileText, ListChecks, ScrollText, Settings } from 'lucide-react'
-import { TaskBoard } from '@/components/tasks/task-board'
-import { ModuleDocuments } from '@/components/modules/module-documents'
-import { ModuleCalendar } from '@/components/modules/module-calendar'
-import { FormTests } from '@/components/modules/form-tests'
-import { HrApplications } from '@/components/applications/hr-applications'
-import { ApplicationFormSettings } from '@/components/applications/application-form-settings'
-import { ProbationsWorkspace } from '@/components/probations/probations-workspace'
-import { ContractsWorkspace } from '@/components/contracts/contracts-workspace'
-import { TransfersWorkspace } from '@/components/transfers/transfers-workspace'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+
+const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: PageLoader })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
+const ModuleCalendar = dynamic(() => import('@/components/modules/module-calendar').then(mod => mod.ModuleCalendar), { loading: PageLoader })
+const FormTests = dynamic(() => import('@/components/modules/form-tests').then(mod => mod.FormTests), { loading: PageLoader })
+const HrApplications = dynamic(() => import('@/components/applications/hr-applications').then(mod => mod.HrApplications), { loading: PageLoader })
+const ApplicationFormSettings = dynamic(() => import('@/components/applications/application-form-settings').then(mod => mod.ApplicationFormSettings), { loading: PageLoader })
+const ProbationsWorkspace = dynamic(() => import('@/components/probations/probations-workspace').then(mod => mod.ProbationsWorkspace), { loading: PageLoader })
+const ContractsWorkspace = dynamic(() => import('@/components/contracts/contracts-workspace').then(mod => mod.ContractsWorkspace), { loading: PageLoader })
+const TransfersWorkspace = dynamic(() => import('@/components/transfers/transfers-workspace').then(mod => mod.TransfersWorkspace), { loading: PageLoader })
 
 type Tab = 'documents' | 'applications' | 'contracts' | 'transfers' | 'settings' | 'tests' | 'probations' | 'tasks' | 'calendar'
 
 const tabs = [
   { id: 'documents' as const, label: 'Dokumente', icon: FileText },
   { id: 'applications' as const, label: 'Bewerbungen', icon: ClipboardList },
-  { id: 'contracts' as const, label: 'Verträge', icon: FileSignature },
+  { id: 'contracts' as const, label: 'Arbeitsverträge', icon: FileSignature },
   { id: 'transfers' as const, label: 'Versetzungen', icon: ArrowLeftRight },
   { id: 'settings' as const, label: 'Einstellungen', icon: Settings },
   { id: 'tests' as const, label: 'Tests', icon: FileQuestion },

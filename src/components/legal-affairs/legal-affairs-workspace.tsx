@@ -1,14 +1,18 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+import { PageLoader } from '@/components/ui/loading'
+
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 import { LegalAffairsNavigation, type LegalAffairsSection } from '@/components/legal-affairs/legal-affairs-navigation'
-import { LegalCases } from '@/components/legal-affairs/legal-cases'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
-import { ModuleDocuments } from '@/components/modules/module-documents'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
+
+const LegalCases = dynamic(() => import('@/components/legal-affairs/legal-cases').then(mod => mod.LegalCases), { loading: PageLoader })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
 
 const EMPTY_LAD_DOCUMENT = `# Neues Dokument der Legal Affairs Division
 
