@@ -132,7 +132,15 @@ must_step "Repository aktualisieren" git fetch origin "$BRANCH"
 must_step "Auf origin/$BRANCH wechseln" git reset --hard "origin/$BRANCH"
 
 log "Abhängigkeiten"
-must_step "Dependencies installieren" npm ci
+# npm ci scheitert mit ENOTEMPTY, wenn node_modules von einem abgebrochenen
+# Lauf halb gelöscht zurückbleibt → einmal komplett entfernen und neu versuchen.
+install_dependencies() {
+  npm ci && return 0
+  echo "npm ci fehlgeschlagen — node_modules wird entfernt und neu installiert" >&2
+  rm -rf node_modules
+  npm ci
+}
+must_step "Dependencies installieren" install_dependencies
 
 log "Datenbank"
 must_step "Prisma-Client generieren" npx prisma generate
