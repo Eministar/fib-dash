@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Eye, Settings2 } from 'lucide-react'
 import { notFound, redirect } from 'next/navigation'
@@ -5,7 +6,13 @@ import { notFound, redirect } from 'next/navigation'
 import { PageHeader } from '@/components/layout/page-header'
 import { UnitIcon } from '@/components/units/unit-icon'
 import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { getNavigationUnitForUser } from '@/lib/unit-navigation'
+
+export async function generateMetadata({ params }: { params: Promise<{ key: string }> }): Promise<Metadata> {
+  const unit = await prisma.unit.findUnique({ where: { key: (await params).key }, select: { name: true } })
+  return { title: unit?.name ?? 'Unit' }
+}
 
 export default async function UnitHubPage({ params }: { params: Promise<{ key: string }> }) {
   const user = await getCurrentUser()

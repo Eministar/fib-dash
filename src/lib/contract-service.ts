@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
+import { displayBadgeNumber } from '@/lib/badge-number'
 import { sendDiscordContractMessage } from '@/lib/discord-integration'
 import { agentUnitKeys } from '@/lib/agent-units'
 import { getBadgePrefix } from '@/lib/settings-helpers'
@@ -192,8 +193,21 @@ export async function createContractForAgent(input: CreateContractInput) {
     body: renderContractContent(clause.body, placeholderContext),
   }))
 
+  const token = await createUniqueContractToken()
   return prisma.contract.create({
     data: {
+      // Ohne Unterschriftszeile ließ sich der Vertrag zwar öffnen, aber nicht
+      // unterschreiben („Vertrag nicht gefunden“). Sie trägt denselben Token wie der Link.
+      signatures: {
+        create: {
+          side: 'EXTERNAL',
+          partyName: `${agent.firstName} ${agent.lastName}`.trim().slice(0, 200) || 'Unbekannt',
+          partyRole: `Dienstnummer ${displayBadgeNumber(agent.badgeNumber)}`.slice(0, 200),
+          sortOrder: 0,
+          token,
+          signerDiscordId: agent.discordId,
+        },
+      },
       templateId: template.id,
       agentId: agent.id,
       applicationId: input.applicationId ?? null,
@@ -203,7 +217,7 @@ export async function createContractForAgent(input: CreateContractInput) {
       closing,
       fields: (fields.length > 0 ? fields : sanitizeContractFields(DEFAULT_CONTRACT_TEMPLATE_FIELDS)) as unknown as Prisma.InputJsonValue,
       status: 'DRAFT',
-      token: await createUniqueContractToken(),
+      token,
       signerDiscordId: agent.discordId,
       createdById: input.createdById ?? null,
     },

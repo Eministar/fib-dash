@@ -3,6 +3,7 @@ import type { CurrentUser } from '@/lib/auth'
 import { isDiscordContractAuditor } from '@/lib/discord-integration'
 import { hasAnyPermission } from '@/lib/permissions'
 import { loadSignatureByToken } from '@/lib/contract-signature-service'
+import { migrateContractSignatures } from '@/lib/contract-signature-migration'
 import {
   resolveLinkAccess,
   signatureStateLabel,
@@ -99,6 +100,17 @@ export async function loadContractLinkByToken(token: string) {
   const contract = await loadContractByToken(token)
   if (!contract) return null
 
+  // Vertrag ohne Unterschriftszeile: jetzt anlegen, damit auch Unterschreiben
+  // und Ablehnen funktionieren (die laufen ausschließlich über diese Zeile).
+  try {
+    await migrateContractSignatures({ contractId: contract.id })
+    const healed = await loadSignatureByToken(token)
+    if (healed) return healed
+  } catch (error) {
+    console.error('[ContractLinks] Unterschriftszeile konnte nicht nachgelegt werden:', error)
+  }
+
+  // Letzter Rückfall: nur Ansicht, falls das Anlegen fehlschlägt.
   // Altbestand ohne Unterschriftszeile: aus dem Vertrag selbst eine bauen,
   // damit die Seite auch vor der Migration funktioniert.
   return {

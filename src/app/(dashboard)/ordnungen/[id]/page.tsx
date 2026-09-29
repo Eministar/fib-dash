@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
@@ -31,6 +32,11 @@ const backLink = (
     Alle Ordnungen
   </Link>
 )
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const ordnung = await prisma.ordnung.findUnique({ where: { slug: (await params).id }, select: { title: true } })
+  return { title: ordnung?.title ?? 'Ordnung' }
+}
 
 export default async function OrdnungPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

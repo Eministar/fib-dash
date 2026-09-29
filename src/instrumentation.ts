@@ -14,5 +14,9 @@ export async function register() {
     ensureManualDutyWorker()
     const [{ ensureDatabaseBackupScheduler }, { prisma }] = await Promise.all([import('./lib/database-backup'), import('./lib/prisma')])
     ensureDatabaseBackupScheduler(prisma)
+    const { migrateContractSignatures } = await import('./lib/contract-signature-migration')
+    void migrateContractSignatures()
+      .then((count) => { if (count > 0) console.log(`[Contracts] ${count} fehlende Unterschriftszeilen angelegt`) })
+      .catch((error) => console.error('[Contracts] Unterschriftszeilen konnten nicht angelegt werden:', error))
   }
 }

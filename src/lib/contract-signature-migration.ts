@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { isUniqueConstraintError } from '@/lib/prisma-errors'
 
 /**
  * Überführt die Unterschriftsdaten bestehender Verträge in das Modell
@@ -11,9 +12,9 @@ import { prisma } from '@/lib/prisma'
  * Wiederholbar: Verträge, die schon eine Zeile haben, werden übersprungen.
  * Gibt die Zahl der angelegten Zeilen zurück.
  */
-export async function migrateContractSignatures(options: { dryRun?: boolean } = {}) {
+export async function migrateContractSignatures(options: { dryRun?: boolean; contractId?: string } = {}) {
   const contracts = await prisma.contract.findMany({
-    where: { signatures: { none: {} } },
+    where: { signatures: { none: {} }, ...(options.contractId ? { id: options.contractId } : {}) },
     select: {
       id: true,
       title: true,
@@ -48,7 +49,7 @@ export async function migrateContractSignatures(options: { dryRun?: boolean } = 
       continue
     }
 
-    await prisma.contractSignature.create({
+    const created = await prisma.contractSignature.create({
       data: {
         contractId: contract.id,
         // Aus Sicht des FIB unterschreibt hier der Agent, nicht die Behörde.
@@ -69,8 +70,12 @@ export async function migrateContractSignatures(options: { dryRun?: boolean } = 
         declinedAt: contract.declinedAt,
         declineReason: contract.declineReason,
       },
+    }).catch((error: unknown) => {
+      // Parallel geöffnet: die andere Anfrage hat die Zeile schon angelegt.
+      if (isUniqueConstraintError(error)) return null
+      throw error
     })
-    written += 1
+    if (created) written += 1
   }
 
   return options.dryRun ? contracts.length : written

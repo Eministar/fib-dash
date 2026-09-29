@@ -231,6 +231,16 @@ export const DISCORD_SETTING_KEYS = {
   unitRoleMap: 'discord.unitRoleMap',
 } as const
 
+const EVENT_ACCENT: Record<keyof typeof EVENT_META, number> = {
+  hire: 0x4caf7a,
+  promotion: 0x5b8def,
+  training: 0x9b7be0,
+  units: 0x4bb3c4,
+  sanction: 0xe0a34a,
+  termination: 0xcf6666,
+  update: 0x879baa,
+}
+
 const EVENT_META = {
   hire:        { icon: '✅', label: 'Neueinstellung' },
   promotion:   { icon: '🔼', label: 'Rangänderung' },
@@ -1688,13 +1698,15 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
     : null
 
   const rows: Array<{ label: string; value: string }> = []
+  // Wer, welche Dienstnummer, welcher Rang – kompakt in einer Zeile unter dem Titel.
+  let agentLine: string | null = null
 
   if (agent) {
     const dn = bracketedServiceNumber(agent.badgeNumber, prefix)
     const rankRoleSnow = snowflake(agent.rankId ? config.rankRoleMap[agent.rankId] : '')
-    const rankValue = rankRoleSnow ? `<@&${rankRoleSnow}>` : agent.rank?.name ?? '—'
-    rows.push({ label: 'Dienstnummer', value: `\`${dn}\`` })
-    rows.push({ label: 'Rang', value: rankValue })
+    const rankValue = rankRoleSnow ? `<@&${rankRoleSnow}>` : agent.rank?.name ?? null
+    const who = snowflake(agent.discordId) ? `<@${snowflake(agent.discordId)}>` : `**${agentDisplayName}**`
+    agentLine = [who, `\`${dn}\``, rankValue].filter(Boolean).join('  ·  ')
     if (event.type === 'hire') {
       rows.push({ label: 'Eintrittsdatum', value: discordTimestamp(agent.hireDate ?? now, 'D') })
     }
@@ -1705,33 +1717,26 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
   }
 
   const trainingBlock = event.type === 'training' && event.trainingChanges?.length
-    ? `### Ausbildung\n${event.trainingChanges.map((change) => trainingChangeLine(change, config)).join('\n')}`
+    ? `**Ausbildung**\n${event.trainingChanges.map((change) => trainingChangeLine(change, config)).join('\n')}`
     : null
   const unitsBlock = event.unitChange
     ? await unitChangeBlock(event.unitChange, config)
     : null
 
+  // Der betroffene Agent wird bei jeder Personalmeldung gepingt, dazu eventuell weitere Personen.
   const mentionIds = Array.from(
-    new Set((event.mentionUserIds ?? []).map((id) => snowflake(id)).filter((id): id is string => Boolean(id))),
+    new Set([agent?.discordId, ...(event.mentionUserIds ?? [])].map((id) => snowflake(id)).filter((id): id is string => Boolean(id))),
   )
-  const pingLine = mentionIds.length ? mentionIds.map((id) => `<@${id}>`).join(' ') : null
-  const allowedMentions = mentionIds.length ? { users: mentionIds } : undefined
+  const allowedMentions = { parse: [], users: mentionIds, roles: [] }
   const description = polishedEventDescription(event.description)
+  const details = [description, rows.length ? markdownRows(rows) : null, trainingBlock, unitsBlock].filter(Boolean)
   return componentMessage([
-    textDisplay(`## ${customHeading}${headingSubject ? `\n**${headingSubject}**` : ''}`),
-    ...(pingLine ? [textDisplay(pingLine)] : []),
-    separator(),
-    ...markdownTextDisplays([
-      description,
-      rows.length ? markdownRows(rows) : null,
-      trainingBlock,
-      unitsBlock,
-    ]),
-    separator(),
+    textDisplay(`## ${meta.icon} ${customHeading}${headingSubject && !agentLine ? ` · ${headingSubject}` : ''}${agentLine ? `\n${agentLine}` : ''}`),
+    ...(details.length ? [separator(), ...markdownTextDisplays(details)] : []),
     textDisplay(markdownMeta([`Erfasst von ${actorLabel}`, discordTimestamp(now, 'f')])),
   ], {
-    ...(allowedMentions ? { allowedMentions } : {}),
-    accentColor: event.type === 'sanction' ? 0xe0a34a : event.type === 'termination' ? 0xcf6666 : 0x879baa,
+    allowedMentions,
+    accentColor: EVENT_ACCENT[event.type],
   })
 }
 
