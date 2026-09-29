@@ -4,7 +4,7 @@ import { useState, useCallback, use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CalendarPlus, Edit, Trash2, UserX, UserCheck, Save, X, Check, TrendingUp, TrendingDown, Plus, StickyNote, Timer, Send, Gavel, ListPlus, ChevronDown, ChevronUp, History, Download, MessageCircle, CircleSlash } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, Edit, Trash2, UserX, UserCheck, Save, X, Check, TrendingUp, TrendingDown, Plus, StickyNote, Timer, Send, Gavel, ListPlus, ChevronDown, ChevronUp, History, Download, MessageCircle, CircleSlash, Plane } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DateField } from '@/components/ui/date-field'
@@ -93,6 +93,9 @@ interface AgentDetail {
   units: string[] | null
   flag: string | null
   promotionBlocked: boolean
+  onLeave: boolean
+  onLeaveSince: string | null
+  onLeaveReason: string | null
   notes: string | null
   hireDate: string
   hiredBy?: { displayName: string | null; createdAt: string } | null
@@ -319,6 +322,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const canEditTrainings = hasPermission(user, 'agent-trainings:manage')
   const canDeleteAgent = hasPermission(user, 'agents:delete')
   const canBlockPromotion = hasPermission(user, 'agents:promotion-block')
+  const canManageLeave = hasPermission(user, 'agents:leave')
   const canRankChange = hasPermission(user, 'rank-changes:manage')
   const canTerminate = hasPermission(user, 'terminations:manage')
   const canSanction = hasPermission(user, 'sanctions:manage')
@@ -352,6 +356,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const [demoteModal, setDemoteModal] = useState(false)
   const [noteModal, setNoteModal] = useState(false)
   const [absenceModal, setAbsenceModal] = useState(false)
+  const [leaveModal, setLeaveModal] = useState(false)
+  const [leaveReason, setLeaveReason] = useState('')
   const [terminateReason, setTerminateReason] = useState('')
   const [sanctionForm, setSanctionForm] = useState<SanctionForm>(EMPTY_SANCTION_FORM)
   const [editingSanction, setEditingSanction] = useState<SanctionRecord | null>(null)
@@ -442,6 +448,31 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     try {
       await execute(`/api/agents/${id}/promotion-block`, { method: blocking ? 'POST' : 'DELETE' })
       addToast({ type: 'success', title: blocking ? 'Uprank-Sperre gesetzt' : 'Uprank-Sperre aufgehoben' })
+      await refetch()
+    } catch (err) {
+      addToast({ type: 'error', title: 'Fehler', message: err instanceof Error ? err.message : '' })
+    }
+  }
+
+  const handleStartLeave = async () => {
+    try {
+      await execute(`/api/agents/${id}/leave`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: leaveReason }),
+      })
+      addToast({ type: 'success', title: 'Agent beurlaubt' })
+      setLeaveModal(false)
+      setLeaveReason('')
+      await refetch()
+    } catch (err) {
+      addToast({ type: 'error', title: 'Fehler', message: err instanceof Error ? err.message : '' })
+    }
+  }
+
+  const handleEndLeave = async () => {
+    try {
+      await execute(`/api/agents/${id}/leave`, { method: 'DELETE' })
+      addToast({ type: 'success', title: 'Beurlaubung aufgehoben' })
       await refetch()
     } catch (err) {
       addToast({ type: 'error', title: 'Fehler', message: err instanceof Error ? err.message : '' })
@@ -842,7 +873,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div>
       <PageHeader
-        title={`${agent.firstName} ${agent.lastName}`}
+        title={`${agent.onLeave ? '[X] ' : ''}${agent.firstName} ${agent.lastName}`}
         description={`DN: ${displayBadgeNumber(agent.badgeNumber)} · ${agent.rank?.name}${agent.rank?.internalNumber != null ? ` · Rang ${agent.rank.internalNumber}` : ''}`}
         action={
           <div className="flex gap-1.5 flex-wrap">
@@ -908,6 +939,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                       <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} options={[
                         { value: 'ACTIVE', label: 'Aktiv' },
                         { value: 'AWAY', label: 'Abgemeldet' },
+                        { value: 'ON_LEAVE', label: 'Beurlaubt' },
                         { value: 'INACTIVE', label: 'Inaktiv' },
                         { value: 'TERMINATED', label: 'Gekündigt' },
                       ]} />
@@ -986,6 +1018,20 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   {agent.promotionBlocked ? (
                     <span className="inline-flex items-center gap-1.5 text-[13.5px] text-[#f59e0b]">
                       <CircleSlash size={14} strokeWidth={2} /> Aktiv – Beförderungen blockiert
+                    </span>
+                  ) : (
+                    <span className="text-[13.5px] text-[#808080]">—</span>
+                  )}
+                </InfoRow>
+                <InfoRow label="Beurlaubung">
+                  {agent.onLeave ? (
+                    <span className="inline-flex flex-col gap-0.5">
+                      <span className="inline-flex items-center gap-1.5 text-[13.5px] text-[#a78bfa]">
+                        <Plane size={14} strokeWidth={2} /> Beurlaubt{agent.onLeaveSince ? ` seit ${formatDate(agent.onLeaveSince)}` : ''}
+                      </span>
+                      {agent.onLeaveReason && (
+                        <span className="text-[12px] text-[#808080]">Grund: {agent.onLeaveReason}</span>
+                      )}
                     </span>
                   ) : (
                     <span className="text-[13.5px] text-[#808080]">—</span>
@@ -1337,6 +1383,18 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                     )}>
                     <CircleSlash size={15} strokeWidth={1.75} />
                     {agent.promotionBlocked ? 'Uprank-Sperre aufheben' : 'Uprank-Sperre setzen'}
+                  </button>
+                )}
+                {canManageLeave && agent.status !== 'TERMINATED' && (
+                  <button onClick={agent.onLeave ? handleEndLeave : () => { setLeaveReason(''); setLeaveModal(true) }}
+                    className={cn(
+                      'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] transition-colors text-left',
+                      agent.onLeave
+                        ? 'text-[#34d399] hover:bg-[#212121]'
+                        : 'text-[#a78bfa] hover:bg-[#161225]',
+                    )}>
+                    <Plane size={15} strokeWidth={1.75} />
+                    {agent.onLeave ? 'Beurlaubung aufheben' : 'Beurlauben'}
                   </button>
                 )}
                 {canEditAgent && agent.status === 'TERMINATED' ? (
@@ -1708,6 +1766,30 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <Button size="sm" onClick={handleAddToList} disabled={!addToListId || !addToListRankId}>
               <ListPlus size={13} strokeWidth={2} />
               Hinzufügen
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={leaveModal} onClose={() => setLeaveModal(false)} title="Agent beurlauben">
+        <div className="space-y-4">
+          <p className="text-[13px] text-[#888]">
+            <strong className="text-[#eee]">{agent.firstName} {agent.lastName}</strong> wird bis auf Weiteres beurlaubt.
+            Die Beurlaubung gilt wie eine Abmeldung, setzt ein [X] vor den Namen und vergibt die Beurlaubungs-Rolle.
+          </p>
+          <Textarea
+            label="Grund"
+            value={leaveReason}
+            onChange={(e) => setLeaveReason(e.target.value)}
+            rows={3}
+            required
+            placeholder="Grund der Beurlaubung..."
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setLeaveModal(false)}>Abbrechen</Button>
+            <Button size="sm" onClick={handleStartLeave} disabled={!leaveReason.trim()}>
+              <Plane size={13} strokeWidth={2} />
+              Beurlauben
             </Button>
           </div>
         </div>

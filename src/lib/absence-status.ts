@@ -17,6 +17,8 @@ export interface AgentStatusAutomationResult {
 }
 export const SYSTEM_NOTE_TITLE = 'Automatische Fehlzeit-Markierung'
 export const INACTIVITY_NOTE_DISMISSED_ACTION = 'INACTIVITY_NOTE_DISMISSED'
+/** Ende einer Beurlaubung — startet die Fehlzeit-Frist wie ein Reset neu. */
+export const AGENT_LEAVE_ENDED_ACTION = 'AGENT_LEAVE_ENDED'
 
 let lastAutomationRun = 0
 let automationInFlight: Promise<AgentStatusAutomationResult> | null = null
@@ -275,6 +277,7 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
       badgeNumber: true,
       status: true,
       flag: true,
+      onLeave: true,
       lastOnline: true,
       createdAt: true,
       hireDate: true,
@@ -296,7 +299,7 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
         select: { createdAt: true },
       },
       auditLogs: {
-        where: { action: INACTIVITY_NOTE_DISMISSED_ACTION },
+        where: { action: { in: [INACTIVITY_NOTE_DISMISSED_ACTION, AGENT_LEAVE_ENDED_ACTION] } },
         orderBy: { createdAt: 'desc' },
         take: 1,
         select: { createdAt: true },
@@ -317,7 +320,8 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
   let systemAuthorId: string | null = null
 
   for (const agent of agents) {
-    const hasActiveAbsence = agent.absenceNotices.length > 0
+    // Eine Beurlaubung gilt wie eine (unbefristete) Abmeldung.
+    const hasActiveAbsence = agent.onLeave || agent.absenceNotices.length > 0
     const latestPlaytime = agent.playtimeSessions[0]
     const latestManual = agent.dutySessions[0]
     const manualActivity = latestManual ? latestManual.clockOutAt ?? now : null
@@ -326,7 +330,7 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
     const lastActivity = latestDate(latestPlaytime?.lastSeenAt ?? agent.lastOnline ?? null, manualActivity, lastReset)
       ?? latestDate(agent.hireDate, agent.createdAt) ?? agent.createdAt
     const isInactive = lastActivity < inactiveCutoff
-    const nextStatus = hasActiveAbsence ? 'AWAY' : isInactive ? 'INACTIVE' : 'ACTIVE'
+    const nextStatus = agent.onLeave ? 'ON_LEAVE' : hasActiveAbsence ? 'AWAY' : isInactive ? 'INACTIVE' : 'ACTIVE'
     const nextFlag = hasActiveAbsence
       ? 'BLUE'
       : isInactive

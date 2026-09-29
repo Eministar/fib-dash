@@ -272,6 +272,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     if (parsed.data.hireDate) data.hireDate = new Date(parsed.data.hireDate)
     if (nextBadgeNumber && nextBadgeNumber !== existing.badgeNumber) data.badgeNumber = nextBadgeNumber
+    // Der Status "Beurlaubt" hängt an onLeave: Status-Wechsel im Formular setzt/entfernt die Beurlaubung.
+    if (parsed.data.status && parsed.data.status !== existing.status) {
+      const onLeave = parsed.data.status === 'ON_LEAVE'
+      if (onLeave !== existing.onLeave) {
+        data.onLeave = onLeave
+        data.onLeaveSince = onLeave ? new Date() : null
+        data.onLeaveReason = null
+      }
+    }
 
     const updated = await codenameTransaction(async (tx) => {
       const agent = await tx.agent.update({

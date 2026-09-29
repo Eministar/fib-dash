@@ -54,6 +54,8 @@ model LeadershipGroupEvent {
 enum AgentStatus {
   ACTIVE
   AWAY
+  /// Beurlaubt: gilt wie eine Abmeldung, bleibt aber bis zur Aufhebung bestehen.
+  ON_LEAVE
   INACTIVE
   TERMINATED
 }
@@ -686,6 +688,11 @@ model Agent {
   flag             AgentFlag?
   /// Uprank-Sperre: blockiert Beförderungen (Aufstieg). Degradierungen bleiben erlaubt.
   promotionBlocked Boolean                @default(false)
+  /// Beurlaubung: wirkt wie eine unbefristete Abmeldung (Status ON_LEAVE),
+  /// setzt den [X]-Marker und vergibt die Beurlaubungs-Rolle.
+  onLeave          Boolean                @default(false)
+  onLeaveSince     DateTime?
+  onLeaveReason    String?                @db.Text
   notes            String?
   hireDate         DateTime               @default(now())
   lastOnline       DateTime?

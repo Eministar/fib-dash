@@ -41,6 +41,7 @@ export function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     ACTIVE: 'Aktiv',
     AWAY: 'Abgemeldet',
+    ON_LEAVE: 'Beurlaubt',
     INACTIVE: 'Inaktiv',
     TERMINATED: 'Gekündigt',
   }
@@ -51,6 +52,7 @@ export function getStatusDot(status: string): string {
   const colors: Record<string, string> = {
     ACTIVE: 'bg-[#34d399]',
     AWAY: 'bg-[#38bdf8]',
+    ON_LEAVE: 'bg-[#a78bfa]',
     INACTIVE: 'bg-[#aaa]',
     TERMINATED: 'bg-[#f87171]',
   }
@@ -61,6 +63,7 @@ export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     ACTIVE: 'text-[#111] dark:text-[#eee]',
     AWAY: 'text-[#888]',
+    ON_LEAVE: 'text-[#888]',
     INACTIVE: 'text-[#aaa]',
     TERMINATED: 'text-[#aaa]',
   }

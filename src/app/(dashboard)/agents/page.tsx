@@ -94,6 +94,7 @@ interface Agent {
   unit: string | null
   units: string[] | null
   flag: string | null
+  onLeave?: boolean
   notes: string | null
   hireDate: string
   lastOnline: string | null
@@ -316,8 +317,9 @@ function DraggableAgentRow({
             href={`/agents/${agent.id}`}
             onClick={(e) => e.stopPropagation()}
             className="block truncate text-[13px] font-medium text-[#eee] transition-colors hover:text-[#d4d4d4]"
-            title={`${agent.firstName} ${agent.lastName}`}
+            title={`${agent.onLeave ? '[X] Beurlaubt · ' : ''}${agent.firstName} ${agent.lastName}`}
           >
+            {agent.onLeave && <span className="mr-1 font-semibold text-[#a78bfa]">[X]</span>}
             {agent.firstName} {agent.lastName}
           </Link>
         </div>
@@ -417,6 +419,7 @@ function MobileAgentCard({
               href={`/agents/${agent.id}`}
               className="block truncate text-[14px] font-semibold text-[#eee] transition-colors hover:text-[#d4d4d4]"
             >
+              {agent.onLeave && <span className="mr-1 text-[#a78bfa]">[X]</span>}
               {agent.firstName} {agent.lastName}
             </Link>
           </div>
@@ -739,7 +742,7 @@ export default function AgentsPage() {
   const filterClass =
     'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-[#343434]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
   const totalActive = agents?.filter((o) => o.status === 'ACTIVE').length || 0
-  const totalAway = agents?.filter((o) => o.status === 'AWAY').length || 0
+  const totalAway = agents?.filter((o) => o.status === 'AWAY' || o.status === 'ON_LEAVE').length || 0
   const totalFlagged = agents?.filter((o) => o.flag).length || 0
 
   return (
@@ -785,6 +788,7 @@ export default function AgentsPage() {
               { value: '', label: 'Alle Status' },
               { value: 'ACTIVE', label: 'Aktiv' },
               { value: 'AWAY', label: 'Abgemeldet' },
+              { value: 'ON_LEAVE', label: 'Beurlaubt' },
               { value: 'INACTIVE', label: 'Inaktiv' },
             ]}
           />

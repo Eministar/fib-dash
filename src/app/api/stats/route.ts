@@ -11,6 +11,7 @@ const RECENT_WINDOW_DAYS = 30
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Aktiv',
   AWAY: 'Abgemeldet',
+  ON_LEAVE: 'Beurlaubt',
   INACTIVE: 'Inaktiv',
   TERMINATED: 'Gekündigt',
 }
@@ -149,7 +150,8 @@ export async function GET() {
 
   const totalAgents = agents.length
   const activeAgents = agents.filter((agent) => agent.status === 'ACTIVE').length
-  const awayAgents = agents.filter((agent) => agent.status === 'AWAY').length
+  // Beurlaubte zählen wie Abgemeldete.
+  const awayAgents = agents.filter((agent) => agent.status === 'AWAY' || agent.status === 'ON_LEAVE').length
   const inactiveAgents = agents.filter((agent) => agent.status === 'INACTIVE').length
   const terminatedAgents = agents.filter((agent) => agent.status === 'TERMINATED').length
   const currentAgents = totalAgents - terminatedAgents

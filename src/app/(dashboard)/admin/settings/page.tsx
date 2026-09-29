@@ -65,6 +65,7 @@ interface DiscordConfigResponse {
     bodycamViewerRoleId: string
     hirePingChannelId: string
     promotionBlockRoleId: string
+    leaveRoleId: string
     employeeRoleIds: string[]
     commandRoleIds: string[]
     authLoginRoleIds: string[]
@@ -153,6 +154,7 @@ export default function SettingsPage() {
     bodycamViewerRoleId: '',
     hirePingChannelId: '',
     promotionBlockRoleId: '',
+    leaveRoleId: '',
     employeeRoleIds: [],
     commandRoleIds: [],
     authLoginRoleIds: [],
@@ -835,6 +837,17 @@ export default function SettingsPage() {
                 />
                 <p className="text-[11px] text-[#6f6f6f] mt-1.5">
                   Agent mit aktiver Uprank-Sperre erhalten diese Rolle automatisch (und verlieren sie beim Aufheben).
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Beurlaubungs-Rolle"
+                    value={discordForm.leaveRoleId}
+                    onValueChange={(leaveRoleId) => setDiscordForm({ ...discordForm, leaveRoleId })}
+                    options={roleOptions}
+                />
+                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                  Beurlaubte Agents erhalten diese Rolle automatisch (und verlieren sie beim Aufheben der Beurlaubung).
                 </p>
               </div>
             </div>

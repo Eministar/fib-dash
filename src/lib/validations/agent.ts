@@ -28,7 +28,7 @@ export const createAgentSchema = z.object({
   discordId: discordIdSchema,
   notes: z.string().optional().nullable(),
   hireDate: z.string().optional(),
-  status: z.enum(['ACTIVE', 'AWAY', 'INACTIVE', 'TERMINATED']).optional(),
+  status: z.enum(['ACTIVE', 'AWAY', 'ON_LEAVE', 'INACTIVE', 'TERMINATED']).optional(),
   unit: z.string().trim().min(1).nullable().optional(),
   units: z.array(z.string().trim().min(1)).nullable().optional(),
   flag: z.enum(AGENT_FLAG_VALUES).nullable().optional(),

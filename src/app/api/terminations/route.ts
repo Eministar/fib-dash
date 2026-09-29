@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (agent.status === 'TERMINATED') return error('Agent ist bereits gekündigt')
 
     const termination = await codenameTransaction(async (tx) => {
-      await tx.agent.update({ where: { id: agentId }, data: { status: 'TERMINATED' } })
+      await tx.agent.update({ where: { id: agentId }, data: { status: 'TERMINATED', onLeave: false, onLeaveSince: null, onLeaveReason: null } })
       const record = await tx.termination.create({
         data: {
           agentId,

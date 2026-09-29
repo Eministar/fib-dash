@@ -706,7 +706,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
               {stats.statusDistribution.map((status) => {
                 const percentage = stats.totalAgents > 0 ? Math.round((status.count / stats.totalAgents) * 100) : 0
-                const color = status.status === 'ACTIVE' ? '#34d399' : status.status === 'AWAY' ? '#38bdf8' : status.status === 'INACTIVE' ? '#fbbf24' : '#f87171'
+                const color = status.status === 'ACTIVE' ? '#34d399' : status.status === 'AWAY' ? '#38bdf8' : status.status === 'ON_LEAVE' ? '#a78bfa' : status.status === 'INACTIVE' ? '#fbbf24' : '#f87171'
                 return (
                     <ProgressRow
                         key={status.status}

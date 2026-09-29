@@ -680,7 +680,7 @@ async function performTermination(options: DiscordOption[] | undefined, actor: R
         previousLastName: agent.lastName,
       },
     })
-    await tx.agent.update({ where: { id: agent.id }, data: { status: 'TERMINATED' } })
+    await tx.agent.update({ where: { id: agent.id }, data: { status: 'TERMINATED', onLeave: false, onLeaveSince: null, onLeaveReason: null } })
     await releaseTerminatedBadgeNumber(agent, tx)
     await detachTerminatedAgent(tx, agent.id)
   })

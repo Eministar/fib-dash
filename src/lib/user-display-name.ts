@@ -9,7 +9,7 @@ type UserDisplaySource = {
 
 const DEFAULT_DISPLAY_BADGE_PREFIX = 'FIB-'
 
-/** Marker, der bei aktiver Uprank-Sperre vor den Namen gesetzt wird. */
+/** Marker, der bei aktiver Uprank-Sperre oder Beurlaubung vor den Namen gesetzt wird. */
 export const PROMOTION_BLOCK_MARKER = '[X]'
 
 export type LinkedAgentDisplaySource = {
@@ -19,6 +19,7 @@ export type LinkedAgentDisplaySource = {
   discordId?: string | null
   status?: string | null
   promotionBlocked?: boolean | null
+  onLeave?: boolean | null
 }
 
 function bracketedBadgeNumber(badgeNumber: string, prefix: string) {
@@ -36,7 +37,7 @@ function bracketedBadgeNumber(badgeNumber: string, prefix: string) {
 
 export function formatLinkedAgentDisplayName(agent: LinkedAgentDisplaySource, prefix: string) {
   const name = `${agent.firstName} ${agent.lastName}`.replace(/\s+/g, ' ').trim()
-  const marker = agent.promotionBlocked ? PROMOTION_BLOCK_MARKER : ''
+  const marker = agent.promotionBlocked || agent.onLeave ? PROMOTION_BLOCK_MARKER : ''
   return [marker, bracketedBadgeNumber(agent.badgeNumber, prefix), name].filter(Boolean).join(' ')
 }
 
@@ -54,6 +55,7 @@ export async function resolveLinkedAgentDisplayName(discordId: string | null | u
       firstName: true,
       lastName: true,
       promotionBlocked: true,
+      onLeave: true,
     },
   })
   if (!agent) return null

@@ -90,6 +90,7 @@ export type DiscordConfig = {
   absenceStatusMessageId: string
   humanResourcesRoleId: string
   promotionBlockRoleId: string
+  leaveRoleId: string
   employeeRoleIds: string[]
   commandRoleIds: string[]
   authLoginRoleIds: string[]
@@ -133,6 +134,7 @@ type AgentForDiscord = {
   badgeNumber: string
   status: string
   promotionBlocked?: boolean | null
+  onLeave?: boolean | null
   units?: unknown
   unit?: string | null
   rankId: string
@@ -217,6 +219,7 @@ export const DISCORD_SETTING_KEYS = {
   absenceStatusMessageId: 'discord.absenceStatusMessageId',
   humanResourcesRoleId: 'discord.humanResourcesRoleId',
   promotionBlockRoleId: 'discord.promotionBlockRoleId',
+  leaveRoleId: 'discord.leaveRoleId',
   employeeRoleIds: 'discord.employeeRoleIds',
   commandRoleIds: 'discord.commandRoleIds',
   authLoginRoleIds: 'discord.authLoginRoleIds',
@@ -499,6 +502,14 @@ function envPromotionBlockRoleId() {
   return (
     process.env.DISCORD_PROMOTION_BLOCK_ROLE_ID?.trim() ||
     process.env.FIB_DISCORD_PROMOTION_BLOCK_ROLE_ID?.trim() ||
+    ''
+  )
+}
+
+function envLeaveRoleId() {
+  return (
+    process.env.DISCORD_LEAVE_ROLE_ID?.trim() ||
+    process.env.FIB_DISCORD_LEAVE_ROLE_ID?.trim() ||
     ''
   )
 }
@@ -868,6 +879,7 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
     absenceStatusMessageId: map[DISCORD_SETTING_KEYS.absenceStatusMessageId] || '',
     humanResourcesRoleId: envFirst(envHumanResourcesRoleId(), map[DISCORD_SETTING_KEYS.humanResourcesRoleId]),
     promotionBlockRoleId: envFirst(envPromotionBlockRoleId(), map[DISCORD_SETTING_KEYS.promotionBlockRoleId]),
+    leaveRoleId: envFirst(envLeaveRoleId(), map[DISCORD_SETTING_KEYS.leaveRoleId]),
     employeeRoleIds: cleanRoleIds(parseJson(map[DISCORD_SETTING_KEYS.employeeRoleIds], [])),
     commandRoleIds: cleanRoleIds(parseJson(map[DISCORD_SETTING_KEYS.commandRoleIds], [])),
     authLoginRoleIds: Array.from(new Set([...envLoginRoles, ...dbLoginRoles])),
@@ -909,6 +921,7 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.absenceStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusMessageId] = input.absenceStatusMessageId.trim()
   if (input.humanResourcesRoleId !== undefined) data[DISCORD_SETTING_KEYS.humanResourcesRoleId] = input.humanResourcesRoleId.trim()
   if (input.promotionBlockRoleId !== undefined) data[DISCORD_SETTING_KEYS.promotionBlockRoleId] = input.promotionBlockRoleId.trim()
+  if (input.leaveRoleId !== undefined) data[DISCORD_SETTING_KEYS.leaveRoleId] = input.leaveRoleId.trim()
   if (input.employeeRoleIds !== undefined) data[DISCORD_SETTING_KEYS.employeeRoleIds] = JSON.stringify(cleanRoleIds(input.employeeRoleIds))
   if (input.commandRoleIds !== undefined) data[DISCORD_SETTING_KEYS.commandRoleIds] = JSON.stringify(cleanRoleIds(input.commandRoleIds))
   if (input.authLoginRoleIds !== undefined) data[DISCORD_SETTING_KEYS.authLoginRoleIds] = JSON.stringify(cleanRoleIds(input.authLoginRoleIds))
@@ -1083,6 +1096,7 @@ export function managedDiscordRoleIds(config: DiscordConfig, extraManagedRoleIds
     ...config.unitGroups.flatMap((group) => [group.memberDiscordRoleId, group.leadershipDiscordRoleId]),
     ...config.tiers.map((tier) => tier.discordRoleId),
     config.promotionBlockRoleId,
+    config.leaveRoleId,
     ...extraManagedRoleIds,
   ].filter(Boolean)))
 }
@@ -1124,6 +1138,7 @@ function desiredRoleIds(agent: AgentForDiscord, config: DiscordConfig) {
       .filter((tier) => tier.rankIds.includes(agent.rankId))
       .map((tier) => tier.discordRoleId),
     ...(agent.promotionBlocked ? [config.promotionBlockRoleId] : []),
+    ...(agent.onLeave ? [config.leaveRoleId] : []),
   ].filter((roleId): roleId is string => !!roleId)))
 }
 
@@ -2116,8 +2131,13 @@ const ABSENCE_LIST_LIMIT = 25
 
 async function absenceStatusPayload() {
   await runAgentStatusAutomation({ force: true })
-  const [absences, prefix] = await Promise.all([
+  const [absences, onLeaveAgents, prefix] = await Promise.all([
     getActiveAbsenceNotices(),
+    prisma.agent.findMany({
+      where: { onLeave: true, status: { not: 'TERMINATED' } },
+      select: { firstName: true, lastName: true, badgeNumber: true, discordId: true, onLeaveSince: true, onLeaveReason: true },
+      orderBy: { onLeaveSince: 'asc' },
+    }),
     getBadgePrefix(),
   ])
   const visible = absences.slice(0, ABSENCE_LIST_LIMIT)
@@ -2142,10 +2162,29 @@ async function absenceStatusPayload() {
     if (overflow > 0) listParts.push(`-# … und ${overflow} weitere`)
   }
 
+  // Beurlaubungen gelten wie Abmeldungen, haben aber kein Rückkehrdatum.
+  const leaveParts: string[] = []
+  if (onLeaveAgents.length > 0) {
+    const visibleLeave = onLeaveAgents.slice(0, ABSENCE_LIST_LIMIT)
+    const leaveLines = visibleLeave.map((agent) => {
+      const dn = bracketedServiceNumber(agentBadge(agent), prefix)
+      const since = agent.onLeaveSince ? ` · seit ${discordTimestamp(agent.onLeaveSince, 'D')}` : ''
+      return [
+        `**${agentName(agent)}** · \`${dn}\``,
+        `${mention(agent.discordId)}${since} · bis auf Weiteres`,
+        agent.onLeaveReason ? `Grund: ${truncate(agent.onLeaveReason.replace(/\s+/g, ' '), 180)}` : null,
+      ].filter(Boolean).join('\n')
+    })
+    leaveParts.push(`### Beurlaubt\n${onLeaveAgents.length} aktuell beurlaubt`, ...chunkLines(leaveLines, 3000))
+    const leaveOverflow = onLeaveAgents.length - visibleLeave.length
+    if (leaveOverflow > 0) leaveParts.push(`-# … und ${leaveOverflow} weitere`)
+  }
+
   return componentMessage([
     ...markdownTextDisplays([
       `## Abmeldungen\n${absences.length} aktuell abgemeldet`,
       ...listParts,
+      ...leaveParts,
       markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
     ]),
     actionRow([

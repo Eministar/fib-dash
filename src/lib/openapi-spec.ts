@@ -58,7 +58,7 @@ export const ENDPOINTS: EndpointSpec[] = [
     scope: 'agents:view',
     params: [
       { name: 'search', in: 'query', description: 'Volltextsuche (Vor-/Nachname, Dienstnummer, Discord-ID).', schema: { type: 'string' } },
-      { name: 'status', in: 'query', description: 'Status-Filter (ACTIVE, AWAY, INACTIVE, TERMINATED).', schema: { type: 'string', enum: ['ACTIVE', 'AWAY', 'INACTIVE', 'TERMINATED'] } },
+      { name: 'status', in: 'query', description: 'Status-Filter (ACTIVE, AWAY, ON_LEAVE, INACTIVE, TERMINATED).', schema: { type: 'string', enum: ['ACTIVE', 'AWAY', 'ON_LEAVE', 'INACTIVE', 'TERMINATED'] } },
       { name: 'rankId', in: 'query', description: 'Filter auf Rang-ID.', schema: { type: 'string' } },
     ],
     responseFields: [
@@ -1184,7 +1184,7 @@ function buildComponentSchemas() {
         firstName: { type: 'string' },
         lastName: { type: 'string' },
         rank: { $ref: '#/components/schemas/Rank' },
-        status: { type: 'string', enum: ['ACTIVE', 'AWAY', 'INACTIVE', 'TERMINATED'] },
+        status: { type: 'string', enum: ['ACTIVE', 'AWAY', 'ON_LEAVE', 'INACTIVE', 'TERMINATED'] },
         discordId: { type: ['string', 'null'] },
         unit: { type: ['string', 'null'] },
         flag: { type: ['string', 'null'], enum: ['RED', 'ORANGE', 'YELLOW', 'BLUE', null] },
