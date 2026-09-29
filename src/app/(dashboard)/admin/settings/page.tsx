@@ -200,7 +200,7 @@ export default function SettingsPage() {
     setDutyModeSaving(true)
     try {
       await execute('/api/duty-times/mode', { method: 'PUT', body: JSON.stringify({ mode }) })
-      addToast({ type: 'success', title: mode === 'manual' ? 'Manuelles Einstempeln aktiv' : 'Automatische Erfassung aktiv', message: 'Mitarbeiter wurden im Dienstzeiten-Channel informiert.' })
+      addToast({ type: 'success', title: mode === 'manual' ? 'Manuelles Einstempeln aktiv' : 'Automatische Erfassung aktiv', message: 'Ankündigung im Dienstzeiten-Channel gesendet.' })
       await refetchDutyMode()
     } catch (err) {
       addToast({ type: 'error', title: 'Umstellen fehlgeschlagen', message: err instanceof Error ? err.message : '' })
@@ -580,7 +580,7 @@ export default function SettingsPage() {
               <Clock size={15} className="text-[#d4d4d4]" /> Dienstzeit-Erfassung
             </h3>
             <p className="text-[11.5px] text-[#909090] mb-4">
-              Falls die Dienstzeiten-API ausfällt, auf manuelles Einstempeln umschalten. Beim Umschalten werden offene Sitzungen beendet, das Panel im Dienstzeiten-Channel neu gesetzt und die Mitarbeiter einmal gepingt.
+              Falls die Dienstzeiten-API ausfällt, auf manuelles Einstempeln umschalten. Beim Umschalten werden offene Sitzungen beendet, eine Ankündigung ohne Ping in den Dienstzeiten-Channel gestellt und das Panel neu gesetzt.
             </p>
             <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Dienstzeit-Erfassung">
               {([

@@ -2000,8 +2000,8 @@ function dutyChannelId(config: DiscordConfig) {
 }
 
 /**
- * Kündigt den Wechsel der Dienstzeit-Erfassung im Dienstzeiten-Channel an,
- * pingt einmal die Mitarbeiter-Rollen und setzt das Panel (mit bzw. ohne
+ * Kündigt den Wechsel der Dienstzeit-Erfassung im Dienstzeiten-Channel an
+ * (ohne Ping) und setzt das Panel (mit bzw. ohne
  * Stempel-Buttons) direkt darunter neu.
  */
 export async function announceDutyModeChange(mode: DutyMode, actorName: string) {
@@ -2009,24 +2009,20 @@ export async function announceDutyModeChange(mode: DutyMode, actorName: string) 
   const channelId = dutyChannelId(config)
   if (!channelId || !botToken()) return
 
-  const roleIds = config.employeeRoleIds
-  const ping = roleIds.length > 0 ? roleIds.map((id) => `<@&${id}>`).join(' ') : '@here'
   const body = mode === 'manual'
     ? [
-        `${ping}`,
         '## ⏱️ Ab sofort manuell einstempeln',
         'Die automatische Erfassung über die Dienstzeiten-API ist pausiert.',
         '- Zu Dienstbeginn **Einstempeln** klicken, zum Dienstende **Ausstempeln** – hier im Channel oder im Dashboard unter „Dienstzeiten“.',
         '- Nach längerer Dienstzeit fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
       ]
     : [
-        `${ping}`,
         '## ✅ Dienstzeiten wieder automatisch',
         'Die Dienstzeit wird wieder automatisch über die Player-Online-API erfasst. Manuelles Ein- und Ausstempeln ist nicht mehr nötig; offene Stempelungen wurden beendet.',
       ]
   await postChannelMessage(channelId, {
     content: [...body, `-# Umgestellt von ${actorName}`].join('\n'),
-    allowed_mentions: roleIds.length > 0 ? { parse: [], roles: roleIds, users: [] } : { parse: ['everyone'] },
+    allowed_mentions: { parse: [] },
   })
 
   if (config.dutyStatusMessageId) {
