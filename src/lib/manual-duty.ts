@@ -23,6 +23,9 @@ export class DutyClockError extends Error {
 }
 
 const TICK_MS = 15_000
+/** Das Discord-Panel zeigt laufende Dienstzeiten – ohne Ereignis trotzdem regelmäßig auffrischen. */
+const PANEL_REFRESH_MS = 60_000
+let lastPanelRefresh = 0
 let workerStarted = false
 let tickRunning = false
 
@@ -209,7 +212,10 @@ export async function runManualDutyTick(now = new Date()) {
     const terminated = await closeTerminatedSessions(now)
     await sendDueActivityChecks(now)
     const autoClosed = await clockOutUnanswered(now)
-    if (terminated || autoClosed) queueDiscordDutyStatusUpdate()
+    if (terminated || autoClosed || now.getTime() - lastPanelRefresh >= PANEL_REFRESH_MS) {
+      lastPanelRefresh = now.getTime()
+      queueDiscordDutyStatusUpdate()
+    }
   } finally {
     tickRunning = false
   }
