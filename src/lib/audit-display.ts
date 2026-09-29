@@ -45,6 +45,9 @@ export const auditActionLabels: Record<string, string> = {
   LEGAL_CASE_UPDATED: 'Klage bearbeitet',
   LEGAL_CASE_DELETED: 'Klage gelöscht',
   LEGAL_CASE_BATCH_CREATED: 'Sammelklage erstellt',
+  PUBLICATION_CREATED: 'Aushang angelegt',
+  PUBLICATION_UPDATED: 'Aushang bearbeitet',
+  PUBLICATION_DELETED: 'Aushang gelöscht',
   CHANGE_UNDONE: 'Änderung rückgängig',
   CHANGE_REDONE: 'Änderung wiederholt',
 }

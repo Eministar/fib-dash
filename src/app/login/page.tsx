@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { MessageCircle, ShieldCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/context/auth-context'
 
 const REMEMBER_KEY = 'fib-discord-remember-login'
 
@@ -22,6 +24,13 @@ export default function LoginPage() {
   // Wer über einen geteilten Link (z. B. einen Testlink) hier landet, soll nach
   // dem Login wieder dort ankommen und nicht auf dem Dashboard-Start.
   const [redirect, setRedirect] = useState('')
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  // Schon angemeldet: nicht erneut nach Discord schicken, sondern direkt weiter.
+  useEffect(() => {
+    if (!loading && user) router.replace(redirect || '/dashboard')
+  }, [loading, user, redirect, router])
 
   useEffect(() => {
     const saved = window.localStorage.getItem(REMEMBER_KEY)
@@ -62,7 +71,7 @@ export default function LoginPage() {
             <Image src="/shield.webp" alt="FIB" width={72} height={72} className="rounded-full" priority />
           </motion.div>
           <h1 className="text-[18px] font-semibold text-white tracking-[-0.01em]">FIB</h1>
-          <p className="text-[12px] font-medium text-[#d4d4d4]/80 mt-1 tracking-[0.04em]">Discord Authentifizierung</p>
+          <p className="text-[12px] font-medium text-[#d4d4d4]/80 mt-1 tracking-[0.04em]">Mitarbeiter-Anmeldung</p>
         </div>
 
         <div className="glass-panel-elevated rounded-[16px] p-6">
@@ -73,14 +82,14 @@ export default function LoginPage() {
             <div>
               <h2 className="text-[14px] font-semibold text-white">Mit Discord anmelden</h2>
               <p className="text-[12px] leading-5 text-[#a6a6a6] mt-1">
-                Zugriff wird über deine Discord-Rollen und die zugeordneten Dashboard-Gruppen vergeben.
+                {redirect ? 'Melde dich an – danach geht es direkt zur angeforderten Seite weiter.' : 'Deine Rechte kommen automatisch aus deinen Discord-Rollen.'}
               </p>
             </div>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-[10px] border border-[#3b1616] bg-[#1c1111] px-3 py-2 text-[12px] text-[#fca5a5]">
-              {error}
+            <div role="alert" className="mb-4 rounded-[10px] border border-[#3b1616] bg-[#1c1111] px-3 py-2 text-[12px] text-[#fca5a5]">
+              {error} Bitte versuche es erneut.
             </div>
           )}
 
@@ -96,7 +105,7 @@ export default function LoginPage() {
 
           <Button type="button" className="w-full h-[42px] text-[13.5px]" onClick={startDiscordLogin}>
             <ShieldCheck size={15} strokeWidth={2} />
-            Discord Login
+            Mit Discord anmelden
           </Button>
 
           <Link

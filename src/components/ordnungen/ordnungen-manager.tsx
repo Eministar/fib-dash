@@ -168,7 +168,7 @@ export const OrdnungenManager = forwardRef<OrdnungenManagerHandle, Props>(functi
   const categoryOptions = payload.categories.map((c) => ({ value: c.id, label: c.label }))
 
   return (
-    <div className="mb-6 flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2">
       <button
         onClick={openNewOrdnung}
         className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-[#333333] px-3 text-[12.5px] font-medium text-[#f4f4f4] hover:bg-[#414141] transition-colors"

@@ -136,6 +136,54 @@ function parseHeadingText(value: string) {
   }
 }
 
+export type MarkdownHeading = {
+  level: number
+  id: string
+  text: string
+  /** Steht vor jedem anderen Inhalt – meist Titelzeilen des Dokuments. */
+  leading: boolean
+}
+
+export type OutlineEntry = { id: string; text: string; depth: 0 | 1 }
+
+/** Überschriften-Text ohne Markdown-Auszeichnung, für Inhaltsverzeichnisse. */
+function plainHeadingText(value: string) {
+  return value
+    .replace(/!?\[([^\]]*)]\([^)]*\)/g, '$1')
+    .replace(/[*_`~]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** Überschrift, die nur aus einer Nummer besteht, z. B. „§ 01“ oder „Artikel 3“. */
+const NUMBER_ONLY_HEADING = /^(§+\s*\d+[a-z]?|art(ikel|\.)?\s*\d+[a-z]?|abschnitt\s+\d+|[ivxlc]+\.?|\d+(\.\d+)*\.?)$/i
+const SECTION_HEADING = /^(§|art(ikel|\.)?\s*\d|abschnitt\s+\d)/i
+
+/**
+ * Erkennt die Abschnitte eines Dokuments für die Seitenleiste:
+ * Titelzeilen am Anfang entfallen, „§ 01“ + folgende Überschrift werden
+ * zusammengefasst, und es werden höchstens zwei Ebenen gezeigt.
+ */
+export function buildSectionOutline(headings: MarkdownHeading[]): OutlineEntry[] {
+  const merged: MarkdownHeading[] = []
+  for (let index = 0; index < headings.length; index++) {
+    const heading = headings[index]
+    if (heading.leading && !SECTION_HEADING.test(heading.text)) continue
+    const next = headings[index + 1]
+    if (NUMBER_ONLY_HEADING.test(heading.text) && next && next.level >= heading.level) {
+      merged.push({ ...heading, text: `${heading.text} · ${next.text}` })
+      index++
+      continue
+    }
+    merged.push(heading)
+  }
+  const levels = [...new Set(merged.map((heading) => heading.level))].sort((a, b) => a - b)
+  const [top, second] = levels
+  return merged
+    .filter((heading) => heading.level === top || heading.level === second)
+    .map((heading) => ({ id: heading.id, text: heading.text, depth: heading.level === top ? 0 : 1 }))
+}
+
 function renderFootnotes(footnotes: Map<string, string>, references: Map<string, LinkReference>) {
   if (footnotes.size === 0) return ''
 
@@ -145,11 +193,28 @@ function renderFootnotes(footnotes: Map<string, string>, references: Map<string,
 }
 
 export function renderMarkdown(markdown: string) {
+  return renderMarkdownDocument(markdown).html
+}
+
+export function renderMarkdownDocument(markdown: string): { html: string; headings: MarkdownHeading[] } {
   const lines = markdown.replace(/\r\n/g, '\n').split('\n')
   const html: string[] = []
   const footnotes = new Map<string, string>()
   const references = new Map<string, LinkReference>()
+  const headings: MarkdownHeading[] = []
+  const usedIds = new Map<string, number>()
   let index = 0
+
+  // Gleiche Überschriften (z. B. mehrfach „Allgemeines“) brauchen eindeutige Sprungziele.
+  const pushHeading = (level: number, raw: string) => {
+    const parsed = parseHeadingText(raw)
+    const base = parsed.id || 'abschnitt'
+    const seen = usedIds.get(base) ?? 0
+    usedIds.set(base, seen + 1)
+    const id = seen === 0 ? base : `${base}-${seen + 1}`
+    headings.push({ level, id, text: plainHeadingText(parsed.text), leading: html.length === headings.length })
+    html.push(`<h${level} id="${id}">${renderInline(parsed.text, references)}</h${level}>`)
+  }
 
   for (const currentLine of lines) {
     const reference = parseReferenceDefinition(currentLine)
@@ -215,24 +280,20 @@ export function renderMarkdown(markdown: string) {
     }
 
     if (index + 1 < lines.length && /^={3,}$/.test(lines[index + 1].trim())) {
-      const heading = parseHeadingText(trimmed)
-      html.push(`<h1 id="${heading.id}">${renderInline(heading.text, references)}</h1>`)
+      pushHeading(1, trimmed)
       index += 2
       continue
     }
 
     if (index + 1 < lines.length && /^-{3,}$/.test(lines[index + 1].trim())) {
-      const heading = parseHeadingText(trimmed)
-      html.push(`<h2 id="${heading.id}">${renderInline(heading.text, references)}</h2>`)
+      pushHeading(2, trimmed)
       index += 2
       continue
     }
 
     const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed)
     if (heading) {
-      const level = heading[1].length
-      const parsedHeading = parseHeadingText(heading[2])
-      html.push(`<h${level} id="${parsedHeading.id}">${renderInline(parsedHeading.text, references)}</h${level}>`)
+      pushHeading(heading[1].length, heading[2])
       index += 1
       continue
     }
@@ -361,5 +422,8 @@ export function renderMarkdown(markdown: string) {
     footnotes.has(id) ? `<sup id="fnref-${id}"><a href="#fn-${id}">${id}</a></sup>` : `[^${id}]`
   ))
 
-  return [withFootnoteReferences, renderFootnotes(footnotes, references)].filter(Boolean).join('\n')
+  return {
+    html: [withFootnoteReferences, renderFootnotes(footnotes, references)].filter(Boolean).join('\n'),
+    headings,
+  }
 }

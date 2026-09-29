@@ -11,7 +11,6 @@ import { PageLoader } from '@/components/ui/loading'
 import { SessionRecoveryScreen } from '@/components/auth/session-recovery-screen'
 import { Button } from '@/components/ui/button'
 import { useFetch } from '@/hooks/use-fetch'
-import { ChangeHistoryControls } from '@/components/layout/change-history-controls'
 import { visitorRedirectTarget, type BodycamAnswer } from '@/lib/visitor-routing'
 import { GlobalSearch } from '@/components/layout/global-search'
 
@@ -79,7 +78,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     visitorOnly,
   ])
 
-  if (loading) return <PageLoader />
+  // Abgemeldet ist kein Fehler: direkt zur Anmeldung, danach zurück auf diese Seite.
+  const signedOut = !loading && !user && !authError && !isSharedFormTestLink
+  useEffect(() => {
+    if (signedOut) router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
+  }, [signedOut, pathname, router])
+
+  if (loading || signedOut) return <PageLoader />
   if (!user) {
     // Wer einen geteilten Testlink öffnet, ohne eingeloggt zu sein, hat keine
     // „kaputte Sitzung“ — er war nie angemeldet. Statt des Recovery-Screens
@@ -156,7 +161,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[#080808]">
       <Sidebar />
-      <ChangeHistoryControls />
       <main className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Rechtsbündig über dem Inhalt: erreichbar von jeder Seite, ohne
             das Layout der einzelnen Ansichten anzufassen. */}

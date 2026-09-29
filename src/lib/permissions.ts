@@ -69,6 +69,7 @@ export const PERMISSIONS = [
   'groups:manage',
   'settings:manage',
   'ordnungen:manage',
+  'publications:manage',
   'password:change',
   //'rank-change-lists:execute', (removed duplicate)
 ] as const
@@ -146,6 +147,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'groups:manage': 'Benutzergruppen verwalten',
   'settings:manage': 'Einstellungen verwalten',
   'ordnungen:manage': 'Ordnungen verwalten',
+  'publications:manage': 'Aushänge & öffentliche Tabellen verwalten',
   'password:change': 'Eigenes Passwort ändern',
 }
 

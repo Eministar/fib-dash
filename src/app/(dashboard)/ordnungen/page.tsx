@@ -1,26 +1,27 @@
 'use client'
 
-import { useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ArrowRight, Library, Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
+import { SearchInput } from '@/components/ui/filter-bar'
 import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
 import { ordnungIcon } from '@/lib/ordnungen-icons'
 import type { OrdnungenPayload } from '@/lib/ordnungen'
 import { OrdnungenManager, type OrdnungenManagerHandle } from '@/components/ordnungen/ordnungen-manager'
 
-function OrdnungCardSkeleton() {
+function IconButton({ label, danger, onClick, children }: { label: string; danger?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-4 p-5 glass-panel-elevated rounded-[14px] border border-[#373737]/40">
-      <div className="w-12 h-12 rounded-[10px] bg-[#212121] animate-pulse shrink-0" />
-      <div className="flex-1 space-y-2 pt-1">
-        <div className="h-3.5 w-2/5 rounded bg-[#212121] animate-pulse" />
-        <div className="h-2.5 w-4/5 rounded bg-[#212121]/70 animate-pulse" />
-        <div className="h-2.5 w-3/5 rounded bg-[#212121]/70 animate-pulse" />
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={(event) => { event.preventDefault(); onClick() }}
+      aria-label={label}
+      title={label}
+      className={`grid h-8 w-8 place-items-center rounded-[7px] text-[#919191] transition-colors hover:bg-[#262626] focus-visible:outline focus-visible:outline-2 ${danger ? 'hover:text-[#ff6b6b]' : 'hover:text-white'}`}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -29,171 +30,87 @@ export default function OrdnungenPage() {
   const { user } = useAuth()
   const canManage = !!user?.permissions.includes('ordnungen:manage')
   const managerRef = useRef<OrdnungenManagerHandle>(null)
+  const [search, setSearch] = useState('')
   const isLoading = data === undefined
-  const categories = data?.categories ?? []
-  const ordnungen = data?.ordnungen ?? []
-  const total = ordnungen.length
+
+  const sections = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return (data?.categories ?? []).map((category) => ({
+      category,
+      items: (data?.ordnungen ?? []).filter((ordnung) => ordnung.categoryId === category.id && (
+        !query || `${ordnung.title} ${ordnung.description} ${category.label}`.toLowerCase().includes(query)
+      )),
+    })).filter((section) => section.items.length > 0 || (canManage && !search.trim()))
+  }, [data, search, canManage])
+  const matches = sections.reduce((sum, section) => sum + section.items.length, 0)
 
   return (
-    <div className="max-w-6xl mx-auto pb-6">
+    <div className="mx-auto max-w-4xl pb-6">
       <PageHeader
         title="Ordnungen & Richtlinien"
-        description="Zentrale Sammlung aller relevanten Dienstordnungen und Richtlinien"
+        description={isLoading ? 'Lade Ordnungen …' : `${data?.ordnungen.length ?? 0} Dokumente in ${data?.categories.length ?? 0} Bereichen. Jede Ordnung hat ein Inhaltsverzeichnis mit allen Abschnitten.`}
       />
 
-      {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="relative overflow-hidden glass-panel-elevated rounded-[16px] border border-[#373737]/50 p-6 mb-8"
-      >
-        <div
-          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(74,143,216,0.18), transparent 70%)' }}
-        />
-        <div className="relative flex items-center gap-4">
-          <div className="flex items-center justify-center w-14 h-14 rounded-[14px] bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] border border-[#404040]/60 text-[#7fb2e8] shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.25)]">
-            <Library size={26} strokeWidth={1.75} />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-[17px] font-semibold text-[#f4f4f4]">Regelwerk-Bibliothek</h2>
-            <p className="text-[13px] text-[#a6a6a6] mt-0.5">
-              {isLoading ? 'Lade Ordnungen …' : `${total} Dokumente in ${categories.length} Bereichen`}
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <SearchInput value={search} onChange={setSearch} placeholder="Ordnung suchen, z. B. Sanktion oder Dienstordnung" className="flex-1" />
+        {data && canManage && <OrdnungenManager ref={managerRef} payload={data} canManage={canManage} onChanged={refetch} />}
+      </div>
 
-      {data && canManage && (
-        <OrdnungenManager ref={managerRef} payload={data} canManage={canManage} onChanged={refetch} />
+      {isLoading && <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-16 animate-pulse rounded-[12px] bg-[#1c1c1c]" />)}</div>}
+
+      {!isLoading && matches === 0 && search.trim() && (
+        <p className="rounded-[12px] border border-[#343434] px-4 py-8 text-center text-[13px] text-[#909090]">Keine Ordnung passt zu „{search.trim()}“.</p>
       )}
 
-      {categories.map((category, catIdx) => {
-        const categoryOrdnungen = ordnungen.filter((o) => o.categoryId === category.id)
-        if (!isLoading && categoryOrdnungen.length === 0) return null
-
-        const accent = category.color
-        const accentSoft = `${accent}24`
-        const ring = `${accent}59`
-        const CategoryIcon = ordnungIcon(category.icon)
-
-        return (
-          <div key={category.id} className="mb-9">
-            {/* Section header */}
-            <div className="flex items-center gap-2.5 mb-4">
-              <span
-                className="flex items-center justify-center w-7 h-7 rounded-[8px] shrink-0"
-                style={{ background: accentSoft, color: accent }}
-              >
-                <CategoryIcon size={15} strokeWidth={2} />
-              </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-[15px] font-semibold text-[#f4f4f4]">{category.label}</h2>
-                  {!isLoading && (
-                    <span
-                      className="text-[11px] font-medium px-1.5 py-0.5 rounded-full"
-                      style={{ background: accentSoft, color: accent }}
-                    >
-                      {categoryOrdnungen.length}
-                    </span>
-                  )}
-                </div>
-                {category.description && (
-                  <p className="text-[12.5px] text-[#909090] leading-tight">{category.description}</p>
+      <div className="space-y-8">
+        {sections.map(({ category, items }) => {
+          const CategoryIcon = ordnungIcon(category.icon)
+          return (
+            <section key={category.id} aria-labelledby={`kategorie-${category.id}`}>
+              <div className="mb-2 flex items-center gap-2.5 px-1">
+                <CategoryIcon size={15} strokeWidth={2} style={{ color: category.color }} aria-hidden />
+                <h2 id={`kategorie-${category.id}`} className="text-[13.5px] font-semibold text-[#f4f4f4]">{category.label}</h2>
+                <span className="text-[12px] text-[#808080]">{items.length}</span>
+                {canManage && (
+                  <div className="ml-auto flex">
+                    <IconButton label="Kategorie bearbeiten" onClick={() => managerRef.current?.openEditCategory(category)}><Pencil size={13} /></IconButton>
+                    <IconButton label="Kategorie löschen" danger onClick={() => managerRef.current?.deleteCategory(category.id, category.label)}><Trash2 size={13} /></IconButton>
+                  </div>
                 )}
               </div>
-              {canManage && (
-                <div className="flex gap-1 ml-auto">
-                  <button
-                    onClick={() => managerRef.current?.openEditCategory(category)}
-                    className="h-7 w-7 grid place-items-center rounded-[7px] bg-[#1a1a1a]/80 text-[#919191] hover:text-[#f4f4f4] transition-colors"
-                    title="Kategorie bearbeiten"
-                  >
-                    <Pencil size={13} strokeWidth={2} />
-                  </button>
-                  <button
-                    onClick={() => managerRef.current?.deleteCategory(category.id, category.label)}
-                    className="h-7 w-7 grid place-items-center rounded-[7px] bg-[#1a1a1a]/80 text-[#919191] hover:text-[#ff6b6b] transition-colors"
-                    title="Kategorie löschen"
-                  >
-                    <Trash2 size={13} strokeWidth={2} />
-                  </button>
-                </div>
-              )}
-            </div>
+              {category.description && <p className="mb-2 px-1 text-[12px] text-[#909090]">{category.description}</p>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {isLoading
-                ? Array.from({ length: 2 }).map((_, i) => <OrdnungCardSkeleton key={i} />)
-                : categoryOrdnungen.map((ordnung, idx) => {
-                    const Icon = ordnungIcon(ordnung.icon)
-                    return (
-                      <motion.div
-                        key={ordnung.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: catIdx * 0.06 + idx * 0.05 }}
-                      >
-                        <Link
-                          href={`/ordnungen/${ordnung.slug}`}
-                          className="group relative flex items-start gap-4 p-5 glass-panel-elevated rounded-[14px] border border-[#373737]/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--accent-ring)] hover:bg-[#212121]/40 hover:shadow-[0_8px_24px_rgba(0,0,0,0.28)]"
-                          style={{ '--accent-ring': ring, '--accent': accent } as React.CSSProperties}
-                        >
-                          {/* accent edge */}
-                          <span
-                            className="absolute left-0 top-5 bottom-5 w-[3px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ background: accent }}
-                          />
+              {items.length === 0
+                ? <p className="rounded-[12px] border border-dashed border-[#343434] px-4 py-4 text-[12.5px] text-[#808080]">Noch keine Ordnung in diesem Bereich.</p>
+                : (
+                  <ul className="divide-y divide-[#2c2c2c] overflow-hidden rounded-[12px] border border-[#343434] bg-[#161616]">
+                    {items.map((ordnung) => {
+                      const Icon = ordnungIcon(ordnung.icon)
+                      return (
+                        <li key={ordnung.id} className="group flex items-center gap-2 pr-2 hover:bg-[#1e1e1e]">
+                          <Link href={`/ordnungen/${ordnung.slug}`} className="flex min-w-0 flex-1 items-center gap-3.5 px-4 py-3.5 focus-visible:outline focus-visible:outline-2">
+                            <Icon size={18} strokeWidth={1.75} className="shrink-0" style={{ color: category.color }} aria-hidden />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[14px] font-medium text-[#f2f2f2]">{ordnung.title}</span>
+                              <span className="mt-0.5 block truncate text-[12.5px] text-[#909090]">{ordnung.description}</span>
+                            </span>
+                            <ChevronRight size={16} className="shrink-0 text-[#6f6f6f] group-hover:text-white" aria-hidden />
+                          </Link>
                           {canManage && (
-                            <div className="absolute right-2 top-2 flex gap-1">
-                              <button
-                                onClick={(e) => { e.preventDefault(); managerRef.current?.openEditOrdnung(ordnung.id) }}
-                                className="h-7 w-7 grid place-items-center rounded-[7px] bg-[#1a1a1a]/80 text-[#919191] hover:text-[#f4f4f4] transition-colors"
-                                title="Ordnung bearbeiten"
-                              >
-                                <Pencil size={13} strokeWidth={2} />
-                              </button>
-                              <button
-                                onClick={(e) => { e.preventDefault(); managerRef.current?.deleteOrdnung(ordnung.id, ordnung.title) }}
-                                className="h-7 w-7 grid place-items-center rounded-[7px] bg-[#1a1a1a]/80 text-[#919191] hover:text-[#ff6b6b] transition-colors"
-                                title="Ordnung löschen"
-                              >
-                                <Trash2 size={13} strokeWidth={2} />
-                              </button>
+                            <div className="flex shrink-0">
+                              <IconButton label={`${ordnung.title} bearbeiten`} onClick={() => managerRef.current?.openEditOrdnung(ordnung.id)}><Pencil size={13} /></IconButton>
+                              <IconButton label={`${ordnung.title} löschen`} danger onClick={() => managerRef.current?.deleteOrdnung(ordnung.id, ordnung.title)}><Trash2 size={13} /></IconButton>
                             </div>
                           )}
-                          <div
-                            className="flex items-center justify-center w-12 h-12 rounded-[10px] shrink-0 transition-transform duration-200 group-hover:scale-[1.05]"
-                            style={{ background: accentSoft, color: accent }}
-                          >
-                            <Icon size={20} strokeWidth={1.75} />
-                          </div>
-                          <div className="flex-1 min-w-0 pt-0.5">
-                            <h3 className="text-[14px] font-semibold text-[#f2f2f2] group-hover:text-[#fff] transition-colors">
-                              {ordnung.title}
-                            </h3>
-                            <p className="text-[12.5px] text-[#919191] mt-1 leading-relaxed line-clamp-2">
-                              {ordnung.description}
-                            </p>
-                            <span className="inline-flex items-center gap-1 mt-2.5 text-[12px] font-medium text-[#8a8a8a] group-hover:text-[var(--accent)] transition-colors">
-                              Öffnen
-                              <ArrowRight
-                                size={13}
-                                strokeWidth={2.25}
-                                className="transition-transform duration-200 group-hover:translate-x-0.5"
-                              />
-                            </span>
-                          </div>
-                        </Link>
-                      </motion.div>
-                    )
-                  })}
-            </div>
-          </div>
-        )
-      })}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+            </section>
+          )
+        })}
+      </div>
     </div>
   )
 }

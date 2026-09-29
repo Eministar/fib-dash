@@ -1,49 +1,45 @@
 import Link from 'next/link'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
-import { renderMarkdown } from '@/lib/markdown'
+import { OrdnungOutline } from '@/components/ordnungen/ordnung-outline'
+import { buildSectionOutline, renderMarkdownDocument } from '@/lib/markdown'
 import { prisma } from '@/lib/prisma'
+import { formatDate } from '@/lib/utils'
 
 async function loadOrdnung(slug: string) {
   try {
-    const ordnung = await prisma.ordnung.findUnique({ where: { slug } })
+    const ordnung = await prisma.ordnung.findUnique({ where: { slug }, include: { category: { select: { label: true } } } })
     if (!ordnung) {
-      return { config: null, html: null, error: 'Ordnung nicht gefunden' }
+      return { ordnung: null, document: null, error: 'Ordnung nicht gefunden' }
     }
-    return {
-      config: { title: ordnung.title, description: ordnung.description },
-      html: renderMarkdown(ordnung.content),
-      error: null,
-    }
+    return { ordnung, document: renderMarkdownDocument(ordnung.content), error: null }
   } catch (error) {
     return {
-      config: null,
-      html: null,
+      ordnung: null,
+      document: null,
       error: error instanceof Error ? error.message : 'Fehler beim Laden der Ordnung',
     }
   }
 }
 
+const backLink = (
+  <Link
+    href="/ordnungen"
+    className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-all duration-150 hover:bg-[#333333] active:scale-[0.98]"
+  >
+    <ArrowLeft size={14} strokeWidth={2} />
+    Alle Ordnungen
+  </Link>
+)
+
 export default async function OrdnungPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { config, html, error } = await loadOrdnung(id)
+  const { ordnung, document, error } = await loadOrdnung(id)
 
-  if (error || !config || !html) {
+  if (error || !ordnung || !document) {
     return (
       <div className="max-w-5xl mx-auto pb-4">
-        <PageHeader
-          title="Fehler"
-          description="Die angeforderte Ordnung konnte nicht geladen werden"
-          action={
-            <Link
-              href="/ordnungen"
-              className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-all duration-150 hover:bg-[#333333] active:scale-[0.98]"
-            >
-              <ArrowLeft size={14} strokeWidth={2} />
-              Zurück
-            </Link>
-          }
-        />
+        <PageHeader title="Fehler" description="Die angeforderte Ordnung konnte nicht geladen werden" action={backLink} />
         <div className="flex items-start gap-3 p-4 rounded-[12px] bg-[#282828]/40 border border-[#ff6b6b]/30">
           <AlertCircle size={18} className="text-[#ff6b6b] shrink-0 mt-0.5" />
           <div>
@@ -55,27 +51,25 @@ export default async function OrdnungPage({ params }: { params: Promise<{ id: st
     )
   }
 
-  return (
-    <div className="max-w-5xl mx-auto pb-4">
-      <PageHeader
-        title={config.title}
-        description={config.description}
-        action={
-          <Link
-            href="/ordnungen"
-            className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-all duration-150 hover:bg-[#333333] active:scale-[0.98]"
-          >
-            <ArrowLeft size={14} strokeWidth={2} />
-            Zurück
-          </Link>
-        }
-      />
+  const outline = buildSectionOutline(document.headings)
 
-      <article
-        className="markdown-document glass-panel-elevated rounded-[14px] border border-[#373737]/40 p-5 sm:p-7"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+  return (
+    <div className="mx-auto max-w-7xl pb-4">
+      <PageHeader title={ordnung.title} description={ordnung.description} action={backLink} />
+      <p className="-mt-3 mb-5 text-[12px] text-[#808080]">
+        {ordnung.category.label} · {outline.length > 0 ? `${outline.length} Abschnitte · ` : ''}Stand {formatDate(ordnung.updatedAt)}
+      </p>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+        <div className="min-w-0">
+          <OrdnungOutline entries={outline} variant="inline" />
+          <article
+            className="markdown-document glass-panel-elevated rounded-[14px] border border-[#373737]/40 p-5 sm:p-7"
+            dangerouslySetInnerHTML={{ __html: document.html }}
+          />
+        </div>
+        <OrdnungOutline entries={outline} variant="sidebar" />
+      </div>
     </div>
   )
 }
-

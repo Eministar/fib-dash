@@ -10,7 +10,7 @@ import {
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Download,
   FileText, FileSignature, Gavel, FolderSearch, Map,
-  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown,
+  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -39,6 +39,7 @@ interface NavContentProps {
 const mainNav: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
   { name: 'Ordnungen', href: '/ordnungen', icon: FileText },
+  { name: 'Aushänge', href: '/publications', icon: Megaphone, permission: 'publications:manage' },
   { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view' },
   { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view' },
   { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
@@ -167,7 +168,7 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
           { label: 'Arbeitsplatz', paths: ['/dashboard', '/duty-times', '/notes'] },
           { label: 'Personal', paths: ['/agents', '/codenames', '/promotions', '/terminations', '/vertraege'] },
           { label: 'Ermittlungen & Disziplin', paths: ['/investigations', '/sanktionen', '/corruption-checks', '/map'] },
-          { label: 'Unterlagen', paths: ['/ordnungen', '/uploads'] },
+          { label: 'Unterlagen', paths: ['/ordnungen', '/publications', '/uploads'] },
         ].map(group => {
           const items = mainNav.filter(item => group.paths.includes(item.href) && (!item.permission || hasPermission(user, item.permission)))
           return items.length > 0 && <SavedSection key={group.label} name={group.label}>

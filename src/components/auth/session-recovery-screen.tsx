@@ -23,12 +23,12 @@ export function SessionRecoveryScreen({ message, onRetry, onClearCache }: Sessio
 
         <div className="mb-2 flex items-center justify-center gap-2 text-[#d4d4d4]">
           <ShieldAlert size={17} strokeWidth={1.8} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">Sitzung prüfen</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">Verbindungsproblem</span>
         </div>
 
-        <h1 className="text-[20px] font-semibold text-white">Keine aktive Sitzung gefunden</h1>
+        <h1 className="text-[20px] font-semibold text-white">Anmeldung konnte nicht geprüft werden</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-[#aeaeae]">
-          {message || 'Deine Anmeldung ist abgelaufen oder der lokale Browser-Cache enthält alte Sitzungsdaten.'}
+          Der Server hat nicht wie erwartet geantwortet. Meist hilft es, kurz zu warten und neu zu laden.{message ? ` (${message})` : ''}
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-2.5">
