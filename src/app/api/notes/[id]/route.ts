@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { hasPermission } from '@/lib/permissions'
-import { INACTIVITY_NOTE_DISMISSED_ACTION, SYSTEM_NOTE_TITLE } from '@/lib/absence-status'
+import { INACTIVITY_NOTE_DISMISSED_ACTION, SYSTEM_NOTE_TITLE, runAgentStatusAutomation } from '@/lib/absence-status'
 import { cleanNoteContent, cleanNotePinned, cleanNoteTitle } from '@/lib/notes'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -57,12 +57,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
           action: INACTIVITY_NOTE_DISMISSED_ACTION,
           userId: user.id,
           agentId: note.agentId,
-          details: 'Automatische Fehlzeit-Notiz gelöscht',
+          details: 'Automatische Fehlzeit-Notiz gelöscht – Fehlzeit beginnt neu',
         },
       })
     }
 
     await tx.note.delete({ where: { id } })
   })
+  if (note.agentId && note.title === SYSTEM_NOTE_TITLE) await runAgentStatusAutomation({ force: true })
   return success({ message: 'Notiz gelöscht' })
 }

@@ -15,6 +15,7 @@ import {
   sendDutyActivityCheck,
 } from '@/lib/discord-integration'
 import { formatDuration } from '@/lib/duty-times'
+import { runAgentStatusAutomation } from '@/lib/absence-status'
 
 export class DutyClockError extends Error {
   constructor(message: string, public status = 400) {
@@ -71,7 +72,13 @@ export async function clockIn(agentId: string, source: 'dashboard' | 'discord', 
     })
     return { session: created, created: true }
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
-  if (session.created) queueDiscordDutyStatusUpdate()
+  if (session.created) {
+    queueDiscordDutyStatusUpdate()
+    // Einstempeln gilt als Aktivität: Inaktiv-Status und gelbe Markierung sofort aufheben.
+    void runAgentStatusAutomation({ force: true }).catch((error) => {
+      console.error('[ManualDuty] Statusaktualisierung fehlgeschlagen:', error)
+    })
+  }
   return session
 }
 

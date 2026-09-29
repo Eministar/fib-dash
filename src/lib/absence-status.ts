@@ -283,6 +283,12 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
         take: 1,
         select: { lastSeenAt: true },
       },
+      // Im manuellen Modus ist die Stempelzeit der Aktivitätsnachweis.
+      dutySessions: {
+        orderBy: { clockInAt: 'desc' },
+        take: 1,
+        select: { clockOutAt: true },
+      },
       agentNotes: {
         where: { title: SYSTEM_NOTE_TITLE },
         orderBy: { createdAt: 'desc' },
@@ -313,7 +319,12 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
   for (const agent of agents) {
     const hasActiveAbsence = agent.absenceNotices.length > 0
     const latestPlaytime = agent.playtimeSessions[0]
-    const lastActivity = latestPlaytime?.lastSeenAt ?? agent.lastOnline ?? latestDate(agent.hireDate, agent.createdAt) ?? agent.createdAt
+    const latestManual = agent.dutySessions[0]
+    const manualActivity = latestManual ? latestManual.clockOutAt ?? now : null
+    // Eine zurückgesetzte Fehlzeit zählt wie Aktivität: die Frist beginnt ab dort neu.
+    const lastReset = agent.auditLogs[0]?.createdAt ?? null
+    const lastActivity = latestDate(latestPlaytime?.lastSeenAt ?? agent.lastOnline ?? null, manualActivity, lastReset)
+      ?? latestDate(agent.hireDate, agent.createdAt) ?? agent.createdAt
     const isInactive = lastActivity < inactiveCutoff
     const nextStatus = hasActiveAbsence ? 'AWAY' : isInactive ? 'INACTIVE' : 'ACTIVE'
     const nextFlag = hasActiveAbsence

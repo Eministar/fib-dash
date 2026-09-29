@@ -327,6 +327,16 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const canManageContracts = hasPermission(user, 'contracts:manage')
   const canViewContracts = canManageContracts || hasPermission(user, 'contracts:view')
   const { data: agent, loading, refetch, setData: setAgent } = useFetch<AgentDetail>(canViewAgent ? `/api/agents/${id}` : null)
+
+  const resetInactivity = async () => {
+    try {
+      await execute(`/api/agents/${id}/inactivity-reset`, { method: 'POST' })
+      addToast({ type: 'success', title: 'Fehlzeit zurückgesetzt', message: 'Die Inaktivität zählt ab jetzt neu.' })
+      await refetch()
+    } catch (err) {
+      addToast({ type: 'error', title: 'Fehler', message: err instanceof Error ? err.message : '' })
+    }
+  }
   const { data: ranks } = useFetch<Rank[]>(canEditAgent || canRankChange ? '/api/ranks' : null)
   const { data: units } = useFetch<Unit[]>(canManageAgentUnits ? '/api/units?active=true&forAssignment=true' : null)
   // Up- und D-Ranks laufen über dieselben Listen; auswählbar sind offene Listen,
@@ -946,6 +956,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   <span className="inline-flex items-center gap-1.5">
                     <span className={cn('h-[6px] w-[6px] rounded-full', getStatusDot(agent.status))} />
                     <span className="text-[13.5px] text-[#eee]">{getStatusLabel(agent.status)}</span>
+                    {agent.status === 'INACTIVE' && canEditAgent && (
+                      <Button variant="ghost" size="sm" className="ml-1 h-7 px-2 text-[12px]" onClick={resetInactivity}
+                        title="Inaktiv-Status und gelbe Markierung entfernen; die Fehlzeit zählt ab jetzt neu">
+                        Fehlzeit zurücksetzen
+                      </Button>
+                    )}
                   </span>
                 </InfoRow>
                 <InfoRow label="Einstellungsdatum" value={formatDate(agent.hireDate)} />

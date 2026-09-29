@@ -12,5 +12,7 @@ export async function register() {
     ensureUploadCleanupWorker()
     const { ensureManualDutyWorker } = await import('./lib/manual-duty')
     ensureManualDutyWorker()
+    const [{ ensureDatabaseBackupScheduler }, { prisma }] = await Promise.all([import('./lib/database-backup'), import('./lib/prisma')])
+    ensureDatabaseBackupScheduler(prisma)
   }
 }

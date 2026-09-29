@@ -31,7 +31,7 @@ export const auditActionLabels: Record<string, string> = {
   PROBATION_UPDATED: 'Probezeit bearbeitet',
   PROBATION_DELETED: 'Probezeit gelöscht',
   NOTE_ADDED: 'Notiz',
-  INACTIVITY_NOTE_DISMISSED: 'Fehlzeit-Notiz gelöscht',
+  INACTIVITY_NOTE_DISMISSED: 'Fehlzeit zurückgesetzt',
   CALENDAR_EVENT_CREATED: 'Termin erstellt',
   CALENDAR_EVENT_UPDATED: 'Termin bearbeitet',
   CALENDAR_EVENT_DELETED: 'Termin gelöscht',
