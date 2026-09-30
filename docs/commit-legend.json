@@ -1,7 +1,25 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-30T18:50:57.026Z",
+  "generatedAt": "2026-09-30T19:11:33.229Z",
   "entries": [
+    {
+      "buildId": "build-fd84308443",
+      "commit": "fd84308443556f62ed1eff478f83147d0ff21fa9",
+      "shortCommit": "fd84308443",
+      "subject": "feat: Personalakte mit Filtern, Monatsgruppen und PDF-Export",
+      "author": "Eministar",
+      "date": "2026-09-30T19:10:58Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/fd84308443556f62ed1eff478f83147d0ff21fa9"
+    },
+    {
+      "buildId": "build-0f3a0095e9",
+      "commit": "0f3a0095e93bfb3fc09149834ed4f5ca2a2da866",
+      "shortCommit": "0f3a0095e9",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-30T18:50:57Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/0f3a0095e93bfb3fc09149834ed4f5ca2a2da866"
+    },
     {
       "buildId": "build-14a4bbe6f4",
       "commit": "14a4bbe6f41d35d26e67da8ef1f3144e6b151cad",
