@@ -112,7 +112,7 @@ export function TitleTooltips() {
     <div
       id={TOOLTIP_ID}
       role="tooltip"
-      className="title-tooltip pointer-events-none fixed z-[130] w-max max-w-[260px] rounded-[7px] border border-[#3a3a3a] bg-[#1f1f1f] px-2.5 py-1.5 text-[12px] font-medium leading-snug text-fg shadow-[0_6px_20px_rgba(0,0,0,0.35)]"
+      className="title-tooltip pointer-events-none fixed z-[130] w-max max-w-[260px] rounded-[7px] border border-[#3a3a3a] bg-[#1f1f1f] px-2.5 py-1.5 text-[12px] font-medium leading-snug text-[#f4f4f4] shadow-[0_6px_20px_rgba(0,0,0,0.35)]"
       style={{
         left,
         top: tip.y,

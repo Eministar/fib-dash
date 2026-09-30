@@ -31,7 +31,7 @@ export function AgentAvatar({ agent, size = 'md', className, ringColor }: AgentA
       aria-label={label}
       title={label}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full border bg-surface-raised bg-cover bg-center text-fg-muted shadow-[0_2px_8px_rgba(0,0,0,.18)]',
+        'inline-flex shrink-0 items-center justify-center rounded-full border bg-[#232323] bg-cover bg-center text-[#a6a6a6] shadow-[0_2px_8px_rgba(0,0,0,.18)]',
         sizeClasses[size],
         className,
       )}

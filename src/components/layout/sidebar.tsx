@@ -91,7 +91,7 @@ function SavedSection({ name, compact, children }: { name: string; compact?: boo
   }
   return <section className="mt-3 first:mt-0">
     <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
-      className="flex w-full items-center justify-between rounded-lg px-3 pb-1.5 pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-subtle transition-colors hover:text-accent">
+      className="flex w-full items-center justify-between rounded-lg px-3 pb-1.5 pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8c8c8c] transition-colors hover:text-[#d4d4d4]">
       {name}
       <ChevronDown size={13} className={cn('transition-transform duration-200 motion-reduce:transition-none', !open && '-rotate-90')} />
     </button>
@@ -116,7 +116,7 @@ function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem
         compact ? 'mx-auto h-9 w-9 justify-center' : 'gap-3 px-3 py-[9px]',
         active
           ? 'bg-[#303030] text-white font-semibold shadow-[inset_0_1px_0_rgba(212,212,212,0.06)]'
-          : 'text-fg-muted hover:bg-[#212121] hover:text-fg'
+          : 'text-[#a6a6a6] hover:bg-[#212121] hover:text-[#f4f4f4]'
       )}
     >
       <Icon
@@ -127,9 +127,9 @@ function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem
       />
       {!compact && <span className="truncate">{item.name}</span>}
       {badgeLabel && (compact ? (
-        <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-accent ring-2 ring-surface-sunken" aria-hidden />
+        <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-[#d4d4d4] ring-2 ring-[#181818]" aria-hidden />
       ) : (
-        <span className="ml-auto rounded-full bg-accent/15 px-1.5 py-px font-mono text-[11px] font-semibold tabular-nums text-[#e4e4e4]">
+        <span className="ml-auto rounded-full bg-[#d4d4d4]/15 px-1.5 py-px font-mono text-[11px] font-semibold tabular-nums text-[#e4e4e4]">
           {badgeLabel}
           <span className="sr-only"> offen</span>
         </span>
@@ -171,17 +171,17 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
       ) : (
       <div className="px-4 pt-5 pb-4">
         <div className="flex items-center gap-3">
-          <div className="relative h-[52px] w-[52px] rounded-[13px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-accent/30 flex items-center justify-center overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(212,212,212,0.08)]">
+          <div className="relative h-[52px] w-[52px] rounded-[13px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-[#d4d4d4]/30 flex items-center justify-center overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(212,212,212,0.08)]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,212,212,0.12),transparent_70%)]" />
             <Image src="/shield.webp" alt="FIB" width={46} height={46} className="rounded-full relative" priority />
           </div>
           <div className="min-w-0">
             <span className="block text-[15px] font-semibold text-white leading-tight tracking-[-0.01em]">FIB</span>
-            <span className="block text-[11px] font-semibold text-accent/80 tracking-[0.14em] uppercase mt-0.5">Department</span>
+            <span className="block text-[11px] font-semibold text-[#d4d4d4]/80 tracking-[0.14em] uppercase mt-0.5">Department</span>
           </div>
         </div>
-        <div className="relative mt-4 h-px bg-gradient-to-r from-transparent via-accent/25 to-transparent">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(212,212,212,0.6)]" />
+        <div className="relative mt-4 h-px bg-gradient-to-r from-transparent via-[#d4d4d4]/25 to-transparent">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-[#d4d4d4] shadow-[0_0_6px_rgba(212,212,212,0.6)]" />
         </div>
       </div>
       )}
@@ -230,14 +230,14 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
           <div className="flex flex-col items-center gap-1">
             {user.avatarUrl ? (
               <span
-                className="h-7 w-7 rounded-full bg-cover bg-center ring-1 ring-accent/25"
+                className="h-7 w-7 rounded-full bg-cover bg-center ring-1 ring-[#d4d4d4]/25"
                 style={{ backgroundImage: `url(${user.avatarUrl})` }}
                 role="img"
                 aria-label={user.displayName}
                 title={user.displayName}
               />
             ) : (
-              <div title={user.displayName} className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent to-[#989898] text-[11px] font-bold text-surface-sunken">
+              <div title={user.displayName} className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#d4d4d4] to-[#989898] text-[11px] font-bold text-[#181818]">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
             )}
@@ -246,7 +246,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
                 type="button"
                 onClick={logout}
                 aria-label="Abmelden"
-                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-accent"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-[#d4d4d4]"
               >
                 <LogOut size={14} strokeWidth={1.75} />
               </button>
@@ -254,15 +254,15 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
           </div>
         )}
         {user && !compact && (
-          <div className="group/user relative flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#1c1c1c]/50 border border-white/[0.04] hover:border-accent/20 transition-colors">
+          <div className="group/user relative flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#1c1c1c]/50 border border-white/[0.04] hover:border-[#d4d4d4]/20 transition-colors">
             {user.avatarUrl ? (
               <span
-                className="h-7 w-7 shrink-0 rounded-full bg-cover bg-center shadow-[0_1px_3px_rgba(212,212,212,0.25)] ring-1 ring-accent/25"
+                className="h-7 w-7 shrink-0 rounded-full bg-cover bg-center shadow-[0_1px_3px_rgba(212,212,212,0.25)] ring-1 ring-[#d4d4d4]/25"
                 style={{ backgroundImage: `url(${user.avatarUrl})` }}
                 aria-hidden
               />
             ) : (
-              <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-accent to-[#989898] flex items-center justify-center text-[11px] font-bold text-surface-sunken shadow-[0_1px_3px_rgba(212,212,212,0.25)]">
+              <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-[#d4d4d4] to-[#989898] flex items-center justify-center text-[11px] font-bold text-[#181818] shadow-[0_1px_3px_rgba(212,212,212,0.25)]">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
             )}
@@ -276,7 +276,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
               <button
                 type="button"
                 onClick={logout}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] hover:text-accent hover:bg-[#212121] transition-colors -mr-1"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] hover:text-[#d4d4d4] hover:bg-[#212121] transition-colors -mr-1"
                 aria-label="Abmelden"
               >
                 <LogOut size={14} strokeWidth={1.75} />
@@ -315,10 +315,10 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 sidebar-gradient border-b border-accent/15 backdrop-blur-md">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 sidebar-gradient border-b border-[#d4d4d4]/15 backdrop-blur-md">
         <button
           onClick={() => setMobileOpen(true)}
-          className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-accent hover:bg-[#212121] transition-colors"
+          className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-[#d4d4d4] hover:bg-[#212121] transition-colors"
           aria-label="Menü öffnen"
         >
           <Menu size={20} />
@@ -330,11 +330,11 @@ export function Sidebar() {
         <div className="w-9" aria-hidden />
       </div>
 
-      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-accent/10 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-14' : 'w-[244px]')}>
+      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-[#d4d4d4]/10 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-14' : 'w-[244px]')}>
         <button type="button" onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed}
           aria-label={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
           title={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
-          className="flex h-11 shrink-0 items-center justify-center gap-2 border-b border-line text-fg-muted hover:bg-[#262626] hover:text-white focus-visible:outline focus-visible:outline-2">
+          className="flex h-11 shrink-0 items-center justify-center gap-2 border-b border-[#343434] text-[#a6a6a6] hover:bg-[#262626] hover:text-white focus-visible:outline focus-visible:outline-2">
           {collapsed ? <PanelLeftOpen size={18} /> : <><PanelLeftClose size={16} /><span className="text-xs">Navigation minimieren</span></>}
         </button>
         <div className="min-h-0 flex-1"><NavContent pathname={pathname} onNavigate={closeMobile} user={user} logout={logout} compact={collapsed} /></div>
@@ -349,14 +349,14 @@ export function Sidebar() {
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
               aria-hidden
-              className="lg:hidden fixed inset-0 bg-canvas/75 backdrop-blur-sm z-40"
+              className="lg:hidden fixed inset-0 bg-[#080808]/75 backdrop-blur-sm z-40"
             />
             <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 w-[264px] max-w-[85vw] sidebar-gradient border-r border-accent/10 z-50 shadow-2xl"
+              className="lg:hidden fixed left-0 top-0 bottom-0 w-[264px] max-w-[85vw] sidebar-gradient border-r border-[#d4d4d4]/10 z-50 shadow-2xl"
               role="dialog"
               aria-modal="true"
               aria-label="Navigation"
@@ -364,7 +364,7 @@ export function Sidebar() {
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Menü schließen"
-                className="absolute top-4 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-accent"
+                className="absolute top-4 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-[#d4d4d4]"
               >
                 <X size={18} />
               </button>

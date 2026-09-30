@@ -2,56 +2,6 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-
-  /* ─── Design-Tokens ───
-     Benannte Werte statt Hex-Codes im Markup. Tailwind erzeugt daraus
-     Klassen wie `bg-surface`, `text-fg-muted`, `border-line`, `rounded-control`
-     oder `text-caption`. Neue Oberflächen bitte nur noch hiermit bauen –
-     dann ändert sich der Look an einer einzigen Stelle. */
-
-  /* Flächen, von hinten nach vorne */
-  --color-canvas: #080808;
-  --color-surface-sunken: #181818;
-  --color-surface: #1b1b1b;
-  --color-surface-raised: #232323;
-  --color-surface-hover: #2a2a2a;
-
-  /* Linien */
-  --color-line: #343434;
-  --color-line-strong: #404040;
-
-  /* Text – alle mit mindestens 4,5:1 auf `surface` */
-  --color-fg: #f4f4f4;
-  --color-fg-muted: #a6a6a6;
-  --color-fg-subtle: #8c8c8c;
-
-  /* Marke: Silber */
-  --color-accent: #d4d4d4;
-  --color-accent-strong: #e8e8e8;
-  --color-on-accent: #181818;
-
-  /* Zustände */
-  --color-danger: #fca5a5;
-  --color-success: #86efac;
-  --color-warning: #fbbf24;
-
-  /* Radien */
-  --radius-chip: 6px;
-  --radius-control: 9px;
-  --radius-panel: 12px;
-  --radius-card: 16px;
-
-  /* Schriftgrößen – die Stufen, die das Dashboard wirklich braucht */
-  --text-caption: 11px;
-  --text-caption--line-height: 1.45;
-  --text-label: 12.5px;
-  --text-label--line-height: 1.45;
-  --text-body: 13.5px;
-  --text-body--line-height: 1.55;
-  --text-title: 15px;
-  --text-title--line-height: 1.35;
-  --text-heading: 22px;
-  --text-heading--line-height: 1.2;
 }
 
 html {

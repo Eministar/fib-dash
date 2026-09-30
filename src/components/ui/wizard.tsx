@@ -62,16 +62,16 @@ export function Wizard({
                   position === index
                     ? 'border-[#a78bfa] bg-[#a78bfa]/10 text-white'
                     : done
-                      ? 'border-line text-fg-muted'
-                      : 'border-[#282828] text-fg-subtle',
+                      ? 'border-[#343434] text-[#a6a6a6]'
+                      : 'border-[#282828] text-[#8c8c8c]',
                   reachable && !saving ? 'hover:border-[#4a4a4a]' : 'cursor-default',
                 )}
               >
-                <span className="grid h-4 w-4 place-items-center rounded-full bg-surface-raised font-mono text-[11px]">
+                <span className="grid h-4 w-4 place-items-center rounded-full bg-[#232323] font-mono text-[11px]">
                   {done ? <Check className="h-2.5 w-2.5" /> : position + 1}
                 </span>
                 {step.label}
-                {step.optional && <span className="text-[11px] text-fg-subtle">optional</span>}
+                {step.optional && <span className="text-[11px] text-[#8c8c8c]">optional</span>}
               </button>
             </li>
           )
@@ -83,7 +83,7 @@ export function Wizard({
       {blocked && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{blocked}</p>}
       {failure && <p role="alert" className="text-[12.5px] text-red-300">{failure}</p>}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-raised pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#232323] pt-4">
         <Button type="button" variant="ghost" disabled={saving} onClick={onCancel}>
           Abbrechen
         </Button>

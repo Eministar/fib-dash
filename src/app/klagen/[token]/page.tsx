@@ -77,7 +77,7 @@ export default function LegalCaseBatchPage() {
   if (state.kind === 'loading') {
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-3 py-24 text-fg-muted">
+        <div className="flex flex-col items-center gap-3 py-24 text-[#a6a6a6]">
           <PdCloudLoader />
           <p className="text-[13px]">Sammelklage wird geladen…</p>
         </div>
@@ -101,11 +101,11 @@ export default function LegalCaseBatchPage() {
     <Shell>
       <div className="contract-no-print mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]">
             Federal Investigation Bureau · Legal Affairs Division
           </p>
           <h1 className="mt-1 text-[22px] font-semibold text-white">{batch.title}</h1>
-          <p className="mt-1 text-[12.5px] text-fg-muted">
+          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
             {batch.caseCount} Klage{batch.caseCount === 1 ? '' : 'n'} · erstellt am {formatDateTime(batch.createdAt)}
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function LegalCaseBatchPage() {
       {batch.cases.length === 0 ? (
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 px-6 py-16 text-center">
           <Scale size={28} className="mx-auto mb-3 text-[#8b5cf6]" />
-          <p className="text-[13px] text-fg-muted">Diese Sammelklage enthält keine Klageschriften.</p>
+          <p className="text-[13px] text-[#a6a6a6]">Diese Sammelklage enthält keine Klageschriften.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -133,14 +133,14 @@ export default function LegalCaseBatchPage() {
                     <span className="font-mono text-[11px] font-semibold text-[#a78bfa]">
                       {legalCase.caseNumber}
                     </span>
-                    <span className="rounded-full border border-line/60 bg-surface-sunken/60 px-2 py-[1px] text-[11px] font-semibold text-fg-muted">
+                    <span className="rounded-full border border-[#343434]/60 bg-[#181818]/60 px-2 py-[1px] text-[11px] font-semibold text-[#a6a6a6]">
                       {index + 1}. Klage
                     </span>
                   </div>
                   <p className="mt-1.5 text-[15px] font-semibold text-white">
                     {legalCase.accusedName ?? 'Ohne Beklagten'}
                   </p>
-                  <p className="text-[12px] text-fg-muted">
+                  <p className="text-[12px] text-[#a6a6a6]">
                     {[legalCase.accusedBadge ? `DN ${legalCase.accusedBadge}` : null, legalCase.accusedRank].filter(Boolean).join(' · ') || '—'}
                   </p>
                 </div>
@@ -152,15 +152,15 @@ export default function LegalCaseBatchPage() {
               </div>
 
               {legalCase.sanctions.length > 0 && (
-                <div className="mt-3 space-y-1.5 border-t border-line/50 pt-3">
+                <div className="mt-3 space-y-1.5 border-t border-[#343434]/50 pt-3">
                   {legalCase.sanctions.map((sanction) => (
-                    <div key={sanction.sanctionId} className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-fg-muted">
+                    <div key={sanction.sanctionId} className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-[#a6a6a6]">
                       <span className="font-semibold text-[#c4b5fd]">{penalGradeLabel(sanction.penalGrade)}</span>
                       <span>{sanctionLevelLabel(sanction.level)}</span>
                       {resolveViolation(sanction.violationCode) && (
-                        <span className="text-accent">{resolveViolation(sanction.violationCode)!.label}</span>
+                        <span className="text-[#d4d4d4]">{resolveViolation(sanction.violationCode)!.label}</span>
                       )}
-                      <span className="text-fg-subtle">· {sanction.reason}</span>
+                      <span className="text-[#8c8c8c]">· {sanction.reason}</span>
                     </div>
                   ))}
                 </div>
@@ -175,7 +175,7 @@ export default function LegalCaseBatchPage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-canvas px-3 py-8 sm:px-6 lg:py-12">
+    <main className="min-h-screen bg-[#080808] px-3 py-8 sm:px-6 lg:py-12">
       <div className="mx-auto w-full max-w-[840px]">{children}</div>
     </main>
   )
@@ -192,11 +192,11 @@ function Notice({
 }) {
   return (
     <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-8 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-accent/30 bg-accent/12 text-accent">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/12 text-[#d4d4d4]">
         <AlertTriangle size={26} />
       </div>
       <h1 className="text-[19px] font-semibold text-white">{title}</h1>
-      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-fg-muted">{description}</p>
+      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#a6a6a6]">{description}</p>
       {children && <div className="mt-5 flex justify-center">{children}</div>}
     </section>
   )

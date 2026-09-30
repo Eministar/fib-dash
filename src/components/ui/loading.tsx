@@ -9,7 +9,7 @@ export function Spinner({ className, size = 'md' }: { className?: string; size?:
 
   return (
       <span
-          className={cn('loading-spinner relative block shrink-0 rounded-full text-accent', sizes[size], className)}
+          className={cn('loading-spinner relative block shrink-0 rounded-full text-[#d4d4d4]', sizes[size], className)}
           style={{ width: px, height: px }}
           aria-hidden
       />
@@ -22,8 +22,8 @@ export function AppLoader() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-5 text-[#909090]">
         <PdCloudLoader />
         <div className="flex flex-col items-center gap-1.5">
-          <p className="text-[11px] font-semibold tracking-[0.18em] text-fg-muted uppercase">Lädt</p>
-          <p className="text-[11px] text-fg-subtle">Einen Moment bitte…</p>
+          <p className="text-[11px] font-semibold tracking-[0.18em] text-[#a6a6a6] uppercase">Lädt</p>
+          <p className="text-[11px] text-[#8c8c8c]">Einen Moment bitte…</p>
         </div>
       </div>
   )
@@ -47,14 +47,14 @@ export function PageLoader({ withHeader = false }: { withHeader?: boolean }) {
             <div className="mb-7">
               <SkeletonBlock className="h-7 w-56" />
               <SkeletonBlock className="mt-3 h-4 w-80 max-w-full" />
-              <div className="mt-5 h-px w-full bg-line" />
+              <div className="mt-5 h-px w-full bg-[#343434]" />
             </div>
         )}
         <div className="mb-5 flex flex-wrap gap-3">
           <SkeletonBlock className="h-9 min-w-[240px] flex-1 rounded-[9px]" />
           <SkeletonBlock className="h-9 w-32 rounded-[9px]" />
         </div>
-        <div className="rounded-[16px] border border-[#323232]/55 bg-surface/70 p-5">
+        <div className="rounded-[16px] border border-[#323232]/55 bg-[#1b1b1b]/70 p-5">
           <div className="space-y-4">
             {Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className="flex items-center gap-3" style={{ opacity: 1 - i * 0.12 }}>

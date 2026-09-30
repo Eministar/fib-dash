@@ -94,7 +94,7 @@ export function InvestigationLinks({
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-[14px] font-semibold text-white">Verwandte Akten ({rows.length})</h2>
-          <p className="mt-0.5 text-[11.5px] text-fg-subtle">
+          <p className="mt-0.5 text-[11.5px] text-[#8c8c8c]">
             Verweise auf Ermittlungen mit denselben Personen, Fahrzeugen oder Tatmustern.
           </p>
         </div>
@@ -107,26 +107,26 @@ export function InvestigationLinks({
       </div>
 
       {rows.length === 0 ? (
-        <p className="py-3 text-[12.5px] text-fg-subtle">Keine Querverweise.</p>
+        <p className="py-3 text-[12.5px] text-[#8c8c8c]">Keine Querverweise.</p>
       ) : (
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id} className="flex items-start justify-between gap-3">
               <Link
                 href={`/investigations/${row.peer.id}`}
-                className="min-w-0 flex-1 rounded-[9px] border border-surface-raised bg-[#111111] p-2.5 transition-colors hover:border-line-strong"
+                className="min-w-0 flex-1 rounded-[9px] border border-[#232323] bg-[#111111] p-2.5 transition-colors hover:border-[#404040]"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+                  <ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
                   <span className="font-mono text-[11.5px] text-[#d4af37]">{row.peer.caseNumber}</span>
                   <StatusBadge status={row.peer.status} />
                   <PriorityBadge priority={row.peer.priority} />
-                  <span className="text-[11px] uppercase tracking-[0.1em] text-fg-subtle">
+                  <span className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">
                     {row.outgoing ? 'verweist auf' : 'verwiesen von'}
                   </span>
                 </div>
                 <p className="mt-1 text-[13px] text-white">{row.peer.title}</p>
-                {row.note && <p className="mt-0.5 text-[12px] text-fg-muted">{row.note}</p>}
+                {row.note && <p className="mt-0.5 text-[12px] text-[#a6a6a6]">{row.note}</p>}
               </Link>
 
               {/* Nur die eigene Richtung ist von hier aus loesbar – der
@@ -135,7 +135,7 @@ export function InvestigationLinks({
                 <button
                   type="button"
                   onClick={() => void handleRemove(row)}
-                  className="mt-2 shrink-0 text-fg-subtle transition-colors hover:text-[#fca5a5]"
+                  className="mt-2 shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                   aria-label="Querverweis entfernen"
                 >
                   <X className="h-4 w-4" />

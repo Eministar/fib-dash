@@ -67,8 +67,8 @@ export default function AcademyPage() {
               className={cn(
                 'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors',
                 active
-                  ? 'border-accent/45 bg-accent/14 text-accent'
-                  : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
+                  ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
+                  : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
               )}
             >
               <Icon size={14} strokeWidth={2} />

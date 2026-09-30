@@ -97,7 +97,7 @@ export function PersonLinks({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[12px] font-medium text-fg-muted">Umfeld ({rows.length})</p>
+        <p className="text-[12px] font-medium text-[#a6a6a6]">Umfeld ({rows.length})</p>
         {canManage && (
           <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
             <Plus className="h-3.5 w-3.5" />
@@ -107,26 +107,26 @@ export function PersonLinks({
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-[12.5px] text-fg-subtle">Keine Verbindungen erfasst.</p>
+        <p className="text-[12.5px] text-[#8c8c8c]">Keine Verbindungen erfasst.</p>
       ) : (
         <ul className="space-y-1.5">
           {rows.map((row) => (
             <li
               key={row.id}
-              className="flex items-center justify-between gap-3 rounded-[9px] border border-surface-raised bg-[#111111] px-2.5 py-2"
+              className="flex items-center justify-between gap-3 rounded-[9px] border border-[#232323] bg-[#111111] px-2.5 py-2"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Network className="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+                  <Network className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
                   <span className="text-[13px] text-white">
                     {row.peer.firstName} {row.peer.lastName}
                   </span>
                   <Badge>{PERSON_LINK_TYPE_LABELS[row.type]}</Badge>
-                  <span className="text-[11px] uppercase tracking-[0.1em] text-fg-subtle">
+                  <span className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">
                     {row.outgoing ? 'ausgehend' : 'eingehend'}
                   </span>
                 </div>
-                {row.note && <p className="mt-0.5 text-[12px] text-fg-muted">{row.note}</p>}
+                {row.note && <p className="mt-0.5 text-[12px] text-[#a6a6a6]">{row.note}</p>}
               </div>
 
               {/* Nur die eigene Richtung ist hier loesbar – die Gegenrichtung
@@ -135,7 +135,7 @@ export function PersonLinks({
                 <button
                   type="button"
                   onClick={() => void handleRemove(row)}
-                  className="shrink-0 text-fg-subtle transition-colors hover:text-[#fca5a5]"
+                  className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                   aria-label="Verbindung entfernen"
                 >
                   <X className="h-4 w-4" />

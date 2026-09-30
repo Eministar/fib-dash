@@ -296,9 +296,9 @@ export default function FormTestLinkPage() {
     return (
       <div className="mx-auto max-w-3xl">
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 px-6 py-16 text-center">
-          <FileQuestion size={30} className="mx-auto mb-3 text-fg-subtle" />
+          <FileQuestion size={30} className="mx-auto mb-3 text-[#8c8c8c]" />
           <p className="text-[14px] font-semibold text-white">Test nicht verfügbar</p>
-          <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-5 text-fg-muted">
+          <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-5 text-[#a6a6a6]">
             {loadError ?? 'Der Link ist nicht aktiv oder nicht verfügbar.'}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -328,7 +328,7 @@ export default function FormTestLinkPage() {
             <CheckCircle2 size={28} />
           </div>
           <h2 className="text-[17px] font-semibold text-white">Deine Abgabe wurde gespeichert</h2>
-          <p className="mt-2 text-[13px] text-fg-muted">
+          <p className="mt-2 text-[13px] text-[#a6a6a6]">
             Abgegeben am {formatDateTime(data.existingResponse.submittedAt)}
           </p>
           {data.existingResponse.maxScore > 0 && (
@@ -348,16 +348,16 @@ export default function FormTestLinkPage() {
 
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-6">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[12px] border border-line/60 bg-surface-sunken/45 px-4 py-3">
-              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-fg-subtle">
-                <ClipboardCheck size={13} className="text-accent" />
+            <div className="rounded-[12px] border border-[#343434]/60 bg-[#181818]/45 px-4 py-3">
+              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[#8c8c8c]">
+                <ClipboardCheck size={13} className="text-[#d4d4d4]" />
                 Umfang
               </div>
               <p className="mt-1.5 text-[14px] font-semibold text-white">{data.questionCount} Frage(n)</p>
             </div>
-            <div className="rounded-[12px] border border-line/60 bg-surface-sunken/45 px-4 py-3">
-              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-fg-subtle">
-                <Clock size={13} className="text-accent" />
+            <div className="rounded-[12px] border border-[#343434]/60 bg-[#181818]/45 px-4 py-3">
+              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[#8c8c8c]">
+                <Clock size={13} className="text-[#d4d4d4]" />
                 Zeitlimit
               </div>
               <p className="mt-1.5 text-[14px] font-semibold text-white">
@@ -366,9 +366,9 @@ export default function FormTestLinkPage() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-[12px] border border-accent/30 bg-[#302712]/45 p-4">
+          <div className="mt-4 rounded-[12px] border border-[#d4d4d4]/30 bg-[#302712]/45 p-4">
             <div className="flex items-start gap-3">
-              <ShieldAlert size={18} className="mt-0.5 shrink-0 text-accent" />
+              <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[#d4d4d4]" />
               <div>
                 <p className="text-[13px] font-semibold text-white">Vor dem Start lesen</p>
                 <ul className="mt-1.5 space-y-1 text-[12.5px] leading-5 text-[#c6c6c6]">
@@ -412,12 +412,12 @@ export default function FormTestLinkPage() {
       )}
       {isActiveTest && (screenshotCover || windowObscured) && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-[#0c0c0c] px-6 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-accent/30 bg-accent/10 text-accent">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/10 text-[#d4d4d4]">
             <ShieldAlert size={30} />
           </div>
           <div>
             <p className="text-[16px] font-semibold text-white">Inhalt geschützt</p>
-            <p className="mx-auto mt-1.5 max-w-sm text-[13px] leading-5 text-fg-muted">
+            <p className="mx-auto mt-1.5 max-w-sm text-[13px] leading-5 text-[#a6a6a6]">
               Der Testinhalt wird ausgeblendet, sobald das Fenster verlassen wird oder ein Screenshot bzw. eine Aufnahme erkannt wird. Kehre zum Test-Tab zurück, um fortzufahren.
             </p>
           </div>
@@ -438,9 +438,9 @@ export default function FormTestLinkPage() {
       />
 
       {isActiveTest && (
-        <div className="mb-4 rounded-[14px] border border-accent/30 bg-[#302712]/45 p-4">
+        <div className="mb-4 rounded-[14px] border border-[#d4d4d4]/30 bg-[#302712]/45 p-4">
           <div className="flex items-start gap-3">
-            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-accent" />
+            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[#d4d4d4]" />
             <div>
               <p className="text-[13px] font-semibold text-white">Testmodus aktiv</p>
               <p className="mt-1 text-[12.5px] leading-5 text-[#c6c6c6]">
@@ -466,7 +466,7 @@ export default function FormTestLinkPage() {
       )}
 
       {data.kind === 'SURVEY' && data.anonymousResponses && (
-        <div className="mb-4 rounded-[14px] border border-[#373737]/45 bg-surface-sunken/55 p-4 text-[12.5px] leading-5 text-fg-muted">
+        <div className="mb-4 rounded-[14px] border border-[#373737]/45 bg-[#181818]/55 p-4 text-[12.5px] leading-5 text-[#a6a6a6]">
           Diese Umfrage wird anonym ausgewertet. Deine Abgabe wird intern nur zur Vermeidung mehrfacher Abgaben erkannt.
         </div>
       )}
@@ -484,13 +484,13 @@ export default function FormTestLinkPage() {
         ))}
       </div>
 
-      <div className="sticky bottom-0 mt-5 rounded-[14px] border border-[#373737]/45 bg-canvas/90 p-3 backdrop-blur-md">
+      <div className="sticky bottom-0 mt-5 rounded-[14px] border border-[#373737]/45 bg-[#080808]/90 p-3 backdrop-blur-md">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-[12.5px] text-fg-muted">
-            <ClipboardCheck size={15} className="text-accent" />
+          <div className="flex items-center gap-2 text-[12.5px] text-[#a6a6a6]">
+            <ClipboardCheck size={15} className="text-[#d4d4d4]" />
             {data.questions.length} Frage(n)
             {isActiveTest && data.securityEventCount > 0 && (
-              <span className="text-accent">· {data.securityEventCount} protokolliert</span>
+              <span className="text-[#d4d4d4]">· {data.securityEventCount} protokolliert</span>
             )}
           </div>
           <Button onClick={submit} loading={submitting} disabled={!answeredRequired || timeExpired}>
@@ -519,7 +519,7 @@ function QuestionField({
   return (
     <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
       <div className="mb-3 flex items-start gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-surface-raised text-[11.5px] font-semibold text-accent">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#232323] text-[11.5px] font-semibold text-[#d4d4d4]">
           {index + 1}
         </span>
         <div className="min-w-0 flex-1">
@@ -528,7 +528,7 @@ function QuestionField({
             {question.required && <Badge variant="warning">Pflicht</Badge>}
             {showPoints && question.points > 0 && <Badge>{question.points} Punkte</Badge>}
           </div>
-          {question.description && <p className="mt-1 text-[12.5px] leading-5 text-fg-muted">{question.description}</p>}
+          {question.description && <p className="mt-1 text-[12.5px] leading-5 text-[#a6a6a6]">{question.description}</p>}
         </div>
       </div>
       <QuestionInput question={question} value={value} onChange={onChange} />
@@ -542,7 +542,7 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
       <input
         value={typeof value === 'string' ? value : ''}
         onChange={(event) => onChange(event.target.value)}
-        className="h-[38px] w-full rounded-[9px] border border-line/70 bg-surface-sunken/60 px-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
+        className="h-[38px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
         placeholder="Antwort eingeben"
       />
     )
@@ -554,7 +554,7 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
         value={typeof value === 'string' ? value : ''}
         onChange={(event) => onChange(event.target.value)}
         rows={5}
-        className="w-full resize-none rounded-[9px] border border-line/70 bg-surface-sunken/60 px-3 py-2.5 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
+        className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
         placeholder="Antwort eingeben"
       />
     )
@@ -564,7 +564,7 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
     const selected = typeof value === 'string' ? value : ''
     return (
       <div className="space-y-2">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-fg-subtle">Nur eine Antwort wählbar</p>
+        <p className="text-[11px] font-medium uppercase tracking-wide text-[#8c8c8c]">Nur eine Antwort wählbar</p>
         {(question.options?.choices ?? []).map((choice) => (
           <button
             key={choice}
@@ -573,11 +573,11 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
             className={cn(
               'flex w-full items-center gap-2 rounded-[10px] border px-3 py-2.5 text-left text-[13px] transition-colors',
               selected === choice
-                ? 'border-accent/45 bg-accent/12 text-white'
-                : 'border-line/60 bg-surface-sunken/45 text-[#e5e5e5] hover:border-line-strong',
+                ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/12 text-white'
+                : 'border-[#343434]/60 bg-[#181818]/45 text-[#e5e5e5] hover:border-[#404040]',
             )}
           >
-            <span className={cn('h-3.5 w-3.5 rounded-full border', selected === choice ? 'border-accent bg-accent' : 'border-[#808080]')} />
+            <span className={cn('h-3.5 w-3.5 rounded-full border', selected === choice ? 'border-[#d4d4d4] bg-[#d4d4d4]' : 'border-[#808080]')} />
             {choice}
           </button>
         ))}
@@ -592,14 +592,14 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
     }
     return (
       <div className="space-y-2">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-accent/70">Mehrfachauswahl möglich</p>
+        <p className="text-[11px] font-medium uppercase tracking-wide text-[#d4d4d4]/70">Mehrfachauswahl möglich</p>
         {(question.options?.choices ?? []).map((choice) => (
           <Checkbox
             key={choice}
             checked={selected.includes(choice)}
             onCheckedChange={() => toggle(choice)}
             label={choice}
-            className="rounded-[10px] border border-line/60 bg-surface-sunken/45 px-3 py-2.5 hover:border-line-strong"
+            className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/45 px-3 py-2.5 hover:border-[#404040]"
           />
         ))}
       </div>
@@ -622,8 +622,8 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
             className={cn(
               'h-10 rounded-[9px] border text-[13px] font-semibold transition-colors',
               selected === item
-                ? 'border-accent/45 bg-accent/16 text-accent'
-                : 'border-line/60 bg-surface-sunken/45 text-[#aeaeae] hover:border-line-strong',
+                ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/16 text-[#d4d4d4]'
+                : 'border-[#343434]/60 bg-[#181818]/45 text-[#aeaeae] hover:border-[#404040]',
             )}
           >
             {item}

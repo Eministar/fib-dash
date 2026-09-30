@@ -21,12 +21,12 @@ export default function AccountPage() {
           <div className="flex items-center gap-4">
             {user?.avatarUrl ? (
               <span
-                className="h-14 w-14 shrink-0 rounded-full bg-cover bg-center ring-1 ring-accent/25"
+                className="h-14 w-14 shrink-0 rounded-full bg-cover bg-center ring-1 ring-[#d4d4d4]/25"
                 style={{ backgroundImage: `url(${user.avatarUrl})` }}
                 aria-label={user.displayName}
               />
             ) : (
-              <div className="h-14 w-14 rounded-full bg-[#212121] flex items-center justify-center text-accent">
+              <div className="h-14 w-14 rounded-full bg-[#212121] flex items-center justify-center text-[#d4d4d4]">
                 <MessageCircle size={22} strokeWidth={1.75} />
               </div>
             )}
@@ -39,7 +39,7 @@ export default function AccountPage() {
 
         <div className="glass-panel-elevated rounded-[14px] p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-9 w-9 rounded-[9px] bg-[#212121] flex items-center justify-center text-accent">
+            <div className="h-9 w-9 rounded-[9px] bg-[#212121] flex items-center justify-center text-[#d4d4d4]">
               <ShieldCheck size={17} strokeWidth={1.75} />
             </div>
             <div>
@@ -50,7 +50,7 @@ export default function AccountPage() {
 
           <div className="flex flex-wrap gap-2">
             {(user?.groups ?? []).map((group) => (
-              <span key={group.id} className="rounded-[7px] border border-line-strong bg-surface-sunken/70 px-2.5 py-1.5 text-[12px] text-fg">
+              <span key={group.id} className="rounded-[7px] border border-[#404040] bg-[#181818]/70 px-2.5 py-1.5 text-[12px] text-[#f4f4f4]">
                 {group.name}
               </span>
             ))}

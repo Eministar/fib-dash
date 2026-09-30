@@ -188,7 +188,7 @@ export function VehicleRegister() {
               key={vehicle.id}
               type="button"
               onClick={() => setSelectedId(vehicle.id)}
-              className="rounded-[12px] border border-surface-hover bg-[#141414] p-3.5 text-left transition-colors hover:border-line-strong hover:bg-surface-sunken"
+              className="rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-3.5 text-left transition-colors hover:border-[#404040] hover:bg-[#181818]"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-[11.5px] text-[#d4af37]">{vehicle.vehicleNumber}</span>
@@ -196,7 +196,7 @@ export function VehicleRegister() {
                 {vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}
               </div>
               <p className="mt-1.5 text-[14px] font-semibold text-white">{vehicleLabel(vehicle)}</p>
-              <p className="mt-1 text-[11.5px] text-fg-subtle">
+              <p className="mt-1 text-[11.5px] text-[#8c8c8c]">
                 {vehicle.color ? `${vehicle.color} · ` : ''}
                 {vehicle.ownerPerson
                   ? `Halter: ${vehicle.ownerPerson.firstName} ${vehicle.ownerPerson.lastName}`
@@ -267,24 +267,24 @@ export function VehicleRegister() {
             <dl className="grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
               {detail.plate && (
                 <div>
-                  <dt className="text-fg-subtle">Kennzeichen</dt>
+                  <dt className="text-[#8c8c8c]">Kennzeichen</dt>
                   <dd className="font-mono text-[#e4e4e4]">{detail.plate}</dd>
                 </div>
               )}
               {detail.model && (
                 <div>
-                  <dt className="text-fg-subtle">Modell</dt>
+                  <dt className="text-[#8c8c8c]">Modell</dt>
                   <dd className="text-[#e4e4e4]">{detail.model}</dd>
                 </div>
               )}
               {detail.color && (
                 <div>
-                  <dt className="text-fg-subtle">Farbe</dt>
+                  <dt className="text-[#8c8c8c]">Farbe</dt>
                   <dd className="text-[#e4e4e4]">{detail.color}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-fg-subtle">Halter</dt>
+                <dt className="text-[#8c8c8c]">Halter</dt>
                 <dd className="text-[#e4e4e4]">
                   {detail.ownerPerson ? (
                     <Link
@@ -302,7 +302,7 @@ export function VehicleRegister() {
 
             {detail.notes && (
               <div>
-                <p className="mb-1 text-[12px] font-medium text-fg-muted">Notizen</p>
+                <p className="mb-1 text-[12px] font-medium text-[#a6a6a6]">Notizen</p>
                 <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c4c4c4]">
                   {detail.notes}
                 </p>
@@ -310,18 +310,18 @@ export function VehicleRegister() {
             )}
 
             <div>
-              <p className="mb-2 text-[12px] font-medium text-fg-muted">
+              <p className="mb-2 text-[12px] font-medium text-[#a6a6a6]">
                 Ermittlungen ({detail.investigations.length})
               </p>
               {detail.investigations.length === 0 ? (
-                <p className="text-[12.5px] text-fg-subtle">Keiner Akte zugeordnet.</p>
+                <p className="text-[12.5px] text-[#8c8c8c]">Keiner Akte zugeordnet.</p>
               ) : (
                 <ul className="space-y-2">
                   {detail.investigations.map((link) => (
                     <li key={link.id}>
                       <Link
                         href={`/investigations/${link.investigation.id}`}
-                        className="block rounded-[9px] border border-surface-raised bg-[#111111] p-2.5 transition-colors hover:border-line-strong"
+                        className="block rounded-[9px] border border-[#232323] bg-[#111111] p-2.5 transition-colors hover:border-[#404040]"
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-[11.5px] text-[#d4af37]">

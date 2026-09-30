@@ -108,7 +108,7 @@ function ResultCard({ entry, canManage, onDelete }: {
 }) {
   return (
     <article className="group relative pl-7">
-      <span className="absolute left-[5px] top-0 h-full w-px bg-gradient-to-b from-[#0ea5e9]/55 via-line-strong to-transparent" aria-hidden />
+      <span className="absolute left-[5px] top-0 h-full w-px bg-gradient-to-b from-[#0ea5e9]/55 via-[#404040] to-transparent" aria-hidden />
       <span className={cn(
         'absolute left-0 top-5 h-[11px] w-[11px] rounded-full border-2 border-[#161616] ring-1',
         entry.prohibitedItemsFound
@@ -116,15 +116,15 @@ function ResultCard({ entry, canManage, onDelete }: {
           : 'bg-[#34d399] ring-[#34d399]/40',
       )} aria-hidden />
 
-      <div className="overflow-hidden rounded-[15px] border border-line/75 bg-[#1a1a1a]/78 shadow-[0_10px_30px_rgba(0,0,0,.1)]">
-        <header className="flex flex-col gap-3 border-b border-line/60 bg-[#161616]/55 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="overflow-hidden rounded-[15px] border border-[#343434]/75 bg-[#1a1a1a]/78 shadow-[0_10px_30px_rgba(0,0,0,.1)]">
+        <header className="flex flex-col gap-3 border-b border-[#343434]/60 bg-[#161616]/55 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#0ea5e9]/20 bg-[#0ea5e9]/[0.07] text-[#7dd3fc]">
               <CalendarClock size={16} strokeWidth={1.9} />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-[12.5px] font-semibold text-fg">{searchDate(entry.conductedAt)}</p>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-fg-subtle"><Clock3 size={10} /> {searchTime(entry.conductedAt)} Uhr</p>
+              <p className="truncate text-[12.5px] font-semibold text-[#f4f4f4]">{searchDate(entry.conductedAt)}</p>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#8c8c8c]"><Clock3 size={10} /> {searchTime(entry.conductedAt)} Uhr</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ function ResultCard({ entry, canManage, onDelete }: {
               <button
                 type="button"
                 onClick={() => onDelete(entry)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-subtle opacity-100 transition-colors hover:bg-[#fb7185]/10 hover:text-[#fda4af] sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8c8c8c] opacity-100 transition-colors hover:bg-[#fb7185]/10 hover:text-[#fda4af] sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                 aria-label={`Durchsuchung vom ${searchDate(entry.conductedAt)} löschen`}
               >
                 <Trash2 size={12} />
@@ -152,25 +152,25 @@ function ResultCard({ entry, canManage, onDelete }: {
 
         <div className="grid gap-4 px-4 py-4 sm:grid-cols-[1fr_190px]">
           <div>
-            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.13em] text-fg-subtle">
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.13em] text-[#8c8c8c]">
               <PackageOpen size={11} /> Gefundene / abgenommene Gegenstände
             </p>
             {entry.foundItems ? (
               <p className="whitespace-pre-wrap text-[12.5px] leading-5 text-[#d5d5d5]">{entry.foundItems}</p>
             ) : (
-              <p className="text-[12px] italic text-fg-subtle">Keine Gegenstände dokumentiert</p>
+              <p className="text-[12px] italic text-[#8c8c8c]">Keine Gegenstände dokumentiert</p>
             )}
             {entry.notes && (
-              <div className="mt-4 border-t border-line/45 pt-3">
-                <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.13em] text-fg-subtle">Ergebnis / Notiz</p>
+              <div className="mt-4 border-t border-[#343434]/45 pt-3">
+                <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.13em] text-[#8c8c8c]">Ergebnis / Notiz</p>
                 <p className="whitespace-pre-wrap text-[12px] leading-5 text-[#aeaeae]">{entry.notes}</p>
               </div>
             )}
           </div>
-          <aside className="rounded-xl border border-line/55 bg-[#161616]/45 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-fg-subtle">Eingetragen von</p>
+          <aside className="rounded-xl border border-[#343434]/55 bg-[#161616]/45 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c8c8c]">Eingetragen von</p>
             <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] font-medium text-[#d3d3d3]"><UserRoundCheck size={12} className="text-[#7dd3fc]" /> {entry.createdBy?.displayName ?? 'Gelöschter Benutzer'}</p>
-            <p className="mt-2 text-[11px] leading-4 text-fg-subtle">Erfasst am<br />{formatDateTime(entry.createdAt)}</p>
+            <p className="mt-2 text-[11px] leading-4 text-[#8c8c8c]">Erfasst am<br />{formatDateTime(entry.createdAt)}</p>
           </aside>
         </div>
       </div>
@@ -260,17 +260,17 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
         <div className="mb-4 rounded-xl border border-[#fb7185]/25 bg-[#fb7185]/[0.06] px-4 py-3 text-[12px] text-[#fda4af]">{error}</div>
       )}
 
-      <div className="grid min-h-[610px] overflow-hidden rounded-[17px] border border-line/75 bg-[#161616]/38 lg:grid-cols-[330px_minmax(0,1fr)]">
-        <aside className="border-b border-line/75 bg-[#161616]/58 lg:border-b-0 lg:border-r">
-          <div className="border-b border-line/65 p-3.5">
+      <div className="grid min-h-[610px] overflow-hidden rounded-[17px] border border-[#343434]/75 bg-[#161616]/38 lg:grid-cols-[330px_minmax(0,1fr)]">
+        <aside className="border-b border-[#343434]/75 bg-[#161616]/58 lg:border-b-0 lg:border-r">
+          <div className="border-b border-[#343434]/65 p-3.5">
             <label className="relative block">
               <span className="sr-only">Agents durchsuchen</span>
-              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Name, Dienstnummer oder Rang"
-                className="h-9 w-full rounded-[9px] border border-line/75 bg-surface/75 pl-9 pr-3 text-[12px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-[#0ea5e9]/55 focus:ring-2 focus:ring-[#0ea5e9]/10"
+                className="h-9 w-full rounded-[9px] border border-[#343434]/75 bg-[#1b1b1b]/75 pl-9 pr-3 text-[12px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#0ea5e9]/55 focus:ring-2 focus:ring-[#0ea5e9]/10"
               />
             </label>
           </div>
@@ -287,7 +287,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                     'group flex w-full items-center gap-3 rounded-[11px] border px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0ea5e9]/35',
                     selected
                       ? 'border-[#0ea5e9]/28 bg-[#0ea5e9]/[0.075] shadow-[inset_3px_0_0_#0ea5e9]'
-                      : 'border-transparent hover:border-line/70 hover:bg-[#1e1e1e]/75',
+                      : 'border-transparent hover:border-[#343434]/70 hover:bg-[#1e1e1e]/75',
                   )}
                 >
                   <AgentAvatar agent={agent} size="md" ringColor={selected ? '#0ea5e9' : agent.rank.color} />
@@ -296,20 +296,20 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                       <span className="font-mono text-[11px] font-bold text-[#7dd3fc]">{displayBadgeNumber(agent.badgeNumber)}</span>
                       <span className="truncate text-[12px] font-semibold text-[#e5e5e5]">{agent.firstName} {agent.lastName}</span>
                     </span>
-                    <span className="mt-0.5 block truncate text-[11px] text-fg-subtle">{agent.rank.name} · {getStatusLabel(agent.status)}</span>
-                    <span className="mt-1 block text-[11px] text-fg-subtle">
+                    <span className="mt-0.5 block truncate text-[11px] text-[#8c8c8c]">{agent.rank.name} · {getStatusLabel(agent.status)}</span>
+                    <span className="mt-1 block text-[11px] text-[#8c8c8c]">
                       {agent.searchCount === 0 ? 'Noch keine Durchsuchung' : `${agent.searchCount} ${agent.searchCount === 1 ? 'Eintrag' : 'Einträge'} · zuletzt ${searchDate(agent.lastSearchAt!)}`}
                     </span>
                   </span>
-                  <ChevronRight size={13} className={cn('shrink-0 transition-transform', selected ? 'translate-x-0.5 text-[#7dd3fc]' : 'text-fg-subtle group-hover:translate-x-0.5')} />
+                  <ChevronRight size={13} className={cn('shrink-0 transition-transform', selected ? 'translate-x-0.5 text-[#7dd3fc]' : 'text-[#8c8c8c] group-hover:translate-x-0.5')} />
                 </button>
               )
             })}
 
             {filteredAgents.length === 0 && (
               <div className="px-4 py-12 text-center">
-                <Search size={21} className="mx-auto mb-2 text-fg-subtle" />
-                <p className="text-[11.5px] text-fg-subtle">Keine Agents gefunden</p>
+                <Search size={21} className="mx-auto mb-2 text-[#8c8c8c]" />
+                <p className="text-[11.5px] text-[#8c8c8c]">Keine Agents gefunden</p>
               </div>
             )}
           </div>
@@ -318,13 +318,13 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
         <section className="min-w-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,.045),transparent_38%)]">
           {selectedAgent ? (
             <>
-              <header className="flex flex-col gap-4 border-b border-line/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <header className="flex flex-col gap-4 border-b border-[#343434]/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-3.5">
                   <AgentAvatar agent={selectedAgent} size="lg" ringColor="#0ea5e9" />
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7dd3fc]">Durchsuchungsakte · {displayBadgeNumber(selectedAgent.badgeNumber)}</p>
                     <h2 className="mt-1 truncate text-[19px] font-semibold tracking-[-0.02em] text-white">{selectedAgent.firstName} {selectedAgent.lastName}</h2>
-                    <p className="mt-0.5 truncate text-[11px] text-fg-subtle">{selectedAgent.rank.name} · {getStatusLabel(selectedAgent.status)}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">{selectedAgent.rank.name} · {getStatusLabel(selectedAgent.status)}</p>
                   </div>
                 </div>
                 {canManage && <Button size="sm" onClick={openCreate}><Plus size={13} /> Durchsuchung hinzufügen</Button>}
@@ -341,10 +341,10 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex min-h-[380px] flex-col items-center justify-center rounded-[15px] border border-dashed border-[#3d3d3d] bg-surface-sunken/38 px-6 text-center">
+                  <div className="flex min-h-[380px] flex-col items-center justify-center rounded-[15px] border border-dashed border-[#3d3d3d] bg-[#181818]/38 px-6 text-center">
                     <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#0ea5e9]/20 bg-[#0ea5e9]/[0.06] text-[#5bbde7]"><Archive size={23} strokeWidth={1.6} /></span>
                     <p className="text-[13px] font-semibold text-[#c6c6c6]">Noch keine Durchsuchung dokumentiert</p>
-                    <p className="mt-1.5 max-w-sm text-[11px] leading-5 text-fg-subtle">Neue Einträge erscheinen hier chronologisch mit Ergebnis, Gegenständen und erfassender Person.</p>
+                    <p className="mt-1.5 max-w-sm text-[11px] leading-5 text-[#8c8c8c]">Neue Einträge erscheinen hier chronologisch mit Ergebnis, Gegenständen und erfassender Person.</p>
                     {canManage && <Button className="mt-5" size="sm" onClick={openCreate}><Plus size={13} /> Erste Durchsuchung eintragen</Button>}
                   </div>
                 )}
@@ -352,7 +352,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
             </>
           ) : (
             <div className="flex min-h-[600px] flex-col items-center justify-center px-6 text-center">
-              <FileSearch size={30} className="mb-3 text-fg-subtle" strokeWidth={1.5} />
+              <FileSearch size={30} className="mb-3 text-[#8c8c8c]" strokeWidth={1.5} />
               <p className="text-[13px] text-[#919191]">Wähle einen Agent aus, um die Durchsuchungsakte zu öffnen.</p>
             </div>
           )}
@@ -374,19 +374,19 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
               type="datetime-local"
               value={form.conductedAt}
               onChange={(event) => setForm({ ...form, conductedAt: event.target.value })}
-              className="h-9 w-full rounded-[9px] border border-line/70 bg-surface-sunken/60 px-3 text-[13px] text-fg outline-none transition-all focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#0ea5e9]/10"
+              className="h-9 w-full rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 text-[13px] text-[#f4f4f4] outline-none transition-all focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#0ea5e9]/10"
               required
             />
           </div>
 
           <fieldset>
             <legend className="mb-2 block text-[12.5px] font-medium text-[#aeaeae]">Verbotene Gegenstände gefunden?</legend>
-            <div className="grid grid-cols-2 gap-2 rounded-xl border border-line/60 bg-[#161616]/45 p-1.5">
+            <div className="grid grid-cols-2 gap-2 rounded-xl border border-[#343434]/60 bg-[#161616]/45 p-1.5">
               <button
                 type="button"
                 onClick={() => setForm({ ...form, prohibitedItemsFound: false })}
                 aria-pressed={!form.prohibitedItemsFound}
-                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', !form.prohibitedItemsFound ? 'bg-[#34d399]/12 text-[#6ee7b7] shadow-[inset_0_0_0_1px_rgba(52,211,153,.2)]' : 'text-fg-subtle hover:text-[#aeaeae]')}
+                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', !form.prohibitedItemsFound ? 'bg-[#34d399]/12 text-[#6ee7b7] shadow-[inset_0_0_0_1px_rgba(52,211,153,.2)]' : 'text-[#8c8c8c] hover:text-[#aeaeae]')}
               >
                 <ShieldCheck size={14} /> Nein
               </button>
@@ -394,7 +394,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                 type="button"
                 onClick={() => setForm({ ...form, prohibitedItemsFound: true })}
                 aria-pressed={form.prohibitedItemsFound}
-                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', form.prohibitedItemsFound ? 'bg-[#fb7185]/12 text-[#fda4af] shadow-[inset_0_0_0_1px_rgba(251,113,133,.2)]' : 'text-fg-subtle hover:text-[#aeaeae]')}
+                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', form.prohibitedItemsFound ? 'bg-[#fb7185]/12 text-[#fda4af] shadow-[inset_0_0_0_1px_rgba(251,113,133,.2)]' : 'text-[#8c8c8c] hover:text-[#aeaeae]')}
               >
                 <ShieldAlert size={14} /> Ja
               </button>
@@ -421,7 +421,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
             Ersteller und Eintragungszeit werden automatisch gespeichert. Einträge bleiben unverändert; Korrekturen erfolgen durch Löschen und erneutes Erfassen.
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-line/60 pt-4">
+          <div className="flex justify-end gap-2 border-t border-[#343434]/60 pt-4">
             <Button variant="secondary" size="sm" onClick={() => setModalOpen(false)}>Abbrechen</Button>
             <Button size="sm" onClick={() => void createSearch()} disabled={!selectedAgent || !form.conductedAt || (form.prohibitedItemsFound && !form.foundItems.trim()) || saving} loading={saving}>Durchsuchung speichern</Button>
           </div>

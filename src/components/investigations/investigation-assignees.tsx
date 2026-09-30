@@ -73,7 +73,7 @@ export function InvestigationAssignees({
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-[14px] font-semibold text-white">Zugewiesene Ermittler</h2>
-          <p className="mt-0.5 text-[11.5px] text-fg-subtle">
+          <p className="mt-0.5 text-[11.5px] text-[#8c8c8c]">
             {classified
               ? 'Diese Agents sehen die Verschlusssache zusätzlich zu Ersteller, Fallführung und Berechtigten.'
               : 'Die Akte ist nicht vertraulich – Zuweisungen dokumentieren hier, wer ermittelt.'}
@@ -88,29 +88,29 @@ export function InvestigationAssignees({
       </div>
 
       {leadAgent && (
-        <div className="mb-2 flex items-center gap-2 rounded-[9px] border border-surface-hover bg-[#111111] px-3 py-2">
+        <div className="mb-2 flex items-center gap-2 rounded-[9px] border border-[#2a2a2a] bg-[#111111] px-3 py-2">
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#c4b5fd]" />
           <span className="text-[12.5px] text-white">
             {leadAgent.firstName} {leadAgent.lastName} ({displayBadgeNumber(leadAgent.badgeNumber)})
           </span>
-          <span className="text-[11px] text-fg-subtle">Fallführung</span>
+          <span className="text-[11px] text-[#8c8c8c]">Fallführung</span>
         </div>
       )}
 
       {assignees.length === 0 ? (
-        <p className="py-2 text-[12.5px] text-fg-subtle">Keine weiteren Ermittler zugewiesen.</p>
+        <p className="py-2 text-[12.5px] text-[#8c8c8c]">Keine weiteren Ermittler zugewiesen.</p>
       ) : (
-        <ul className="divide-y divide-surface-raised">
+        <ul className="divide-y divide-[#232323]">
           {assignees.map((assignee) => (
             <li key={assignee.id} className="flex items-center justify-between gap-3 py-2.5">
               <div className="min-w-0">
                 <p className="truncate text-[13px] text-white">
                   {assignee.agent.firstName} {assignee.agent.lastName} ({displayBadgeNumber(assignee.agent.badgeNumber)})
                   {assignee.agent.rank && (
-                    <span className="ml-2 text-[11.5px] text-fg-subtle">{assignee.agent.rank.name}</span>
+                    <span className="ml-2 text-[11.5px] text-[#8c8c8c]">{assignee.agent.rank.name}</span>
                   )}
                 </p>
-                <p className="mt-0.5 text-[11px] text-fg-subtle">
+                <p className="mt-0.5 text-[11px] text-[#8c8c8c]">
                   Zugewiesen {formatDateTime(assignee.createdAt)}
                   {assignee.addedBy ? ` von ${assignee.addedBy.displayName}` : ''}
                 </p>
@@ -126,7 +126,7 @@ export function InvestigationAssignees({
                 <button
                   type="button"
                   onClick={() => void handleRemove(assignee)}
-                  className="shrink-0 text-fg-subtle transition-colors hover:text-[#fca5a5]"
+                  className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                   aria-label="Zuweisung entfernen"
                 >
                   <X className="h-4 w-4" />

@@ -34,7 +34,7 @@ export function InternalAffairsNavigation({ active }: { active: InternalAffairsS
               'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0ea5e9]/35',
               isActive
                 ? 'border-[#0ea5e9]/40 bg-[#0ea5e9]/10 text-[#7dd3fc]'
-                : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
+                : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
             )}
           >
             <Icon size={14} strokeWidth={2} />

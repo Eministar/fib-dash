@@ -76,7 +76,7 @@ export function Modal({ open, onClose, title, description, children, className, 
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="fixed inset-0 bg-canvas/60 backdrop-blur-[2px] z-50"
+                className="fixed inset-0 bg-[#080808]/60 backdrop-blur-[2px] z-50"
               />
             </Dialog.Overlay>
             <Dialog.Content asChild>
@@ -97,7 +97,7 @@ export function Modal({ open, onClose, title, description, children, className, 
                   className
                 )}
               >
-                <div aria-hidden className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-line-strong sm:hidden" />
+                <div aria-hidden className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-[#404040] sm:hidden" />
                 <div className="p-5 sm:p-6" onKeyDown={submitOnEnter}>
                   {title ? (
                     <div className="mb-5">
@@ -105,7 +105,7 @@ export function Modal({ open, onClose, title, description, children, className, 
                         {title}
                       </Dialog.Title>
                       {description ? (
-                        <Dialog.Description className="text-[13px] text-fg-muted mt-1">
+                        <Dialog.Description className="text-[13px] text-[#a6a6a6] mt-1">
                           {description}
                         </Dialog.Description>
                       ) : (
@@ -126,7 +126,7 @@ export function Modal({ open, onClose, title, description, children, className, 
                 </div>
                 <Dialog.Close asChild>
                   <button
-                    className="absolute top-4 right-4 p-1.5 rounded-[8px] text-[#909090] hover:text-accent hover:bg-surface-raised/60 transition-colors"
+                    className="absolute top-4 right-4 p-1.5 rounded-[8px] text-[#909090] hover:text-[#d4d4d4] hover:bg-[#232323]/60 transition-colors"
                     aria-label="Schließen"
                   >
                     <X size={15} strokeWidth={2} />

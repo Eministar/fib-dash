@@ -247,7 +247,7 @@ export default function DutyTimesPage() {
             <section className="glass-panel-elevated rounded-[14px] p-5">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2">
-                  <Trophy size={16} className="text-accent" />
+                  <Trophy size={16} className="text-[#d4d4d4]" />
                   <h3 className="text-[13.5px] font-semibold text-[#fafafa]">Top-Spielzeit diese Woche</h3>
                 </div>
                 <span className="text-[11.5px] text-[#868686]">Sync {formatRelativeTime(data.sync.checkedAt)}</span>
@@ -259,10 +259,10 @@ export default function DutyTimesPage() {
                       // visual order: 2nd, 1st, 3rd
                       const rank = agent === podium[0] ? 1 : agent === podium[1] ? 2 : 3
                       const colors = rank === 1
-                          ? { ring: 'ring-accent/40', text: 'text-accent', label: 'bg-accent text-surface-sunken', icon: <Crown size={14} /> }
+                          ? { ring: 'ring-[#d4d4d4]/40', text: 'text-[#d4d4d4]', label: 'bg-[#d4d4d4] text-[#181818]', icon: <Crown size={14} /> }
                           : rank === 2
-                              ? { ring: 'ring-[#c7c7c7]/30', text: 'text-[#c7c7c7]', label: 'bg-[#c7c7c7] text-surface-sunken', icon: null }
-                              : { ring: 'ring-[#b08968]/30', text: 'text-[#b08968]', label: 'bg-[#b08968] text-surface-sunken', icon: null }
+                              ? { ring: 'ring-[#c7c7c7]/30', text: 'text-[#c7c7c7]', label: 'bg-[#c7c7c7] text-[#181818]', icon: null }
+                              : { ring: 'ring-[#b08968]/30', text: 'text-[#b08968]', label: 'bg-[#b08968] text-[#181818]', icon: null }
                       return (
                           <Link
                               key={agent.id}
@@ -298,17 +298,17 @@ export default function DutyTimesPage() {
               {data.topRows.length > 3 && (
                   <div className="space-y-2">
                     {data.topRows.slice(3).map((agent) => (
-                        <Link key={agent.id} href={`/agents/${agent.id}`} className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-3 rounded-[10px] border border-[#373737]/40 bg-[#1c1c1c]/55 px-3 py-2.5 transition-colors hover:border-accent/25">
+                        <Link key={agent.id} href={`/agents/${agent.id}`} className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-3 rounded-[10px] border border-[#373737]/40 bg-[#1c1c1c]/55 px-3 py-2.5 transition-colors hover:border-[#d4d4d4]/25">
                           <div className="min-w-0">
                             <div className="flex items-center justify-between gap-3">
                               <p className="truncate text-[12.5px] font-medium text-white">
-                                {agentName(agent)} <span className="font-mono text-accent">#{displayBadgeNumber(agent.badgeNumber)}</span>
+                                {agentName(agent)} <span className="font-mono text-[#d4d4d4]">#{displayBadgeNumber(agent.badgeNumber)}</span>
                               </p>
-                              <span className="shrink-0 text-[12px] font-semibold tabular-nums text-accent">{formatDuration(agent.weekDurationMs)}</span>
+                              <span className="shrink-0 text-[12px] font-semibold tabular-nums text-[#d4d4d4]">{formatDuration(agent.weekDurationMs)}</span>
                             </div>
-                            <div className="mt-2 h-[6px] overflow-hidden rounded-full bg-canvas/80">
+                            <div className="mt-2 h-[6px] overflow-hidden rounded-full bg-[#080808]/80">
                               <div
-                                  className="h-full rounded-full bg-gradient-to-r from-accent to-[#38bdf8]"
+                                  className="h-full rounded-full bg-gradient-to-r from-[#d4d4d4] to-[#38bdf8]"
                                   style={{ width: `${Math.max(4, (agent.weekDurationMs / topMax) * 100)}%` }}
                               />
                             </div>
@@ -344,9 +344,9 @@ export default function DutyTimesPage() {
                         <AgentAvatar agent={agent} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <Link href={`/agents/${agent.id}`} className="text-[14px] font-semibold text-white transition-colors hover:text-accent">
+                            <Link href={`/agents/${agent.id}`} className="text-[14px] font-semibold text-white transition-colors hover:text-[#d4d4d4]">
                               {agentName(agent)}
-                              <span className="ml-1 font-mono text-accent">#{displayBadgeNumber(agent.badgeNumber)}</span>
+                              <span className="ml-1 font-mono text-[#d4d4d4]">#{displayBadgeNumber(agent.badgeNumber)}</span>
                             </Link>
                             <StatusPill status={agent.apiStatus} />
                           </div>
@@ -377,7 +377,7 @@ export default function DutyTimesPage() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#868686]">
-                        <span>Woche: <strong className="text-accent tabular-nums">{formatDuration(agent.weekDurationMs)}</strong></span>
+                        <span>Woche: <strong className="text-[#d4d4d4] tabular-nums">{formatDuration(agent.weekDurationMs)}</strong></span>
                         <span>Gesamt: <strong className="text-[#38bdf8] tabular-nums">{formatDuration(agent.totalDurationMs)}</strong></span>
                         <span>Sessions: <strong className="text-[#d2d2d2] tabular-nums">{agent.sessionCount}</strong></span>
                         <span>Heartbeat: <strong className="text-[#d2d2d2]">{formatRelativeTime(agent.lastHeartbeat ?? '')}</strong></span>
@@ -398,21 +398,21 @@ export default function DutyTimesPage() {
           <p className="text-[12px] text-[#868686] mb-4">
             Alle nicht gekündigten Agents mit Live-Status, IDs und Spielzeitstatistik.
           </p>
-          <div className="divide-y divide-line/40">
+          <div className="divide-y divide-[#343434]/40">
             {data.rows.map((agent) => (
                 <div key={agent.id} className="grid grid-cols-1 gap-3 py-3 first:pt-0 last:pb-0 xl:grid-cols-[minmax(0,1fr)_260px_420px] xl:items-center">
                   <div className="min-w-0 flex items-start gap-3">
                     <AgentAvatar agent={agent} size="sm" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Link href={`/agents/${agent.id}`} className="text-[13px] font-medium text-white transition-colors hover:text-accent">
-                          {agentName(agent)} <span className="font-mono text-accent">#{displayBadgeNumber(agent.badgeNumber)}</span>
+                        <Link href={`/agents/${agent.id}`} className="text-[13px] font-medium text-white transition-colors hover:text-[#d4d4d4]">
+                          {agentName(agent)} <span className="font-mono text-[#d4d4d4]">#{displayBadgeNumber(agent.badgeNumber)}</span>
                         </Link>
                         <StatusPill status={agent.apiStatus} compact />
                       </div>
                       <p className="mt-0.5 text-[11.5px] text-[#868686]">{agent.rank.name}</p>
                       {agent.currentPlayer && (
-                          <p className="mt-1 truncate text-[11px] text-fg-subtle">
+                          <p className="mt-1 truncate text-[11px] text-[#8c8c8c]">
                             {agent.currentPlayer.name}
                             {agent.currentPlayer.identifier ? ` · ${agent.currentPlayer.identifier}` : ''}
                           </p>
@@ -461,17 +461,17 @@ function KpiCard({ icon: Icon, label, value, accent }: { icon: LucideIcon; label
 
 function Metric({ label, value, strong }: { label: string; value?: string; strong?: boolean }) {
   return (
-      <div className="rounded-[8px] bg-canvas/60 border border-line/30 px-3 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-fg-subtle">{label}</p>
-        <p className={cn('mt-1 truncate text-[12.5px] tabular-nums', strong ? 'font-semibold text-accent' : 'text-[#d2d2d2]')}>{value || '—'}</p>
+      <div className="rounded-[8px] bg-[#080808]/60 border border-[#343434]/30 px-3 py-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8c8c8c]">{label}</p>
+        <p className={cn('mt-1 truncate text-[12.5px] tabular-nums', strong ? 'font-semibold text-[#d4d4d4]' : 'text-[#d2d2d2]')}>{value || '—'}</p>
       </div>
   )
 }
 
 function IdentityMetric({ label, value }: { label: string; value?: string | null }) {
   return (
-      <div className="rounded-[8px] bg-canvas/60 border border-line/30 px-3 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-fg-subtle">{label}</p>
+      <div className="rounded-[8px] bg-[#080808]/60 border border-[#343434]/30 px-3 py-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8c8c8c]">{label}</p>
         <p className="mt-1 truncate font-mono text-[11.5px] text-[#d2d2d2]" title={value || undefined}>{value || '—'}</p>
       </div>
   )
@@ -488,7 +488,7 @@ function StatusPill({ status, compact }: { status: ApiStatus; compact?: boolean 
               ? 'border-[#22c55e]/30 bg-[#052e1b]/60 text-[#86efac]'
               : error
                   ? 'border-[#ef4444]/25 bg-[#2a1111]/60 text-[#fca5a5]'
-                  : 'border-line-strong/60 bg-surface-sunken/60 text-fg-muted',
+                  : 'border-[#404040]/60 bg-[#181818]/60 text-[#a6a6a6]',
       )}>
       {online ? <span className="live-pulse" /> : <span className={cn('h-1.5 w-1.5 rounded-full', error ? 'bg-[#ef4444]' : 'bg-[#808080]')} />}
         {statusLabel(status)}
@@ -504,19 +504,19 @@ function MiniBars({ daily }: { daily: DailyPoint[] }) {
           const isToday = new Date(day.date).toDateString() === new Date().toDateString()
           return (
               <div key={`${day.date}-${day.label}`} className="min-w-0 group">
-                <div className="flex h-[38px] items-end rounded-[6px] bg-canvas/60 border border-line/30 px-1 transition-colors group-hover:border-accent/30">
+                <div className="flex h-[38px] items-end rounded-[6px] bg-[#080808]/60 border border-[#343434]/30 px-1 transition-colors group-hover:border-[#d4d4d4]/30">
                   <div
                       className={cn(
                           'w-full rounded-t-[4px] transition-all',
                           isToday
-                              ? 'bg-gradient-to-t from-accent to-[#fde68a]'
+                              ? 'bg-gradient-to-t from-[#d4d4d4] to-[#fde68a]'
                               : 'bg-gradient-to-t from-[#1d4ed8] to-[#38bdf8]',
                       )}
                       style={{ height: Math.max(4, Math.round((day.durationMs / max) * 32)) }}
                       title={`${day.label}: ${day.durationLabel}`}
                   />
                 </div>
-                <p className={cn('mt-1 truncate text-center text-[11px]', isToday ? 'text-accent font-semibold' : 'text-[#868686]')}>{day.label}</p>
+                <p className={cn('mt-1 truncate text-center text-[11px]', isToday ? 'text-[#d4d4d4] font-semibold' : 'text-[#868686]')}>{day.label}</p>
               </div>
           )
         })}
@@ -527,8 +527,8 @@ function MiniBars({ daily }: { daily: DailyPoint[] }) {
 function EmptyState({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   return (
       <div className="rounded-[12px] border border-dashed border-[#373737]/55 bg-[#1c1c1c]/35 px-4 py-12 text-center">
-        <Icon size={28} className="mx-auto text-accent/40 mb-3" />
-        <p className="text-[13px] text-fg-muted">{text}</p>
+        <Icon size={28} className="mx-auto text-[#d4d4d4]/40 mb-3" />
+        <p className="text-[13px] text-[#a6a6a6]">{text}</p>
       </div>
   )
 }

@@ -77,11 +77,11 @@ export function PhotoGrid({ onSelect, selectedIds = [], onUpload }: { onSelect?:
     {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
     {loading && !data ? <p className="py-8 text-sm text-[#909090]">Bilder werden geladen …</p> : !data?.items.length ? <p className="py-8 text-sm text-[#909090]">Noch keine passenden Bilder. Lade eines hoch oder poste es im eingerichteten Discord-Channel.</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {data.items.map(photo => <button key={photo.id} type="button" onClick={() => onSelect ? onSelect(photo) : setPreview(photo.id)} aria-pressed={selectedIds.includes(photo.id)} className={cn(
-        'overflow-hidden rounded-xl bg-surface-sunken text-left border hover:border-[#a78bfa] focus-visible:outline-2 focus-visible:outline-[#a78bfa]',
-        selectedIds.includes(photo.id) ? 'border-[#a78bfa] ring-2 ring-[#a78bfa]/40' : 'border-line',
+        'overflow-hidden rounded-xl bg-[#181818] text-left border hover:border-[#a78bfa] focus-visible:outline-2 focus-visible:outline-[#a78bfa]',
+        selectedIds.includes(photo.id) ? 'border-[#a78bfa] ring-2 ring-[#a78bfa]/40' : 'border-[#343434]',
       )}>
         <Image unoptimized src={photo.url} alt={photo.title} width={320} height={240} className="aspect-[4/3] w-full object-cover" />
-        <p className="truncate px-3 py-2 text-xs text-accent">{photo.title}</p>
+        <p className="truncate px-3 py-2 text-xs text-[#d4d4d4]">{photo.title}</p>
       </button>)}
     </div>}
     <div className="flex items-center justify-between gap-3"><span className="text-xs text-[#909090]">{data?.total ?? 0} Bilder · Seite {page}</span><div className="flex gap-2"><Button size="sm" variant="outline" disabled={page === 1 || loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button size="sm" variant="outline" disabled={page * 30 >= (data?.total ?? 0) || loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>
@@ -94,7 +94,7 @@ export function PhotoField({ value, onChange, readOnly = false }: { value: strin
   const [open, setOpen] = useState(false)
   return <div className="space-y-2">
     <p className="text-[12.5px] font-medium text-[#aeaeae]">Foto</p>
-    {value ? <Image unoptimized src={value} alt="Aktenfoto" width={400} height={300} className="max-h-56 rounded-lg object-contain" /> : <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-line px-4 text-sm text-fg-subtle"><ImageIcon size={20} />Kein Foto ausgewählt</div>}
+    {value ? <Image unoptimized src={value} alt="Aktenfoto" width={400} height={300} className="max-h-56 rounded-lg object-contain" /> : <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 text-sm text-[#8c8c8c]"><ImageIcon size={20} />Kein Foto ausgewählt</div>}
     {!readOnly && <div className="flex flex-wrap items-center gap-2">
       <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>Aus Bildkatalog wählen</Button>
       <PhotoUploadButton onUploaded={photo => onChange(photo)} />
@@ -102,7 +102,7 @@ export function PhotoField({ value, onChange, readOnly = false }: { value: strin
     </div>}
     <Modal open={open} onClose={() => setOpen(false)} title="Foto aus Bildkatalog auswählen" size="xl">
       <PhotoGrid onSelect={photo => { onChange(photo); setOpen(false) }} onUpload={photo => { onChange(photo); setOpen(false) }} />
-      <div className="mt-4 flex justify-end border-t border-surface-raised pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button></div>
+      <div className="mt-4 flex justify-end border-t border-[#232323] pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button></div>
     </Modal>
   </div>
 }
@@ -116,8 +116,8 @@ export function PhotoPicker({ value, onChange }: { value: CatalogPhoto[]; onChan
 
   return <div className="space-y-3">
     {value.length === 0
-      ? <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-line px-4 text-sm text-fg-subtle"><ImageIcon size={20} />Noch keine Bilder ausgewählt</div>
-      : <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{value.map(photo => <div key={photo.id} className="relative overflow-hidden rounded-lg border border-line">
+      ? <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 text-sm text-[#8c8c8c]"><ImageIcon size={20} />Noch keine Bilder ausgewählt</div>
+      : <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{value.map(photo => <div key={photo.id} className="relative overflow-hidden rounded-lg border border-[#343434]">
           <Image unoptimized src={photo.url} alt={photo.title} width={200} height={150} className="aspect-[4/3] w-full object-cover" />
           <button type="button" aria-label={`${photo.title} entfernen`} onClick={() => toggle(photo)} className="absolute right-1 top-1 rounded bg-[#111111]/80 px-1.5 text-xs text-[#fca5a5]">×</button>
         </div>)}</div>}

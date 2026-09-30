@@ -287,7 +287,7 @@ export default function SanktionenPage() {
   if (loading) return <PageLoader />
 
   const filterClass =
-    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-line/50 focus:outline-none focus:border-accent transition-all'
+    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-[#343434]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
 
   return (
     <div>
@@ -320,12 +320,12 @@ export default function SanktionenPage() {
 
           <div className="mb-5 flex flex-col gap-2 lg:flex-row">
             <div className="relative flex-1">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" strokeWidth={1.75} />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" strokeWidth={1.75} />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Suche nach Name, Dienstnummer, Rang, Verstoß oder Grund..."
-                className={cn(filterClass, 'w-full pl-9 placeholder:text-fg-subtle')}
+                className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
               />
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex">
@@ -337,7 +337,7 @@ export default function SanktionenPage() {
           </div>
 
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[12px] text-fg-subtle">
+            <p className="text-[12px] text-[#8c8c8c]">
               {filtered.length} von {sanctions?.length ?? 0} Sanktionen
             </p>
             {(sanctions?.length ?? 0) >= 1000 && (
@@ -371,7 +371,7 @@ export default function SanktionenPage() {
             </div>
           ) : (
             <div className="glass-panel-elevated rounded-[14px] py-20 text-center">
-              <Gavel size={28} className="mx-auto mb-3 text-fg" strokeWidth={1.5} />
+              <Gavel size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
               <p className="text-[13px] text-[#909090]">
                 {sanctions && sanctions.length > 0 ? 'Keine Treffer für die aktuellen Filter' : 'Keine Sanktionen vorhanden'}
               </p>
@@ -383,7 +383,7 @@ export default function SanktionenPage() {
       <Modal open={!!editing} onClose={() => setEditing(null)} title="Sanktion bearbeiten">
         {editing && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-[10px] border border-line/60 bg-[#1c1c1c]/70 px-3.5 py-3">
+            <div className="flex items-center gap-3 rounded-[10px] border border-[#343434]/60 bg-[#1c1c1c]/70 px-3.5 py-3">
               <Gavel size={15} className="text-[#f59e0b] shrink-0" strokeWidth={1.75} />
               <p className="text-[13px] text-[#aeaeae]">
                 Sanktion bearbeiten für{' '}
@@ -401,14 +401,14 @@ export default function SanktionenPage() {
             />
 
             {isPenalGrade(editForm.penalGrade) && (
-              <div className="rounded-[9px] border border-line/70 bg-surface-sunken/60 px-3 py-2.5">
+              <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
                 <p className="text-[12.5px] font-medium text-[#aeaeae]">
                   {PENAL_GRADE_RULES[editForm.penalGrade].severity}
                 </p>
-                <p className="mt-1 text-[13px] leading-snug text-fg">
+                <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">
                   {PENAL_GRADE_RULES[editForm.penalGrade].description}
                 </p>
-                <p className="mt-1.5 text-[12px] text-fg-subtle">
+                <p className="mt-1.5 text-[12px] text-[#8c8c8c]">
                   Regelsanktion: {PENAL_GRADE_RULES[editForm.penalGrade].typicalConsequence}
                 </p>
               </div>
@@ -432,9 +432,9 @@ export default function SanktionenPage() {
             />
 
             {editLevelRule && (
-              <div className="rounded-[9px] border border-line/70 bg-surface-sunken/60 px-3 py-2.5">
+              <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
                 <p className="text-[12.5px] font-medium text-[#aeaeae]">Anwendung</p>
-                <p className="mt-1 text-[13px] leading-snug text-fg">{editLevelRule.application}</p>
+                <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">{editLevelRule.application}</p>
               </div>
             )}
 
@@ -455,8 +455,8 @@ export default function SanktionenPage() {
               placeholder="Zusätzliche Auflagen oder Folgen (optional)..."
             />
 
-            <div className="rounded-[10px] border border-line/70 bg-surface-sunken/60 px-3.5 py-3">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-fg-subtle">
+            <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/60 px-3.5 py-3">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#8c8c8c]">
                 Entscheidungs-Check
               </p>
               <div className="space-y-1.5">
@@ -491,11 +491,11 @@ export default function SanktionenPage() {
       <Modal open={!!toDelete} onClose={() => setToDelete(null)} title="Sanktion löschen">
         {toDelete && (
           <div className="space-y-4">
-            <div className="rounded-[10px] border border-line/60 bg-[#1c1c1c]/70 px-3.5 py-3">
+            <div className="rounded-[10px] border border-[#343434]/60 bg-[#1c1c1c]/70 px-3.5 py-3">
               <p className="text-[13px] font-semibold text-[#eee]">
                 {cardAgent(toDelete).firstName} {cardAgent(toDelete).lastName} · {penalGradeLabel(toDelete.penalGrade)}
               </p>
-              <p className="mt-1 text-[12.5px] text-fg-muted">{toDelete.reason}</p>
+              <p className="mt-1 text-[12.5px] text-[#a6a6a6]">{toDelete.reason}</p>
             </div>
             <p className="text-[12.5px] text-[#aeaeae]">Diese Sanktion wird dauerhaft gelöscht.</p>
             <div className="flex justify-end gap-2 pt-1">
@@ -513,13 +513,13 @@ function StatTile({ label, value, tone }: { label: string; value: string; tone: 
   const toneClass = {
     open: 'text-[#fbbf24]',
     alert: 'text-[#fca5a5]',
-    gold: 'text-accent',
-    neutral: 'text-fg',
+    gold: 'text-[#d4d4d4]',
+    neutral: 'text-[#f4f4f4]',
   }[tone]
 
   return (
     <div className="glass-panel-elevated rounded-[12px] px-4 py-3">
-      <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-fg-subtle">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-[#8c8c8c]">{label}</p>
       <p className={cn('mt-1 text-[19px] font-semibold tabular-nums', toneClass)}>{value}</p>
     </div>
   )

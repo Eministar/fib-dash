@@ -361,9 +361,9 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
       />
 
       {/* Filterleiste */}
-      <div className="flex flex-col gap-3 rounded-xl border border-line/60 bg-[#191919]/60 p-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-xl border border-[#343434]/60 bg-[#191919]/60 p-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -392,10 +392,10 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
 
       {/* Liste der DAWs */}
       {filteredDaws.length === 0 ? (
-        <div className="rounded-2xl border border-line/50 bg-[#161616]/50 p-12 text-center">
-          <ShieldAlert className="mx-auto h-12 w-12 text-fg-subtle" />
+        <div className="rounded-2xl border border-[#343434]/50 bg-[#161616]/50 p-12 text-center">
+          <ShieldAlert className="mx-auto h-12 w-12 text-[#8c8c8c]" />
           <p className="mt-3 text-base font-semibold text-white">Keine Akten gefunden</p>
-          <p className="mt-1 text-xs text-fg-muted">
+          <p className="mt-1 text-xs text-[#a6a6a6]">
             {search || statusFilter !== 'ALL' || categoryFilter !== 'ALL'
               ? 'Passe deine Filterkriterien an, um Ergebnisse anzuzeigen.'
               : 'Es wurden bisher keine Dienstaufsichtswarnungen oder Disziplinarakten angelegt.'}
@@ -428,7 +428,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
             return (
               <div
                 key={item.id}
-                className="group flex flex-col justify-between rounded-xl border border-line/60 bg-[#161616]/80 p-4 transition-all hover:border-[#0ea5e9]/50 hover:bg-[#1e1e1e]"
+                className="group flex flex-col justify-between rounded-xl border border-[#343434]/60 bg-[#161616]/80 p-4 transition-all hover:border-[#0ea5e9]/50 hover:bg-[#1e1e1e]"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
@@ -456,7 +456,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                   </div>
 
                   {/* Betroffener Agent */}
-                  <div className="mt-3.5 flex items-center gap-2.5 rounded-lg border border-line/40 bg-[#111111]/60 p-2.5">
+                  <div className="mt-3.5 flex items-center gap-2.5 rounded-lg border border-[#343434]/40 bg-[#111111]/60 p-2.5">
                     <AgentAvatar
                       agent={avatarAgent}
                       size="sm"
@@ -465,7 +465,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                       <p className="truncate text-xs font-semibold text-white">
                         {agentName}
                       </p>
-                      <p className="truncate text-[11px] text-fg-muted">
+                      <p className="truncate text-[11px] text-[#a6a6a6]">
                         {badge} · {rankName}
                       </p>
                     </div>
@@ -474,8 +474,8 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                   {/* Tatvorwurf Zusammenfassung */}
                   {item.allegation && (
                     <div className="mt-3">
-                      <p className="text-[11px] font-semibold text-fg-muted">Tatvorwurf:</p>
-                      <p className="line-clamp-2 text-xs text-accent">{item.allegation}</p>
+                      <p className="text-[11px] font-semibold text-[#a6a6a6]">Tatvorwurf:</p>
+                      <p className="line-clamp-2 text-xs text-[#d4d4d4]">{item.allegation}</p>
                     </div>
                   )}
 
@@ -502,7 +502,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="mt-4 flex items-center justify-between border-t border-line/40 pt-3 text-[11px] text-fg-subtle">
+                <div className="mt-4 flex items-center justify-between border-t border-[#343434]/40 pt-3 text-[11px] text-[#8c8c8c]">
                   <span>{formatDateTime(item.createdAt)}</span>
                   <div className="flex items-center gap-1">
                     <Button
@@ -518,7 +518,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                         size="sm"
                         variant="ghost"
                         onClick={() => openEditModal(item)}
-                        className="h-7 px-2 text-xs text-accent hover:bg-white/5"
+                        className="h-7 px-2 text-xs text-[#d4d4d4] hover:bg-white/5"
                       >
                         <FileEdit size={13} />
                       </Button>
@@ -540,7 +540,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-semibold text-fg-muted">Titel / Betreff *</label>
+              <label className="text-xs font-semibold text-[#a6a6a6]">Titel / Betreff *</label>
               <Input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -551,7 +551,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-fg-muted">Kategorie *</label>
+              <label className="text-xs font-semibold text-[#a6a6a6]">Kategorie *</label>
               <Select
                 value={form.category}
                 onValueChange={(val) => setForm({ ...form, category: val })}
@@ -563,7 +563,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-semibold text-fg-muted">Betroffener Agent</label>
+              <label className="text-xs font-semibold text-[#a6a6a6]">Betroffener Agent</label>
               <Select
                 value={form.agentId}
                 onValueChange={(val) => setForm({ ...form, agentId: val })}
@@ -573,7 +573,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-fg-muted">Fallnummer (optional)</label>
+              <label className="text-xs font-semibold text-[#a6a6a6]">Fallnummer (optional)</label>
               <Input
                 value={form.caseNumber}
                 onChange={(e) => setForm({ ...form, caseNumber: e.target.value })}
@@ -584,7 +584,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-fg-muted">Tatvorwurf / Verstoß</label>
+            <label className="text-xs font-semibold text-[#a6a6a6]">Tatvorwurf / Verstoß</label>
             <Input
               value={form.allegation}
               onChange={(e) => setForm({ ...form, allegation: e.target.value })}
@@ -594,7 +594,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-fg-muted">Sachverhalt / Ausführliche Schilderung</label>
+            <label className="text-xs font-semibold text-[#a6a6a6]">Sachverhalt / Ausführliche Schilderung</label>
             <Textarea
               value={form.statement}
               onChange={(e) => setForm({ ...form, statement: e.target.value })}
@@ -605,12 +605,12 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
           </div>
 
           {/* Sanktionen & Strafmaß */}
-          <div className="rounded-xl border border-line/70 bg-[#161616]/80 p-3.5 space-y-3">
+          <div className="rounded-xl border border-[#343434]/70 bg-[#161616]/80 p-3.5 space-y-3">
             <p className="text-xs font-bold text-[#7dd3fc]">Sanktion & Disziplinarmaßnahme (Penal Grade)</p>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-semibold text-fg-muted">Penal Grade</label>
+                <label className="text-xs font-semibold text-[#a6a6a6]">Penal Grade</label>
                 <Select
                   value={form.penalGrade}
                   onValueChange={(val) => setForm({ ...form, penalGrade: val })}
@@ -621,7 +621,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-fg-muted">Status der Akte</label>
+                <label className="text-xs font-semibold text-[#a6a6a6]">Status der Akte</label>
                 <Select
                   value={form.status}
                   onValueChange={(val) => setForm({ ...form, status: val })}
@@ -634,7 +634,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <label className="text-xs font-semibold text-fg-muted">Geldstrafe ($)</label>
+                <label className="text-xs font-semibold text-[#a6a6a6]">Geldstrafe ($)</label>
                 <Input
                   type="number"
                   value={form.fineAmount}
@@ -644,7 +644,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-fg-muted">SG-Runden</label>
+                <label className="text-xs font-semibold text-[#a6a6a6]">SG-Runden</label>
                 <Input
                   type="number"
                   value={form.sgRounds}
@@ -654,7 +654,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-fg-muted">Suspendierung (Std.)</label>
+                <label className="text-xs font-semibold text-[#a6a6a6]">Suspendierung (Std.)</label>
                 <Input
                   type="number"
                   value={form.suspensionHours}
@@ -666,7 +666,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-fg-muted">Zusätzliche Auflagen / Bemerkung zur Sanktion</label>
+              <label className="text-xs font-semibold text-[#a6a6a6]">Zusätzliche Auflagen / Bemerkung zur Sanktion</label>
               <Input
                 value={form.sanctionSummary}
                 onChange={(e) => setForm({ ...form, sanctionSummary: e.target.value })}
@@ -678,7 +678,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-semibold text-fg-muted">Tatzeitpunkt</label>
+              <label className="text-xs font-semibold text-[#a6a6a6]">Tatzeitpunkt</label>
               <Input
                 type="datetime-local"
                 value={form.incidentAt}
@@ -687,7 +687,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-fg-muted">Frist / Zahlungsziel</label>
+              <label className="text-xs font-semibold text-[#a6a6a6]">Frist / Zahlungsziel</label>
               <Input
                 type="datetime-local"
                 value={form.deadlineAt}
@@ -698,7 +698,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-fg-muted">Beweise & Anhänge (URLs, eine pro Zeile)</label>
+            <label className="text-xs font-semibold text-[#a6a6a6]">Beweise & Anhänge (URLs, eine pro Zeile)</label>
             <Textarea
               value={form.evidenceUrls}
               onChange={(e) => setForm({ ...form, evidenceUrls: e.target.value })}
@@ -709,7 +709,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-fg-muted">Abschlussvermerk / Ergebnis (optional)</label>
+            <label className="text-xs font-semibold text-[#a6a6a6]">Abschlussvermerk / Ergebnis (optional)</label>
             <Textarea
               value={form.resolutionNote}
               onChange={(e) => setForm({ ...form, resolutionNote: e.target.value })}
@@ -738,7 +738,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
           title={`Fallakte: ${viewingItem.caseNumber || 'Entwurf'}`}
         >
           <div className="space-y-4 text-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line/40 pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#343434]/40 pb-3">
               <div>
                 <span className="font-mono text-xs font-bold text-[#0ea5e9]">
                   {viewingItem.caseNumber || 'DAW-ENTWURF'}
@@ -753,7 +753,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
             </div>
 
             {/* Agent Box */}
-            <div className="rounded-xl border border-line/60 bg-[#161616] p-3.5 flex items-center gap-3">
+            <div className="rounded-xl border border-[#343434]/60 bg-[#161616] p-3.5 flex items-center gap-3">
               <AgentAvatar
                 agent={{
                   firstName: viewingItem.agent?.firstName || viewingItem.previousFirstName || '',
@@ -763,7 +763,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                 size="md"
               />
               <div>
-                <p className="text-xs text-fg-muted">Betroffener Agent</p>
+                <p className="text-xs text-[#a6a6a6]">Betroffener Agent</p>
                 <p className="font-bold text-white">
                   {viewingItem.agent
                     ? `${viewingItem.agent.firstName} ${viewingItem.agent.lastName}`
@@ -779,16 +779,16 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
 
             {/* Tatvorwurf & Sachverhalt */}
             {viewingItem.allegation && (
-              <div className="rounded-xl border border-line/40 bg-[#111111]/70 p-3.5">
-                <p className="text-xs font-bold text-fg-muted">Tatvorwurf / Anschuldigung:</p>
+              <div className="rounded-xl border border-[#343434]/40 bg-[#111111]/70 p-3.5">
+                <p className="text-xs font-bold text-[#a6a6a6]">Tatvorwurf / Anschuldigung:</p>
                 <p className="mt-1 text-white">{viewingItem.allegation}</p>
               </div>
             )}
 
             {viewingItem.statement && (
-              <div className="rounded-xl border border-line/40 bg-[#111111]/70 p-3.5">
-                <p className="text-xs font-bold text-fg-muted">Sachverhalt & Ermittlungsbericht:</p>
-                <p className="mt-1 whitespace-pre-wrap text-xs text-accent leading-relaxed">
+              <div className="rounded-xl border border-[#343434]/40 bg-[#111111]/70 p-3.5">
+                <p className="text-xs font-bold text-[#a6a6a6]">Sachverhalt & Ermittlungsbericht:</p>
+                <p className="mt-1 whitespace-pre-wrap text-xs text-[#d4d4d4] leading-relaxed">
                   {viewingItem.statement}
                 </p>
               </div>
@@ -830,8 +830,8 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
 
             {/* Beweise */}
             {viewingItem.evidence && viewingItem.evidence.length > 0 && (
-              <div className="rounded-xl border border-line/40 bg-[#111111]/70 p-3.5 space-y-2">
-                <p className="text-xs font-bold text-fg-muted">Beweismittel & Links:</p>
+              <div className="rounded-xl border border-[#343434]/40 bg-[#111111]/70 p-3.5 space-y-2">
+                <p className="text-xs font-bold text-[#a6a6a6]">Beweismittel & Links:</p>
                 <div className="flex flex-col gap-1.5">
                   {viewingItem.evidence.map((ev, idx) => (
                     <a
@@ -852,12 +852,12 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
             {viewingItem.resolutionNote && (
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5">
                 <p className="text-xs font-bold text-emerald-300">Abschlussvermerk / Ergebnis:</p>
-                <p className="mt-1 text-xs text-accent whitespace-pre-wrap">{viewingItem.resolutionNote}</p>
+                <p className="mt-1 text-xs text-[#d4d4d4] whitespace-pre-wrap">{viewingItem.resolutionNote}</p>
               </div>
             )}
 
             {/* Metadaten */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/40 pt-3 text-[11px] text-fg-subtle">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#343434]/40 pt-3 text-[11px] text-[#8c8c8c]">
               <div>
                 Erstellt am {formatDateTime(viewingItem.createdAt)} von {viewingItem.createdBy?.displayName || 'Unbekannt'}
               </div>
@@ -910,7 +910,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
         size="sm"
       >
         <div className="space-y-3">
-          <p className="text-sm text-accent">
+          <p className="text-sm text-[#d4d4d4]">
             Möchtest du diesen Internal-Affairs-Eintrag wirklich unwiderruflich löschen?
           </p>
           <div className="flex justify-end gap-2 pt-2">

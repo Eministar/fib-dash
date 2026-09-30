@@ -174,7 +174,7 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
   return (
     <div
       ref={viewportRef}
-      className="relative h-full w-full overflow-hidden rounded-[12px] border border-surface-hover bg-[#111111]"
+      className="relative h-full w-full overflow-hidden rounded-[12px] border border-[#2a2a2a] bg-[#111111]"
     >
       <TransformWrapper
         ref={controlsRef}
@@ -249,7 +249,7 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
                     >
                       <MapNeedle color={category.hex} icon={spot.icon} pending={relocating} />
                       {hovered === spot.id && (
-                        <span className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-[calc(100%+8px)] whitespace-nowrap rounded-[8px] border border-line bg-surface-sunken px-2.5 py-1.5 text-[11.5px] font-medium text-white shadow-lg">
+                        <span className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-[calc(100%+8px)] whitespace-nowrap rounded-[8px] border border-[#343434] bg-[#181818] px-2.5 py-1.5 text-[11.5px] font-medium text-white shadow-lg">
                           {spot.title}
                         </span>
                       )}
@@ -273,7 +273,7 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
               </div>
             </TransformComponent>
 
-            <div className="absolute right-3 top-3 z-30 flex rounded-[11px] border border-surface-hover bg-[#141414]/90 p-1 backdrop-blur">
+            <div className="absolute right-3 top-3 z-30 flex rounded-[11px] border border-[#2a2a2a] bg-[#141414]/90 p-1 backdrop-blur">
               <Button
                 variant="ghost"
                 onClick={() => zoomIn(0.18, 180, 'easeOut')}
@@ -307,7 +307,7 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
                 </span>
                 <p className="min-w-0 truncate text-[12px] text-white">
                   <span className="font-semibold">{movingSpot.title}</span>
-                  <span className="text-fg-muted"> · neue Position anklicken</span>
+                  <span className="text-[#a6a6a6]"> · neue Position anklicken</span>
                 </p>
                 <Button
                   variant="ghost"
@@ -321,11 +321,11 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
               </div>
             )}
 
-            <div className="pointer-events-none absolute bottom-3 left-1/2 z-30 hidden -translate-x-1/2 rounded-[9px] border border-surface-hover bg-[#141414]/85 px-3 py-2 text-[11px] text-fg-subtle backdrop-blur sm:block">
+            <div className="pointer-events-none absolute bottom-3 left-1/2 z-30 hidden -translate-x-1/2 rounded-[9px] border border-[#2a2a2a] bg-[#141414]/85 px-3 py-2 text-[11px] text-[#8c8c8c] backdrop-blur sm:block">
               Mausrad zoomt auf den Cursor
-              <span className="px-1.5 text-line-strong">·</span>
+              <span className="px-1.5 text-[#404040]">·</span>
               Ziehen verschiebt die Karte
-              <span className="px-1.5 text-line-strong">·</span>
+              <span className="px-1.5 text-[#404040]">·</span>
               Rechtsklick auf eine Nadel öffnet Details
             </div>
           </>

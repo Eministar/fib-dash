@@ -232,10 +232,10 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
       />
 
       {creating && (
-        <section className="rounded-[14px] border border-line-strong/75 bg-surface-sunken p-4 sm:p-5">
+        <section className="rounded-[14px] border border-[#404040]/75 bg-[#181818] p-4 sm:p-5">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-[14px] font-semibold text-fg">
+              <h2 className="text-[14px] font-semibold text-[#f4f4f4]">
                 {mode === 'files' ? 'Neue Datei' : 'Neue Ausbildungsressource'}
               </h2>
               <p className="mt-1 text-[12px] text-[#909090]">
@@ -247,7 +247,7 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
             <button
               type="button"
               onClick={resetForm}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-[#909090] hover:bg-surface-raised hover:text-fg"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-[#909090] hover:bg-[#232323] hover:text-[#f4f4f4]"
               aria-label="Formular schließen"
             >
               <X size={15} />
@@ -310,11 +310,11 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
                   className={cn(
                     'flex h-[42px] w-full items-center gap-2 rounded-[8px] border px-3 text-left text-[12.5px] transition-colors',
                     file
-                      ? 'border-accent/45 bg-accent/8 text-fg'
-                      : 'border-line bg-canvas text-[#909090] hover:border-line-strong',
+                      ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/8 text-[#f4f4f4]'
+                      : 'border-[#343434] bg-[#080808] text-[#909090] hover:border-[#404040]',
                   )}
                 >
-                  <Upload size={14} className={file ? 'text-accent' : ''} />
+                  <Upload size={14} className={file ? 'text-[#d4d4d4]' : ''} />
                   <span className="truncate">{file?.name ?? 'Datei auswählen'}</span>
                 </button>
                 <input
@@ -377,13 +377,13 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
       ) : (
         <div className="space-y-4">
           {groupedResources.map((group) => (
-            <section key={group.label} className="overflow-hidden rounded-[14px] border border-line/70 bg-[#161616]">
-              <div className="flex items-center gap-3 border-b border-line/60 px-4 py-3">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] bg-accent/12 text-accent">
+            <section key={group.label} className="overflow-hidden rounded-[14px] border border-[#343434]/70 bg-[#161616]">
+              <div className="flex items-center gap-3 border-b border-[#343434]/60 px-4 py-3">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#d4d4d4]/12 text-[#d4d4d4]">
                   <FolderOpen size={15} />
                 </span>
                 <div>
-                  <h2 className="text-[13.5px] font-semibold text-fg">{group.label}</h2>
+                  <h2 className="text-[13.5px] font-semibold text-[#f4f4f4]">{group.label}</h2>
                   <p className="text-[11px] text-[#909090]">{group.resources.length} Ressource(n)</p>
                 </div>
               </div>
@@ -394,10 +394,10 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
       )}
 
       {resources.length === 0 && !creating && (
-        <div className="rounded-[14px] border border-dashed border-line-strong/70 px-5 py-16 text-center">
+        <div className="rounded-[14px] border border-dashed border-[#404040]/70 px-5 py-16 text-center">
           {mode === 'files'
-            ? <Upload size={27} className="mx-auto mb-3 text-fg-subtle" />
-            : <FolderOpen size={27} className="mx-auto mb-3 text-fg-subtle" />}
+            ? <Upload size={27} className="mx-auto mb-3 text-[#8c8c8c]" />
+            : <FolderOpen size={27} className="mx-auto mb-3 text-[#8c8c8c]" />}
           <p className="text-[13px] font-medium text-[#aeaeae]">
             {mode === 'files' ? 'Noch keine Academy-Dateien' : 'Noch keine Ausbildungsressourcen'}
           </p>
@@ -405,7 +405,7 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="mt-2 text-[12px] font-medium text-accent hover:text-[#cacaca]"
+              className="mt-2 text-[12px] font-medium text-[#d4d4d4] hover:text-[#cacaca]"
             >
               Jetzt {mode === 'files' ? 'eine Datei hochladen' : 'eine Ressource erstellen'}
             </button>
@@ -430,25 +430,25 @@ function ResourceList({
   if (resources.length === 0) return null
 
   return (
-    <div className={cn('divide-y divide-line/60', !nested && 'overflow-hidden rounded-[14px] border border-line/70 bg-[#161616]')}>
+    <div className={cn('divide-y divide-[#343434]/60', !nested && 'overflow-hidden rounded-[14px] border border-[#343434]/70 bg-[#161616]')}>
       {resources.map((resource) => {
         const Icon = resourceIcon(resource)
         return (
           <div key={resource.id} className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-[#1e1e1e]">
-            <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border border-line-strong/60 bg-canvas text-accent">
+            <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border border-[#404040]/60 bg-[#080808] text-[#d4d4d4]">
               <Icon size={16} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="truncate text-[13.5px] font-semibold text-fg">{resource.title}</p>
-                <span className="rounded-full border border-line-strong/60 px-2 py-0.5 text-[11px] font-medium text-fg-muted">
+                <p className="truncate text-[13.5px] font-semibold text-[#f4f4f4]">{resource.title}</p>
+                <span className="rounded-full border border-[#404040]/60 px-2 py-0.5 text-[11px] font-medium text-[#a6a6a6]">
                   {resource.type === 'LINK' ? 'Link' : 'Datei'}
                 </span>
               </div>
               {resource.description && (
-                <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-fg-muted">{resource.description}</p>
+                <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-[#a6a6a6]">{resource.description}</p>
               )}
-              <p className="mt-1.5 text-[11px] text-fg-subtle">
+              <p className="mt-1.5 text-[11px] text-[#8c8c8c]">
                 {resource.originalFilename && `${resource.originalFilename} · `}
                 {resource.size !== null && `${formatBytes(resource.size)} · `}
                 {formatDateTime(resource.createdAt)}
@@ -461,7 +461,7 @@ function ResourceList({
                   href={resource.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[11.5px] font-medium text-[#aeaeae] hover:bg-surface-raised hover:text-accent"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[11.5px] font-medium text-[#aeaeae] hover:bg-[#232323] hover:text-[#d4d4d4]"
                 >
                   <ExternalLink size={13} />
                   Öffnen

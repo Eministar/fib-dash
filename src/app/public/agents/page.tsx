@@ -36,21 +36,21 @@ export default function PublicAgentsPage() {
       <div className="mx-auto max-w-5xl">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="h-[46px] w-[46px] rounded-[12px] bg-[#1e1e1e] border border-accent/30 flex items-center justify-center overflow-hidden">
+            <div className="h-[46px] w-[46px] rounded-[12px] bg-[#1e1e1e] border border-[#d4d4d4]/30 flex items-center justify-center overflow-hidden">
               <Image src="/shield.webp" alt="FIB" width={40} height={40} className="rounded-full" priority />
             </div>
             <div>
               <h1 className="text-[19px] font-semibold text-white tracking-[-0.01em]">Mitarbeiterliste</h1>
-              <p className="text-[12px] text-fg-muted">{filtered.length} Mitarbeiter</p>
+              <p className="text-[12px] text-[#a6a6a6]">{filtered.length} Mitarbeiter</p>
             </div>
           </div>
           <div className="relative w-full sm:w-[300px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" strokeWidth={1.75} />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" strokeWidth={1.75} />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Suchen..."
-              className="h-[36px] w-full rounded-[8px] border border-line/70 bg-[#1d1d1d] pl-9 pr-3 text-[13px] text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent"
+              className="h-[36px] w-full rounded-[8px] border border-[#343434]/70 bg-[#1d1d1d] pl-9 pr-3 text-[13px] text-[#f4f4f4] placeholder:text-[#8c8c8c] focus:outline-none focus:border-[#d4d4d4]"
             />
           </div>
         </header>
@@ -58,7 +58,7 @@ export default function PublicAgentsPage() {
         <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
           {filtered.length > 0 ? (
             <div>
-              <div className="hidden grid-cols-[92px_minmax(0,1.2fr)_minmax(140px,0.8fr)_minmax(150px,1fr)_130px] gap-4 border-b border-line px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#909090] lg:grid">
+              <div className="hidden grid-cols-[92px_minmax(0,1.2fr)_minmax(140px,0.8fr)_minmax(150px,1fr)_130px] gap-4 border-b border-[#343434] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#909090] lg:grid">
                 <span>DN</span>
                 <span>Name</span>
                 <span>Rang</span>
@@ -68,7 +68,7 @@ export default function PublicAgentsPage() {
               {filtered.map((agent) => (
                 <div
                   key={`${agent.badgeNumber}-${agent.firstName}-${agent.lastName}`}
-                  className="grid grid-cols-1 gap-2 border-b border-line px-4 py-3.5 last:border-b-0 lg:grid-cols-[92px_minmax(0,1.2fr)_minmax(140px,0.8fr)_minmax(150px,1fr)_130px] lg:items-center lg:gap-4"
+                  className="grid grid-cols-1 gap-2 border-b border-[#343434] px-4 py-3.5 last:border-b-0 lg:grid-cols-[92px_minmax(0,1.2fr)_minmax(140px,0.8fr)_minmax(150px,1fr)_130px] lg:items-center lg:gap-4"
                 >
                   <span className="font-mono text-[12px] text-[#c3c3c3]">{displayBadgeNumber(agent.badgeNumber)}</span>
                   <div className="min-w-0">
@@ -85,15 +85,15 @@ export default function PublicAgentsPage() {
                         {unit.name}
                       </span>
                     ))}
-                    {agent.unitInfo.length === 0 && <span className="text-[12px] text-fg-subtle">Keine Unit</span>}
+                    {agent.unitInfo.length === 0 && <span className="text-[12px] text-[#8c8c8c]">Keine Unit</span>}
                   </span>
-                  <span className="text-[12px] text-fg-muted">{formatDate(agent.hireDate)}</span>
+                  <span className="text-[12px] text-[#a6a6a6]">{formatDate(agent.hireDate)}</span>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-20">
-              <Shield size={28} className="mx-auto mb-3 text-fg" strokeWidth={1.5} />
+              <Shield size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
               <p className="text-[13px] text-[#909090]">Keine Agents gefunden</p>
             </div>
           )}

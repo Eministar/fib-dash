@@ -51,7 +51,7 @@ function dateBoundary(value: string, nextDay = false) {
 }
 
 function Pagination({ page, total, loading, onChange }: { page: number; total: number; loading: boolean; onChange: (page: number) => void }) {
-  if (total <= 25) return total > 0 ? <p className="mt-3 text-xs text-fg-subtle">{total} Einträge</p> : null
+  if (total <= 25) return total > 0 ? <p className="mt-3 text-xs text-[#8c8c8c]">{total} Einträge</p> : null
   return <div className="mt-4 flex items-center justify-between gap-2 text-xs text-[#909090]">
     <span>{total} Einträge · Seite {page} von {Math.max(1, Math.ceil(total / 25))}</span>
     <div className="flex gap-2"><Button type="button" variant="outline" size="sm" disabled={loading || page <= 1} onClick={() => onChange(page - 1)}>Zurück</Button><Button type="button" variant="outline" size="sm" disabled={loading || page * 25 >= total} onClick={() => onChange(page + 1)}>Weiter</Button></div>
@@ -113,12 +113,12 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
     </div>}
 
     {officialId ? <OfficialHeader official={official} onChanged={() => { void official.refetch(); void controls.refetch() }} /> : (
-      <nav aria-label="Korruptionskontrollen" className="mb-4 flex gap-1 border-b border-line">
+      <nav aria-label="Korruptionskontrollen" className="mb-4 flex gap-1 border-b border-[#343434]">
         {[{ tab: 'archive', label: 'Kontrollen' }, { tab: 'officials', label: 'Beamte' }].map(item => <Link
           key={item.tab}
           href={`/corruption-checks?tab=${item.tab}`}
           aria-current={tab === item.tab ? 'page' : undefined}
-          className={cn('-mb-px border-b-2 px-3 py-2.5 text-[13px] font-medium', tab === item.tab ? 'border-accent text-white' : 'border-transparent text-[#909090] hover:text-white')}
+          className={cn('-mb-px border-b-2 px-3 py-2.5 text-[13px] font-medium', tab === item.tab ? 'border-[#d4d4d4] text-white' : 'border-transparent text-[#909090] hover:text-white')}
         >{item.label}</Link>)}
       </nav>
     )}
@@ -126,7 +126,7 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
     <div className="mb-4 space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <SearchInput value={search} onChange={value => changed(setSearch, value)} placeholder={tab === 'archive' ? 'BEA-Nummer, Name oder Befund suchen …' : 'BEA-Nummer oder Name suchen …'} className="flex-1" />
-        {tab === 'archive' && <div className="flex gap-1 rounded-[10px] border border-line bg-[#151515] p-1" role="group" aria-label="Ergebnis">
+        {tab === 'archive' && <div className="flex gap-1 rounded-[10px] border border-[#343434] bg-[#151515] p-1" role="group" aria-label="Ergebnis">
           {[{ value: '', label: 'Alle' }, { value: 'FINDINGS', label: 'Mit Befund' }, { value: 'CLEAR', label: 'Ohne Befund' }].map(option => <button
             key={option.value}
             type="button"
@@ -136,10 +136,10 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
           >{option.label}</button>)}
         </div>}
         <Button type="button" variant="secondary" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}>
-          <SlidersHorizontal size={14} />Weitere Filter{extraFilters > 0 && <span className="rounded-full bg-accent px-1.5 text-[11px] font-semibold text-surface-sunken">{extraFilters}</span>}
+          <SlidersHorizontal size={14} />Weitere Filter{extraFilters > 0 && <span className="rounded-full bg-[#d4d4d4] px-1.5 text-[11px] font-semibold text-[#181818]">{extraFilters}</span>}
         </Button>
       </div>
-      {filtersOpen && <section aria-label="Weitere Filter" className="grid gap-3 rounded-[12px] border border-line bg-[#141414] p-4 sm:grid-cols-2 lg:grid-cols-5">
+      {filtersOpen && <section aria-label="Weitere Filter" className="grid gap-3 rounded-[12px] border border-[#343434] bg-[#141414] p-4 sm:grid-cols-2 lg:grid-cols-5">
         <Input label="Behörde" placeholder="z. B. LSPD" maxLength={150} value={agency} onChange={e => changed(setAgency, e.target.value)} />
         {tab === 'archive' && <>
           <Input label="Von" type="date" value={from} onChange={e => changed(setFrom, e.target.value)} />
@@ -157,21 +157,21 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
     {tab === 'archive' ? <>
       {controls.loading && !controls.data ? <Loading /> : !controls.data?.items.length ? <Empty text={search || result || extraFilters ? 'Keine Kontrollen passen zu den Filtern.' : 'Noch keine Kontrollen eingetragen.'} /> : (
         <div className="glass-panel-elevated overflow-hidden rounded-[14px]">
-          <div className="hidden grid-cols-[130px_minmax(0,1.4fr)_120px_minmax(0,1fr)_20px] gap-4 border-b border-line bg-[#1c1c1c] px-4 py-2 text-[11.5px] font-medium text-[#909090] md:grid">
+          <div className="hidden grid-cols-[130px_minmax(0,1.4fr)_120px_minmax(0,1fr)_20px] gap-4 border-b border-[#343434] bg-[#1c1c1c] px-4 py-2 text-[11.5px] font-medium text-[#909090] md:grid">
             <span>Datum</span><span>Beamter</span><span>Ergebnis</span><span>Durchgeführt von</span><span />
           </div>
           <ul className="divide-y divide-[#2c2c2c]">
             {controls.data.items.map(check => <li key={check.id}>
-              <button type="button" onClick={() => setSelected(check)} className="grid w-full gap-1.5 px-4 py-3 text-left hover:bg-surface-raised focus-visible:outline focus-visible:outline-2 md:grid-cols-[130px_minmax(0,1.4fr)_120px_minmax(0,1fr)_20px] md:items-center md:gap-4">
-                <span className="text-[12.5px] text-fg-muted">{formatDateTime(check.conductedAt)}</span>
+              <button type="button" onClick={() => setSelected(check)} className="grid w-full gap-1.5 px-4 py-3 text-left hover:bg-[#232323] focus-visible:outline focus-visible:outline-2 md:grid-cols-[130px_minmax(0,1.4fr)_120px_minmax(0,1fr)_20px] md:items-center md:gap-4">
+                <span className="text-[12.5px] text-[#a6a6a6]">{formatDateTime(check.conductedAt)}</span>
                 <span className="min-w-0">
                   <span className="block truncate text-[13.5px] font-medium text-white">{check.official.firstName} {check.official.lastName}</span>
-                  <span className="block truncate text-[12px] text-fg-subtle">{officialNumber(check.official.id)} · {check.official.agency}{check.location ? ` · ${check.location}` : ''}</span>
+                  <span className="block truncate text-[12px] text-[#8c8c8c]">{officialNumber(check.official.id)} · {check.official.agency}{check.location ? ` · ${check.location}` : ''}</span>
                   {check.result === 'FINDINGS' && check.findings && <span className="mt-1 line-clamp-1 block text-[12px] text-amber-100/80">{check.findings}</span>}
                 </span>
                 <span><ResultBadge result={check.result} /></span>
-                <span className="truncate text-[12.5px] text-fg-muted">{check.agents.map(agent => agent.name).join(', ')}</span>
-                <ChevronRight size={16} className="hidden text-fg-subtle md:block" aria-hidden />
+                <span className="truncate text-[12.5px] text-[#a6a6a6]">{check.agents.map(agent => agent.name).join(', ')}</span>
+                <ChevronRight size={16} className="hidden text-[#8c8c8c] md:block" aria-hidden />
               </button>
             </li>)}
           </ul>
@@ -182,18 +182,18 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
       {officials.loading && !officials.data ? <Loading /> : !officials.data?.items.length ? <Empty text={search || extraFilters ? 'Kein Beamter passt zu den Filtern.' : 'Noch keine Beamten erfasst. Die erste Kontrolle legt automatisch eine Akte an.'} /> : (
         <ul className="glass-panel-elevated divide-y divide-[#2c2c2c] overflow-hidden rounded-[14px]">
           {officials.data.items.map(person => <li key={person.id}>
-            <Link href={officialHref(person.id)} className="flex items-center gap-4 px-4 py-3 hover:bg-surface-raised focus-visible:outline focus-visible:outline-2">
+            <Link href={officialHref(person.id)} className="flex items-center gap-4 px-4 py-3 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2">
               <span className="w-[92px] shrink-0 font-mono text-[12px] text-[#909090]">{officialNumber(person.id)}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13.5px] font-medium text-white">{person.firstName} {person.lastName}</span>
-                <span className="block truncate text-[12px] text-fg-subtle">{person.agency}{person.badgeNumber ? ` · DN ${person.badgeNumber}` : ''}</span>
+                <span className="block truncate text-[12px] text-[#8c8c8c]">{person.agency}{person.badgeNumber ? ` · DN ${person.badgeNumber}` : ''}</span>
               </span>
               <span className="hidden text-right text-[12px] text-[#909090] sm:block">
                 {person._count?.checks ?? 0} Kontrollen
                 {person.checks?.[0] && <span className="block">zuletzt {formatDateTime(person.checks[0].conductedAt)}</span>}
               </span>
               {person.checks?.[0] && <ResultBadge result={person.checks[0].result} />}
-              <ChevronRight size={16} className="shrink-0 text-fg-subtle" aria-hidden />
+              <ChevronRight size={16} className="shrink-0 text-[#8c8c8c]" aria-hidden />
             </Link>
           </li>)}
         </ul>
@@ -208,13 +208,13 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
 function OfficialHeader({ official, onChanged }: { official: { data: Official | null; loading: boolean }; onChanged: () => void }) {
   const person = official.data
   return <section className="glass-panel-elevated mb-5 rounded-[14px] p-5">
-    <Link href="/corruption-checks?tab=officials" className="mb-3 inline-flex items-center gap-1 text-xs text-fg-muted hover:text-white"><ArrowLeft size={13} />Alle Beamten</Link>
+    <Link href="/corruption-checks?tab=officials" className="mb-3 inline-flex items-center gap-1 text-xs text-[#a6a6a6] hover:text-white"><ArrowLeft size={13} />Alle Beamten</Link>
     {person ? <>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs text-fg-muted">{officialNumber(person.id)}</p>
+          <p className="font-mono text-xs text-[#a6a6a6]">{officialNumber(person.id)}</p>
           <h2 className="mt-1 text-xl font-semibold text-white">{person.firstName} {person.lastName}</h2>
-          <p className="mt-1 text-sm text-fg-muted">{person.agency}{person.badgeNumber ? ` · Dienstnummer ${person.badgeNumber}` : ''} · {person._count?.checks ?? 0} Kontrollen</p>
+          <p className="mt-1 text-sm text-[#a6a6a6]">{person.agency}{person.badgeNumber ? ` · Dienstnummer ${person.badgeNumber}` : ''} · {person._count?.checks ?? 0} Kontrollen</p>
           {!!person.mergedFrom?.length && <p className="mt-1 text-xs text-[#909090]">Zusammengeführte Nummern: {person.mergedFrom.map(p => officialNumber(p.id)).join(', ')}</p>}
         </div>
         <div className="flex flex-wrap gap-2"><EditOfficial official={person} onSaved={onChanged} /><MergeOfficial source={person} /></div>
@@ -226,15 +226,15 @@ function OfficialHeader({ official, onChanged }: { official: { data: Official | 
 }
 
 function Loading() { return <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-14 animate-pulse rounded-[12px] bg-[#1c1c1c]" />)}</div> }
-function Empty({ text }: { text: string }) { return <div className="rounded-[14px] border border-dashed border-line p-8 text-center text-sm text-[#909090]"><ShieldCheck className="mx-auto mb-3" size={25} />{text}</div> }
+function Empty({ text }: { text: string }) { return <div className="rounded-[14px] border border-dashed border-[#343434] p-8 text-center text-sm text-[#909090]"><ShieldCheck className="mx-auto mb-3" size={25} />{text}</div> }
 
 function ChoiceCard({ active, onClick, title, text, icon: Icon, tone }: { active: boolean; onClick: () => void; title: string; text: string; icon: typeof ShieldCheck; tone: 'good' | 'warn' }) {
   return <button type="button" role="radio" aria-checked={active} onClick={onClick} className={cn(
     'flex gap-3 rounded-[12px] border p-4 text-left transition-colors',
-    active ? (tone === 'good' ? 'border-emerald-400/50 bg-emerald-400/10' : 'border-amber-400/50 bg-amber-400/10') : 'border-line hover:bg-[#1f1f1f]',
+    active ? (tone === 'good' ? 'border-emerald-400/50 bg-emerald-400/10' : 'border-amber-400/50 bg-amber-400/10') : 'border-[#343434] hover:bg-[#1f1f1f]',
   )}>
     <Icon size={20} className={cn('mt-0.5 shrink-0', tone === 'good' ? 'text-emerald-300' : 'text-amber-300')} />
-    <span><span className="block text-[14px] font-medium text-white">{title}</span><span className="mt-0.5 block text-[12.5px] text-fg-muted">{text}</span></span>
+    <span><span className="block text-[14px] font-medium text-white">{title}</span><span className="mt-0.5 block text-[12.5px] text-[#a6a6a6]">{text}</span></span>
   </button>
 }
 
@@ -282,17 +282,17 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
         ? (person ? undefined : 'Bitte den kontrollierten Beamten auswählen oder neu anlegen.')
         : (!firstName.trim() || !lastName.trim() || !agency.trim() ? 'Bitte Vorname, Nachname und Behörde angeben.' : undefined),
       content: mode === 'existing' ? <div className="space-y-3">
-        <p className="text-sm text-fg-muted">Wer wurde kontrolliert? Suche nach Name oder BEA-Nummer.</p>
-        {person ? <div className="flex items-center justify-between gap-3 rounded-[12px] border border-fg-muted/50 bg-[#262626] p-4">
-          <div><p className="font-mono text-xs text-fg-muted">{officialNumber(person.id)}</p><p className="mt-0.5 text-[14px] font-medium text-white">{person.firstName} {person.lastName}</p><p className="text-[12.5px] text-fg-muted">{person.agency}{person.badgeNumber ? ` · DN ${person.badgeNumber}` : ''}</p></div>
+        <p className="text-sm text-[#a6a6a6]">Wer wurde kontrolliert? Suche nach Name oder BEA-Nummer.</p>
+        {person ? <div className="flex items-center justify-between gap-3 rounded-[12px] border border-[#a6a6a6]/50 bg-[#262626] p-4">
+          <div><p className="font-mono text-xs text-[#a6a6a6]">{officialNumber(person.id)}</p><p className="mt-0.5 text-[14px] font-medium text-white">{person.firstName} {person.lastName}</p><p className="text-[12.5px] text-[#a6a6a6]">{person.agency}{person.badgeNumber ? ` · DN ${person.badgeNumber}` : ''}</p></div>
           <Button type="button" variant="ghost" size="sm" onClick={() => setPerson(null)}>Ändern</Button>
         </div> : <>
           <SearchInput value={search} onChange={setSearch} placeholder="z. B. BEA-000012 oder Alex Miller" />
-          <div className="max-h-64 overflow-y-auto rounded-[12px] border border-line">
+          <div className="max-h-64 overflow-y-auto rounded-[12px] border border-[#343434]">
             {matches.loading && !matches.data && <p className="p-3 text-[12.5px] text-[#909090]">Suche läuft …</p>}
-            {(matches.data?.items ?? []).map(item => <button type="button" key={item.id} onClick={() => setPerson(item)} className="flex w-full items-center gap-3 border-b border-[#262626] px-3 py-2.5 text-left last:border-0 hover:bg-surface-raised">
+            {(matches.data?.items ?? []).map(item => <button type="button" key={item.id} onClick={() => setPerson(item)} className="flex w-full items-center gap-3 border-b border-[#262626] px-3 py-2.5 text-left last:border-0 hover:bg-[#232323]">
               <span className="w-[88px] shrink-0 font-mono text-[11.5px] text-[#909090]">{officialNumber(item.id)}</span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-[13px] text-white">{item.firstName} {item.lastName}</span><span className="block truncate text-[12px] text-fg-subtle">{item.agency} · {item._count?.checks ?? 0} Kontrollen</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-[13px] text-white">{item.firstName} {item.lastName}</span><span className="block truncate text-[12px] text-[#8c8c8c]">{item.agency} · {item._count?.checks ?? 0} Kontrollen</span></span>
             </button>)}
             {matches.data && !matches.data.items.length && <p className="p-3 text-[12.5px] text-[#909090]">Kein Treffer.</p>}
           </div>
@@ -300,7 +300,7 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
         </>}
         {!person && <Button type="button" variant="secondary" onClick={() => { setMode('new'); const [first = '', ...rest] = search.trim().split(/\s+/); if (!/^bea/i.test(first)) { setFirstName(first); setLastName(rest.join(' ')) } }}><UserPlus size={14} />Beamter noch nicht erfasst – neu anlegen</Button>}
       </div> : <div className="space-y-3">
-        <p className="text-sm text-fg-muted">Der Beamte bekommt beim Speichern automatisch eine feste BEA-Nummer.</p>
+        <p className="text-sm text-[#a6a6a6]">Der Beamte bekommt beim Speichern automatisch eine feste BEA-Nummer.</p>
         <div className="grid gap-3 sm:grid-cols-2"><Input label="Vorname" required maxLength={100} value={firstName} onChange={e => setFirstName(e.target.value)} /><Input label="Nachname" required maxLength={100} value={lastName} onChange={e => setLastName(e.target.value)} /><Input label="Behörde" required maxLength={150} placeholder="z. B. LSPD, LSSD, Regierung" value={agency} onChange={e => setAgency(e.target.value)} /><Input label="Dienstnummer (optional)" maxLength={100} value={badgeNumber} onChange={e => setBadgeNumber(e.target.value)} /></div>
         {lookupSearch && !!matches.data?.items.length && <div className="rounded-[12px] border border-amber-400/25 bg-amber-400/5 p-3">
           <p className="mb-2 text-xs text-amber-200">Gibt es diesen Beamten schon? Dann bitte die vorhandene Akte nehmen, damit keine Doppelten entstehen:</p>
@@ -319,8 +319,8 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
           <p className="text-[12.5px] font-medium text-[#aeaeae]">Durchführende Agents · {agentIds.length} ausgewählt</p>
           {!!chosenAgents.length && <div className="flex flex-wrap gap-1.5">{chosenAgents.map(agent => <button type="button" key={agent.id} onClick={() => setAgentIds(agentIds.filter(value => value !== agent.id))} className="inline-flex items-center gap-1.5 rounded-full border border-[#4a4a4a] bg-[#262626] px-2.5 py-1 text-[12px] text-white hover:border-[#ff6b6b]/60" aria-label={`${agent.firstName} ${agent.lastName} entfernen`}>{agent.firstName} {agent.lastName}<X size={12} /></button>)}</div>}
           <SearchInput value={agentSearch} onChange={setAgentSearch} placeholder="Agent nach Name oder Dienstnummer suchen …" />
-          <div className="max-h-44 overflow-y-auto rounded-[12px] border border-line p-1">
-            {agentMatches.map(agent => <button type="button" key={agent.id} disabled={agentIds.length >= 30} className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-2 text-left text-[13px] text-[#e5e5e5] hover:bg-surface-raised disabled:opacity-40" onClick={() => setAgentIds([...agentIds, agent.id])}><Plus size={13} className="text-[#909090]" />{agentLabel(agent)}</button>)}
+          <div className="max-h-44 overflow-y-auto rounded-[12px] border border-[#343434] p-1">
+            {agentMatches.map(agent => <button type="button" key={agent.id} disabled={agentIds.length >= 30} className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-2 text-left text-[13px] text-[#e5e5e5] hover:bg-[#232323] disabled:opacity-40" onClick={() => setAgentIds([...agentIds, agent.id])}><Plus size={13} className="text-[#909090]" />{agentLabel(agent)}</button>)}
             {!agentMatches.length && <p className="p-2 text-xs text-[#909090]">{agents.length ? 'Kein weiterer Agent gefunden.' : 'Keine Agents verfügbar.'}</p>}
           </div>
           {agentsError && <p role="alert" className="text-xs text-red-300">{agentsError}</p>}
@@ -338,14 +338,14 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
         </div>
         <Textarea label={result === 'FINDINGS' ? 'Was wurde gefunden?' : 'Anmerkung zum Ergebnis (optional)'} required={result === 'FINDINGS'} maxLength={30000} rows={4} value={findings} onChange={e => setFindings(e.target.value)} placeholder={result === 'FINDINGS' ? 'Gegenstände, Mengen und Feststellungen beschreiben …' : 'Leer lassen, dann wird „Ohne Befund“ gespeichert.'} />
         <Textarea label="Weitere Informationen (optional)" maxLength={30000} rows={3} value={notes} onChange={e => setNotes(e.target.value)} />
-        <div className="rounded-[12px] border border-line bg-[#151515] p-4 text-[12.5px] leading-6 text-[#c4c4c4]">
+        <div className="rounded-[12px] border border-[#343434] bg-[#151515] p-4 text-[12.5px] leading-6 text-[#c4c4c4]">
           <p className="mb-1 flex items-center gap-1.5 font-medium text-white"><CheckIcon size={14} />Zusammenfassung</p>
           <p>Beamter: {officialSummary}</p>
           <p>Zeitpunkt: {conductedAt ? formatDateTime(new Date(conductedAt).toISOString()) : '—'}{location ? ` · ${location}` : ''}</p>
           <p>Agents: {chosenAgents.map(agent => `${agent.firstName} ${agent.lastName}`).join(', ') || '—'}</p>
           <p>Ergebnis: {result === 'FINDINGS' ? 'Mit Befund' : 'Ohne Befund'}</p>
         </div>
-        <p className="text-xs text-fg-subtle">Beweise (Fotos, PDFs, Bodycams) hängst du nach dem Speichern im Bericht an.</p>
+        <p className="text-xs text-[#8c8c8c]">Beweise (Fotos, PDFs, Bodycams) hängst du nach dem Speichern im Bericht an.</p>
       </div>,
     },
   ]

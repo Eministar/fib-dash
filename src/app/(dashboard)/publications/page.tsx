@@ -49,8 +49,8 @@ export default function PublicationsPage() {
         description="Schreiben und Tabellen veröffentlichen – öffentlich einsehbar auf dem Schwarzen Brett oder nur per Link."
         action={
           <div className="flex gap-2">
-            <a href="/aushang" target="_blank" rel="noopener noreferrer" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-surface-raised px-3 text-[12.5px] font-medium text-fg hover:bg-[#333333]"><ExternalLink size={13} /> Schwarzes Brett</a>
-            <Link href="/publications/new" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-accent px-3 text-[12.5px] font-medium text-surface-sunken hover:bg-white"><Plus size={14} /> Neuer Aushang</Link>
+            <a href="/aushang" target="_blank" rel="noopener noreferrer" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] hover:bg-[#333333]"><ExternalLink size={13} /> Schwarzes Brett</a>
+            <Link href="/publications/new" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#d4d4d4] px-3 text-[12.5px] font-medium text-[#181818] hover:bg-white"><Plus size={14} /> Neuer Aushang</Link>
           </div>
         }
       />
@@ -66,8 +66,8 @@ export default function PublicationsPage() {
                 const Icon = item.kind === 'TABLE' ? Table2 : FileText
                 return (
                   <li key={item.id}>
-                    <Link href={`/publications/${item.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-surface-raised focus-visible:outline focus-visible:outline-2">
-                      <Icon size={18} className="shrink-0 text-fg-muted" aria-hidden />
+                    <Link href={`/publications/${item.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2">
+                      <Icon size={18} className="shrink-0 text-[#a6a6a6]" aria-hidden />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2 text-[14px] font-medium text-white">
                           {item.pinned && <Pin size={13} aria-label="Angeheftet" />}

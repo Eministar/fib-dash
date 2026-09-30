@@ -276,7 +276,7 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
         action={canManage ? (
           <div className="flex flex-wrap items-center gap-2">
             {syncProgress && (
-              <span className="text-[11.5px] text-accent">
+              <span className="text-[11.5px] text-[#d4d4d4]">
                 {syncProgress.done} umbenannt · {syncProgress.remaining} offen
               </span>
             )}
@@ -307,30 +307,30 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
       </div>
 
       {(applications ?? []).length === 0 ? (
-        <section className="rounded-[14px] border border-[#373737]/45 bg-surface/70 py-14 text-center">
-          <ClipboardList size={28} className="mx-auto mb-3 text-fg-subtle" />
+        <section className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 py-14 text-center">
+          <ClipboardList size={28} className="mx-auto mb-3 text-[#8c8c8c]" />
           <p className="text-[14px] font-semibold text-white">Noch keine Bewerbungen vorhanden</p>
-          <p className="mt-1 text-[12.5px] text-fg-muted">Neue Abgaben erscheinen automatisch in dieser Liste.</p>
+          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">Neue Abgaben erscheinen automatisch in dieser Liste.</p>
         </section>
       ) : (
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[330px_1fr]">
-          <aside className="overflow-hidden rounded-[14px] border border-[#373737]/45 bg-surface/70 lg:sticky lg:top-4">
-            <div className="flex items-center justify-between border-b border-line/45 px-3 py-2.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-fg-muted">Bewerbungseingang</p>
-              <span className="text-[11px] text-fg-subtle">
+          <aside className="overflow-hidden rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 lg:sticky lg:top-4">
+            <div className="flex items-center justify-between border-b border-[#343434]/45 px-3 py-2.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a6a6a6]">Bewerbungseingang</p>
+              <span className="text-[11px] text-[#8c8c8c]">
                 {filtered.length}
                 {filtered.length !== (applications?.length ?? 0) && ` / ${applications?.length ?? 0}`}
               </span>
             </div>
 
-            <div className="space-y-2 border-b border-line/45 px-2.5 py-2.5">
+            <div className="space-y-2 border-b border-[#343434]/45 px-2.5 py-2.5">
               <div className="relative">
-                <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
+                <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Aktenzeichen oder Name suchen"
-                  className="h-[34px] w-full rounded-[8px] border border-line/70 bg-surface-sunken pl-8 pr-3 text-[13px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
+                  className="h-[34px] w-full rounded-[8px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
                 />
               </div>
               <div className="flex flex-wrap gap-1">
@@ -342,8 +342,8 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
                     className={cn(
                       'rounded-[7px] border px-2 py-1 text-[11px] font-medium transition-colors',
                       statusFilter === option.value
-                        ? 'border-accent/45 bg-accent/14 text-accent'
-                        : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
+                        ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
+                        : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
                     )}
                   >
                     {option.label}
@@ -378,16 +378,16 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
                 onSyncNickname={syncNickname}
               />
 
-              <div className="rounded-[14px] border border-[#373737]/45 bg-surface/70 p-4">
+              <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <FileText size={15} className="text-accent" />
+                  <FileText size={15} className="text-[#d4d4d4]" />
                   <h3 className="text-[14px] font-semibold text-white">Antworten</h3>
                 </div>
                 <div className="space-y-3">
                   {selected.answers.map((answer, index) => (
-                    <div key={answer.id} className="rounded-[12px] border border-line/45 bg-surface-sunken/55 p-3">
+                    <div key={answer.id} className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/55 p-3">
                       <div className="mb-2 flex items-start gap-2">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-surface-raised text-[11px] font-semibold text-accent">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
                           {index + 1}
                         </span>
                         <p className="text-[13px] font-semibold text-white">{answer.questionTitle}</p>
@@ -398,9 +398,9 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
                 </div>
               </div>
 
-              <div className="rounded-[14px] border border-[#373737]/45 bg-surface/70 p-4">
+              <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <MessageSquareText size={15} className="text-accent" />
+                  <MessageSquareText size={15} className="text-[#d4d4d4]" />
                   <h3 className="text-[14px] font-semibold text-white">HR-Status</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-[220px_1fr]">
@@ -475,9 +475,9 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[12px] border border-white/[0.04] bg-surface/70 px-4 py-3">
+    <div className="rounded-[12px] border border-white/[0.04] bg-[#1b1b1b]/70 px-4 py-3">
       <p className="text-[20px] font-semibold leading-tight text-white tabular-nums">{value}</p>
-      <p className="mt-0.5 text-[11px] text-fg-muted">{label}</p>
+      <p className="mt-0.5 text-[11px] text-[#a6a6a6]">{label}</p>
     </div>
   )
 }
@@ -499,14 +499,14 @@ function ApplicationListItem({
       onClick={onSelect}
       className={cn(
         'w-full rounded-[9px] border px-3 py-2.5 text-left transition-colors',
-        active ? 'border-accent/35 bg-accent/12' : 'border-transparent hover:bg-surface-raised/60',
+        active ? 'border-[#d4d4d4]/35 bg-[#d4d4d4]/12' : 'border-transparent hover:bg-[#232323]/60',
       )}
     >
       <div className="flex items-start gap-2.5">
         <ApplicantAvatar application={application} size="sm" />
         <div className="min-w-0 flex-1">
           {application.caseNumber && (
-            <p className="truncate font-mono text-[11px] font-semibold tracking-wide text-accent">
+            <p className="truncate font-mono text-[11px] font-semibold tracking-wide text-[#d4d4d4]">
               {application.caseNumber}
             </p>
           )}
@@ -535,7 +535,7 @@ function ApplicationDetailHeader({
   const meta = JOB_APPLICATION_STATUS_META[application.status]
 
   return (
-    <div className="rounded-[14px] border border-[#373737]/45 bg-surface/70 p-4">
+    <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <ApplicantAvatar application={application} size="lg" />
@@ -543,7 +543,7 @@ function ApplicationDetailHeader({
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <Badge variant={meta.variant}>{meta.label}</Badge>
               {application.caseNumber && (
-                <span className="rounded-[6px] border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-accent">
+                <span className="rounded-[6px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-[#d4d4d4]">
                   {application.caseNumber}
                 </span>
               )}
@@ -552,15 +552,15 @@ function ApplicationDetailHeader({
             <h2 className="truncate text-[19px] font-semibold text-white">
               {stripApplicationCaseNumber(application.applicantDisplayName)}
             </h2>
-            <p className="mt-1 text-[12.5px] text-fg-muted">
+            <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
               {application.discordGlobalName || application.discordUsername || application.discordId}
             </p>
             <p className="mt-2 max-w-2xl text-[13px] leading-5 text-[#e5e5e5]">{application.statusText}</p>
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-start gap-2">
-          <div className="rounded-[12px] border border-line/45 bg-surface-sunken/55 px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-subtle">Review</p>
+          <div className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/55 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8c8c8c]">Review</p>
             <p className="mt-1 text-[12px] text-[#c3c3c3]">
               {application.reviewedBy ? application.reviewedBy.displayName : 'Noch offen'}
             </p>
@@ -586,7 +586,7 @@ function ApplicantAvatar({ application, size }: { application: ApplicationRow; s
   if (avatarUrl) {
     return (
       <span
-        className={cn('shrink-0 rounded-full bg-cover bg-center ring-1 ring-accent/25', className)}
+        className={cn('shrink-0 rounded-full bg-cover bg-center ring-1 ring-[#d4d4d4]/25', className)}
         style={{ backgroundImage: `url(${avatarUrl})` }}
         aria-label={name}
       />
@@ -594,7 +594,7 @@ function ApplicantAvatar({ application, size }: { application: ApplicationRow; s
   }
 
   return (
-    <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-accent/90 font-bold text-surface-sunken', className)}>
+    <div className={cn('flex shrink-0 items-center justify-center rounded-full bg-[#d4d4d4]/90 font-bold text-[#181818]', className)}>
       {name ? name.charAt(0).toUpperCase() : <UserRound size={14} />}
     </div>
   )

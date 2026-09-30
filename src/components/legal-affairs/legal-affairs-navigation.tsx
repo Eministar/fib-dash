@@ -28,7 +28,7 @@ export function LegalAffairsNavigation({ active }: { active: LegalAffairsSection
               'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8b5cf6]/35',
               isActive
                 ? 'border-[#8b5cf6]/40 bg-[#8b5cf6]/10 text-[#c4b5fd]'
-                : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
+                : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
             )}
           >
             <Icon size={14} strokeWidth={2} />

@@ -332,8 +332,8 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
               className={cn(
                 'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors',
                 active
-                  ? 'border-accent/45 bg-accent/14 text-accent'
-                  : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
+                  ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
+                  : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
               )}
             >
               <Icon size={14} />
@@ -344,7 +344,7 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
       </div>
 
       {tab === 'contracts' ? (
-        <section className="overflow-hidden rounded-[14px] border border-[#373737]/45 bg-surface/70">
+        <section className="overflow-hidden rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70">
           {(contracts ?? []).length === 0 ? (
             <EmptyState
               icon={FileSignature}
@@ -352,7 +352,7 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
               description="Verträge entstehen automatisch beim Einstellen eines Agents oder manuell auf der Agent-Seite."
             />
           ) : (
-            <div className="divide-y divide-line/35">
+            <div className="divide-y divide-[#343434]/35">
               {contracts?.map((contract) => (
                 <ContractListRow
                   key={contract.id}
@@ -367,7 +367,7 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
           )}
         </section>
       ) : tab === 'pending' ? (
-        <section className="overflow-hidden rounded-[14px] border border-[#373737]/45 bg-surface/70">
+        <section className="overflow-hidden rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70">
           {(pendingAgents ?? []).length === 0 ? (
             <EmptyState
               icon={FileSignature}
@@ -376,8 +376,8 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
             />
           ) : (
             <>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/45 px-4 py-3">
-                <p className="max-w-xl text-[12.5px] leading-5 text-fg-muted">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#343434]/45 px-4 py-3">
+                <p className="max-w-xl text-[12.5px] leading-5 text-[#a6a6a6]">
                   Diese Mitarbeiter haben noch keinen unterschriebenen Arbeitsvertrag. Bei neuen
                   Agentn gilt die Einstellung erst mit Unterschrift als abgeschlossen.
                 </p>
@@ -393,7 +393,7 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
                   </Button>
                 )}
               </div>
-              <div className="divide-y divide-line/35">
+              <div className="divide-y divide-[#343434]/35">
                 {pendingAgents?.map((row) => (
                   <PendingAgentListRow
                     key={row.id}
@@ -419,7 +419,7 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
             templates?.map((template) => (
               <article
                 key={template.id}
-                className="rounded-[14px] border border-[#373737]/45 bg-surface/70 p-4"
+                className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -434,7 +434,7 @@ export function ContractsWorkspace({ canManage }: { canManage: boolean }) {
                       {!template.active && <Badge>Deaktiviert</Badge>}
                     </div>
                     {template.description && (
-                      <p className="text-[12.5px] text-fg-muted">{template.description}</p>
+                      <p className="text-[12.5px] text-[#a6a6a6]">{template.description}</p>
                     )}
                     <p className="mt-1.5 text-[11.5px] text-[#909090]">
                       {readContractClauses(template.clauses).length} Regelungen ·{' '}
@@ -517,7 +517,7 @@ function ContractListRow({
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-raised text-accent">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#232323] text-[#d4d4d4]">
           <UserRound size={16} />
         </span>
         <div className="min-w-0">
@@ -526,7 +526,7 @@ function ContractListRow({
           {contract.agent ? (
             <Link
               href={`/agents/${contract.agent.id}`}
-              className="truncate text-[13.5px] font-semibold text-white hover:text-accent"
+              className="truncate text-[13.5px] font-semibold text-white hover:text-[#d4d4d4]"
             >
               {contract.agent.firstName} {contract.agent.lastName}
             </Link>
@@ -541,7 +541,7 @@ function ContractListRow({
             {contract.counterpartyRole ? ` · ${contract.counterpartyRole}` : ''}
             {contract.application ? ` · Bewerbung: ${contract.application.applicantDisplayName}` : ''}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-fg-subtle">
+          <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">
             {contract.status === 'SIGNED'
               ? `Unterschrieben ${formatDateTime(contract.signedAt)} von ${contract.signedName ?? '—'}`
               : contract.sentAt
@@ -590,20 +590,20 @@ function PendingAgentListRow({
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-raised text-accent">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#232323] text-[#d4d4d4]">
           <UserRound size={16} />
         </span>
         <div className="min-w-0">
           <Link
             href={`/agents/${row.id}`}
-            className="truncate text-[13.5px] font-semibold text-white hover:text-accent"
+            className="truncate text-[13.5px] font-semibold text-white hover:text-[#d4d4d4]"
           >
             {row.firstName} {row.lastName}
           </Link>
           <p className="mt-0.5 truncate text-[11.5px] text-[#909090]">
             DN {displayBadgeNumber(row.badgeNumber)} · {row.rank?.name ?? '—'} · seit {formatDateTime(row.hireDate)}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-fg-subtle">
+          <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">
             {hasOpenContract
               ? `Vertrag versendet · ${row.latestContract?.sendCount ?? 0}× angeschrieben`
               : row.latestContract
@@ -630,9 +630,9 @@ function PendingAgentListRow({
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[12px] border border-white/[0.04] bg-surface/70 px-4 py-3">
+    <div className="rounded-[12px] border border-white/[0.04] bg-[#1b1b1b]/70 px-4 py-3">
       <p className="text-[20px] font-semibold leading-tight text-white tabular-nums">{value}</p>
-      <p className="mt-0.5 text-[11px] text-fg-muted">{label}</p>
+      <p className="mt-0.5 text-[11px] text-[#a6a6a6]">{label}</p>
     </div>
   )
 }
@@ -647,10 +647,10 @@ function EmptyState({
   description: string
 }) {
   return (
-    <div className="rounded-[14px] border border-[#373737]/45 bg-surface/70 py-14 text-center">
-      <Icon size={28} className="mx-auto mb-3 text-fg-subtle" />
+    <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 py-14 text-center">
+      <Icon size={28} className="mx-auto mb-3 text-[#8c8c8c]" />
       <p className="text-[14px] font-semibold text-white">{title}</p>
-      <p className="mx-auto mt-1 max-w-md text-[12.5px] text-fg-muted">{description}</p>
+      <p className="mx-auto mt-1 max-w-md text-[12.5px] text-[#a6a6a6]">{description}</p>
     </div>
   )
 }

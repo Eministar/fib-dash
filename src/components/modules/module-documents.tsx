@@ -311,7 +311,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
           fullscreen ? 'h-full' : 'h-[min(72vh,760px)] min-h-[560px]',
       )}>
         {viewMode !== 'preview' && (
-            <div className="relative flex min-h-0 flex-col border-r border-line/45 bg-[#0f0f0f]/60">
+            <div className="relative flex min-h-0 flex-col border-r border-[#343434]/45 bg-[#0f0f0f]/60">
           <textarea
               ref={textareaRef}
               value={content}
@@ -329,16 +329,16 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
               }}
               readOnly={!canManage}
               spellCheck
-              className="h-full min-h-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent p-6 font-mono text-[13.5px] leading-[1.75] text-fg outline-none placeholder:text-fg-subtle selection:bg-accent/30"
+              className="h-full min-h-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent p-6 font-mono text-[13.5px] leading-[1.75] text-[#f4f4f4] outline-none placeholder:text-[#8c8c8c] selection:bg-[#d4d4d4]/30"
               placeholder="Markdown schreiben…&#10;&#10;# Überschrift&#10;**fett** *kursiv*&#10;- Liste"
           />
             </div>
         )}
         {viewMode !== 'edit' && (
-            <div className="min-h-0 overflow-y-auto bg-gradient-to-b from-surface-sunken/40 to-[#0f0f0f]/30 p-6">
+            <div className="min-h-0 overflow-y-auto bg-gradient-to-b from-[#181818]/40 to-[#0f0f0f]/30 p-6">
               <article
-                  className="markdown-document mx-auto max-w-3xl rounded-[14px] border border-line/55 bg-[#131313]/80 p-7 shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
-                  dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-fg-subtle italic">Vorschau erscheint hier...</p>' }}
+                  className="markdown-document mx-auto max-w-3xl rounded-[14px] border border-[#343434]/55 bg-[#131313]/80 p-7 shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
+                  dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-[#8c8c8c] italic">Vorschau erscheint hier...</p>' }}
               />
             </div>
         )}
@@ -347,16 +347,16 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
 
   const directDocumentView = (
     <div className={cn(
-      'flex min-h-0 items-center justify-center overflow-y-auto bg-gradient-to-b from-surface-sunken/40 to-[#0f0f0f]/30 p-6',
+      'flex min-h-0 items-center justify-center overflow-y-auto bg-gradient-to-b from-[#181818]/40 to-[#0f0f0f]/30 p-6',
       fullscreen ? 'h-full' : 'h-[min(72vh,760px)] min-h-[560px]',
     )}>
-      <div className="w-full max-w-xl rounded-[18px] border border-accent/25 bg-[#131313]/90 p-7 text-center shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[16px] border border-accent/30 bg-accent/10 text-accent">
+      <div className="w-full max-w-xl rounded-[18px] border border-[#d4d4d4]/25 bg-[#131313]/90 p-7 text-center shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[16px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/10 text-[#d4d4d4]">
           <ExternalLink size={25} strokeWidth={1.8} />
         </div>
-        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-accent/80">Externer Dokument-Link</p>
+        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-[#d4d4d4]/80">Externer Dokument-Link</p>
         <h3 className="mt-1.5 text-[18px] font-semibold text-white">{title}</h3>
-        <p className="mx-auto mt-2 max-w-md text-[12px] leading-5 text-fg-muted">
+        <p className="mx-auto mt-2 max-w-md text-[12px] leading-5 text-[#a6a6a6]">
           Dieses Dokument wird direkt im Browser geöffnet. Der Markdown-Editor ist für diesen Eintrag deaktiviert.
         </p>
         {directUrl ? (
@@ -364,7 +364,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
             href={directUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mx-auto mt-5 inline-flex h-10 items-center gap-2 rounded-[10px] bg-gradient-to-b from-accent to-[#b8b8b8] px-4 text-[13px] font-semibold text-surface-sunken shadow-[0_4px_16px_rgba(212,212,212,0.18)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="mx-auto mt-5 inline-flex h-10 items-center gap-2 rounded-[10px] bg-gradient-to-b from-[#d4d4d4] to-[#b8b8b8] px-4 text-[13px] font-semibold text-[#181818] shadow-[0_4px_16px_rgba(212,212,212,0.18)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/60"
           >
             <ExternalLink size={15} />
             Dokument im Browser öffnen
@@ -372,12 +372,12 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
         ) : (
           <p className="mt-5 text-[12px] text-[#fca5a5]">Der Link ist noch nicht gültig. Bitte eine vollständige HTTP- oder HTTPS-Adresse speichern.</p>
         )}
-        {directUrl && <p className="mt-4 break-all font-mono text-[11px] leading-4 text-fg-subtle">{directUrl}</p>}
+        {directUrl && <p className="mt-4 break-all font-mono text-[11px] leading-4 text-[#8c8c8c]">{directUrl}</p>}
         {content.trim() && (
-          <details className="mt-6 border-t border-line/60 pt-4 text-left">
-            <summary className="cursor-pointer text-[11px] font-semibold text-fg-muted">Interne Notizen anzeigen</summary>
+          <details className="mt-6 border-t border-[#343434]/60 pt-4 text-left">
+            <summary className="cursor-pointer text-[11px] font-semibold text-[#a6a6a6]">Interne Notizen anzeigen</summary>
             <article
-              className="markdown-document mt-3 rounded-[10px] border border-line/50 bg-[#0f0f0f]/60 p-4 text-[12px] leading-5"
+              className="markdown-document mt-3 rounded-[10px] border border-[#343434]/50 bg-[#0f0f0f]/60 p-4 text-[12px] leading-5"
               dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
           </details>
@@ -391,7 +391,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
           type="button"
           onClick={onClick}
           title={label}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[7px] text-fg-muted transition-colors hover:bg-surface-raised hover:text-accent"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[7px] text-[#a6a6a6] transition-colors hover:bg-[#232323] hover:text-[#d4d4d4]"
       >
         {icon}
       </button>
@@ -405,7 +405,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
         {selectedDocument ? (
             <div className="flex h-full min-h-0 flex-col">
               {/* Title bar */}
-              <div className="border-b border-line/45 bg-gradient-to-r from-surface-sunken/80 to-surface/60 p-4 space-y-3">
+              <div className="border-b border-[#343434]/45 bg-gradient-to-r from-[#181818]/80 to-[#1b1b1b]/60 p-4 space-y-3">
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_auto] lg:items-end">
                   <Input label="Titel" value={title} onChange={(e) => { setDirty(true); setTitle(e.target.value) }} disabled={!canManage} required />
                   <Select label="Ordner" value={folderId} onValueChange={(v) => { setDirty(true); setFolderId(v) }} options={folderOptions} disabled={!canManage} />
@@ -434,7 +434,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                       href={directUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] border border-accent/35 bg-accent/10 px-3 text-[11.5px] font-semibold text-[#c3c3c3] transition-colors hover:bg-accent/16 hover:text-white"
+                      className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-[8px] border border-[#d4d4d4]/35 bg-[#d4d4d4]/10 px-3 text-[11.5px] font-semibold text-[#c3c3c3] transition-colors hover:bg-[#d4d4d4]/16 hover:text-white"
                     >
                       <ExternalLink size={13} /> Öffnen
                     </a>
@@ -451,32 +451,32 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                   <span>{charCount} Zeichen</span>
                   <span>·</span>
                   <span>Aktualisiert {relativeTime(selectedDocument.updatedAt)}{selectedDocument.updatedBy ? ` von ${selectedDocument.updatedBy.displayName}` : ''}</span>
-                  <span className="ml-auto hidden md:inline text-fg-subtle">⌘/Ctrl + S zum Speichern</span>
+                  <span className="ml-auto hidden md:inline text-[#8c8c8c]">⌘/Ctrl + S zum Speichern</span>
                 </div>
               </div>
 
               {/* Toolbar */}
-              <div className="flex flex-wrap items-center gap-1 border-b border-line/45 bg-canvas/70 px-3 py-1.5">
+              <div className="flex flex-wrap items-center gap-1 border-b border-[#343434]/45 bg-[#080808]/70 px-3 py-1.5">
                 {canManage && !directUrl && (
                     <>
-                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-line/60">
+                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-[#343434]/60">
                         {toolbarBtn(<Heading1 size={15} />, 'Überschrift 1', toolbarActions.heading1)}
                         {toolbarBtn(<Heading2 size={15} />, 'Überschrift 2', toolbarActions.heading2)}
                         {toolbarBtn(<Heading3 size={15} />, 'Überschrift 3', toolbarActions.heading3)}
                       </div>
-                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-line/60">
+                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-[#343434]/60">
                         {toolbarBtn(<Bold size={15} />, 'Fett', toolbarActions.bold)}
                         {toolbarBtn(<Italic size={15} />, 'Kursiv', toolbarActions.italic)}
                         {toolbarBtn(<Strikethrough size={15} />, 'Durchgestrichen', toolbarActions.strike)}
                         {toolbarBtn(<Code size={15} />, 'Code', toolbarActions.code)}
                       </div>
-                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-line/60">
+                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-[#343434]/60">
                         {toolbarBtn(<List size={15} />, 'Aufzählung', toolbarActions.unorderedList)}
                         {toolbarBtn(<ListOrdered size={15} />, 'Nummeriert', toolbarActions.orderedList)}
                         {toolbarBtn(<ListTodo size={15} />, 'Aufgabe', toolbarActions.checklist)}
                         {toolbarBtn(<Quote size={15} />, 'Zitat', toolbarActions.quote)}
                       </div>
-                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-line/60">
+                      <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-[#343434]/60">
                         {toolbarBtn(<Link2 size={15} />, 'Link', toolbarActions.link)}
                         {toolbarBtn(<Table2 size={15} />, 'Tabelle', toolbarActions.table)}
                       </div>
@@ -494,19 +494,19 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                         title={label}
                         className={cn(
                           'inline-flex h-8 items-center gap-1.5 rounded-[7px] px-2.5 text-[11.5px] font-medium transition-colors',
-                          viewMode === mode ? 'bg-accent/15 text-accent' : 'text-fg-muted hover:bg-surface-raised hover:text-white',
+                          viewMode === mode ? 'bg-[#d4d4d4]/15 text-[#d4d4d4]' : 'text-[#a6a6a6] hover:bg-[#232323] hover:text-white',
                         )}
                       >
                         <Icon size={13} /> {label}
                       </button>
                     )
                   })}
-                  {directUrl && <span className="inline-flex h-8 items-center gap-1.5 px-2 text-[11px] font-semibold text-accent"><ExternalLink size={13} /> Browseransicht</span>}
+                  {directUrl && <span className="inline-flex h-8 items-center gap-1.5 px-2 text-[11px] font-semibold text-[#d4d4d4]"><ExternalLink size={13} /> Browseransicht</span>}
                   <button
                       type="button"
                       onClick={() => setFullscreen((v) => !v)}
                       title={fullscreen ? 'Vollbild verlassen' : 'Vollbild'}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-[7px] text-fg-muted transition-colors hover:bg-surface-raised hover:text-white ml-1"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-[7px] text-[#a6a6a6] transition-colors hover:bg-[#232323] hover:text-white ml-1"
                   >
                     {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                   </button>
@@ -517,11 +517,11 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
             </div>
         ) : (
             <div className="flex min-h-[680px] flex-col items-center justify-center text-center px-6">
-              <div className="rounded-full bg-accent/10 p-5 mb-4">
-                <FileText size={32} className="text-accent/70" />
+              <div className="rounded-full bg-[#d4d4d4]/10 p-5 mb-4">
+                <FileText size={32} className="text-[#d4d4d4]/70" />
               </div>
               <p className="text-[14px] font-semibold text-[#e5e5e5] mb-1">Kein Dokument ausgewählt</p>
-              <p className="text-[12.5px] text-fg-muted mb-4 max-w-xs">Wähle ein Dokument aus der Seitenleiste oder erstelle ein neues.</p>
+              <p className="text-[12.5px] text-[#a6a6a6] mb-4 max-w-xs">Wähle ein Dokument aus der Seitenleiste oder erstelle ein neues.</p>
               {canManage && <Button size="sm" onClick={() => setDocModalOpen(true)}><Plus size={13} /> Neues Dokument</Button>}
             </div>
         )}
@@ -546,30 +546,30 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
         <div className={cn('grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4', fullscreen && 'lg:grid-cols-1')}>
           {!fullscreen && (
               <aside className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 overflow-hidden">
-                <div className="border-b border-line/45 px-3 py-2.5 space-y-2">
+                <div className="border-b border-[#343434]/45 px-3 py-2.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-fg-muted">Ablage</p>
+                    <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-[#a6a6a6]">Ablage</p>
                     <div className="flex items-center gap-1">
-                      <span className="text-[11px] text-fg-subtle">{allDocuments.length}</span>
-                      <button type="button" onClick={refetch} className="p-1 rounded-[6px] text-[#909090] hover:text-accent hover:bg-surface-raised/70" title="Aktualisieren">
+                      <span className="text-[11px] text-[#8c8c8c]">{allDocuments.length}</span>
+                      <button type="button" onClick={refetch} className="p-1 rounded-[6px] text-[#909090] hover:text-[#d4d4d4] hover:bg-[#232323]/70" title="Aktualisieren">
                         <RefreshCw size={12} />
                       </button>
                     </div>
                   </div>
                   <div className="relative">
-                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Suchen…"
-                        className="h-8 w-full rounded-[7px] border border-line/60 bg-[#0f0f0f] pl-7 pr-2 text-[12px] text-fg placeholder:text-fg-subtle outline-none focus:border-accent/40"
+                        className="h-8 w-full rounded-[7px] border border-[#343434]/60 bg-[#0f0f0f] pl-7 pr-2 text-[12px] text-[#f4f4f4] placeholder:text-[#8c8c8c] outline-none focus:border-[#d4d4d4]/40"
                     />
                   </div>
                 </div>
                 <div className="max-h-[640px] overflow-y-auto p-1.5">
                   {filteredLoose.length > 0 && (
                       <div className="mb-2">
-                        <p className="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-fg-subtle font-semibold">Ohne Ordner</p>
+                        <p className="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-[#8c8c8c] font-semibold">Ohne Ordner</p>
                         {filteredLoose.map((doc) => (
                             <DocumentButton key={doc.id} document={doc} active={selectedId === doc.id} onClick={() => selectDocument(doc.id)} />
                         ))}
@@ -583,17 +583,17 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                           <button
                               type="button"
                               onClick={() => toggleFolder(folder.id)}
-                              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-[7px] hover:bg-surface-raised/55 transition-colors group"
+                              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-[7px] hover:bg-[#232323]/55 transition-colors group"
                           >
-                            <ChevronRight size={11} className={cn('text-fg-subtle transition-transform', !collapsed && 'rotate-90')} />
+                            <ChevronRight size={11} className={cn('text-[#8c8c8c] transition-transform', !collapsed && 'rotate-90')} />
                             <Folder size={12} style={{ color: folder.color }} />
                             <span className="flex-1 truncate text-left text-[12px] font-semibold text-[#e5e5e5]">{folder.name}</span>
-                            <span className="text-[11px] text-fg-subtle">{folder.documents.length}</span>
+                            <span className="text-[11px] text-[#8c8c8c]">{folder.documents.length}</span>
                           </button>
                           {!collapsed && (
-                              <div className="ml-1.5 pl-2 border-l border-line/40">
+                              <div className="ml-1.5 pl-2 border-l border-[#343434]/40">
                                 {folder.documents.length === 0 ? (
-                                    <p className="px-2 py-1.5 text-[11px] text-fg-subtle italic">Leer</p>
+                                    <p className="px-2 py-1.5 text-[11px] text-[#8c8c8c] italic">Leer</p>
                                 ) : (
                                     folder.documents.map((doc) => (
                                         <DocumentButton key={doc.id} document={doc} color={folder.color} active={selectedId === doc.id} onClick={() => selectDocument(doc.id)} />
@@ -606,8 +606,8 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                   })}
                   {allDocuments.length === 0 && (
                       <div className="py-12 text-center px-4">
-                        <FileText size={22} className="mx-auto mb-2 text-fg-subtle" />
-                        <p className="text-[12px] text-fg-muted mb-3">Noch keine Dokumente</p>
+                        <FileText size={22} className="mx-auto mb-2 text-[#8c8c8c]" />
+                        <p className="text-[12px] text-[#a6a6a6] mb-3">Noch keine Dokumente</p>
                         {canManage && (
                             <Button size="sm" variant="secondary" onClick={() => setDocModalOpen(true)}>
                               <Plus size={12} /> Erstellen
@@ -616,7 +616,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                       </div>
                   )}
                   {allDocuments.length > 0 && search && filteredLoose.length === 0 && filteredFolders.every((f) => f.documents.length === 0) && (
-                      <p className="py-8 text-center text-[11.5px] text-fg-subtle">Keine Treffer für {search}</p>
+                      <p className="py-8 text-center text-[11.5px] text-[#8c8c8c]">Keine Treffer für {search}</p>
                   )}
                 </div>
               </aside>
@@ -649,7 +649,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                 onChange={(e) => setDocForm({ ...docForm, externalUrl: e.target.value })}
                 placeholder="https://drive.google.com/..."
               />
-              <p className="mt-1.5 text-[11px] leading-4 text-fg-subtle">
+              <p className="mt-1.5 text-[11px] leading-4 text-[#8c8c8c]">
                 Mit einem Link öffnet sich der Eintrag direkt im Browser statt im Markdown-Editor.
               </p>
             </div>
@@ -671,15 +671,15 @@ function DocumentButton({ document, color, active, onClick }: { document: Module
           className={cn(
               'w-full rounded-[8px] px-2.5 py-2 text-left transition-all group relative',
               active
-                  ? 'bg-gradient-to-r from-accent/15 to-accent/5 border border-accent/30 shadow-[0_2px_10px_rgba(212,212,212,0.08)]'
-                  : 'border border-transparent hover:bg-surface-raised/60',
+                  ? 'bg-gradient-to-r from-[#d4d4d4]/15 to-[#d4d4d4]/5 border border-[#d4d4d4]/30 shadow-[0_2px_10px_rgba(212,212,212,0.08)]'
+                  : 'border border-transparent hover:bg-[#232323]/60',
           )}
       >
-        {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[2px] rounded-r bg-accent" />}
+        {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[2px] rounded-r bg-[#d4d4d4]" />}
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color ?? '#d4d4d4' }} />
-          <p className={cn('truncate text-[12.5px] font-medium flex-1', active ? 'text-white' : 'text-fg')}>{document.title}</p>
-          {document.externalUrl && <ExternalLink size={11} className="shrink-0 text-accent" aria-label="Direktlink" />}
+          <p className={cn('truncate text-[12.5px] font-medium flex-1', active ? 'text-white' : 'text-[#f4f4f4]')}>{document.title}</p>
+          {document.externalUrl && <ExternalLink size={11} className="shrink-0 text-[#d4d4d4]" aria-label="Direktlink" />}
         </div>
         <p className="mt-0.5 line-clamp-1 text-[11px] leading-4 text-[#909090] pl-3.5">{document.externalUrl ? 'Direkt im Browser öffnen' : preview(document.content)}</p>
       </button>

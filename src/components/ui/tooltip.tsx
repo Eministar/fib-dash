@@ -34,7 +34,7 @@ export function Tooltip({
           side={side}
           sideOffset={6}
           collisionPadding={8}
-          className="tooltip-content z-[120] max-w-[260px] rounded-[7px] border border-[#3a3a3a] bg-[#1f1f1f] px-2.5 py-1.5 text-[12px] font-medium leading-snug text-fg shadow-[0_6px_20px_rgba(0,0,0,0.35)]"
+          className="tooltip-content z-[120] max-w-[260px] rounded-[7px] border border-[#3a3a3a] bg-[#1f1f1f] px-2.5 py-1.5 text-[12px] font-medium leading-snug text-[#f4f4f4] shadow-[0_6px_20px_rgba(0,0,0,0.35)]"
         >
           {content}
         </TooltipPrimitive.Content>

@@ -26,17 +26,17 @@ export function RecentItemsCard() {
           <li key={item.href} className="min-w-[220px] sm:min-w-0">
             <Link
               href={item.href}
-              className="group flex h-full items-start justify-between gap-3 rounded-[12px] border border-[#323232]/55 bg-surface/70 px-3.5 py-3 transition-colors hover:border-[#484848] hover:bg-[#202020]"
+              className="group flex h-full items-start justify-between gap-3 rounded-[12px] border border-[#323232]/55 bg-[#1b1b1b]/70 px-3.5 py-3 transition-colors hover:border-[#484848] hover:bg-[#202020]"
             >
               <span className="min-w-0">
                 <span className="block text-[11px] font-medium text-[#909090]">
                   {RECENT_KIND_LABELS[item.kind]}
-                  {item.subtitle && <span className="font-mono text-fg-muted"> · {item.subtitle}</span>}
+                  {item.subtitle && <span className="font-mono text-[#a6a6a6]"> · {item.subtitle}</span>}
                 </span>
                 <span className="mt-0.5 block truncate text-[13.5px] font-medium text-white">{item.title}</span>
-                <span className="mt-0.5 block text-[11px] text-fg-subtle">{formatRelativeTime(new Date(item.visitedAt))}</span>
+                <span className="mt-0.5 block text-[11px] text-[#8c8c8c]">{formatRelativeTime(new Date(item.visitedAt))}</span>
               </span>
-              <ArrowUpRight size={14} className="mt-0.5 shrink-0 text-fg-subtle transition-colors group-hover:text-accent" />
+              <ArrowUpRight size={14} className="mt-0.5 shrink-0 text-[#8c8c8c] transition-colors group-hover:text-[#d4d4d4]" />
             </Link>
           </li>
         ))}

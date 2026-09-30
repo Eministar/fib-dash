@@ -70,12 +70,12 @@ function TableEditor({ table, onChange }: { table: PublicationTable; onChange: (
           <Button type="button" variant="secondary" size="sm" onClick={addColumn} disabled={table.columns.length >= MAX_TABLE_COLUMNS}><Plus size={13} /> Spalte</Button>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-[10px] border border-line">
+      <div className="overflow-x-auto rounded-[10px] border border-[#343434]">
         <table className="w-full border-collapse text-[13px]">
           <thead className="bg-[#1c1c1c]">
             <tr>
               {table.columns.map((column, index) => (
-                <th key={index} className="min-w-[160px] border-b border-r border-line p-1 last:border-r-0">
+                <th key={index} className="min-w-[160px] border-b border-r border-[#343434] p-1 last:border-r-0">
                   <div className="flex items-center gap-1">
                     <input
                       aria-label={`Überschrift Spalte ${index + 1}`}
@@ -84,12 +84,12 @@ function TableEditor({ table, onChange }: { table: PublicationTable; onChange: (
                       className="h-8 w-full rounded-[6px] bg-transparent px-2 font-medium text-white outline-none focus:bg-[#262626]"
                     />
                     {table.columns.length > 1 && (
-                      <button type="button" onClick={() => removeColumn(index)} aria-label={`Spalte ${column || index + 1} entfernen`} className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><X size={13} /></button>
+                      <button type="button" onClick={() => removeColumn(index)} aria-label={`Spalte ${column || index + 1} entfernen`} className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] text-[#8c8c8c] hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><X size={13} /></button>
                     )}
                   </div>
                 </th>
               ))}
-              <th className="w-9 border-b border-line" aria-label="Aktionen" />
+              <th className="w-9 border-b border-[#343434]" aria-label="Aktionen" />
             </tr>
           </thead>
           <tbody>
@@ -106,7 +106,7 @@ function TableEditor({ table, onChange }: { table: PublicationTable; onChange: (
                   </td>
                 ))}
                 <td className="p-1">
-                  <button type="button" onClick={() => removeRow(rowIndex)} aria-label={`Zeile ${rowIndex + 1} entfernen`} className="grid h-7 w-7 place-items-center rounded-[6px] text-fg-subtle hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><Trash2 size={13} /></button>
+                  <button type="button" onClick={() => removeRow(rowIndex)} aria-label={`Zeile ${rowIndex + 1} entfernen`} className="grid h-7 w-7 place-items-center rounded-[6px] text-[#8c8c8c] hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><Trash2 size={13} /></button>
                 </td>
               </tr>
             ))}
@@ -152,13 +152,13 @@ function RolePicker({ value, onChange }: { value: string[]; onChange: (ids: stri
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Rolle suchen …"
         aria-label="Rolle suchen"
-        className="mb-2 h-9 w-full rounded-[8px] border border-line bg-[#151515] px-3 text-[13px] text-white outline-none focus:border-[#6f6f6f]"
+        className="mb-2 h-9 w-full rounded-[8px] border border-[#343434] bg-[#151515] px-3 text-[13px] text-white outline-none focus:border-[#6f6f6f]"
       />
-      <div className="max-h-56 space-y-0.5 overflow-y-auto rounded-[10px] border border-line p-1.5">
+      <div className="max-h-56 space-y-0.5 overflow-y-auto rounded-[10px] border border-[#343434] p-1.5">
         {loading && !roles && <p className="px-2 py-1.5 text-[12.5px] text-[#909090]">Rollen werden geladen …</p>}
         {visible.map((role) => (
-          <label key={role.id} className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[#e5e5e5] hover:bg-surface-raised">
-            <input type="checkbox" checked={value.includes(role.id)} onChange={() => toggle(role.id)} className="accent-accent" />
+          <label key={role.id} className="flex cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px] text-[#e5e5e5] hover:bg-[#232323]">
+            <input type="checkbox" checked={value.includes(role.id)} onChange={() => toggle(role.id)} className="accent-[#d4d4d4]" />
             {role.name}
           </label>
         ))}
@@ -239,7 +239,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
 
   return (
     <div className="mx-auto max-w-5xl pb-10">
-      <Link href="/publications" className="mb-4 inline-flex items-center gap-1.5 text-[12.5px] text-fg-muted hover:text-white"><ArrowLeft size={14} /> Alle Aushänge</Link>
+      <Link href="/publications" className="mb-4 inline-flex items-center gap-1.5 text-[12.5px] text-[#a6a6a6] hover:text-white"><ArrowLeft size={14} /> Alle Aushänge</Link>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-semibold text-white">{existing ? 'Aushang bearbeiten' : 'Neuer Aushang'}</h1>
@@ -251,7 +251,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
           {publicUrl && status === 'PUBLISHED' && (
             <>
               <Button variant="secondary" size="sm" onClick={() => { void navigator.clipboard.writeText(`${window.location.origin}${publicUrl}`); addToast({ type: 'success', title: 'Link kopiert' }) }}>Link kopieren</Button>
-              <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-surface-raised px-3 text-[12.5px] font-medium text-fg hover:bg-[#333333]"><ExternalLink size={13} /> Ansehen</a>
+              <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] hover:bg-[#333333]"><ExternalLink size={13} /> Ansehen</a>
             </>
           )}
           <Button variant="secondary" size="sm" loading={loading} disabled={slugInvalid} onClick={() => save()}>Speichern</Button>
@@ -272,9 +272,9 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
                 role="radio"
                 aria-checked={kind === option.id}
                 onClick={() => setKind(option.id)}
-                className={cn('flex gap-3 rounded-[10px] border p-3 text-left transition-colors', kind === option.id ? 'border-fg-muted bg-[#262626]' : 'border-line hover:bg-[#1f1f1f]')}
+                className={cn('flex gap-3 rounded-[10px] border p-3 text-left transition-colors', kind === option.id ? 'border-[#a6a6a6] bg-[#262626]' : 'border-[#343434] hover:bg-[#1f1f1f]')}
               >
-                <option.icon size={18} className="mt-0.5 shrink-0 text-accent" />
+                <option.icon size={18} className="mt-0.5 shrink-0 text-[#d4d4d4]" />
                 <span><span className="block text-[13px] font-medium text-white">{option.label}</span><span className="mt-0.5 block text-[12px] text-[#909090]">{option.text}</span></span>
               </button>
             ))}
@@ -297,9 +297,9 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
             </div>
           </div>
           {preview
-            ? <article className="markdown-document min-h-[200px] rounded-[10px] border border-line p-4" dangerouslySetInnerHTML={{ __html: previewHtml || '<p>Noch kein Text.</p>' }} />
+            ? <article className="markdown-document min-h-[200px] rounded-[10px] border border-[#343434] p-4" dangerouslySetInnerHTML={{ __html: previewHtml || '<p>Noch kein Text.</p>' }} />
             : <Textarea value={content} onChange={(event) => setContent(event.target.value)} rows={kind === 'TABLE' ? 5 : 16} maxLength={100_000} placeholder={'# Überschrift\n\nText des Schreibens. **Fett**, Listen mit - und Links sind möglich.'} />}
-          <p className="mt-2 text-[11.5px] text-fg-subtle">Formatierung wie bei den Ordnungen: # Überschrift, **fett**, - Aufzählung.</p>
+          <p className="mt-2 text-[11.5px] text-[#8c8c8c]">Formatierung wie bei den Ordnungen: # Überschrift, **fett**, - Aufzählung.</p>
         </div>
 
         <div className="glass-panel-elevated space-y-4 rounded-[14px] p-5">
@@ -316,9 +316,9 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
                   role="radio"
                   aria-checked={access === option.id}
                   onClick={() => setAccess(option.id)}
-                  className={cn('flex gap-3 rounded-[10px] border p-3 text-left transition-colors', access === option.id ? 'border-fg-muted bg-[#262626]' : 'border-line hover:bg-[#1f1f1f]')}
+                  className={cn('flex gap-3 rounded-[10px] border p-3 text-left transition-colors', access === option.id ? 'border-[#a6a6a6] bg-[#262626]' : 'border-[#343434] hover:bg-[#1f1f1f]')}
                 >
-                  <option.icon size={17} className="mt-0.5 shrink-0 text-accent" />
+                  <option.icon size={17} className="mt-0.5 shrink-0 text-[#d4d4d4]" />
                   <span><span className="block text-[13px] font-medium text-white">{option.label}</span><span className="mt-0.5 block text-[12px] text-[#909090]">{option.text}</span></span>
                 </button>
               ))}
@@ -334,8 +334,8 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
               placeholder="z. B. dienstplan-oktober"
               error={slugInvalid ? '3–80 Zeichen, nur a–z, 0–9 und Bindestriche, nicht mit Bindestrich beginnen oder enden' : undefined}
             />
-            <p className="mt-1.5 text-[11.5px] text-fg-subtle">
-              Link: <code className="text-accent">/aushang/{slug.trim() || (existing ? existing.slug : 'wird-automatisch-erzeugt')}</code>
+            <p className="mt-1.5 text-[11.5px] text-[#8c8c8c]">
+              Link: <code className="text-[#d4d4d4]">/aushang/{slug.trim() || (existing ? existing.slug : 'wird-automatisch-erzeugt')}</code>
               {existing && slug.trim() && slug.trim() !== existing.slug && ' · Achtung: Der bisherige Link funktioniert nach dem Speichern nicht mehr.'}
             </p>
           </div>
@@ -345,7 +345,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
           <Select label="Status" value={status} onValueChange={(value) => setStatus(value as PublicationStatus)} options={Object.entries(PUBLICATION_STATUS).map(([value, label]) => ({ value, label }))} />
           <div className="pt-6"><Checkbox checked={listed} onCheckedChange={setListed} label="Auf dem Schwarzen Brett anzeigen" /></div>
           <div className="pt-6"><Checkbox checked={pinned} onCheckedChange={setPinned} label="Oben anheften" /></div>
-          <p className="text-[11.5px] leading-5 text-fg-subtle sm:col-span-3">Ohne „Auf dem Schwarzen Brett anzeigen“ ist ein veröffentlichter Aushang nur über seinen Link erreichbar. Geschlossene Aushänge erscheinen auf dem Brett nur für Berechtigte. Entwürfe und Archiviertes sind öffentlich nie sichtbar.</p>
+          <p className="text-[11.5px] leading-5 text-[#8c8c8c] sm:col-span-3">Ohne „Auf dem Schwarzen Brett anzeigen“ ist ein veröffentlichter Aushang nur über seinen Link erreichbar. Geschlossene Aushänge erscheinen auf dem Brett nur für Berechtigte. Entwürfe und Archiviertes sind öffentlich nie sichtbar.</p>
         </div>
 
         {existing && (
@@ -356,7 +356,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
       </div>
 
       <Modal open={deleting} onClose={() => setDeleting(false)} title="Aushang löschen">
-        <p className="mb-4 text-[13px] text-fg-muted">„{existing?.title}“ endgültig löschen? Der öffentliche Link funktioniert danach nicht mehr.</p>
+        <p className="mb-4 text-[13px] text-[#a6a6a6]">„{existing?.title}“ endgültig löschen? Der öffentliche Link funktioniert danach nicht mehr.</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setDeleting(false)}>Abbrechen</Button>
           <Button variant="danger" loading={loading} onClick={remove}>Löschen</Button>

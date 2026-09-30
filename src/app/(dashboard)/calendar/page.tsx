@@ -156,7 +156,7 @@ export default function CalendarPage() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-[6px] border border-accent/20 bg-accent/8 px-2 py-0.5 text-[11px] font-semibold text-accent">{event.type}</span>
+                  <span className="rounded-[6px] border border-[#d4d4d4]/20 bg-[#d4d4d4]/8 px-2 py-0.5 text-[11px] font-semibold text-[#d4d4d4]">{event.type}</span>
                   {event.module && (
                     <span
                       className="rounded-[6px] border px-2 py-0.5 text-[11px] font-semibold"
@@ -172,7 +172,7 @@ export default function CalendarPage() {
                   {event.discordAnnouncement && <Megaphone size={13} className="text-[#38bdf8]" />}
                 </div>
                 <h3 className="mt-2 text-[14px] font-semibold text-white">{event.title}</h3>
-                <p className="mt-1 text-[12px] text-fg-muted">{formatDateTime(event.startsAt)}{event.endsAt ? ` → ${formatDateTime(event.endsAt)}` : ''}</p>
+                <p className="mt-1 text-[12px] text-[#a6a6a6]">{formatDateTime(event.startsAt)}{event.endsAt ? ` → ${formatDateTime(event.endsAt)}` : ''}</p>
               </div>
               {canManage && (
                 <button type="button" onClick={() => deleteEvent(event.id)} className="rounded-[7px] p-1.5 text-[#909090] transition-colors hover:bg-[#321218]/60 hover:text-[#fca5a5]">
@@ -183,7 +183,7 @@ export default function CalendarPage() {
             {event.location && <p className="mt-3 text-[12.5px] text-[#d2d2d2]">Ort: {event.location}</p>}
             {event.description && <p className="mt-2 text-[12.5px] leading-relaxed text-[#c3c3c3]">{event.description}</p>}
             {event.agent && (
-              <Link href={`/agents/${event.agent.id}`} className="mt-3 inline-flex text-[12px] text-accent hover:text-white">
+              <Link href={`/agents/${event.agent.id}`} className="mt-3 inline-flex text-[12px] text-[#d4d4d4] hover:text-white">
                 {event.agent.firstName} {event.agent.lastName} #{displayBadgeNumber(event.agent.badgeNumber)}
               </Link>
             )}
@@ -193,8 +193,8 @@ export default function CalendarPage() {
 
       {(events ?? []).length === 0 && (
         <div className="glass-panel-elevated rounded-[14px] p-12 text-center">
-          <CalendarDays size={28} className="mx-auto mb-3 text-accent/35" />
-          <p className="text-[13px] text-fg-muted">Keine Termine vorhanden</p>
+          <CalendarDays size={28} className="mx-auto mb-3 text-[#d4d4d4]/35" />
+          <p className="text-[13px] text-[#a6a6a6]">Keine Termine vorhanden</p>
         </div>
       )}
 
@@ -209,7 +209,7 @@ export default function CalendarPage() {
           <Input label="Ort optional" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
           <Select label="Agent-Bezug" value={form.agentId} onValueChange={(agentId) => setForm({ ...form, agentId })} options={agentOptions} />
           <Textarea label="Beschreibung" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
-          <label className={cn('flex items-center gap-2 rounded-[9px] border border-line/60 bg-surface-sunken px-3 py-2 text-[12.5px] text-[#c3c3c3]')}>
+          <label className={cn('flex items-center gap-2 rounded-[9px] border border-[#343434]/60 bg-[#181818] px-3 py-2 text-[12.5px] text-[#c3c3c3]')}>
             <input type="checkbox" checked={form.discordAnnouncement} onChange={(e) => setForm({ ...form, discordAnnouncement: e.target.checked })} />
             Discord-Ankündigung senden
           </label>

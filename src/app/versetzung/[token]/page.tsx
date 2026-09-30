@@ -195,7 +195,7 @@ export default function TransferRequestPage() {
   if (state.kind === 'loading') {
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-3 py-24 text-fg-muted">
+        <div className="flex flex-col items-center gap-3 py-24 text-[#a6a6a6]">
           <PdCloudLoader />
           <p className="text-[13px]">Antrag wird geladen…</p>
         </div>
@@ -230,11 +230,11 @@ export default function TransferRequestPage() {
     <Shell>
       <div className="contract-no-print mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]">
             Federal Investigation Bureau
           </p>
           <h1 className="mt-1 text-[20px] font-semibold text-white">{doc.title}</h1>
-          <p className="mt-1 text-[12.5px] text-fg-muted">
+          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
             Aktenzeichen {doc.requestNumber} · {doc.openRoles.length === 0
               ? 'Alle Unterschriften liegen vor'
               : `Offen: ${doc.openRoles.map((role) => SIGNATURE_ROLE_META[role].title).join(', ')}`}
@@ -247,9 +247,9 @@ export default function TransferRequestPage() {
       </div>
 
       {!closed && !finished && (
-        <div className="contract-no-print mb-5 rounded-[14px] border border-accent/30 bg-[#302712]/45 p-4">
+        <div className="contract-no-print mb-5 rounded-[14px] border border-[#d4d4d4]/30 bg-[#302712]/45 p-4">
           <div className="flex items-start gap-3">
-            <FileSignature size={18} className="mt-0.5 shrink-0 text-accent" />
+            <FileSignature size={18} className="mt-0.5 shrink-0 text-[#d4d4d4]" />
             <div>
               <p className="text-[13px] font-semibold text-white">So läuft der Antrag</p>
               <ul className="mt-1.5 space-y-1 text-[12.5px] leading-5 text-[#c6c6c6]">
@@ -306,7 +306,7 @@ export default function TransferRequestPage() {
       </TransferDocument>
 
       {editable && (
-        <div className="contract-no-print mt-5 rounded-[14px] border border-[#373737]/45 bg-surface/80 p-4">
+        <div className="contract-no-print mt-5 rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/80 p-4">
           {missingRequired.length > 0 && (
             <p className="mb-3 text-[12.5px] text-[#f3b7b7]">
               Noch offen: {missingRequired.map((field) => field.label).join(', ')}
@@ -334,7 +334,7 @@ export default function TransferRequestPage() {
                 onChange={(event) => setDeclineReason(event.target.value)}
                 rows={3}
                 placeholder="Grund (optional)"
-                className="mt-2 w-full resize-none rounded-[9px] border border-[#4a2020]/70 bg-[#120b0b]/60 px-3 py-2 text-[13px] text-fg outline-none placeholder:text-[#7a5555] focus:border-[#b45252]"
+                className="mt-2 w-full resize-none rounded-[9px] border border-[#4a2020]/70 bg-[#120b0b]/60 px-3 py-2 text-[13px] text-[#f4f4f4] outline-none placeholder:text-[#7a5555] focus:border-[#b45252]"
               />
               <div className="mt-2 flex justify-end">
                 <Button variant="danger" size="sm" onClick={decline} loading={declining}>
@@ -394,12 +394,12 @@ function SignatureSlot({
   if (!allowed) {
     const needsLogin = !loggedIn && role !== 'AUTHORITY'
     return (
-      <div className="contract-no-print mt-2 rounded-[9px] border border-line/55 bg-surface-sunken/50 px-2.5 py-2">
-        <p className="text-[11px] leading-4 text-fg-muted">{meta.who}</p>
+      <div className="contract-no-print mt-2 rounded-[9px] border border-[#343434]/55 bg-[#181818]/50 px-2.5 py-2">
+        <p className="text-[11px] leading-4 text-[#a6a6a6]">{meta.who}</p>
         {needsLogin && (
           <a
             href={`/api/auth/discord/login?mode=contract&redirect=${encodeURIComponent(`/versetzung/${token}`)}`}
-            className="mt-1.5 inline-flex items-center gap-1 text-[11.5px] font-semibold text-accent hover:underline"
+            className="mt-1.5 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#d4d4d4] hover:underline"
           >
             <Lock size={11} />
             Mit Discord anmelden
@@ -435,7 +435,7 @@ function SignatureSlot({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-canvas px-3 py-8 sm:px-6 lg:py-12">
+    <main className="min-h-screen bg-[#080808] px-3 py-8 sm:px-6 lg:py-12">
       <div className="mx-auto w-full max-w-[900px]">{children}</div>
     </main>
   )
@@ -454,11 +454,11 @@ function Notice({
 }) {
   return (
     <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-8 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-accent/30 bg-accent/12 text-accent">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/12 text-[#d4d4d4]">
         <Icon size={26} />
       </div>
       <h1 className="text-[19px] font-semibold text-white">{title}</h1>
-      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-fg-muted">{description}</p>
+      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#a6a6a6]">{description}</p>
       {children && <div className="mt-5 flex justify-center">{children}</div>}
     </section>
   )

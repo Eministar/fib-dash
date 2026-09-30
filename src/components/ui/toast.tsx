@@ -44,7 +44,7 @@ const durations: Record<ToastType, number> = { success: 3500, info: 4000, warnin
 const typeColors = {
   success: 'text-emerald-400',
   error: 'text-red-400',
-  warning: 'text-accent',
+  warning: 'text-[#d4d4d4]',
   info: 'text-blue-400',
 }
 
@@ -87,7 +87,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <Icon size={16} className={`mt-0.5 shrink-0 ${typeColors[toast.type]}`} strokeWidth={1.75} />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-white">{toast.title}</p>
-                  {toast.message && <p className="text-[11.5px] text-fg-muted mt-0.5 leading-relaxed break-words">{toast.message}</p>}
+                  {toast.message && <p className="text-[11.5px] text-[#a6a6a6] mt-0.5 leading-relaxed break-words">{toast.message}</p>}
                 </div>
                 {toast.action && (
                   <button
@@ -96,7 +96,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                       toast.action?.onClick()
                       removeToast(toast.id)
                     }}
-                    className="-my-1 shrink-0 self-center rounded-[7px] border border-line-strong px-2.5 py-1 text-[12px] font-semibold text-fg transition-colors hover:border-[#5a5a5a] hover:bg-surface-hover"
+                    className="-my-1 shrink-0 self-center rounded-[7px] border border-[#404040] px-2.5 py-1 text-[12px] font-semibold text-[#f4f4f4] transition-colors hover:border-[#5a5a5a] hover:bg-[#2a2a2a]"
                   >
                     {toast.action.label}
                   </button>
@@ -105,7 +105,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   type="button"
                   onClick={() => removeToast(toast.id)}
                   aria-label="Meldung schließen"
-                  className="-mr-1.5 -mt-0.5 shrink-0 rounded-[6px] p-1 text-[#909090] transition-colors hover:bg-surface-raised/70 hover:text-accent"
+                  className="-mr-1.5 -mt-0.5 shrink-0 rounded-[6px] p-1 text-[#909090] transition-colors hover:bg-[#232323]/70 hover:text-[#d4d4d4]"
                 >
                   <X size={13} />
                 </button>
@@ -113,7 +113,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   // Zeigt, wie lange die Aktion noch möglich ist.
                   <span
                     aria-hidden
-                    className="toast-countdown absolute bottom-0 left-0 h-[2px] w-full origin-left bg-accent/40"
+                    className="toast-countdown absolute bottom-0 left-0 h-[2px] w-full origin-left bg-[#d4d4d4]/40"
                     style={{ animationDuration: `${toast.duration}ms` }}
                   />
                 )}

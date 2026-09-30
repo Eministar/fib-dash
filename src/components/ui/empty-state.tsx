@@ -26,7 +26,7 @@ export function EmptyState({
 }) {
   const content = (
     <>
-      <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-accent/10 bg-accent/5">
+      <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-[#d4d4d4]/10 bg-[#d4d4d4]/5">
         <Icon className="h-[18px] w-[18px] text-[#8a8a8a]" strokeWidth={1.6} />
       </span>
       <p className="mt-3 text-[13.5px] text-[#c4c4c4]">{title}</p>

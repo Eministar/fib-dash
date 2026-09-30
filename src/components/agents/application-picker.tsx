@@ -50,16 +50,16 @@ export function ApplicationPicker({ applications, value, onChange }: Application
       <p className="mb-1.5 text-[12.5px] font-medium text-[#aeaeae]">Zugehörige Bewerbung</p>
 
       <div className="relative">
-        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Aktenzeichen, Name oder Discord-ID suchen"
-          className="h-[36px] w-full rounded-[9px] border border-line/70 bg-surface-sunken pl-8 pr-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
+          className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
         />
       </div>
 
-      <div className="mt-2 max-h-[212px] space-y-1 overflow-y-auto rounded-[9px] border border-line/55 bg-surface-sunken/45 p-1.5">
+      <div className="mt-2 max-h-[212px] space-y-1 overflow-y-auto rounded-[9px] border border-[#343434]/55 bg-[#181818]/45 p-1.5">
         <PickerRow
           label="Keine Bewerbung verknüpfen"
           selected={value === ''}
@@ -109,11 +109,11 @@ function PickerRow({
       className={cn(
         'flex w-full items-center gap-2 rounded-[8px] border px-2.5 py-2 text-left transition-colors',
         selected
-          ? 'border-accent/40 bg-accent/12'
-          : 'border-transparent hover:bg-surface-raised/60',
+          ? 'border-[#d4d4d4]/40 bg-[#d4d4d4]/12'
+          : 'border-transparent hover:bg-[#232323]/60',
       )}
     >
-      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-accent">
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-[#d4d4d4]">
         {selected && <Check size={13} strokeWidth={2.5} />}
       </span>
       <span className="min-w-0 flex-1">

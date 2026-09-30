@@ -26,7 +26,7 @@ async function loadOrdnung(slug: string) {
 const backLink = (
   <Link
     href="/ordnungen"
-    className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] bg-surface-raised px-3 text-[12.5px] font-medium text-fg shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-all duration-150 hover:bg-[#333333] active:scale-[0.98]"
+    className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-all duration-150 hover:bg-[#333333] active:scale-[0.98]"
   >
     <ArrowLeft size={14} strokeWidth={2} />
     Alle Ordnungen
@@ -50,7 +50,7 @@ export default async function OrdnungPage({ params }: { params: Promise<{ id: st
           <AlertCircle size={18} className="text-[#ff6b6b] shrink-0 mt-0.5" />
           <div>
             <p className="text-[13px] font-medium text-[#ff6b6b]">Fehler beim Laden</p>
-            <p className="text-[12px] text-fg-muted mt-1">{error}</p>
+            <p className="text-[12px] text-[#a6a6a6] mt-1">{error}</p>
           </div>
         </div>
       </div>
@@ -62,7 +62,7 @@ export default async function OrdnungPage({ params }: { params: Promise<{ id: st
   return (
     <div className="mx-auto max-w-7xl pb-4">
       <PageHeader breadcrumbs={[{ label: 'Ordnungen', href: '/ordnungen' }, { label: ordnung.title }]} title={ordnung.title} description={ordnung.description} />
-      <p className="-mt-3 mb-5 text-[12px] text-fg-subtle">
+      <p className="-mt-3 mb-5 text-[12px] text-[#8c8c8c]">
         {ordnung.category.label} · {outline.length > 0 ? `${outline.length} Abschnitte · ` : ''}Stand {formatDate(ordnung.updatedAt)}
       </p>
 

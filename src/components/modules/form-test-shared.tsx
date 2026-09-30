@@ -103,10 +103,10 @@ export function correctValues(question: FormQuestion) {
 export function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
     <div className="glass-panel-elevated flex items-center gap-3 rounded-[12px] border border-white/[0.04] px-4 py-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent/15 text-accent">{icon}</div>
+      <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#d4d4d4]/15 text-[#d4d4d4]">{icon}</div>
       <div>
         <p className="text-[20px] font-semibold leading-tight text-white tabular-nums">{value}</p>
-        <p className="mt-0.5 text-[11px] text-fg-muted">{label}</p>
+        <p className="mt-0.5 text-[11px] text-[#a6a6a6]">{label}</p>
       </div>
     </div>
   )
@@ -118,7 +118,7 @@ export function QuestionAnalytics({ questions, responses }: { questions: FormQue
   return (
     <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
       <div className="mb-3 flex items-center gap-2">
-        <BarChart3 size={15} className="text-accent" />
+        <BarChart3 size={15} className="text-[#d4d4d4]" />
         <h3 className="text-[14px] font-semibold text-white">Auswertung</h3>
       </div>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -135,7 +135,7 @@ export function QuestionAnalytics({ questions, responses }: { questions: FormQue
             }
             const max = Math.max(1, ...Array.from(counts.values()))
             return (
-              <div key={question.id} className="rounded-[12px] border border-line/45 bg-surface-sunken/45 p-3">
+              <div key={question.id} className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/45 p-3">
                 <p className="mb-2 text-[12.5px] font-semibold text-white">{question.title}</p>
                 <div className="space-y-2">
                   {choices.map((choice) => {
@@ -146,8 +146,8 @@ export function QuestionAnalytics({ questions, responses }: { questions: FormQue
                           <span className="truncate text-[#c3c3c3]">{choice}</span>
                           <span className="text-[#909090]">{count}</span>
                         </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-surface-raised">
-                          <div className="h-full rounded-full bg-accent" style={{ width: `${Math.round((count / max) * 100)}%` }} />
+                        <div className="h-1.5 overflow-hidden rounded-full bg-[#232323]">
+                          <div className="h-full rounded-full bg-[#d4d4d4]" style={{ width: `${Math.round((count / max) * 100)}%` }} />
                         </div>
                       </div>
                     )
@@ -161,18 +161,18 @@ export function QuestionAnalytics({ questions, responses }: { questions: FormQue
             const values = answers.map((answer) => Number(answer.value.value)).filter(Number.isFinite)
             const average = values.length > 0 ? (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1) : '-'
             return (
-              <div key={question.id} className="rounded-[12px] border border-line/45 bg-surface-sunken/45 p-3">
+              <div key={question.id} className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/45 p-3">
                 <p className="text-[12.5px] font-semibold text-white">{question.title}</p>
-                <p className="mt-2 text-[22px] font-semibold text-accent tabular-nums">{average}</p>
+                <p className="mt-2 text-[22px] font-semibold text-[#d4d4d4] tabular-nums">{average}</p>
                 <p className="text-[11.5px] text-[#909090]">{values.length} Antwort(en)</p>
               </div>
             )
           }
 
           return (
-            <div key={question.id} className="rounded-[12px] border border-line/45 bg-surface-sunken/45 p-3">
+            <div key={question.id} className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/45 p-3">
               <p className="text-[12.5px] font-semibold text-white">{question.title}</p>
-              <p className="mt-2 text-[22px] font-semibold text-accent tabular-nums">{answers.length}</p>
+              <p className="mt-2 text-[22px] font-semibold text-[#d4d4d4] tabular-nums">{answers.length}</p>
               <p className="text-[11.5px] text-[#909090]">Textantwort(en)</p>
             </div>
           )

@@ -92,13 +92,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     // bekommt er den Login mit Rücksprung auf genau diesen Link.
     if (isSharedFormTestLink) {
       return (
-        <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
+        <main className="flex min-h-screen items-center justify-center bg-[#080808] px-4 py-10">
           <section className="glass-panel-elevated w-full max-w-md rounded-[14px] border border-[#373737]/45 p-7 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-accent/30 bg-accent/12 text-accent">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/12 text-[#d4d4d4]">
               <ShieldAlert size={26} />
             </div>
             <h1 className="text-[19px] font-semibold text-white">Anmeldung erforderlich</h1>
-            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-5 text-fg-muted">
+            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-5 text-[#a6a6a6]">
               Melde dich mit Discord an, um diesen Test zu öffnen. Danach landest du automatisch
               wieder hier.
             </p>
@@ -131,20 +131,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (visitorOnly && !bodycamOnly) {
     if (!isSharedFormTestLink) return <AppLoader />
     return (
-      <main className="min-h-screen bg-canvas px-3 pb-10 pt-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="min-h-screen bg-[#080808] px-3 pb-10 pt-6 sm:px-6 lg:px-8">{children}</main>
     )
   }
 
   const activeTestPath = activeSession ? `/form-tests/${activeSession.shareToken}` : ''
   if (activeSession && pathname !== activeTestPath) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
+      <main className="flex min-h-screen items-center justify-center bg-[#080808] px-4 py-10">
         <section className="glass-panel-elevated w-full max-w-xl rounded-[14px] border border-[#373737]/45 p-7 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-accent/30 bg-accent/12 text-accent">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/12 text-[#d4d4d4]">
             <ShieldAlert size={28} />
           </div>
           <h1 className="text-[20px] font-semibold text-white">Du hast gerade einen Test laufen.</h1>
-          <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-fg-muted">
+          <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#a6a6a6]">
             Während der Test aktiv ist, kannst du keine andere Seite im Dashboard öffnen.
           </p>
           <div className="mt-5 flex justify-center">
@@ -160,7 +160,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div className="flex min-h-screen bg-[#080808]">
       <Sidebar />
       <main className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Rechtsbündig über dem Inhalt: erreichbar von jeder Seite, ohne

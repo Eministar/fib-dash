@@ -278,7 +278,7 @@ export function ApplicationFormSettings({ canManage }: ApplicationFormSettingsPr
         </div>
       )}
 
-      <section className="rounded-[14px] border border-[#373737]/45 bg-surface/70 p-4">
+      <section className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 p-4">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_160px_160px]">
           <Input
             label="Formulartitel"
@@ -291,10 +291,10 @@ export function ApplicationFormSettings({ canManage }: ApplicationFormSettingsPr
         </div>
       </section>
 
-      <section className="rounded-[14px] border border-[#373737]/45 bg-surface/70">
-        <div className="flex flex-col gap-3 border-b border-line/45 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70">
+        <div className="flex flex-col gap-3 border-b border-[#343434]/45 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <ClipboardList size={16} className="text-accent" />
+            <ClipboardList size={16} className="text-[#d4d4d4]" />
             <h2 className="text-[14px] font-semibold text-white">Fragen</h2>
           </div>
           <Button type="button" variant="secondary" size="sm" onClick={addQuestion} disabled={!canManage || saving}>
@@ -327,9 +327,9 @@ export function ApplicationFormSettings({ canManage }: ApplicationFormSettingsPr
 
 function SummaryTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[12px] border border-white/[0.04] bg-surface-sunken/65 px-4 py-3">
+    <div className="rounded-[12px] border border-white/[0.04] bg-[#181818]/65 px-4 py-3">
       <p className="text-[20px] font-semibold leading-tight text-white tabular-nums">{value}</p>
-      <p className="mt-0.5 text-[11px] text-fg-muted">{label}</p>
+      <p className="mt-0.5 text-[11px] text-[#a6a6a6]">{label}</p>
     </div>
   )
 }
@@ -362,10 +362,10 @@ function QuestionEditor({
   const hasScale = question.type === 'SCALE'
 
   return (
-    <article className="rounded-[12px] border border-line/45 bg-surface-sunken/55 p-3">
+    <article className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/55 p-3">
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-surface-raised text-[11.5px] font-semibold text-accent">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#232323] text-[11.5px] font-semibold text-[#d4d4d4]">
             {index + 1}
           </span>
           <div className="min-w-0">
@@ -523,7 +523,7 @@ function IconButton({
         'flex h-8 w-8 items-center justify-center rounded-[8px] border transition-colors',
         danger
           ? 'border-[#4a1a2a]/50 text-[#fca5a5] hover:bg-[#2a1620]/70'
-          : 'border-line/60 text-[#c3c3c3] hover:border-line-strong hover:bg-surface-raised/70',
+          : 'border-[#343434]/60 text-[#c3c3c3] hover:border-[#404040] hover:bg-[#232323]/70',
         disabled && 'cursor-not-allowed opacity-40 hover:bg-transparent',
       )}
     >

@@ -39,8 +39,8 @@ import type {
 } from '@/lib/statistics'
 import { matchesSearch } from '@/lib/search-match'
 
-const panelClass = 'rounded-[16px] border border-[#323232]/55 bg-surface/72 shadow-[0_1px_2px_rgba(0,0,0,.14),0_14px_36px_rgba(0,0,0,.16),inset_0_1px_0_rgba(255,255,255,.025)]'
-const surfaceClass = 'rounded-[11px] border border-white/[0.055] bg-surface-sunken/55'
+const panelClass = 'rounded-[16px] border border-[#323232]/55 bg-[#1b1b1b]/72 shadow-[0_1px_2px_rgba(0,0,0,.14),0_14px_36px_rgba(0,0,0,.16),inset_0_1px_0_rgba(255,255,255,.025)]'
+const surfaceClass = 'rounded-[11px] border border-white/[0.055] bg-[#181818]/55'
 
 const rangeOptions: Array<{ value: StatisticsRange; label: string; shortLabel: string }> = [
   { value: 'week', label: 'Diese Woche', shortLabel: 'Woche' },
@@ -82,7 +82,7 @@ const activityMeta: Record<StatisticsPayload['latestActivity'][number]['type'], 
 
 function DeltaLabel({ metric }: { metric: StatisticsMetric }) {
   const delta = metric.current - metric.previous
-  if (delta === 0) return <span className="text-fg-subtle">wie zuvor</span>
+  if (delta === 0) return <span className="text-[#8c8c8c]">wie zuvor</span>
   return (
     <span className={delta > 0 ? 'text-[#6ee7b7]' : 'text-[#fca5a5]'}>
       {delta > 0 ? '+' : ''}{delta} zur Vorperiode
@@ -118,7 +118,7 @@ function MetricCard({
       </div>
       <div className="mt-3 flex items-center justify-between gap-2 text-[11px]">
         <DeltaLabel metric={metric} />
-        <span className="truncate text-fg-subtle" title={hint}>{hint}</span>
+        <span className="truncate text-[#8c8c8c]" title={hint}>{hint}</span>
       </div>
     </article>
   )
@@ -128,7 +128,7 @@ function SectionHeading({ icon: Icon, title, description, aside }: { icon: Lucid
   return (
     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div className="flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] border border-accent/18 bg-accent/9 text-accent">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] border border-[#d4d4d4]/18 bg-[#d4d4d4]/9 text-[#d4d4d4]">
           <Icon size={15} strokeWidth={1.9} />
         </span>
         <div>
@@ -150,7 +150,7 @@ function ActivityChart({ points }: { points: StatisticsSeriesPoint[] }) {
     <div>
       <div className="mb-4 flex flex-wrap gap-x-4 gap-y-2">
         {seriesLegend.map((item) => (
-          <span key={item.field} className="inline-flex items-center gap-1.5 text-[11px] text-fg-muted">
+          <span key={item.field} className="inline-flex items-center gap-1.5 text-[11px] text-[#a6a6a6]">
             <span className="h-2 w-2 rounded-[2px]" style={{ backgroundColor: item.color }} />
             {item.label}
           </span>
@@ -181,7 +181,7 @@ function ActivityChart({ points }: { points: StatisticsSeriesPoint[] }) {
                   })}
                   {total > 0 && <span className="absolute inset-x-0 top-1 text-center text-[10px] font-semibold text-white/75 tabular-nums">{total}</span>}
                 </div>
-                <span className={cn('mt-2 truncate text-center text-[10px] text-fg-subtle', !showLabel && 'invisible')}>{point.shortLabel}</span>
+                <span className={cn('mt-2 truncate text-center text-[10px] text-[#8c8c8c]', !showLabel && 'invisible')}>{point.shortLabel}</span>
               </div>
             )
           })}
@@ -193,10 +193,10 @@ function ActivityChart({ points }: { points: StatisticsSeriesPoint[] }) {
 
 function StaffAvatar({ row }: { row: StatisticsStaffRow }) {
   if (row.avatarUrl) {
-    return <span className="h-8 w-8 shrink-0 rounded-full bg-cover bg-center ring-1 ring-accent/22" style={{ backgroundImage: `url(${row.avatarUrl})` }} aria-hidden />
+    return <span className="h-8 w-8 shrink-0 rounded-full bg-cover bg-center ring-1 ring-[#d4d4d4]/22" style={{ backgroundImage: `url(${row.avatarUrl})` }} aria-hidden />
   }
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#333333] text-[11px] font-semibold text-accent ring-1 ring-[#474747]">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#333333] text-[11px] font-semibold text-[#d4d4d4] ring-1 ring-[#474747]">
       {row.displayName.charAt(0).toUpperCase()}
     </span>
   )
@@ -205,9 +205,9 @@ function StaffAvatar({ row }: { row: StatisticsStaffRow }) {
 function LeaderCard({ label, row, value, icon: Icon }: { label: string; row: StatisticsStaffRow | undefined; value: number; icon: LucideIcon }) {
   return (
     <div className={cn(surfaceClass, 'flex min-w-0 items-center gap-3 px-3 py-2.5')}>
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-accent/10 text-accent"><Icon size={14} /></span>
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#d4d4d4]/10 text-[#d4d4d4]"><Icon size={14} /></span>
       <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-fg-subtle">{label}</p>
+        <p className="text-[11px] uppercase tracking-[0.12em] text-[#8c8c8c]">{label}</p>
         <p className="mt-0.5 truncate text-[11.5px] font-medium text-[#e5e5e5]">{row ? `${row.displayName} · ${value}` : 'Noch keine Daten'}</p>
       </div>
     </div>
@@ -233,7 +233,7 @@ export default function StatisticsPage() {
         <div className={cn(panelClass, 'mt-6 px-6 py-16 text-center')}>
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#f87171]/25 bg-[#f87171]/10 text-[#f87171]"><AlertTriangle size={22} /></span>
           <h1 className="mt-4 text-[16px] font-semibold text-white">Statistik nicht verfügbar</h1>
-          <p className="mx-auto mt-1.5 max-w-md text-[12.5px] text-fg-muted">{error ?? 'Die Statistikdaten konnten nicht geladen werden.'}</p>
+          <p className="mx-auto mt-1.5 max-w-md text-[12.5px] text-[#a6a6a6]">{error ?? 'Die Statistikdaten konnten nicht geladen werden.'}</p>
           <Button size="sm" className="mt-5" onClick={refetch}><RefreshCw size={13} /> Erneut laden</Button>
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function StatisticsPage() {
         title="Statistiken"
         description="Personal und Ausbildung im gewählten Zeitraum. Vergleich mit der gleich langen Vorperiode."
         action={(
-          <div className="inline-flex rounded-[10px] border border-line-strong/70 bg-[#161616]/75 p-1" role="group" aria-label="Statistikzeitraum">
+          <div className="inline-flex rounded-[10px] border border-[#404040]/70 bg-[#161616]/75 p-1" role="group" aria-label="Statistikzeitraum">
             {rangeOptions.map((option) => (
               <button
                 key={option.value}
@@ -264,8 +264,8 @@ export default function StatisticsPage() {
                 title={option.label}
                 className={cn(
                   'h-8 rounded-[7px] px-2.5 text-[11px] font-semibold transition-colors sm:px-3',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                  range === option.value ? 'bg-accent text-surface-sunken shadow-[0_2px_8px_rgba(212,212,212,.2)]' : 'text-[#909090] hover:bg-[#282828] hover:text-white',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40',
+                  range === option.value ? 'bg-[#d4d4d4] text-[#181818] shadow-[0_2px_8px_rgba(212,212,212,.2)]' : 'text-[#909090] hover:bg-[#282828] hover:text-white',
                 )}
               >
                 {option.shortLabel}
@@ -275,9 +275,9 @@ export default function StatisticsPage() {
         )}
       />
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#353535]/55 bg-surface-sunken/65 px-3.5 py-2 text-[11px]">
-        <span className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.12em] text-accent"><Activity size={12} /> {data.period.label}</span>
-        <span className="font-mono text-fg-subtle">{periodText}</span>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#353535]/55 bg-[#181818]/65 px-3.5 py-2 text-[11px]">
+        <span className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.12em] text-[#d4d4d4]"><Activity size={12} /> {data.period.label}</span>
+        <span className="font-mono text-[#8c8c8c]">{periodText}</span>
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6" aria-label="Kennzahlen">
@@ -290,7 +290,7 @@ export default function StatisticsPage() {
       </section>
 
       <section className={cn(panelClass, 'mt-3 p-4 sm:p-5')}>
-        <SectionHeading icon={BarChart3} title="Personalbewegung im Verlauf" description="Alle erfassten Personalereignisse nach Tag, Woche oder Monat gestapelt." aside={<span className="font-mono text-[11px] text-fg-subtle">GESAMT {data.series.reduce((sum, point) => sum + seriesLegend.reduce((value, item) => value + point[item.field], 0), 0)}</span>} />
+        <SectionHeading icon={BarChart3} title="Personalbewegung im Verlauf" description="Alle erfassten Personalereignisse nach Tag, Woche oder Monat gestapelt." aside={<span className="font-mono text-[11px] text-[#8c8c8c]">GESAMT {data.series.reduce((sum, point) => sum + seriesLegend.reduce((value, item) => value + point[item.field], 0), 0)}</span>} />
         <ActivityChart points={data.series} />
       </section>
 
@@ -307,25 +307,25 @@ export default function StatisticsPage() {
                 <span className="text-right text-[11px] font-semibold text-[#e5e5e5] tabular-nums">{rank.count}</span>
               </div>
             ))}
-            {data.rankDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-fg-subtle">Keine aktiven Agents vorhanden.</p>}
+            {data.rankDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8c8c8c]">Keine aktiven Agents vorhanden.</p>}
           </div>
         </section>
 
         <section className={cn(panelClass, 'p-4 sm:p-5')}>
-          <SectionHeading icon={BookOpenCheck} title="Ausbildungslage" description={`${data.additional.completedTrainingAssignments} von ${data.additional.trainingAssignments} Zuweisungen abgeschlossen.`} aside={<span className="text-[18px] font-semibold text-accent tabular-nums">{data.additional.trainingCompletionRate}%</span>} />
+          <SectionHeading icon={BookOpenCheck} title="Ausbildungslage" description={`${data.additional.completedTrainingAssignments} von ${data.additional.trainingAssignments} Zuweisungen abgeschlossen.`} aside={<span className="text-[18px] font-semibold text-[#d4d4d4] tabular-nums">{data.additional.trainingCompletionRate}%</span>} />
           <div className="space-y-3">
             {data.trainingDistribution.slice(0, 8).map((training) => (
               <div key={training.id}>
                 <div className="mb-1 flex items-center justify-between gap-3 text-[11px]">
                   <span className="truncate text-[#bcbcbc]">{training.label}</span>
-                  <span className="shrink-0 text-fg-subtle tabular-nums">{training.completed}/{training.total} · {training.percentage}%</span>
+                  <span className="shrink-0 text-[#8c8c8c] tabular-nums">{training.completed}/{training.total} · {training.percentage}%</span>
                 </div>
                 <span className="block h-1.5 overflow-hidden rounded-full bg-[#161616]">
                   <span className="block h-full rounded-full bg-[linear-gradient(90deg,#a98622,#e5c85c)]" style={{ width: `${training.percentage}%` }} />
                 </span>
               </div>
             ))}
-            {data.trainingDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-fg-subtle">Keine Ausbildungszuweisungen vorhanden.</p>}
+            {data.trainingDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8c8c8c]">Keine Ausbildungszuweisungen vorhanden.</p>}
           </div>
         </section>
       </div>
@@ -339,7 +339,7 @@ export default function StatisticsPage() {
               return (
                 <div key={item.status} className={cn(surfaceClass, 'relative overflow-hidden p-3')}>
                   <span className="absolute inset-x-0 top-0 h-px" style={{ backgroundColor: colors[index] }} />
-                  <p className="text-[11px] uppercase tracking-[0.1em] text-fg-subtle">{item.label}</p>
+                  <p className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">{item.label}</p>
                   <p className="mt-2 text-[20px] font-semibold text-white tabular-nums">{item.count}</p>
                   <div className="mt-2 h-1 rounded-full bg-[#161616]">
                     <span className="block h-full rounded-full" style={{ width: `${applicationTotal > 0 ? (item.count / applicationTotal) * 100 : 0}%`, backgroundColor: colors[index] }} />
@@ -360,7 +360,7 @@ export default function StatisticsPage() {
               ['Neue Ausbildungsarten', data.additional.newTrainingTypes.current],
             ].map(([label, value]) => (
               <div key={String(label)} className={cn(surfaceClass, 'p-3')}>
-                <dt className="text-[11px] leading-4 text-fg-subtle">{label}</dt>
+                <dt className="text-[11px] leading-4 text-[#8c8c8c]">{label}</dt>
                 <dd className="mt-1 text-[18px] font-semibold text-[#e5e5e5] tabular-nums">{value}</dd>
               </div>
             ))}
@@ -375,8 +375,8 @@ export default function StatisticsPage() {
           description="Wer hat Einstellungen, Ausbildungen und Personalmaßnahmen im gewählten Zeitraum bearbeitet?"
           aside={(
             <label className="relative block w-full sm:w-[230px]">
-              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
-              <input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="PDler suchen…" className="h-8 w-full rounded-[8px] border border-line-strong/65 bg-[#161616]/75 pl-8 pr-3 text-[11px] text-white outline-none transition-colors placeholder:text-fg-subtle focus:border-accent/55 focus:ring-2 focus:ring-accent/12" />
+              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
+              <input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="PDler suchen…" className="h-8 w-full rounded-[8px] border border-[#404040]/65 bg-[#161616]/75 pl-8 pr-3 text-[11px] text-white outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]/55 focus:ring-2 focus:ring-[#d4d4d4]/12" />
             </label>
           )}
         />
@@ -390,7 +390,7 @@ export default function StatisticsPage() {
         <div className="overflow-x-auto rounded-[11px] border border-white/[0.055]">
           <table className="w-full min-w-[920px] border-collapse text-left">
             <thead className="bg-[#161616]/90">
-              <tr className="text-[11px] uppercase tracking-[0.1em] text-fg-subtle">
+              <tr className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">
                 <th className="px-3 py-2.5 font-semibold">PDler / Bearbeiter</th>
                 <th className="px-3 py-2.5 text-center font-semibold">Einstellungen</th>
                 <th className="px-3 py-2.5 text-center font-semibold">Ausbildungen</th>
@@ -398,7 +398,7 @@ export default function StatisticsPage() {
                 <th className="px-3 py-2.5 text-center font-semibold">D-Ranks</th>
                 <th className="px-3 py-2.5 text-center font-semibold">Kündigungen</th>
                 <th className="px-3 py-2.5 text-center font-semibold">Sanktionen</th>
-                <th className="px-3 py-2.5 text-center font-semibold text-accent">Gesamt</th>
+                <th className="px-3 py-2.5 text-center font-semibold text-[#d4d4d4]">Gesamt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.045] bg-[#1a1a1a]/45">
@@ -406,7 +406,7 @@ export default function StatisticsPage() {
                 <tr key={row.id} className="transition-colors hover:bg-[#282828]/55">
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 text-center font-mono text-[11px] text-fg-subtle">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="w-5 text-center font-mono text-[11px] text-[#8c8c8c]">{String(index + 1).padStart(2, '0')}</span>
                       <StaffAvatar row={row} />
                       <span className="max-w-[240px] truncate text-[11.5px] font-medium text-[#e5e5e5]">{row.displayName}</span>
                     </div>
@@ -422,9 +422,9 @@ export default function StatisticsPage() {
               ))}
             </tbody>
           </table>
-          {filteredStaff.length === 0 && <p className="bg-[#1a1a1a]/45 px-4 py-10 text-center text-[12px] italic text-fg-subtle">{staffSearch ? 'Kein Bearbeiter passt zur Suche.' : 'In diesem Zeitraum wurden noch keine Maßnahmen erfasst.'}</p>}
+          {filteredStaff.length === 0 && <p className="bg-[#1a1a1a]/45 px-4 py-10 text-center text-[12px] italic text-[#8c8c8c]">{staffSearch ? 'Kein Bearbeiter passt zur Suche.' : 'In diesem Zeitraum wurden noch keine Maßnahmen erfasst.'}</p>}
         </div>
-        <p className="mt-2.5 text-[11px] leading-4 text-fg-subtle">Ausbildungen zählen neu als abgeschlossen markierte Ausbildungszuweisungen. Änderungen ohne neuen Abschluss werden nicht als Leistung gezählt.</p>
+        <p className="mt-2.5 text-[11px] leading-4 text-[#8c8c8c]">Ausbildungen zählen neu als abgeschlossen markierte Ausbildungszuweisungen. Änderungen ohne neuen Abschluss werden nicht als Leistung gezählt.</p>
       </section>
 
       <section className={cn(panelClass, 'mt-3 p-4 sm:p-5')}>
@@ -440,15 +440,15 @@ export default function StatisticsPage() {
                   <p className="truncate text-[11.5px] font-medium text-[#e5e5e5]">{item.subject}</p>
                   <p className="mt-0.5 truncate text-[11px] text-[#868686]">{item.title} · von {item.actor}</p>
                 </div>
-                <time className="shrink-0 text-[11px] text-fg-subtle">{formatDateTime(item.createdAt)}</time>
+                <time className="shrink-0 text-[11px] text-[#8c8c8c]">{formatDateTime(item.createdAt)}</time>
               </article>
             )
           })}
-          {data.latestActivity.length === 0 && <p className="py-8 text-center text-[12px] italic text-fg-subtle lg:col-span-2">Keine Personalbewegungen im gewählten Zeitraum.</p>}
+          {data.latestActivity.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8c8c8c] lg:col-span-2">Keine Personalbewegungen im gewählten Zeitraum.</p>}
         </div>
       </section>
 
-      <div className="mt-3 flex items-center justify-between gap-3 px-1 text-[11px] text-fg-subtle">
+      <div className="mt-3 flex items-center justify-between gap-3 px-1 text-[11px] text-[#8c8c8c]">
         <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={11} /> Datenstand {formatDateTime(data.period.end)}</span>
         <span className="font-mono uppercase tracking-[0.1em]">FIB · Personalstatistik</span>
       </div>

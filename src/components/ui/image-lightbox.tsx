@@ -66,14 +66,14 @@ export function ImageLightbox({
       role="dialog"
       aria-modal="true"
       aria-label={current.title}
-      className="fixed inset-0 z-[60] flex flex-col bg-canvas/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex flex-col bg-[#080808]/95 backdrop-blur-sm"
       onClick={onClose}
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3 text-[12.5px] text-[#c4c4c4]">
         <span className="min-w-0 truncate">{current.title}</span>
         <div className="flex shrink-0 items-center gap-3">
           {images.length > 1 && (
-            <span className="font-mono text-[11.5px] text-fg-subtle">
+            <span className="font-mono text-[11.5px] text-[#8c8c8c]">
               {index + 1} / {images.length}
             </span>
           )}
@@ -82,7 +82,7 @@ export function ImageLightbox({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
-            className="rounded-md p-1.5 text-fg-muted hover:bg-surface-raised hover:text-white"
+            className="rounded-md p-1.5 text-[#a6a6a6] hover:bg-[#232323] hover:text-white"
             aria-label="In neuem Tab öffnen"
             title="In voller Auflösung öffnen"
           >
@@ -91,7 +91,7 @@ export function ImageLightbox({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 text-fg-muted hover:bg-surface-raised hover:text-white"
+            className="rounded-md p-1.5 text-[#a6a6a6] hover:bg-[#232323] hover:text-white"
             aria-label="Schließen"
           >
             <X className="h-4 w-4" />
@@ -130,7 +130,7 @@ export function ImageLightbox({
               aria-current={position === index}
               className={cn(
                 'h-12 w-16 shrink-0 overflow-hidden rounded border',
-                position === index ? 'border-[#a78bfa]' : 'border-line opacity-60 hover:opacity-100',
+                position === index ? 'border-[#a78bfa]' : 'border-[#343434] opacity-60 hover:opacity-100',
               )}
             >
               <Image unoptimized src={image.url} alt="" width={128} height={96} className="h-full w-full object-cover" />
@@ -154,7 +154,7 @@ function LightboxArrow({ side, onClick }: { side: 'left' | 'right'; onClick: () 
       aria-label={side === 'left' ? 'Vorheriges Bild' : 'Nächstes Bild'}
       className={cn(
         'absolute top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full',
-        'border border-line bg-surface-sunken/80 text-[#c4c4c4] hover:border-[#a78bfa] hover:text-white',
+        'border border-[#343434] bg-[#181818]/80 text-[#c4c4c4] hover:border-[#a78bfa] hover:text-white',
         side === 'left' ? 'left-2' : 'right-2',
       )}
     >
@@ -179,7 +179,7 @@ export function LightboxThumb({
       onClick={() => onOpen(image.id)}
       title={image.title}
       className={cn(
-        'group relative overflow-hidden rounded-lg border border-surface-hover transition-colors hover:border-[#a78bfa]',
+        'group relative overflow-hidden rounded-lg border border-[#2a2a2a] transition-colors hover:border-[#a78bfa]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a78bfa]/40',
         className,
       )}
@@ -192,7 +192,7 @@ export function LightboxThumb({
         height={240}
         className="aspect-[4/3] w-full object-cover"
       />
-      <span className="absolute inset-x-0 bottom-0 truncate bg-canvas/75 px-2 py-1 text-left text-[11px] text-accent opacity-0 transition-opacity group-hover:opacity-100">
+      <span className="absolute inset-x-0 bottom-0 truncate bg-[#080808]/75 px-2 py-1 text-left text-[11px] text-[#d4d4d4] opacity-0 transition-opacity group-hover:opacity-100">
         {image.title}
       </span>
     </button>

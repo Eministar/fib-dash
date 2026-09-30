@@ -28,7 +28,7 @@ export function Breadcrumbs({ items, className }: { items: Crumb[]; className?: 
                   {item.label}
                 </span>
               )}
-              {!last && <ChevronRight size={13} className="shrink-0 text-fg-subtle" aria-hidden />}
+              {!last && <ChevronRight size={13} className="shrink-0 text-[#8c8c8c]" aria-hidden />}
             </li>
           )
         })}

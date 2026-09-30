@@ -84,7 +84,7 @@ function UploadDialog({ onClose, onUploaded }: { onClose: () => void; onUploaded
           onClick={() => inputRef.current?.click()}
           className={cn(
             'cursor-pointer rounded-xl border border-dashed p-8 text-center text-sm',
-            dragging ? 'border-accent/70 bg-accent/5 text-white' : 'border-line text-[#909090] hover:border-[#707070]',
+            dragging ? 'border-[#d4d4d4]/70 bg-[#d4d4d4]/5 text-white' : 'border-[#343434] text-[#909090] hover:border-[#707070]',
           )}
         >
           <UploadIcon className="mx-auto mb-2" size={22} />
@@ -176,7 +176,7 @@ export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
         }
       />
 
-      <section aria-label="Filter" className="mb-5 grid gap-3 rounded-xl border border-line bg-[#141414] p-4 sm:grid-cols-2">
+      <section aria-label="Filter" className="mb-5 grid gap-3 rounded-xl border border-[#343434] bg-[#141414] p-4 sm:grid-cols-2">
         <Input
           label="Suche"
           placeholder="Titel, Beschreibung, Dateiname, Ticketnummer …"
@@ -203,7 +203,7 @@ export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
       {list.loading && !items.length ? (
         <p className="py-8 text-sm text-[#909090]">Uploads werden geladen …</p>
       ) : !items.length ? (
-        <div className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-[#909090]">
+        <div className="rounded-xl border border-dashed border-[#343434] p-8 text-center text-sm text-[#909090]">
           <UploadIcon className="mx-auto mb-3" size={25} />
           Noch keine Uploads. Lade eine Datei hoch oder richte einen Upload-Schlüssel für das Ticketboard ein.
         </div>
@@ -214,17 +214,17 @@ export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
               key={upload.id}
               type="button"
               onClick={() => setSelected(upload)}
-              className="rounded-xl border border-line bg-[#141414] p-4 text-left hover:border-[#707070]"
+              className="rounded-xl border border-[#343434] bg-[#141414] p-4 text-left hover:border-[#707070]"
             >
-              <div className="flex items-start gap-2 text-fg-muted">
+              <div className="flex items-start gap-2 text-[#a6a6a6]">
                 <KindIcon mimeType={upload.mimeType} />
                 <span className="min-w-0 flex-1 truncate font-semibold text-white">{upload.title}</span>
               </div>
-              {upload.description && <p className="mt-2 line-clamp-2 text-xs text-fg-muted">{upload.description}</p>}
-              <p className="mt-2 text-xs text-fg-subtle">
+              {upload.description && <p className="mt-2 line-clamp-2 text-xs text-[#a6a6a6]">{upload.description}</p>}
+              <p className="mt-2 text-xs text-[#8c8c8c]">
                 {formatDateTime(upload.createdAt)} · {formatBytes(upload.sizeBytes)}
               </p>
-              <p className="mt-1 truncate text-xs text-fg-subtle">
+              <p className="mt-1 truncate text-xs text-[#8c8c8c]">
                 {upload.category ? `${upload.category} · ` : ''}
                 {upload.uploadKey ? upload.uploadKey.name : upload.uploadedBy?.displayName ?? 'Unbekannt'}
                 {upload.externalRef ? ` · ${upload.externalRef}` : ''}
@@ -232,7 +232,7 @@ export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
               {!!upload.tags.length && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {upload.tags.slice(0, 4).map((tag) => (
-                    <span key={tag} className="rounded border border-line px-1.5 py-0.5 text-[11px] text-fg-muted">
+                    <span key={tag} className="rounded border border-[#343434] px-1.5 py-0.5 text-[11px] text-[#a6a6a6]">
                       {tag}
                     </span>
                   ))}
@@ -244,7 +244,7 @@ export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
       )}
 
       {pages > 1 && (
-        <div className="mt-5 flex items-center justify-center gap-3 text-sm text-fg-muted">
+        <div className="mt-5 flex items-center justify-center gap-3 text-sm text-[#a6a6a6]">
           <Button variant="secondary" size="sm" disabled={page <= 1 || list.loading} onClick={() => setPage(page - 1)}>
             Zurück
           </Button>

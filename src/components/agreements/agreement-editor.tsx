@@ -107,7 +107,7 @@ export function AgreementEditor({
 
       {mode === 'agreement' && (
         <div className="space-y-2">
-          <p className="text-[12.5px] font-semibold text-accent">Parteien</p>
+          <p className="text-[12.5px] font-semibold text-[#d4d4d4]">Parteien</p>
           {draft.parties.map((party, index) => (
             <div key={party.key} className="flex items-end gap-2">
               <Input label={`Partei ${index + 1}`} value={party.name} maxLength={200} placeholder="z. B. Los Santos Police Department"
@@ -131,11 +131,11 @@ export function AgreementEditor({
       <Textarea label="Präambel" rows={4} value={draft.content} placeholder="Einleitender Text (Markdown erlaubt)" onChange={(event) => set({ content: event.target.value })} />
 
       <div className="space-y-2">
-        <p className="text-[12.5px] font-semibold text-accent">Regelungen</p>
+        <p className="text-[12.5px] font-semibold text-[#d4d4d4]">Regelungen</p>
         {draft.clauses.map((clause, index) => (
-          <div key={clause.key} className="space-y-2 rounded-[10px] border border-line/60 p-3">
+          <div key={clause.key} className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11.5px] text-fg-subtle">§ {index + 1}</span>
+              <span className="text-[11.5px] text-[#8c8c8c]">§ {index + 1}</span>
               <Input value={clause.title} maxLength={200} placeholder="Überschrift"
                 onChange={(event) => set({ clauses: draft.clauses.map((entry, i) => (i === index ? { ...entry, title: event.target.value } : entry)) })} />
               <button type="button" aria-label="Nach oben" className="text-[#909090] hover:text-white" onClick={() => set({ clauses: move(draft.clauses, index, index - 1) })}><ArrowUp size={14} /></button>
@@ -156,7 +156,7 @@ export function AgreementEditor({
       <Textarea label="Abschluss" rows={3} value={draft.closing} placeholder="Text unterhalb der Regelungen" onChange={(event) => set({ closing: event.target.value })} />
 
       {mode === 'agreement' && (
-        <div className="space-y-2 rounded-[10px] border border-line/60 p-3">
+        <div className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
           <Checkbox checked={saveAsTemplate} onCheckedChange={setSaveAsTemplate} label="Aufbau zusätzlich als Vorlage sichern" />
           {saveAsTemplate && <Input label="Name der Vorlage" value={templateName} maxLength={120} placeholder="Ohne Angabe: Vertragstitel" onChange={(event) => setTemplateName(event.target.value)} />}
         </div>

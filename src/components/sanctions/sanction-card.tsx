@@ -57,7 +57,7 @@ export function sanctionStatusClass(status: SanctionStatusValue) {
   if (status === 'EXECUTED') return 'border-[#1d4ed8]/60 bg-[#0a1229]/60 text-[#93c5fd]'
   if (status === 'IN_COURT') return 'border-[#6d28d9]/60 bg-[#1a1030]/60 text-[#c4b5fd]'
   if (status === 'UPHELD') return 'border-[#166534]/60 bg-[#052e1a]/60 text-[#86efac]'
-  if (status === 'REVOKED') return 'border-line-strong/70 bg-[#141414]/70 text-[#a3a3a3]'
+  if (status === 'REVOKED') return 'border-[#404040]/70 bg-[#141414]/70 text-[#a3a3a3]'
   return 'border-[#b45309]/50 bg-[#1d1608]/70 text-[#fbbf24]'
 }
 
@@ -128,11 +128,11 @@ function AgentHeader({ agent }: { agent: SanctionCardAgent }) {
   const content = (
     <>
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#212121]">
-        <User size={13} className="text-fg-muted" strokeWidth={1.75} />
+        <User size={13} className="text-[#a6a6a6]" strokeWidth={1.75} />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[13px] font-semibold text-fg">{name}</span>
-        {meta && <span className="block truncate text-[11px] text-fg-subtle">{meta}</span>}
+        <span className="block truncate text-[13px] font-semibold text-[#f4f4f4]">{name}</span>
+        {meta && <span className="block truncate text-[11px] text-[#8c8c8c]">{meta}</span>}
       </span>
     </>
   )
@@ -194,7 +194,7 @@ export function SanctionCard({
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 rounded-[6px] bg-white/[0.04] px-2.5 py-1">
               <Gavel size={11} className="text-[#f59e0b] shrink-0" strokeWidth={2} />
-              <span className="text-[12.5px] font-bold tracking-wide text-fg">{penalGradeLabel(sanction.penalGrade)}</span>
+              <span className="text-[12.5px] font-bold tracking-wide text-[#f4f4f4]">{penalGradeLabel(sanction.penalGrade)}</span>
             </div>
             <span className={cn('rounded-full border px-2.5 py-[2px] text-[11px] font-semibold tracking-wide', sanctionStatusClass(sanction.status))}>
               {sanctionStatusLabel(sanction.status)}
@@ -218,16 +218,16 @@ export function SanctionCard({
         {violation && (
           <div className="mb-2 flex gap-2">
             <span className="mt-[2px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#f59e0b]" />
-            <p className="text-[12.5px] font-medium leading-relaxed text-accent">Verstoß: {violation.label}</p>
+            <p className="text-[12.5px] font-medium leading-relaxed text-[#d4d4d4]">Verstoß: {violation.label}</p>
           </div>
         )}
         {sanction.penalty && (
           <div className="mb-2 flex gap-2">
             <span className="mt-[2px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#a1a1a1]" />
-            <p className="text-[12.5px] font-medium leading-relaxed text-accent">Weitere Folge: {sanction.penalty}</p>
+            <p className="text-[12.5px] font-medium leading-relaxed text-[#d4d4d4]">Weitere Folge: {sanction.penalty}</p>
           </div>
         )}
-        <p className="text-[12.5px] leading-relaxed text-fg-muted">{sanction.reason}</p>
+        <p className="text-[12.5px] leading-relaxed text-[#a6a6a6]">{sanction.reason}</p>
 
         {needsConfirmation && (
           <p className="mt-2.5 flex items-center gap-1.5 rounded-[8px] border border-[#b45309]/40 bg-[#1d1608]/60 px-2.5 py-1.5 text-[11.5px] text-[#fbbf24]">
@@ -238,11 +238,11 @@ export function SanctionCard({
 
         {/* Footer metadata */}
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-[11px] text-fg-subtle">{formatDate(sanction.createdAt)}</span>
+          <span className="text-[11px] text-[#8c8c8c]">{formatDate(sanction.createdAt)}</span>
           <span className="text-[11px] text-[#464646]">·</span>
-          <span className="text-[11px] text-fg-subtle">{sanction.issuedBy?.displayName ?? 'Gelöscht'}</span>
+          <span className="text-[11px] text-[#8c8c8c]">{sanction.issuedBy?.displayName ?? 'Gelöscht'}</span>
           <span className="text-[11px] text-[#464646]">·</span>
-          <span className="text-[11px] text-fg-subtle">{sanctionTimingLabel(sanction)}</span>
+          <span className="text-[11px] text-[#8c8c8c]">{sanctionTimingLabel(sanction)}</span>
           {sanction.confirmedBy && (
             <>
               <span className="text-[11px] text-[#464646]">·</span>
