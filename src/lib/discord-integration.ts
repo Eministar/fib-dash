@@ -2039,7 +2039,7 @@ export async function announceDutyModeChange(mode: DutyMode, actorName: string) 
         '## ⏱️ Ab sofort manuell einstempeln',
         'Die automatische Erfassung über die Dienstzeiten-API ist pausiert.',
         '- Zu Dienstbeginn **Einstempeln** klicken, zum Dienstende **Ausstempeln** – hier im Channel oder im Dashboard unter „Dienstzeiten“.',
-        '- Alle 30 Minuten fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
+        '- Alle 2,5 Stunden fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
         '- Startest du FiveM bzw. NERO-V Roleplay, ohne eingestempelt zu sein, erinnert dich der Bot per Direktnachricht – dort kannst du dich direkt einstempeln.',
       ]
     : [
