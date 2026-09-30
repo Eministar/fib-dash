@@ -95,7 +95,7 @@ export const ENDPOINTS: EndpointSpec[] = [
         { name: 'discordId', type: 'string', required: false, description: 'Discord-Snowflake' },
         { name: 'unit', type: 'string', required: false, description: 'Primäre Unit (Legacy)' },
         { name: 'units', type: 'string[]', required: false, description: 'Unit-Keys' },
-        { name: 'flag', type: 'AgentFlag', required: false, description: 'RED, ORANGE, YELLOW, BLUE', enumValues: ['RED', 'ORANGE', 'YELLOW', 'BLUE'] },
+        { name: 'flag', type: 'AgentFlag', required: false, description: 'RED, ORANGE, YELLOW, BLUE, PURPLE', enumValues: ['RED', 'ORANGE', 'YELLOW', 'BLUE', 'PURPLE'] },
         { name: 'status', type: 'AgentStatus', required: false, description: 'Default: ACTIVE' },
         { name: 'notes', type: 'string', required: false, description: 'Interne Notizen' },
         { name: 'hireDate', type: 'string', required: false, description: 'Einstellungsdatum (ISO-8601)' },
@@ -1187,7 +1187,7 @@ function buildComponentSchemas() {
         status: { type: 'string', enum: ['ACTIVE', 'AWAY', 'ON_LEAVE', 'INACTIVE', 'TERMINATED'] },
         discordId: { type: ['string', 'null'] },
         unit: { type: ['string', 'null'] },
-        flag: { type: ['string', 'null'], enum: ['RED', 'ORANGE', 'YELLOW', 'BLUE', null] },
+        flag: { type: ['string', 'null'], enum: ['RED', 'ORANGE', 'YELLOW', 'BLUE', 'PURPLE', null] },
       },
     },
     Rank: {

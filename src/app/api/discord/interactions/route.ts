@@ -14,11 +14,13 @@ import { nextBadgeForRank, normalizeBadgeNumber, rankHasBadgeRange } from '@/lib
 import { normalizeUnitKeys } from '@/lib/agent-units'
 import {
   getDiscordApplicationId,
+  DUTY_GAME_CLOCK_IN_PREFIX,
   getDiscordConfig,
   queueDiscordAbsenceStatusUpdate,
   queueDiscordDutyStatusUpdate,
   queueDiscordHrEvent,
   queueAgentRoleSync,
+  resolveDutyActivityCheck,
 } from '@/lib/discord-integration'
 import { clockIn, clockOut, confirmDutyActivity, DutyClockError, findAgentForDiscord } from '@/lib/manual-duty'
 import { cancelAbsenceNotice, createAbsenceNotice, formatAbsenceDate, parseAbsenceDate } from '@/lib/absence-status'
@@ -56,6 +58,8 @@ type DiscordInteraction = {
       }>
     }>
   }
+  channel_id?: string
+  message?: { id: string }
   member?: {
     roles?: string[]
     permissions?: string
@@ -920,6 +924,21 @@ function handleButton(interaction: DiscordInteraction) {
   if (customId && customId.startsWith(DUTY_ACTIVITY_CONFIRM_PREFIX)) {
     const sessionId = customId.slice(DUTY_ACTIVITY_CONFIRM_PREFIX.length)
     return runDeferred(interaction, 'Button: Dienst bestätigen', () => performDutyButton(interaction, 'confirm', sessionId))
+  }
+
+  if (customId && customId.startsWith(DUTY_GAME_CLOCK_IN_PREFIX)) {
+    const targetDiscordId = customId.slice(DUTY_GAME_CLOCK_IN_PREFIX.length)
+    if (actorFromInteraction(interaction).discordId !== targetDiscordId) {
+      return reply('Diese Erinnerung ist nicht für dich. Nutze zum Einstempeln das Dienstzeiten-Panel.')
+    }
+    return runDeferred(interaction, 'Button: Einstempeln (Spielstart)', async () => {
+      const result = await performDutyButton(interaction, 'clock-in')
+      // Erinnerung ersetzen, damit der Button nicht stehen bleibt.
+      if (result.startsWith('✅')) {
+        await resolveDutyActivityCheck(interaction.channel_id ?? null, interaction.message?.id ?? null, '✅ Du hast dich über diese Erinnerung eingestempelt. Viel Erfolg im Dienst!')
+      }
+      return result
+    })
   }
 
   if (customId === 'fib_absence_create') {

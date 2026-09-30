@@ -108,6 +108,7 @@ export function getFlagLabel(flag: string | null | undefined): string {
     ORANGE: 'Orange',
     YELLOW: 'Gelb',
     BLUE: 'Blau',
+    PURPLE: 'Lila',
   }
   return labels[flag] || flag
 }
@@ -119,6 +120,7 @@ export function getFlagColor(flag: string | null | undefined): string {
     ORANGE: '#f97316',
     YELLOW: '#facc15',
     BLUE: '#38bdf8',
+    PURPLE: '#a855f7',
   }
   return colors[flag] || 'transparent'
 }
@@ -129,6 +131,7 @@ export function getFlagDotClass(flag: string | null | undefined): string {
     ORANGE: 'bg-[#f97316]',
     YELLOW: 'bg-[#facc15]',
     BLUE: 'bg-[#38bdf8]',
+    PURPLE: 'bg-[#a855f7]',
   }
   if (!flag) return 'bg-transparent'
   return map[flag] || 'bg-transparent'
@@ -140,6 +143,7 @@ export function getFlagRowClass(flag: string | null | undefined): string {
     ORANGE: 'bg-[rgba(249,115,22,0.07)] hover:bg-[rgba(249,115,22,0.12)]',
     YELLOW: 'bg-[rgba(250,204,21,0.07)] hover:bg-[rgba(250,204,21,0.12)]',
     BLUE: 'bg-[rgba(56,189,248,0.07)] hover:bg-[rgba(56,189,248,0.12)]',
+    PURPLE: 'bg-[rgba(168,85,247,0.07)] hover:bg-[rgba(168,85,247,0.12)]',
   }
   if (!flag) return ''
   return map[flag] || ''

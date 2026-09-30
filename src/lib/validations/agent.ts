@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const AGENT_FLAG_VALUES = ['RED', 'ORANGE', 'YELLOW', 'BLUE'] as const
+export const AGENT_FLAG_VALUES = ['RED', 'ORANGE', 'YELLOW', 'BLUE', 'PURPLE'] as const
 export const AGENT_UNIT_VALUES = ['HR_LEITUNG', 'HR_TRAINEE', 'HR_OFFICER', 'ACADEMY', 'SRU', 'AIR_SUPPORT'] as const
 
 export type AgentFlagValue = (typeof AGENT_FLAG_VALUES)[number]

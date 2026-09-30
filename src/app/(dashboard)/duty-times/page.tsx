@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Activity, AlertTriangle, BarChart3, Clock3, Crown, Database, RefreshCw, Signal, Timer, Trophy, Users, Wifi } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart3, Clock3, Crown, Database, LogOut, RefreshCw, Signal, Timer, Trophy, Users, Wifi } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageLoader } from '@/components/ui/loading'
@@ -10,6 +11,8 @@ import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Button } from '@/components/ui/button'
 import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
+import { useApi } from '@/hooks/use-api'
+import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { hasPermission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
@@ -122,7 +125,24 @@ function statusLabel(status: ApiStatus) {
 export default function DutyTimesPage() {
   const { user } = useAuth()
   const canView = hasPermission(user, 'duty-times:view')
+  const canManage = hasPermission(user, 'duty-times:manage')
   const { data, loading, error, refetch } = useFetch<DutySnapshot>(canView ? '/api/duty-times' : null)
+  const { execute } = useApi()
+  const { addToast } = useToast()
+  const [clockingOutId, setClockingOutId] = useState<string | null>(null)
+
+  const clockOutAgent = async (agent: DutyAgent) => {
+    setClockingOutId(agent.id)
+    try {
+      await execute(`/api/duty-times/${agent.id}/clock-out`, { method: 'POST' })
+      addToast({ type: 'success', title: 'Ausgestempelt', message: `${agentName(agent)} wurde ausgestempelt.` })
+      refetch()
+    } catch (cause) {
+      addToast({ type: 'error', title: 'Ausstempeln fehlgeschlagen', message: cause instanceof Error ? cause.message : '' })
+    } finally {
+      setClockingOutId(null)
+    }
+  }
 
   if (!canView) return <UnauthorizedContent />
   if (loading) return <PageLoader />
@@ -332,6 +352,16 @@ export default function DutyTimesPage() {
                           </div>
                           <p className="text-[11.5px] text-[#aeaeae] mt-0.5">{agent.rank.name}</p>
                         </div>
+                        {data.mode === 'manual' && canManage && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                loading={clockingOutId === agent.id}
+                                onClick={() => clockOutAgent(agent)}
+                            >
+                              <LogOut size={13} /> Ausstempeln
+                            </Button>
+                        )}
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">

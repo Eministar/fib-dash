@@ -95,6 +95,14 @@ enum AgentFlag {
   ORANGE
   YELLOW
   BLUE
+  /// Automatisch nach 3 Tagen ohne Aktivität (Vorstufe zu Gelb nach 7 Tagen).
+  PURPLE
+}
+
+/// Positiver oder negativer Eintrag in der Personalakte.
+enum AgentRecordKind {
+  POSITIVE
+  NEGATIVE
 }
 
 /// Lebenszyklus einer Sanktion nach dem Sanktionskatalog v1.0. Der Katalog kennt
@@ -261,6 +269,7 @@ model User {
   sanctionsIssued            Sanction[]                @relation("SanctionIssuedBy")
   sanctionsConfirmed         Sanction[]                @relation("SanctionConfirmedBy")
   notesAuthored              Note[]                    @relation("NoteAuthor")
+  recordEntriesAuthored      AgentRecordEntry[]        @relation("AgentRecordEntryAuthor")
   auditLogs                  AuditLog[]                @relation("AuditUser")
   createdLists               RankChangeList[]          @relation("ListCreator")
   rankChangeEntriesCreated   RankChangeListEntry[]     @relation("EntryCreator")
@@ -707,6 +716,7 @@ model Agent {
   terminations             Termination[]
   sanctions                Sanction[]
   agentNotes               Note[]                  @relation("AgentNotes")
+  recordEntries            AgentRecordEntry[]      @relation("AgentRecordEntries")
   auditLogs                AuditLog[]              @relation("AuditAgent")
   rankChangeEntries        RankChangeListEntry[]
   taskAssignments          TaskAssignment[]        @relation("TaskAssigned")
@@ -1069,6 +1079,24 @@ model Note {
   pinned    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Positiver/negativer Eintrag in der Personalakte. `source` = `manual` (von
+/// der Leitung angelegt) oder `inactivity` (automatisch nach 3 Tagen Fehlzeit).
+model AgentRecordEntry {
+  id        String          @id @default(cuid())
+  agentId   String
+  agent     Agent           @relation("AgentRecordEntries", fields: [agentId], references: [id], onDelete: Cascade)
+  kind      AgentRecordKind
+  title     String          @db.VarChar(200)
+  content   String?         @db.Text
+  source    String          @default("manual") @db.VarChar(32)
+  authorId  String?
+  author    User?           @relation("AgentRecordEntryAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime        @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([agentId, source, createdAt])
 }
 
 model AuditLog {

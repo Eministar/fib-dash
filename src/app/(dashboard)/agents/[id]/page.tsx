@@ -53,6 +53,7 @@ import { SanctionCard, type SanctionRecord } from '@/components/sanctions/sancti
 import { Badge } from '@/components/ui/badge'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { CodenameHistory } from '@/components/codenames/codename-history'
+import { AgentRecordsPanel } from '@/components/agents/agent-records-panel'
 
 interface Rank { id: string; name: string; sortOrder: number; internalNumber: number | null; color: string }
 interface Unit { id: string; key: string; name: string; color: string; active: boolean }
@@ -1418,6 +1419,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             </motion.div>
           )}
 
+          <AgentRecordsPanel agentId={agent.id} canManage={canEditAgent} />
+
           {/* Notes */}
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
             className="glass-panel-elevated rounded-[14px] p-5">
@@ -2110,6 +2113,7 @@ function FlagPicker({
     { id: 'ORANGE', label: 'Orange', ring: 'ring-[#f97316]/70', bg: 'bg-[#f97316]' },
     { id: 'YELLOW', label: 'Gelb', ring: 'ring-[#facc15]/70', bg: 'bg-[#facc15]' },
     { id: 'BLUE', label: 'Blau', ring: 'ring-[#38bdf8]/70', bg: 'bg-[#38bdf8]' },
+    { id: 'PURPLE', label: 'Lila', ring: 'ring-[#a855f7]/70', bg: 'bg-[#a855f7]' },
   ]
   return (
     <div className="flex gap-1.5 flex-wrap">

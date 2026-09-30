@@ -7,8 +7,8 @@ import { prisma } from '@/lib/prisma'
 export type DutyMode = 'api' | 'manual'
 
 export const DUTY_MODE_SETTING_KEY = 'duty.mode'
-/** Nach so langer ununterbrochener Dienstzeit fragt der Bot nach, ob man noch im Dienst ist. */
-export const DUTY_ACTIVITY_CHECK_AFTER_MS = 8 * 60 * 60_000
+/** Nach so langer Dienstzeit (bzw. seit der letzten Bestätigung) fragt der Bot nach, ob man noch im Dienst ist. */
+export const DUTY_ACTIVITY_CHECK_AFTER_MS = 30 * 60_000
 /** Ohne Antwort in dieser Zeit wird automatisch ausgestempelt. */
 export const DUTY_ACTIVITY_RESPONSE_MS = 60_000
 

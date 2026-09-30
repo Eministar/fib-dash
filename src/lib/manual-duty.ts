@@ -82,7 +82,7 @@ export async function clockIn(agentId: string, source: 'dashboard' | 'discord', 
   return session
 }
 
-export async function clockOut(agentId: string, source: 'dashboard' | 'discord') {
+async function closeOpenSession(agentId: string, source: 'dashboard' | 'discord' | 'admin', resolvedText: string) {
   await requireManualMode()
   const open = await getOpenDutySession(agentId)
   if (!open) return null
@@ -93,10 +93,25 @@ export async function clockOut(agentId: string, source: 'dashboard' | 'discord')
   })
   if (count === 0) return null
   if (open.activityCheckSentAt) {
-    void resolveDutyActivityCheck(open.activityCheckChannelId, open.activityCheckMessageId, '✅ Du hast dich selbst ausgestempelt.')
+    void resolveDutyActivityCheck(open.activityCheckChannelId, open.activityCheckMessageId, resolvedText)
   }
   queueDiscordDutyStatusUpdate()
   return { ...open, clockOutAt: now }
+}
+
+export async function clockOut(agentId: string, source: 'dashboard' | 'discord') {
+  return closeOpenSession(agentId, source, '✅ Du hast dich selbst ausgestempelt.')
+}
+
+/** Leitung stempelt einen anderen Agent aus, z. B. wenn er das Ausstempeln vergessen hat. */
+export async function clockOutByAdmin(agentId: string, actorName: string) {
+  const agent = await prisma.agent.findUnique({ where: { id: agentId }, select: { firstName: true, lastName: true } })
+  if (!agent) throw new DutyClockError('Agent nicht gefunden.', 404)
+  const closed = await closeOpenSession(agentId, 'admin', `⏹️ Du wurdest von ${actorName} ausgestempelt.`)
+  if (!closed) throw new DutyClockError(`${agentName(agent)} ist aktuell nicht eingestempelt.`, 409)
+  const duration = formatDuration(closed.clockOutAt.getTime() - closed.clockInAt.getTime())
+  await postDutyAdminLog(`⏹️ **${agentName(agent)}** wurde von **${actorName}** nach ${duration} ausgestempelt.`)
+  return closed
 }
 
 /** Bestätigt die Aktivitätsabfrage; die nächste Abfrage folgt erst nach der vollen Wartezeit. */

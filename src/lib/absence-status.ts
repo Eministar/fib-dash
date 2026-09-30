@@ -3,9 +3,19 @@ import bcrypt from 'bcryptjs'
 import type { AgentFlag, AgentStatus } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { isRecordChangedError } from '@/lib/prisma-errors'
+import {
+  INACTIVITY_DAYS,
+  INACTIVITY_WARNING_DAYS,
+  inactivityTier,
+  nextAgentFlag,
+  shouldCreateInactivityEntry,
+} from '@/lib/inactivity-tier'
 
-export const INACTIVITY_DAYS = 7
+export { INACTIVITY_DAYS, INACTIVITY_WARNING_DAYS }
 const AUTOMATION_INTERVAL_MS = 60_000
+/** Regelmäßiger Lauf, damit Markierung und DM auch ohne Seitenaufruf kommen. */
+const AUTOMATION_WORKER_INTERVAL_MS = 5 * 60_000
+export const INACTIVITY_RECORD_SOURCE = 'inactivity'
 const SYSTEM_USERNAME = 'fib-system'
 const SYSTEM_DISPLAY_NAME = 'FIB System'
 const STATUS_UPDATE_ATTEMPTS = 3
@@ -14,6 +24,7 @@ export interface AgentStatusAutomationResult {
   skipped: boolean
   updated: number
   notesCreated: number
+  recordsCreated: number
 }
 export const SYSTEM_NOTE_TITLE = 'Automatische Fehlzeit-Markierung'
 export const INACTIVITY_NOTE_DISMISSED_ACTION = 'INACTIVITY_NOTE_DISMISSED'
@@ -263,11 +274,10 @@ export async function runAgentStatusAutomation(options?: { force?: boolean }): P
 async function runAgentStatusAutomationPass(options?: { force?: boolean }): Promise<AgentStatusAutomationResult> {
   const now = new Date()
   if (!options?.force && now.getTime() - lastAutomationRun < AUTOMATION_INTERVAL_MS) {
-    return { skipped: true, updated: 0, notesCreated: 0 }
+    return { skipped: true, updated: 0, notesCreated: 0, recordsCreated: 0 }
   }
   lastAutomationRun = now.getTime()
 
-  const inactiveCutoff = new Date(now.getTime() - INACTIVITY_DAYS * 24 * 60 * 60 * 1000)
   const agents = await prisma.agent.findMany({
     where: { status: { not: 'TERMINATED' } },
     select: {
@@ -275,6 +285,7 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
       firstName: true,
       lastName: true,
       badgeNumber: true,
+      discordId: true,
       status: true,
       flag: true,
       onLeave: true,
@@ -291,6 +302,12 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
         orderBy: { clockInAt: 'desc' },
         take: 1,
         select: { clockOutAt: true },
+      },
+      recordEntries: {
+        where: { source: INACTIVITY_RECORD_SOURCE },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true },
       },
       agentNotes: {
         where: { title: SYSTEM_NOTE_TITLE },
@@ -317,6 +334,8 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
 
   let updated = 0
   let notesCreated = 0
+  let recordsCreated = 0
+  const warnings: Array<{ discordId: string | null; agentName: string; lastActivity: Date }> = []
   let systemAuthorId: string | null = null
 
   for (const agent of agents) {
@@ -329,15 +348,32 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
     const lastReset = agent.auditLogs[0]?.createdAt ?? null
     const lastActivity = latestDate(latestPlaytime?.lastSeenAt ?? agent.lastOnline ?? null, manualActivity, lastReset)
       ?? latestDate(agent.hireDate, agent.createdAt) ?? agent.createdAt
-    const isInactive = lastActivity < inactiveCutoff
+    const tier = inactivityTier(lastActivity, now)
+    const isInactive = tier === 'inactive'
     const nextStatus = agent.onLeave ? 'ON_LEAVE' : hasActiveAbsence ? 'AWAY' : isInactive ? 'INACTIVE' : 'ACTIVE'
-    const nextFlag = hasActiveAbsence
-      ? 'BLUE'
-      : isInactive
-        ? 'YELLOW'
-        : agent.flag === 'BLUE' || agent.flag === 'YELLOW'
-          ? null
-          : agent.flag
+    const nextFlag = nextAgentFlag(agent.flag, hasActiveAbsence, tier)
+
+    if (shouldCreateInactivityEntry({
+      tier,
+      hasAbsence: hasActiveAbsence,
+      lastActivity,
+      lastEntryAt: agent.recordEntries[0]?.createdAt ?? null,
+      now,
+    })) {
+      systemAuthorId ??= await systemUserId()
+      await prisma.agentRecordEntry.create({
+        data: {
+          agentId: agent.id,
+          kind: 'NEGATIVE',
+          source: INACTIVITY_RECORD_SOURCE,
+          title: `Inaktivität (${INACTIVITY_WARNING_DAYS} Tage)`,
+          content: `Keine Abmeldung und keine Aktivität seit ${formatAbsenceDate(lastActivity)}. Automatisch als inaktiv gemeldet.`,
+          authorId: systemAuthorId,
+        },
+      })
+      recordsCreated++
+      warnings.push({ discordId: agent.discordId, agentName: `${agent.firstName} ${agent.lastName}`.trim(), lastActivity })
+    }
 
     if (!hasActiveAbsence && isInactive) {
       const alreadyNoted = agent.agentNotes.some((note) => note.createdAt >= lastActivity)
@@ -386,5 +422,27 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
     }
   }
 
-  return { skipped: false, updated, notesCreated }
+  if (warnings.length > 0) {
+    // Dynamischer Import: discord-integration importiert dieses Modul ebenfalls.
+    const { sendInactivityWarning } = await import('@/lib/discord-integration')
+    for (const warning of warnings) {
+      await sendInactivityWarning(warning).catch((error) => {
+        console.error(`[AbsenceStatus] Inaktivitäts-DM an ${warning.agentName} fehlgeschlagen:`, error)
+      })
+    }
+  }
+
+  return { skipped: false, updated, notesCreated, recordsCreated }
+}
+
+let automationWorkerStarted = false
+
+export function ensureAgentStatusAutomationWorker() {
+  if (automationWorkerStarted || typeof setInterval !== 'function') return
+  automationWorkerStarted = true
+  setInterval(() => {
+    void runAgentStatusAutomation().catch((error) => {
+      console.error('[AbsenceStatus] Statusautomatik fehlgeschlagen:', error)
+    })
+  }, AUTOMATION_WORKER_INTERVAL_MS).unref?.()
 }

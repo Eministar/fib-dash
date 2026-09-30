@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   serverExternalPackages: ['better-sqlite3'],
+  experimental: {
+    // Folge-Builds auf dem Server nutzen den Cache in .next/ (Next 16: Beta, opt-in).
+    turbopackFileSystemCacheForBuild: true,
+  },
   images: {
     unoptimized: true,
     maximumDiskCacheSize: 0,

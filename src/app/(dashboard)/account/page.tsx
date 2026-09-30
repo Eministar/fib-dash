@@ -4,6 +4,7 @@ import { MessageCircle, ShieldCheck } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { useAuth } from '@/context/auth-context'
+import { AgentRecordsPanel } from '@/components/agents/agent-records-panel'
 
 export default function AccountPage() {
   const { user } = useAuth()
@@ -58,6 +59,8 @@ export default function AccountPage() {
             )}
           </div>
         </div>
+
+        <AgentRecordsPanel title="Meine Einträge" />
       </div>
     </div>
   )

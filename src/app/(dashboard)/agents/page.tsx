@@ -136,6 +136,7 @@ const FLAG_OPTIONS: Array<{ id: string | null; label: string; color: string }> =
   { id: 'ORANGE', label: 'Orange', color: '#f97316' },
   { id: 'YELLOW', label: 'Gelb', color: '#facc15' },
   { id: 'BLUE', label: 'Blau', color: '#38bdf8' },
+  { id: 'PURPLE', label: 'Lila', color: '#a855f7' },
 ]
 
 function trainingAvailableForAgent(training: Training, agent: Agent) {

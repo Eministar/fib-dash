@@ -2019,6 +2019,11 @@ function dutyChannelId(config: DiscordConfig) {
   return config.dutyStatusChannelId || config.announcementsChannelId
 }
 
+/** Personal-Info-Channel (Ankündigungs-Channel) für Nachrichten, deren DM nicht zustellbar ist. */
+function personnelInfoChannelId(config: DiscordConfig) {
+  return config.announcementsChannelId || config.dutyStatusChannelId
+}
+
 /**
  * Kündigt den Wechsel der Dienstzeit-Erfassung im Dienstzeiten-Channel an
  * (ohne Ping) und setzt das Panel (mit bzw. ohne
@@ -2034,7 +2039,8 @@ export async function announceDutyModeChange(mode: DutyMode, actorName: string) 
         '## ⏱️ Ab sofort manuell einstempeln',
         'Die automatische Erfassung über die Dienstzeiten-API ist pausiert.',
         '- Zu Dienstbeginn **Einstempeln** klicken, zum Dienstende **Ausstempeln** – hier im Channel oder im Dashboard unter „Dienstzeiten“.',
-        '- Nach längerer Dienstzeit fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
+        '- Alle 30 Minuten fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
+        '- Startest du FiveM bzw. NERO-V Roleplay, ohne eingestempelt zu sein, erinnert dich der Bot per Direktnachricht – dort kannst du dich direkt einstempeln.',
       ]
     : [
         '## ✅ Dienstzeiten wieder automatisch',
@@ -2073,10 +2079,72 @@ export async function sendDutyActivityCheck(input: { sessionId: string; discordI
       const message = await postChannelMessage(dm.id, payload(false))
       return { channelId: dm.id, messageId: message.id }
     } catch {
-      // DMs geschlossen – auf den Dienstzeiten-Channel ausweichen.
+      // DMs geschlossen – in den Personal-Info-Channel ausweichen.
     }
   }
-  const channelId = dutyChannelId(await getDiscordConfig())
+  const channelId = personnelInfoChannelId(await getDiscordConfig())
+  if (!channelId) return null
+  const message = await postChannelMessage(channelId, payload(true))
+  return { channelId, messageId: message.id }
+}
+
+export const DUTY_GAME_CLOCK_IN_PREFIX = 'fib_duty_game_clock_in:'
+
+/** Erinnerung ans Einstempeln beim Spielstart, bei geschlossenen DMs mit Ping im Personal-Info-Channel. */
+export async function sendGameClockInReminder(input: { discordId: string; gameName: string }) {
+  if (!botToken()) return null
+  const payload = (withMention: boolean) => componentMessage([
+    ...markdownTextDisplays([
+      withMention ? mention(input.discordId) : null,
+      markdownHeader('🎮', 'Gehst du gerade auf NERO-V Roleplay?'),
+      `Du spielst gerade **${truncate(input.gameName, 80)}**, bist aber nicht eingestempelt. Wenn du in den Dienst gehst, denk bitte daran, dich einzustempeln – das geht direkt hier.`,
+    ]),
+    actionRow([{ type: 2, style: 3, custom_id: `${DUTY_GAME_CLOCK_IN_PREFIX}${input.discordId}`, label: 'Jetzt einstempeln' }]),
+  ], { allowedMentions: { parse: [], roles: [], users: withMention ? [input.discordId] : [] } })
+
+  try {
+    const dm = await discordFetch<{ id: string }>('/users/@me/channels', {
+      method: 'POST',
+      body: JSON.stringify({ recipient_id: input.discordId }),
+    })
+    const message = await postChannelMessage(dm.id, payload(false))
+    return { channelId: dm.id, messageId: message.id }
+  } catch {
+    // DMs geschlossen – in den Personal-Info-Channel ausweichen.
+  }
+  const channelId = personnelInfoChannelId(await getDiscordConfig())
+  if (!channelId) return null
+  const message = await postChannelMessage(channelId, payload(true))
+  return { channelId, messageId: message.id }
+}
+
+/** Inaktivitätsmeldung nach 3 Tagen, bei geschlossenen DMs mit Ping im Personal-Info-Channel. */
+export async function sendInactivityWarning(input: { discordId: string | null; agentName: string; lastActivity: Date }) {
+  if (!botToken()) return null
+  const discordId = snowflake(input.discordId)
+  const payload = (withMention: boolean) => componentMessage([
+    ...markdownTextDisplays([
+      withMention ? (discordId ? mention(discordId) : `**${input.agentName}**`) : null,
+      markdownHeader('⚠️', 'Du wurdest als inaktiv gemeldet'),
+      `Seit ${discordTimestamp(input.lastActivity, 'R')} warst du nicht mehr im Dienst und bist nicht abgemeldet. Dafür hast du einen **negativen Eintrag** in deiner Personalakte erhalten.`,
+      'Wenn du länger nicht da sein kannst, **melde dich bitte ab**. Bleibst du weiter inaktiv, wirst du nach 7 Tagen gelb markiert.',
+    ]),
+    actionRow([{ type: 2, style: 1, custom_id: 'fib_absence_create', label: 'Jetzt abmelden' }]),
+  ], { allowedMentions: { parse: [], roles: [], users: withMention && discordId ? [discordId] : [] } })
+
+  if (discordId) {
+    try {
+      const dm = await discordFetch<{ id: string }>('/users/@me/channels', {
+        method: 'POST',
+        body: JSON.stringify({ recipient_id: discordId }),
+      })
+      const message = await postChannelMessage(dm.id, payload(false))
+      return { channelId: dm.id, messageId: message.id }
+    } catch {
+      // DMs geschlossen – in den Personal-Info-Channel ausweichen.
+    }
+  }
+  const channelId = personnelInfoChannelId(await getDiscordConfig())
   if (!channelId) return null
   const message = await postChannelMessage(channelId, payload(true))
   return { channelId, messageId: message.id }
