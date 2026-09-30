@@ -19,9 +19,9 @@ export function MapNeedle({
         pending ? '-translate-y-0.5' : ''
       }`}
     >
-      <span className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-[#f4f4f4]" />
+      <span className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-fg" />
       <span
-        className="absolute left-1/2 top-0 grid h-6 w-6 -translate-x-1/2 place-items-center rounded-full border-2 border-[#f4f4f4] text-[13px] leading-none shadow-[0_1px_0_rgba(8,8,8,0.6)]"
+        className="absolute left-1/2 top-0 grid h-6 w-6 -translate-x-1/2 place-items-center rounded-full border-2 border-fg text-[13px] leading-none shadow-[0_1px_0_rgba(8,8,8,0.6)]"
         style={{ backgroundColor: color }}
       >
         {icon ? (

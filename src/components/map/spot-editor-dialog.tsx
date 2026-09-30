@@ -133,7 +133,7 @@ export function SpotEditorDialog({
                 className={`flex h-9 items-center gap-2 rounded-[9px] border px-2.5 text-left text-[12px] font-medium transition-colors ${
                   form.category === category.id
                     ? 'border-[#a78bfa]/40 bg-[#a78bfa]/10 text-[#c4b5fd]'
-                    : 'border-[#2a2a2a] bg-[#111111] text-[#a6a6a6] hover:border-[#404040] hover:text-white'
+                    : 'border-surface-hover bg-[#111111] text-fg-muted hover:border-line-strong hover:text-white'
                 }`}
               >
                 <span

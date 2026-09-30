@@ -143,11 +143,11 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
       {loading && tiers.length === 0 ? (
         <p className="text-[12px] text-[#909090]">Lade Ebenen…</p>
       ) : tiers.length === 0 ? (
-        <p className="text-[12px] text-[#8c8c8c]">Noch keine Ebenen angelegt.</p>
+        <p className="text-[12px] text-fg-subtle">Noch keine Ebenen angelegt.</p>
       ) : (
         <div className="space-y-3">
           {tiers.map((tier) => (
-            <div key={tier.id} className="rounded-lg border border-[#343434]/50 bg-[#171717]/60 p-3">
+            <div key={tier.id} className="rounded-lg border border-line/50 bg-[#171717]/60 p-3">
               <div className="flex flex-col sm:flex-row gap-3 mb-3">
                 <div className="flex-1">
                   <Input
@@ -182,8 +182,8 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
                         selected
                           ? 'border-[#3b82f6] bg-[#1d4ed8]/25 text-[#dfdfdf]'
                           : lockedByOther
-                            ? 'border-[#252525] bg-transparent text-[#8c8c8c] cursor-not-allowed'
-                            : 'border-[#343434]/60 bg-transparent text-[#aeaeae] hover:border-[#2a5a8f]',
+                            ? 'border-[#252525] bg-transparent text-fg-subtle cursor-not-allowed'
+                            : 'border-line/60 bg-transparent text-[#aeaeae] hover:border-[#2a5a8f]',
                       )}
                     >
                       {rank.name}

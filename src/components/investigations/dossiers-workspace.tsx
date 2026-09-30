@@ -34,6 +34,7 @@ import { formatDate } from '@/lib/utils'
 import type { InvestigationPriorityKey, InvestigationStatusKey } from '@/lib/investigations'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 
 type Dossier = {
@@ -68,6 +69,7 @@ function DossierView({ id }: { id: string | null }) {
   const manage = hasPermission(user, 'investigations:manage')
   const [kind, setKind] = useState('')
   const [search, setSearch] = useUrlState('q', '')
+  const debouncedSearch = useDebouncedValue(search)
   const [page, setPage] = useState(1)
   const [editor, setEditor] = useState<'new' | 'edit' | null>(manage && params.get('new') === '1' ? 'new' : null)
   const [quick, setQuick] = useState<RegisterField | null>(null)
@@ -83,7 +85,7 @@ function DossierView({ id }: { id: string | null }) {
   } : null)
   // Die Liste gibt es nur in der Übersicht – eine Dauerakte führt keine
   // Akten mehr unter sich, sondern Personen-, Einsatz- und Fahrzeugakten.
-  const listQuery = new URLSearchParams({ search, page: String(page) })
+  const listQuery = new URLSearchParams({ search: debouncedSearch, page: String(page) })
   if (kind) listQuery.set('kind', kind)
   const list = useFetch<List>(id ? null : `/api/investigations/dossiers?${listQuery}`)
   const current = detail.data
@@ -134,23 +136,23 @@ function DossierView({ id }: { id: string | null }) {
       </>}
     />
     <InvestigationsNavigation active="dossiers" />
-    {id && <nav className="mb-4 flex flex-wrap gap-2 text-sm text-[#c4b5fd]" aria-label="Aktenpfad"><Link href="/investigations/dossiers">Dauerakten</Link><span>/</span><span className="text-[#a6a6a6]">{current?.title ?? '…'}</span></nav>}
+    {id && <nav className="mb-4 flex flex-wrap gap-2 text-sm text-[#c4b5fd]" aria-label="Aktenpfad"><Link href="/investigations/dossiers">Dauerakten</Link><span>/</span><span className="text-fg-muted">{current?.title ?? '…'}</span></nav>}
     {(message || detail.error || list.error) && <p role="alert" className="mb-4 text-sm text-red-300">{message || detail.error || list.error}</p>}
 
     {/* Stammdaten der Akte selbst – ohne Aktionen, die woanders hingehören. */}
-    {current && <section className="mb-5 rounded-[14px] border border-[#2a2a2a] bg-[#141414] p-5">
+    {current && <section className="mb-5 rounded-[14px] border border-surface-hover bg-[#141414] p-5">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-md bg-[#a78bfa]/10 px-2 py-1 text-xs text-[#c4b5fd]">{DOSSIER_KINDS[current.kind]}</span>
         {/* Der Erklärsatz stand bisher nur im Wizard – hier braucht man ihn genauso. */}
-        <span className="text-[11.5px] text-[#8c8c8c]">{DOSSIER_KIND_HINTS[current.kind]}</span>
+        <span className="text-[11.5px] text-fg-subtle">{DOSSIER_KIND_HINTS[current.kind]}</span>
       </div>
-      {current.address && <p className="mt-3 flex items-center gap-2 text-sm text-[#d4d4d4]"><MapPin size={15} />{current.address}</p>}
+      {current.address && <p className="mt-3 flex items-center gap-2 text-sm text-accent"><MapPin size={15} />{current.address}</p>}
       {current.photoId && <Image unoptimized src={photoUrl(current.photoId)} alt={current.title} width={1000} height={560} className="mt-3 max-h-72 w-full rounded-lg object-contain" />}
       {current.description && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-[#c4c4c4]">{current.description}</p>}
-      <dl className="mt-4 grid gap-x-6 gap-y-2.5 border-t border-[#232323] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="mt-4 grid gap-x-6 gap-y-2.5 border-t border-surface-raised pt-4 sm:grid-cols-2 lg:grid-cols-4">
         {factRows.map(([label, value]) => <div key={label} className="min-w-0">
-          <dt className="text-[11px] uppercase tracking-wide text-[#8c8c8c]">{label}</dt>
-          <dd className="mt-0.5 truncate text-[12.5px] text-[#d4d4d4]" title={value}>{value}</dd>
+          <dt className="text-[11px] uppercase tracking-wide text-fg-subtle">{label}</dt>
+          <dd className="mt-0.5 truncate text-[12.5px] text-accent" title={value}>{value}</dd>
         </div>)}
       </dl>
     </section>}
@@ -189,10 +191,10 @@ function DossierView({ id }: { id: string | null }) {
           action={manage ? <Button size="sm" variant="ghost" onClick={() => setEditor('edit')}><Plus size={13} />Verknüpfen</Button> : null}>
           <ul className="flex flex-wrap gap-1.5">
             {current.mapSpots?.map(spot => <li key={spot.id}>
-              <Link href="/map" className="flex items-center gap-1.5 rounded-full border border-[#343434] px-3 py-1.5 text-[12px] text-[#d4d4d4] hover:border-[#a78bfa]">
+              <Link href="/map" className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-[12px] text-accent hover:border-[#a78bfa]">
                 <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} />
                 {spot.title}
-                <span className="text-[#8c8c8c]">{mapCategory(spot.category).label}</span>
+                <span className="text-fg-subtle">{mapCategory(spot.category).label}</span>
               </Link>
             </li>)}
           </ul>
@@ -203,7 +205,7 @@ function DossierView({ id }: { id: string | null }) {
         <SearchInput value={search} onChange={value => { setSearch(value); setPage(1) }} label="Dauerakte suchen" placeholder="Akte nach Titel oder Adresse suchen …" />
         <Select value={kind} onValueChange={value => { setKind(value); setPage(1) }} options={[{ value: '', label: 'Alle Kategorien' }, ...Object.entries(DOSSIER_KINDS).map(([value, label]) => ({ value, label }))]} />
       </FilterBar>
-      {list.loading ? <p className="py-8 text-sm text-[#8c8c8c]">Akten werden geladen …</p>
+      {list.loading && !list.data ? <p className="py-8 text-sm text-fg-subtle">Akten werden geladen …</p>
         : !list.data?.items.length ? <EmptyState
             icon={Folders}
             title={search || kind ? 'Keine Akte passt zu diesem Filter.' : 'Noch keine Dauerakten.'}
@@ -214,23 +216,23 @@ function DossierView({ id }: { id: string | null }) {
               ? <Button variant="outline" onClick={() => { setSearch(''); setKind(''); setPage(1) }}>Filter zurücksetzen</Button>
               : manage ? <Button onClick={() => setEditor('new')}><Plus size={14} />Akte anlegen</Button> : null}
           />
-        : <div className="overflow-hidden rounded-lg border border-[#343434]">
-          <div className="hidden grid-cols-[minmax(0,2fr)_1fr_1fr_110px] gap-4 border-b border-[#343434] bg-[#212121] px-4 py-2 text-xs text-[#909090] md:grid"><span>Dauerakte</span><span>Kategorie</span><span>Verknüpfungen</span><span>Aktualisiert</span></div>
-          {list.data.items.map(item => <Link key={item.id} href={href(item.id)} className="grid gap-2 border-b border-[#343434] px-4 py-4 last:border-0 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2 md:grid-cols-[minmax(0,2fr)_1fr_1fr_110px] md:items-center md:gap-4">
+        : <div className="overflow-hidden rounded-lg border border-line">
+          <div className="hidden grid-cols-[minmax(0,2fr)_1fr_1fr_110px] gap-4 border-b border-line bg-[#212121] px-4 py-2 text-xs text-[#909090] md:grid"><span>Dauerakte</span><span>Kategorie</span><span>Verknüpfungen</span><span>Aktualisiert</span></div>
+          {list.data.items.map(item => <Link key={item.id} href={href(item.id)} className="grid gap-2 border-b border-line px-4 py-4 last:border-0 hover:bg-surface-raised focus-visible:outline focus-visible:outline-2 md:grid-cols-[minmax(0,2fr)_1fr_1fr_110px] md:items-center md:gap-4">
             <div className="min-w-0"><h2 className="truncate text-sm font-medium text-white">{item.title}</h2>{item.address && <p className="mt-1 truncate text-xs text-[#909090]">{item.address}</p>}</div>
-            <span className="text-xs text-[#a6a6a6]">{DOSSIER_KINDS[item.kind]}</span>
-            <span className="text-xs text-[#a6a6a6]">{item._count?.investigations ?? 0} Einsätze · {item._count?.persons ?? 0} Personen · {item._count?.vehicles ?? 0} Fahrzeuge</span>
+            <span className="text-xs text-fg-muted">{DOSSIER_KINDS[item.kind]}</span>
+            <span className="text-xs text-fg-muted">{item._count?.investigations ?? 0} Einsätze · {item._count?.persons ?? 0} Personen · {item._count?.vehicles ?? 0} Fahrzeuge</span>
             <span className="text-xs text-[#909090]">{item.updatedAt ? formatDate(item.updatedAt) : '—'}</span>
           </Link>)}
         </div>}
 
-      {(list.data?.items.length ?? 0) > 0 && <div className="mt-4 flex items-center justify-between text-xs text-[#8c8c8c]"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
+      {(list.data?.items.length ?? 0) > 0 && <div className="mt-4 flex items-center justify-between text-xs text-fg-subtle"><span>{list.data?.total ?? 0} Akten · Seite {page}</span><div className="flex gap-2"><Button variant="ghost" size="sm" disabled={page === 1 || list.loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button variant="ghost" size="sm" disabled={page * 30 >= (list.data?.total ?? 0) || list.loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>}
     </>}
 
     {editor && <DossierEditor initialKind={params.get('kind') === 'FAMILY' ? 'FAMILY' : undefined} existing={editor === 'edit' ? current ?? undefined : undefined} onClose={() => setEditor(null)} onSaved={refresh} />}
     {quick && current && <QuickRelationEditor dossier={current} field={quick} onClose={() => setQuick(null)} onSaved={refresh} />}
     <ImageLightbox images={galleryImages} startId={lightboxId} onClose={() => setLightboxId(null)} />
-    <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#a6a6a6]">„{current?.title}“ löschen? Verknüpfte Personen-, Einsatz- und Fahrzeugakten bleiben bestehen.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push('/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
+    <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-fg-muted">„{current?.title}“ löschen? Verknüpfte Personen-, Einsatz- und Fahrzeugakten bleiben bestehen.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push('/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
   </div>
 }
 
@@ -251,8 +253,8 @@ type RegisterCardData = {
  */
 function RegisterCard({ card }: { card: RegisterCardData }) {
   const Icon = card.variant === 'investigation' ? FolderSearch : FolderOpen
-  return <Link href={card.href} className="group flex flex-col overflow-hidden rounded-xl border border-[#343434] bg-[#141414] transition-colors hover:border-[#a78bfa]">
-    <div className="relative h-28 shrink-0 overflow-hidden border-b border-[#232323] bg-[#111111]">
+  return <Link href={card.href} className="group flex flex-col overflow-hidden rounded-xl border border-line bg-[#141414] transition-colors hover:border-[#a78bfa]">
+    <div className="relative h-28 shrink-0 overflow-hidden border-b border-surface-raised bg-[#111111]">
       {card.photoId
         ? <Image unoptimized src={photoUrl(card.photoId)} alt="" width={480} height={224} className="h-full w-full object-cover opacity-90 transition-opacity group-hover:opacity-100" />
         : <span className="flex h-full w-full items-center justify-center text-[#2f2f2f]"><ImageOff size={22} /></span>}
@@ -261,7 +263,7 @@ function RegisterCard({ card }: { card: RegisterCardData }) {
 
     <div className="flex min-w-0 flex-1 flex-col gap-2 p-3.5">
       <h3 className="flex items-start gap-2 text-[13.5px] font-medium leading-snug text-white">
-        <Icon size={15} className="mt-0.5 shrink-0 text-[#8c8c8c]" />
+        <Icon size={15} className="mt-0.5 shrink-0 text-fg-subtle" />
         <span className="line-clamp-2">{card.title}</span>
       </h3>
 
@@ -272,9 +274,9 @@ function RegisterCard({ card }: { card: RegisterCardData }) {
       </div>}
 
       {card.code && <p className="truncate font-mono text-[11px] text-[#d4af37]">{card.code}</p>}
-      {card.facts?.length ? <p className="truncate text-[11px] text-[#8c8c8c]">{card.facts.join(' · ')}</p> : null}
+      {card.facts?.length ? <p className="truncate text-[11px] text-fg-subtle">{card.facts.join(' · ')}</p> : null}
 
-      {(card.author || card.date) && <p className="mt-auto truncate border-t border-[#232323] pt-2 text-[11px] text-[#8c8c8c]">
+      {(card.author || card.date) && <p className="mt-auto truncate border-t border-surface-raised pt-2 text-[11px] text-fg-subtle">
         {[card.author, card.date ? formatDate(card.date) : null].filter(Boolean).join(' · ')}
       </p>}
     </div>
@@ -285,17 +287,17 @@ function RegisterCard({ card }: { card: RegisterCardData }) {
 /** Reine Liste – Titel, Zähler und Aktion liefert die umgebende SectionCard. */
 function RegisterList({ entries }: { entries?: { id: string; href: string; label: string; hint?: string }[] }) {
   if (!entries?.length) return null
-  return <ul className="divide-y divide-[#232323] text-sm">
+  return <ul className="divide-y divide-surface-raised text-sm">
     {entries.map(entry => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
       <Link className="text-[#c4b5fd] hover:underline" href={entry.href}>{entry.label}</Link>
-      {entry.hint && <span className="font-mono text-xs text-[#8c8c8c]">{entry.hint}</span>}
+      {entry.hint && <span className="font-mono text-xs text-fg-subtle">{entry.hint}</span>}
     </li>)}
   </ul>
 }
 
 function RelationPicker({ label, options, value, onChange }: { label: string; options: { id: string; label: string }[]; value: string[]; onChange: (ids: string[]) => void }) {
   const [search, setSearch] = useState('')
-  return <div className="space-y-2"><p className="text-sm text-[#a6a6a6]">{label}</p><div className="flex flex-wrap gap-1">{value.map(id => <Button type="button" key={id} variant="secondary" size="sm" onClick={() => onChange(value.filter(v => v !== id))}>{options.find(o => o.id === id)?.label ?? id} ×</Button>)}</div><Input placeholder={`${label} suchen …`} value={search} onChange={e => setSearch(e.target.value)} /><div className="max-h-36 overflow-y-auto">{options.filter(o => !value.includes(o.id) && o.label.toLowerCase().includes(search.toLowerCase())).slice(0, 30).map(option => <button type="button" key={option.id} className="block w-full rounded px-2 py-1.5 text-left text-xs text-[#c4c4c4] hover:bg-[#232323]" onClick={() => onChange([...value, option.id])}>+ {option.label}</button>)}</div></div>
+  return <div className="space-y-2"><p className="text-sm text-fg-muted">{label}</p><div className="flex flex-wrap gap-1">{value.map(id => <Button type="button" key={id} variant="secondary" size="sm" onClick={() => onChange(value.filter(v => v !== id))}>{options.find(o => o.id === id)?.label ?? id} ×</Button>)}</div><Input placeholder={`${label} suchen …`} value={search} onChange={e => setSearch(e.target.value)} /><div className="max-h-36 overflow-y-auto">{options.filter(o => !value.includes(o.id) && o.label.toLowerCase().includes(search.toLowerCase())).slice(0, 30).map(option => <button type="button" key={option.id} className="block w-full rounded px-2 py-1.5 text-left text-xs text-[#c4c4c4] hover:bg-surface-raised" onClick={() => onChange([...value, option.id])}>+ {option.label}</button>)}</div></div>
 }
 
 /** Kurzerklärungen für die Kategorieauswahl im Wizard. Die reinen Labels
@@ -357,12 +359,12 @@ function DossierEditor({ existing, initialKind, onClose, onSaved }: { existing?:
       content: <div className="space-y-4">
         <div className="grid gap-2 sm:grid-cols-2">
           {Object.entries(DOSSIER_KINDS).map(([value, label]) => <button type="button" key={value} onClick={() => setKind(value as DossierKind)} aria-pressed={kind === value}
-            className={`rounded-[10px] border p-3 text-left ${kind === value ? 'border-[#a78bfa] bg-[#a78bfa]/10' : 'border-[#282828] hover:border-[#404040]'}`}>
+            className={`rounded-[10px] border p-3 text-left ${kind === value ? 'border-[#a78bfa] bg-[#a78bfa]/10' : 'border-[#282828] hover:border-line-strong'}`}>
             <span className="block text-[13px] font-medium text-white">{label}</span>
-            <span className="mt-0.5 block text-[11.5px] leading-relaxed text-[#8c8c8c]">{DOSSIER_KIND_HINTS[value as DossierKind]}</span>
+            <span className="mt-0.5 block text-[11.5px] leading-relaxed text-fg-subtle">{DOSSIER_KIND_HINTS[value as DossierKind]}</span>
           </button>)}
         </div>
-        <p className="text-sm leading-6 text-[#a6a6a6]">Eine Dauerakte ist die zentrale Sammlung. Konkrete Vorfälle kommen als Einsatzakten dazu. Personen und Fahrzeuge werden verknüpft, nicht erneut angelegt.</p>
+        <p className="text-sm leading-6 text-fg-muted">Eine Dauerakte ist die zentrale Sammlung. Konkrete Vorfälle kommen als Einsatzakten dazu. Personen und Fahrzeuge werden verknüpft, nicht erneut angelegt.</p>
         <Input label="Titel" value={title} onChange={e => setTitle(e.target.value)} maxLength={200} placeholder="z. B. Familie Moretti" />
       </div>,
     },
@@ -375,7 +377,7 @@ function DossierEditor({ existing, initialKind, onClose, onSaved }: { existing?:
         <PhotoField value={photoId ? photoUrl(photoId) : null} onChange={photo => setPhotoId(photo?.id ?? null)} />
         <div className="space-y-2">
           <p className="text-[12.5px] font-medium text-[#aeaeae]">Weitere Bilder</p>
-          <p className="text-[11.5px] text-[#8c8c8c]">Stehen in der Akte unter „Medien & Orte“. Das Titelbild steht in den Stammdaten.</p>
+          <p className="text-[11.5px] text-fg-subtle">Stehen in der Akte unter „Medien & Orte“. Das Titelbild steht in den Stammdaten.</p>
           <PhotoPicker value={photos} onChange={setPhotos} />
         </div>
         <Textarea label="Informationen und Notizen" value={description} onChange={e => setDescription(e.target.value)} maxLength={30000} rows={6} placeholder="Hintergründe, Bewohner, Eigentümer, Beobachtungen …" />
@@ -386,7 +388,7 @@ function DossierEditor({ existing, initialKind, onClose, onSaved }: { existing?:
       label: 'Kartenpunkte',
       optional: true,
       content: <div className="space-y-3">
-        <p className="text-[12.5px] text-[#a6a6a6]">Routen, Sammler und Anwesen, die zu dieser Akte gehören.</p>
+        <p className="text-[12.5px] text-fg-muted">Routen, Sammler und Anwesen, die zu dieser Akte gehören.</p>
         <SpotPickerField value={mapSpots} onChange={setMapSpots} canCreate={hasPermission(user, 'map:manage')} />
       </div>,
     },
@@ -414,8 +416,8 @@ function DossierEditor({ existing, initialKind, onClose, onSaved }: { existing?:
           ['Einsatzakten', String(investigationIds.length)],
           ['Fahrzeuge', String(vehicleIds.length)],
         ] as [string, string][]).map(([label, value]) => <div key={label} className="flex flex-wrap gap-x-3 border-b border-[#1e1e1e] pb-2">
-          <dt className="w-36 shrink-0 text-[#8c8c8c]">{label}</dt>
-          <dd className="min-w-0 text-[#d4d4d4]">{value}</dd>
+          <dt className="w-36 shrink-0 text-fg-subtle">{label}</dt>
+          <dd className="min-w-0 text-accent">{value}</dd>
         </div>)}
       </dl>,
     },
@@ -444,8 +446,8 @@ function DossierPicker({ title, excludeIds, busy, failure, onPick, onClose }: { 
     <div className="space-y-3">
       <Input aria-label="Dauerakte suchen" placeholder="Akte suchen …" value={search} onChange={e => setSearch(e.target.value)} />
       {(failure || list.error) && <p role="alert" className="text-sm text-red-300">{failure || list.error}</p>}
-      {list.loading ? <p className="text-sm text-[#8c8c8c]">Akten werden geladen …</p> : !options.length ? <p className="text-sm text-[#8c8c8c]">Keine passende Akte gefunden.</p> : <ul className="max-h-72 space-y-1 overflow-y-auto">{options.map(item => <li key={item.id}><button type="button" disabled={busy} className="block w-full rounded px-2 py-2 text-left text-sm text-[#c4b5fd] hover:bg-[#232323] disabled:opacity-50" onClick={() => onPick(item)}>{DOSSIER_KINDS[item.kind]} · {item.title}</button></li>)}</ul>}
-      <div className="flex justify-end border-t border-[#232323] pt-3"><Button type="button" variant="ghost" disabled={busy} onClick={onClose}>Abbrechen</Button></div>
+      {list.loading ? <p className="text-sm text-fg-subtle">Akten werden geladen …</p> : !options.length ? <p className="text-sm text-fg-subtle">Keine passende Akte gefunden.</p> : <ul className="max-h-72 space-y-1 overflow-y-auto">{options.map(item => <li key={item.id}><button type="button" disabled={busy} className="block w-full rounded px-2 py-2 text-left text-sm text-[#c4b5fd] hover:bg-surface-raised disabled:opacity-50" onClick={() => onPick(item)}>{DOSSIER_KINDS[item.kind]} · {item.title}</button></li>)}</ul>}
+      <div className="flex justify-end border-t border-surface-raised pt-3"><Button type="button" variant="ghost" disabled={busy} onClick={onClose}>Abbrechen</Button></div>
     </div>
   </Modal>
 }
@@ -480,9 +482,9 @@ function LinkedDossiers({ relation, recordId, heading }: { relation: 'person' | 
     {(error || failure) && <p role="alert" className="text-xs text-red-300">{failure || error}</p>}
     {linked.length ? <ul className="space-y-1">{linked.map(item => <li key={item.id} className="flex items-center gap-2">
       <Link className="text-sm text-[#c4b5fd] hover:underline" href={href(item.id)}>{DOSSIER_KINDS[item.kind]} · {item.title}</Link>
-      {manage && <button type="button" disabled={loading} className="text-xs text-[#8c8c8c] hover:text-red-300 disabled:opacity-50" aria-label={`${item.title} entfernen`} onClick={() => setMembership(item.id, false)}>Entfernen</button>}
-    </li>)}</ul> : <p className="text-xs text-[#8c8c8c]">Keine Dauerakten verknüpft.</p>}
-    <Link className="inline-block text-xs text-[#a6a6a6] hover:text-white" href="/investigations/dossiers">Dauerakten öffnen →</Link>
+      {manage && <button type="button" disabled={loading} className="text-xs text-fg-subtle hover:text-red-300 disabled:opacity-50" aria-label={`${item.title} entfernen`} onClick={() => setMembership(item.id, false)}>Entfernen</button>}
+    </li>)}</ul> : <p className="text-xs text-fg-subtle">Keine Dauerakten verknüpft.</p>}
+    <Link className="inline-block text-xs text-fg-muted hover:text-white" href="/investigations/dossiers">Dauerakten öffnen →</Link>
     {picking && <DossierPicker title="Zu welcher Dauerakte hinzufügen?" excludeIds={linked.map(item => item.id)} busy={loading} failure={failure} onPick={dossier => setMembership(dossier.id, true)} onClose={() => setPicking(false)} />}
   </section>
 }

@@ -15,12 +15,31 @@ export async function GET() {
 
   const badges: Record<string, number> = {}
 
-  if (hasPermission(user, 'rank-changes:view')) {
-    const openRankChanges = await prisma.rankChangeListEntry.count({
-      where: { executed: false, list: { status: 'DRAFT' } },
-    })
-    if (openRankChanges > 0) badges['/promotions'] = openRankChanges
-  }
+  const [openRankChanges, awaitingConfirmation, openAgreements] = await Promise.all([
+    hasPermission(user, 'rank-changes:view')
+      ? prisma.rankChangeListEntry.count({ where: { executed: false, list: { status: 'DRAFT' } } })
+      : 0,
+    // Vier-Augen-Prinzip: PG 5/6 braucht die Bestätigung einer ZWEITEN Führungskraft –
+    // eigene Sanktionen zählen deshalb nicht mit.
+    hasPermission(user, 'sanctions:confirm')
+      ? prisma.sanction.count({
+          where: {
+            penalGrade: { in: ['5', '6'] },
+            confirmedAt: null,
+            status: 'ISSUED',
+            // `NOT: { issuedByUserId }` würde in SQL auch Zeilen ohne Aussteller (NULL) verwerfen.
+            OR: [{ issuedByUserId: null }, { issuedByUserId: { not: user.id } }],
+          },
+        })
+      : 0,
+    hasPermission(user, 'agreements:manage')
+      ? prisma.agreement.count({ where: { status: 'OPEN' } })
+      : 0,
+  ])
+
+  if (openRankChanges > 0) badges['/promotions'] = openRankChanges
+  if (awaitingConfirmation > 0) badges['/sanktionen'] = awaitingConfirmation
+  if (openAgreements > 0) badges['/vertraege'] = openAgreements
 
   return success(badges)
 }

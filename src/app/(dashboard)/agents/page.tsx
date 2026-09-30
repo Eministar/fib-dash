@@ -124,7 +124,7 @@ function DropRankZone({ rankId, canHighlight, children }: { rankId: string; canH
       ref={setNodeRef}
       className={cn(
         'w-full min-w-0 rounded-[10px] transition-[box-shadow] duration-150',
-        canHighlight && isOver && 'ring-1 ring-[#d4d4d4]/50 ring-inset'
+        canHighlight && isOver && 'ring-1 ring-accent/50 ring-inset'
       )}
     >
       {children}
@@ -155,7 +155,7 @@ function DiscordMemberBadge({ agent, compact = false }: { agent: Pick<Agent, 'di
       ? inGuild ? 'Auf Discord' : 'Nicht auf Discord'
       : 'Discord ungeprüft'
   const className = !hasDiscordId || !checked
-    ? 'border-[#404040]/50 bg-[#1d1d1d]/70 text-[#909090]'
+    ? 'border-line-strong/50 bg-[#1d1d1d]/70 text-[#909090]'
     : inGuild
       ? 'border-[#166534]/50 bg-[#052e1a]/70 text-[#86efac]'
       : 'border-[#7f1d1d]/55 bg-[#2a1212]/70 text-[#fca5a5]'
@@ -198,12 +198,12 @@ function FlagButton({
         dim,
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'hover:scale-110',
-        value ? 'border-transparent shadow-sm' : 'border-[#808080]/60 hover:border-[#d4d4d4]/60'
+        value ? 'border-transparent shadow-sm' : 'border-[#808080]/60 hover:border-accent/60'
       )}
       style={{ backgroundColor: value ? getFlagColor(value) : 'transparent' }}
       onClick={(e) => e.stopPropagation()}
     >
-      {!value && <Flag size={size === 'lg' ? 13 : 10} className="text-[#8c8c8c]" strokeWidth={1.75} />}
+      {!value && <Flag size={size === 'lg' ? 13 : 10} className="text-fg-subtle" strokeWidth={1.75} />}
     </button>
   )
 
@@ -216,7 +216,7 @@ function FlagButton({
         <Popover.Content
           align="end"
           sideOffset={6}
-          className="z-[200] glass-panel-elevated rounded-[10px] p-1.5 border border-[#404040]/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+          className="z-[200] glass-panel-elevated rounded-[10px] p-1.5 border border-line-strong/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1">
@@ -230,11 +230,11 @@ function FlagButton({
                     title={opt.label}
                     className={cn(
                       'h-[28px] w-[28px] rounded-full border flex items-center justify-center transition-all',
-                      active ? 'ring-2 ring-[#d4d4d4] ring-offset-1 ring-offset-[#1d1d1d] border-transparent' : 'border-[#404040]/70 hover:border-[#d4d4d4]/60'
+                      active ? 'ring-2 ring-accent ring-offset-1 ring-offset-[#1d1d1d] border-transparent' : 'border-line-strong/70 hover:border-accent/60'
                     )}
                     style={{ backgroundColor: opt.id ? opt.color : 'transparent' }}
                   >
-                    {!opt.id && <Flag size={12} className="text-[#a6a6a6]" strokeWidth={1.75} />}
+                    {!opt.id && <Flag size={12} className="text-fg-muted" strokeWidth={1.75} />}
                   </button>
                 </Popover.Close>
               )
@@ -283,7 +283,7 @@ function DraggableAgentRow({
         'transition-colors duration-100',
         agent.flag ? getFlagRowClass(agent.flag) : 'hover:bg-[#212121]',
         isDragging && 'opacity-40 z-10',
-        rowIndex > 0 && 'border-t border-[#343434]'
+        rowIndex > 0 && 'border-t border-line'
       )}
     >
       <td className="px-0 py-0 w-[3px]" aria-hidden>
@@ -298,7 +298,7 @@ function DraggableAgentRow({
         {canDrag ? (
           <button
             type="button"
-            className="inline-flex p-1 rounded-md text-[#8c8c8c] hover:text-[#d4d4d4] cursor-grab active:cursor-grabbing"
+            className="inline-flex p-1 rounded-md text-fg-subtle hover:text-accent cursor-grab active:cursor-grabbing"
             aria-label="Zum Verschieben ziehen"
             {...attributes}
             {...listeners}
@@ -319,7 +319,7 @@ function DraggableAgentRow({
           <Link
             href={`/agents/${agent.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="block truncate text-[13px] font-medium text-[#eee] transition-colors hover:text-[#d4d4d4]"
+            className="block truncate text-[13px] font-medium text-[#eee] transition-colors hover:text-accent"
             title={`${agent.onLeave ? '[X] Beurlaubt · ' : ''}${agent.firstName} ${agent.lastName}`}
           >
             {agent.onLeave && <span className="mr-1 font-semibold text-[#a78bfa]">[X]</span>}
@@ -340,7 +340,7 @@ function DraggableAgentRow({
               title={!available ? `${t.label} ist erst ab ${t.minRank?.name ?? 'Mindestrang'} vorgesehen` : t.label}
               className={cn(
                 'mx-auto h-[18px] w-[18px] rounded-[4px] flex items-center justify-center transition-all duration-150',
-                completed ? 'bg-[#d4d4d4]' : available ? 'bg-[#343434]' : 'bg-[#1d1d1d] border border-dashed border-[#808080]/60',
+                completed ? 'bg-accent' : available ? 'bg-line' : 'bg-[#1d1d1d] border border-dashed border-[#808080]/60',
                 !available && !completed && 'opacity-70',
                 canEditTrainings ? 'hover:bg-[#373737]' : 'cursor-not-allowed opacity-70'
               )}
@@ -356,16 +356,16 @@ function DraggableAgentRow({
       <td className="px-2 py-2.5 whitespace-nowrap">
         <span className="inline-flex items-center gap-1.5">
           <span className={cn('h-[6px] w-[6px] rounded-full', getStatusDot(agent.status))} />
-          <span className="text-[12px] text-[#a6a6a6]">{getStatusLabel(agent.status)}</span>
+          <span className="text-[12px] text-fg-muted">{getStatusLabel(agent.status)}</span>
         </span>
       </td>
       <td className="px-2 py-2.5 whitespace-nowrap">
         <DiscordMemberBadge agent={agent} compact />
       </td>
-      <td className="px-2 py-2.5 text-[12px] text-[#a6a6a6]" title={agent.lastOnline ? formatDateTime(agent.lastOnline) : 'Nie online gewesen'}>
+      <td className="px-2 py-2.5 text-[12px] text-fg-muted" title={agent.lastOnline ? formatDateTime(agent.lastOnline) : 'Nie online gewesen'}>
         {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
       </td>
-      <td className="px-2 py-2.5 text-[12px] text-[#a6a6a6]">{formatDate(agent.hireDate)}</td>
+      <td className="px-2 py-2.5 text-[12px] text-fg-muted">{formatDate(agent.hireDate)}</td>
       <td className="px-1.5 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1.5">
           <FlagButton
@@ -373,7 +373,7 @@ function DraggableAgentRow({
             disabled={!canEdit}
             onChange={(v) => onFlagChange(agent.id, v)}
           />
-          {agent.notes && <StickyNote size={12} className="text-[#8c8c8c]" strokeWidth={1.75} />}
+          {agent.notes && <StickyNote size={12} className="text-fg-subtle" strokeWidth={1.75} />}
         </div>
       </td>
     </tr>
@@ -400,8 +400,8 @@ function MobileAgentCard({
   return (
     <div
       className={cn(
-        'relative w-full rounded-[10px] border border-[#343434]/40 px-3.5 py-3 transition-colors',
-        agent.flag ? getFlagRowClass(agent.flag) : 'bg-[#181818]/60 hover:bg-[#212121]'
+        'relative w-full rounded-[10px] border border-line/40 px-3.5 py-3 transition-colors',
+        agent.flag ? getFlagRowClass(agent.flag) : 'bg-surface-sunken/60 hover:bg-[#212121]'
       )}
     >
       {agent.flag && (
@@ -420,7 +420,7 @@ function MobileAgentCard({
             </span>
             <Link
               href={`/agents/${agent.id}`}
-              className="block truncate text-[14px] font-semibold text-[#eee] transition-colors hover:text-[#d4d4d4]"
+              className="block truncate text-[14px] font-semibold text-[#eee] transition-colors hover:text-accent"
             >
               {agent.onLeave && <span className="mr-1 text-[#a78bfa]">[X]</span>}
               {agent.firstName} {agent.lastName}
@@ -442,20 +442,20 @@ function MobileAgentCard({
           {agentUnitKeys(agent).length > 0 ? (
             <UnitBadges agent={agent} unitsByKey={unitsByKey} maxVisible={3} />
           ) : (
-            <span className="text-[11px] text-[#8c8c8c]">—</span>
+            <span className="text-[11px] text-fg-subtle">—</span>
           )}
         </div>
         <span className="inline-flex items-center gap-1.5 justify-self-end whitespace-nowrap pt-[3px]">
           <span className={cn('h-[6px] w-[6px] rounded-full shrink-0', getStatusDot(agent.status))} />
-          <span className="text-[11.5px] text-[#a6a6a6]">{getStatusLabel(agent.status)}</span>
+          <span className="text-[11.5px] text-fg-muted">{getStatusLabel(agent.status)}</span>
         </span>
         <div className="col-span-2 flex items-center gap-2">
           <DiscordMemberBadge agent={agent} compact />
-          <span className="text-[11.5px] text-[#a6a6a6]">
+          <span className="text-[11.5px] text-fg-muted">
             Zuletzt online: {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
           </span>
-          <span className="text-[11.5px] text-[#a6a6a6]">{formatDate(agent.hireDate)}</span>
-          {agent.notes && <StickyNote size={11} className="text-[#8c8c8c]" strokeWidth={1.75} />}
+          <span className="text-[11.5px] text-fg-muted">{formatDate(agent.hireDate)}</span>
+          {agent.notes && <StickyNote size={11} className="text-fg-subtle" strokeWidth={1.75} />}
         </div>
       </div>
 
@@ -475,17 +475,17 @@ function MobileAgentCard({
                 className={cn(
                   'inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[11px] font-medium border transition-colors',
                   completed
-                    ? 'bg-[#d4d4d4]/15 border-[#d4d4d4]/40 text-[#e6d27a]'
+                    ? 'bg-accent/15 border-accent/40 text-[#e6d27a]'
                     : available
-                      ? 'bg-[#1d1d1d] border-[#343434]/60 text-[#909090]'
-                      : 'bg-[#080808] border-dashed border-[#808080]/50 text-[#8c8c8c]',
-                  canEditTrainings ? 'hover:border-[#404040]' : 'cursor-not-allowed opacity-70'
+                      ? 'bg-[#1d1d1d] border-line/60 text-[#909090]'
+                      : 'bg-canvas border-dashed border-[#808080]/50 text-fg-subtle',
+                  canEditTrainings ? 'hover:border-line-strong' : 'cursor-not-allowed opacity-70'
                 )}
               >
                 <span
                   className={cn(
                     'h-[10px] w-[10px] rounded-[3px] flex items-center justify-center',
-                    completed ? 'bg-[#d4d4d4]' : 'bg-[#343434]'
+                    completed ? 'bg-accent' : 'bg-line'
                   )}
                 >
                   {completed && <Check size={7} className="text-[#1d1d1d]" strokeWidth={3} />}
@@ -732,7 +732,7 @@ export default function AgentsPage() {
   if (loading) return <PageLoader withHeader />
 
   const filterClass =
-    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-[#343434]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
+    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-line/50 focus:outline-none focus:border-accent transition-all'
   const totalActive = agents?.filter((o) => o.status === 'ACTIVE').length || 0
   const totalAway = agents?.filter((o) => o.status === 'AWAY' || o.status === 'ON_LEAVE').length || 0
   const totalFlagged = agents?.filter((o) => o.flag).length || 0
@@ -760,14 +760,14 @@ export default function AgentsPage() {
         <div className="relative">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle"
             strokeWidth={1.75}
           />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche nach Name, Dienstnummer oder Discord-ID..."
-            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
+            className={cn(filterClass, 'w-full pl-9 placeholder:text-fg-subtle')}
           />
         </div>
 
@@ -827,8 +827,8 @@ export default function AgentsPage() {
         <div className="w-full min-w-0 rounded-[12px] overflow-hidden">
           {groupedByRank.length === 0 && (
             <div className="text-center py-24">
-              <Users size={28} className="mx-auto text-[#8c8c8c] mb-3" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#a6a6a6]">Keine Ränge gefunden</p>
+              <Users size={28} className="mx-auto text-fg-subtle mb-3" strokeWidth={1.5} />
+              <p className="text-[13px] text-fg-muted">Keine Ränge gefunden</p>
             </div>
           )}
 
@@ -845,14 +845,14 @@ export default function AgentsPage() {
                     <ChevronDown
                       size={14}
                       strokeWidth={2}
-                      className={cn('text-[#8c8c8c] transition-transform duration-200 shrink-0', isCollapsed && '-rotate-90')}
+                      className={cn('text-fg-subtle transition-transform duration-200 shrink-0', isCollapsed && '-rotate-90')}
                     />
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: rank.color }} />
                     <span className="truncate text-[13px] font-semibold text-[#eee]">{rank.name}</span>
                     <RankNumberBadge number={rank.internalNumber} />
-                    <span className="text-[12px] text-[#8c8c8c] font-normal shrink-0">{groupAgents.length}</span>
+                    <span className="text-[12px] text-fg-subtle font-normal shrink-0">{groupAgents.length}</span>
                     {rank.badgeMin != null && rank.badgeMax != null && (
-                      <span className="hidden sm:inline text-[11px] text-[#8c8c8c] ml-auto font-mono">
+                      <span className="hidden sm:inline text-[11px] text-fg-subtle ml-auto font-mono">
                         DN {formatBadgeNumber(rank.badgeMin, '')}–{formatBadgeNumber(rank.badgeMax, '')}
                       </span>
                     )}
@@ -940,7 +940,7 @@ export default function AgentsPage() {
                               />
                             ))
                           ) : (
-                            <div className="rounded-[10px] border border-dashed border-[#343434]/70 bg-[#181818]/40 px-3.5 py-3 text-center text-[12.5px] text-[#909090]">
+                            <div className="rounded-[10px] border border-dashed border-line/70 bg-surface-sunken/40 px-3.5 py-3 text-center text-[12.5px] text-[#909090]">
                               — Kein Agent hat diesen Rang
                             </div>
                           )}
@@ -962,16 +962,16 @@ export default function AgentsPage() {
       >
         {pendingTrainingOverride && (
           <div className="space-y-4">
-            <div className="rounded-[10px] border border-[#d4d4d4]/25 bg-[#1d1608]/60 px-3.5 py-3">
-              <p className="text-[13px] font-medium text-[#f4f4f4]">
+            <div className="rounded-[10px] border border-accent/25 bg-[#1d1608]/60 px-3.5 py-3">
+              <p className="text-[13px] font-medium text-fg">
                 {pendingTrainingOverride.training.label}
               </p>
               <p className="mt-1 text-[12.5px] text-[#aeaeae]">
                 Vorgesehen ab: {pendingTrainingOverride.training.minRank?.name ?? 'Mindestrang'}
               </p>
             </div>
-            <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/70 px-3.5 py-3">
-              <p className="text-[12px] text-[#a6a6a6]">Agent</p>
+            <div className="rounded-[10px] border border-line/70 bg-surface-sunken/70 px-3.5 py-3">
+              <p className="text-[12px] text-fg-muted">Agent</p>
               <p className="mt-1 text-[14px] font-semibold text-white">
                 {pendingTrainingOverride.agent.firstName} {pendingTrainingOverride.agent.lastName}
               </p>

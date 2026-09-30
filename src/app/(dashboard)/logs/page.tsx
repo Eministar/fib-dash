@@ -37,7 +37,7 @@ interface LogResponse {
 
 
 const groupChipStyles: Record<AuditLogGroupKey | 'other', string> = {
-  agent: 'bg-[#232323] text-[#7fb3e8]',
+  agent: 'bg-surface-raised text-[#7fb3e8]',
   rank: 'bg-[#1d2a10] text-[#a3d977]',
   termination: 'bg-[#331416] text-[#e88a8a]',
   sanction: 'bg-[#33240f] text-[#e8b969]',
@@ -47,8 +47,8 @@ const groupChipStyles: Record<AuditLogGroupKey | 'other', string> = {
   calendar: 'bg-[#1d1d1d] text-[#8aa8d8]',
   internalAffairs: 'bg-[#242424] text-[#7dd3fc]',
   legal: 'bg-[#251438] text-[#c4b5fd]',
-  system: 'bg-[#232323] text-[#a9a9a9]',
-  other: 'bg-[#212121] text-[#a6a6a6]',
+  system: 'bg-surface-raised text-[#a9a9a9]',
+  other: 'bg-[#212121] text-fg-muted',
 }
 
 export default function LogsPage() {
@@ -86,7 +86,7 @@ export default function LogsPage() {
   const hasFilter = !!debouncedSearch || !!groupFilter
 
   const filterClass =
-    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-[#343434]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
+    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-line/50 focus:outline-none focus:border-accent transition-all'
 
   return (
     <div>
@@ -96,14 +96,14 @@ export default function LogsPage() {
         <div className="relative flex-1">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle"
             strokeWidth={1.75}
           />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche nach Name, Dienstnummer, Nutzer oder Details..."
-            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
+            className={cn(filterClass, 'w-full pl-9 placeholder:text-fg-subtle')}
           />
         </div>
         <Select
@@ -122,7 +122,7 @@ export default function LogsPage() {
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
         {logs.length > 0 ? (
           <>
-            <div className="divide-y divide-[#343434]">
+            <div className="divide-y divide-line">
               {logs.map((log, i) => {
                 const label = auditActionLabel(log.action)
                 const group = groupForAction(log.action)
@@ -139,7 +139,7 @@ export default function LogsPage() {
                       <span className={cn('inline-flex items-center px-2 py-[3px] rounded-[5px] text-[11px] font-medium', groupChipStyles[group])}>
                         {groupLabel}
                       </span>
-                      <span className="inline-flex items-center px-2 py-[3px] rounded-[5px] text-[11px] font-medium bg-[#212121] text-[#a6a6a6]">
+                      <span className="inline-flex items-center px-2 py-[3px] rounded-[5px] text-[11px] font-medium bg-[#212121] text-fg-muted">
                         {label}
                       </span>
                     </div>
@@ -151,7 +151,7 @@ export default function LogsPage() {
                         </p>
                       )}
                       {log.details && (
-                        <p className="text-[12.5px] text-[#a6a6a6] mt-0.5">{auditDetails(log.details)}</p>
+                        <p className="text-[12.5px] text-fg-muted mt-0.5">{auditDetails(log.details)}</p>
                       )}
                       {log.oldValue && log.newValue && (
                         <p className="text-[12px] text-[#909090] mt-0.5">
@@ -161,14 +161,14 @@ export default function LogsPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-[12px] text-[#909090]">{formatDateTime(log.createdAt)}</p>
-                      <p className="text-[11px] text-[#8c8c8c]">{log.user?.displayName ?? 'Gelöscht'}</p>
+                      <p className="text-[11px] text-fg-subtle">{log.user?.displayName ?? 'Gelöscht'}</p>
                     </div>
                   </motion.div>
                 )
               })}
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-[#343434]">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-line">
                 <p className="text-[12px] text-[#909090]">Seite {page + 1} von {totalPages}</p>
                 <div className="flex gap-1.5">
                   <Button variant="secondary" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
@@ -183,7 +183,7 @@ export default function LogsPage() {
           </>
         ) : (
           <div className="text-center py-20">
-            <ScrollText size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+            <ScrollText size={28} className="mx-auto mb-3 text-fg" strokeWidth={1.5} />
             <p className="text-[13px] text-[#909090]">
               {hasFilter ? 'Keine Treffer für die aktuelle Suche' : 'Keine Protokolleinträge'}
             </p>

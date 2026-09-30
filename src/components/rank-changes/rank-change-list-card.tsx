@@ -108,7 +108,7 @@ function EntryVoteControls({
         activeClassName: string
     }[] = [
         { vote: 'HIGHER', count: summary.higherVotes, label: 'Höher einstufen', icon: ArrowUp, activeClassName: 'bg-[#34d399]/18 text-[#6ee7b7]' },
-        { vote: 'CONFIRM', count: summary.confirmVotes, label: 'Vorschlag bestätigen', icon: Check, activeClassName: 'bg-[#d4d4d4]/18 text-[#d6d6d6]' },
+        { vote: 'CONFIRM', count: summary.confirmVotes, label: 'Vorschlag bestätigen', icon: Check, activeClassName: 'bg-accent/18 text-[#d6d6d6]' },
         { vote: 'LOWER', count: summary.lowerVotes, label: 'Niedriger einstufen', icon: ArrowDown, activeClassName: 'bg-[#f87171]/18 text-[#fca5a5]' },
     ]
 
@@ -127,7 +127,7 @@ function EntryVoteControls({
                         title={active ? `${label} – Stimme entfernen` : label}
                         className={cn(
                             'inline-flex h-7 min-w-10 items-center justify-center gap-1 rounded-[6px] px-2 text-[11.5px] font-semibold tabular-nums transition-colors',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40 disabled:cursor-not-allowed disabled:opacity-55',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-55',
                             active && activeClassName,
                             !active && 'text-[#909090] hover:bg-[#333333]/70 hover:text-white',
                         )}
@@ -181,17 +181,17 @@ export function RankChangeListCard({
     const statusTone = isCompleted
         ? 'bg-[#34d399]/14 text-[#34d399]'
         : isClosed
-            ? 'bg-[#a6a6a6]/14 text-[#c3c3c3]'
+            ? 'bg-fg-muted/14 text-[#c3c3c3]'
             : 'bg-[#fbbf24]/14 text-[#fbbf24]'
     const statusDot = isCompleted ? 'bg-[#34d399]' : isClosed ? 'bg-[#c3c3c3]' : 'bg-[#fbbf24]'
 
     return (
-        <div className="glass-panel-elevated rounded-[14px] overflow-hidden border border-[#373737]/45 transition-colors hover:border-[#404040]">
+        <div className="glass-panel-elevated rounded-[14px] overflow-hidden border border-[#373737]/45 transition-colors hover:border-line-strong">
             <button
                 onClick={onToggle}
                 className="w-full flex items-center gap-3.5 px-5 py-4 hover:bg-[#212121]/60 transition-colors text-left"
             >
-                <ChevronDown size={14} strokeWidth={2.5} className={cn('text-[#8c8c8c] transition-transform duration-200 shrink-0', !expanded && '-rotate-90')} />
+                <ChevronDown size={14} strokeWidth={2.5} className={cn('text-fg-subtle transition-transform duration-200 shrink-0', !expanded && '-rotate-90')} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[14px] font-semibold text-white">{list.name}</span>
@@ -218,15 +218,15 @@ export function RankChangeListCard({
                             {statusLabel}
                         </span>
                     </div>
-                    <p className="text-[11.5px] text-[#a6a6a6] mt-1">
+                    <p className="text-[11.5px] text-fg-muted mt-1">
                         {formatDate(list.createdAt)} · {list.createdBy?.displayName ?? 'Gelöscht'}
-                        {list.description && <span className="text-[#8c8c8c]"> · {list.description}</span>}
+                        {list.description && <span className="text-fg-subtle"> · {list.description}</span>}
                     </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                     {total > 0 && (
                         <div className="hidden sm:flex flex-col items-end gap-1">
-                            <div className="flex items-center gap-2 text-[11px] text-[#a6a6a6]">
+                            <div className="flex items-center gap-2 text-[11px] text-fg-muted">
                                 <span><span className="font-semibold text-white">{executed}</span>/{total} durchgeführt</span>
                             </div>
                             <div className="h-1 w-24 rounded-full bg-[#212121] overflow-hidden">
@@ -243,7 +243,7 @@ export function RankChangeListCard({
             </button>
 
             {expanded && (
-                <div className="px-5 pb-4 border-t border-[#343434]/40">
+                <div className="px-5 pb-4 border-t border-line/40">
                     {entries.length > 0 ? (
                         <div className="space-y-1.5 my-3">
                             {entries.map((entry) => {
@@ -254,33 +254,33 @@ export function RankChangeListCard({
                                         className={cn(
                                             'flex flex-wrap items-center gap-3 px-3 py-2.5 rounded-[10px] border transition-colors',
                                             entry.executed
-                                                ? 'bg-[#1c1c1c]/60 border-[#343434]/30 opacity-80'
-                                                : 'bg-[#212121]/70 border-[#373737]/40 hover:border-[#404040]',
+                                                ? 'bg-[#1c1c1c]/60 border-line/30 opacity-80'
+                                                : 'bg-[#212121]/70 border-[#373737]/40 hover:border-line-strong',
                                         )}
                                     >
                                         <AgentAvatar agent={entry.agent} ringColor={entry.proposedRank.color} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <Link href={`/agents/${entry.agent.id}`} className="text-[13px] font-medium text-white hover:text-[#d4d4d4] transition-colors">
+                                                <Link href={`/agents/${entry.agent.id}`} className="text-[13px] font-medium text-white hover:text-accent transition-colors">
                                                     {entry.agent.firstName} {entry.agent.lastName}
                                                 </Link>
-                                                <span className="text-[11px] text-[#a6a6a6]">#{displayBadgeNumber(entry.agent.badgeNumber)}</span>
+                                                <span className="text-[11px] text-fg-muted">#{displayBadgeNumber(entry.agent.badgeNumber)}</span>
                                                 {entry.newBadgeNumber && (
-                                                    <span className="text-[11px] text-[#a6a6a6]">
-                          → <span className="text-[#d4d4d4]">#{displayBadgeNumber(entry.newBadgeNumber)}</span>
+                                                    <span className="text-[11px] text-fg-muted">
+                          → <span className="text-accent">#{displayBadgeNumber(entry.newBadgeNumber)}</span>
                         </span>
                                                 )}
                                                 <DirectionPill direction={direction} />
                                             </div>
                                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                                 <RankPill name={entry.currentRank.name} color={entry.currentRank.color} />
-                                                <ArrowRight size={11} className="text-[#8c8c8c]" />
+                                                <ArrowRight size={11} className="text-fg-subtle" />
                                                 <RankPill name={entry.proposedRank.name} color={entry.proposedRank.color} />
                                             </div>
                                             {entry.note && (
                                                 <p className="text-[11px] text-[#c3c3c3] mt-1.5 italic">„{entry.note}“</p>
                                             )}
-                                            <p className="text-[11px] text-[#8c8c8c] mt-1">
+                                            <p className="text-[11px] text-fg-subtle mt-1">
                                                 Eingereicht von <span className="text-[#909090]">{entry.createdBy?.displayName ?? list.createdBy?.displayName ?? 'Gelöscht'}</span>
                                                 {entry.executed && (
                                                     <>
@@ -295,11 +295,11 @@ export function RankChangeListCard({
                                         <div className="ml-auto flex shrink-0 items-center gap-2">
                                             <Link
                                                 href={`/promotions/${entry.id}`}
-                                                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-[#404040]/70 bg-[#232323]/70 px-2.5 text-[11.5px] font-medium text-[#c3c3c3] transition-colors hover:border-[#d4d4d4]/45 hover:text-[#d6d6d6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40"
+                                                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-line-strong/70 bg-surface-raised/70 px-2.5 text-[11.5px] font-medium text-[#c3c3c3] transition-colors hover:border-accent/45 hover:text-[#d6d6d6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                                                 title="Eintrag, Kommentare und Vorschläge öffnen"
                                             >
                                                 Details
-                                                <span className="inline-flex items-center gap-1 rounded-[5px] bg-[#161616]/65 px-1.5 py-0.5 text-[11px] tabular-nums text-[#a6a6a6]">
+                                                <span className="inline-flex items-center gap-1 rounded-[5px] bg-[#161616]/65 px-1.5 py-0.5 text-[11px] tabular-nums text-fg-muted">
                                                     <MessageSquare size={11} /> {entry.commentCount}
                                                 </span>
                                                 <ChevronRight size={13} />
@@ -329,7 +329,7 @@ export function RankChangeListCard({
                                                     {canManage && (
                                                         <button
                                                             onClick={() => onRemove(entry.id)}
-                                                            className="p-1.5 rounded-[6px] hover:bg-[#321218]/60 text-[#8c8c8c] hover:text-[#fca5a5] transition-colors"
+                                                            className="p-1.5 rounded-[6px] hover:bg-[#321218]/60 text-fg-subtle hover:text-[#fca5a5] transition-colors"
                                                             title="Entfernen"
                                                         >
                                                             <X size={13} />
@@ -343,7 +343,7 @@ export function RankChangeListCard({
                             })}
                         </div>
                     ) : (
-                        <p className="text-[12px] text-[#8c8c8c] italic py-3">
+                        <p className="text-[12px] text-fg-subtle italic py-3">
                             {filtered ? 'Keine Einträge passen zu Suche und Filter' : 'Noch keine Agents in dieser Liste'}
                         </p>
                     )}
@@ -368,7 +368,7 @@ export function RankChangeListCard({
                         </div>
                     )}
                     {isClosed && !isCompleted && (
-                        <p className="text-[11px] text-[#a6a6a6] pt-2">
+                        <p className="text-[11px] text-fg-muted pt-2">
                             Einreichungen geschlossen{list.closedAt ? ` am ${formatDate(list.closedAt)}` : ''} — offene Einträge können weiterhin durchgeführt werden.
                         </p>
                     )}

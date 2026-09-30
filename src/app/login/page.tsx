@@ -49,10 +49,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#080808] bg-pattern p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-canvas bg-pattern p-4 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-40%] left-[-20%] w-[80%] h-[80%] rounded-full bg-[#d4d4d4]/[0.03] blur-[100px]" />
-        <div className="absolute bottom-[-30%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#181818]/[0.04] blur-[80px]" />
+        <div className="absolute top-[-40%] left-[-20%] w-[80%] h-[80%] rounded-full bg-accent/[0.03] blur-[100px]" />
+        <div className="absolute bottom-[-30%] right-[-10%] w-[60%] h-[60%] rounded-full bg-surface-sunken/[0.04] blur-[80px]" />
       </div>
 
       <motion.div
@@ -66,12 +66,12 @@ export default function LoginPage() {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="inline-flex items-center justify-center h-[88px] w-[88px] rounded-[20px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-[#d4d4d4]/30 mb-5 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.15),0_1px_3px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(212,212,212,0.08)]"
+            className="inline-flex items-center justify-center h-[88px] w-[88px] rounded-[20px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-accent/30 mb-5 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.15),0_1px_3px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(212,212,212,0.08)]"
           >
             <Image src="/shield.webp" alt="FIB" width={72} height={72} className="rounded-full" priority />
           </motion.div>
           <h1 className="text-[18px] font-semibold text-white tracking-[-0.01em]">FIB</h1>
-          <p className="text-[12px] font-medium text-[#d4d4d4]/80 mt-1 tracking-[0.04em]">Mitarbeiter-Anmeldung</p>
+          <p className="text-[12px] font-medium text-accent/80 mt-1 tracking-[0.04em]">Mitarbeiter-Anmeldung</p>
         </div>
 
         <div className="glass-panel-elevated rounded-[16px] p-6">
@@ -81,7 +81,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h2 className="text-[14px] font-semibold text-white">Mit Discord anmelden</h2>
-              <p className="text-[12px] leading-5 text-[#a6a6a6] mt-1">
+              <p className="text-[12px] leading-5 text-fg-muted mt-1">
                 {redirect ? 'Melde dich an – danach geht es direkt zur angeforderten Seite weiter.' : 'Deine Rechte kommen automatisch aus deinen Discord-Rollen.'}
               </p>
             </div>
@@ -93,12 +93,12 @@ export default function LoginPage() {
             </div>
           )}
 
-          <label className="mb-4 flex items-center gap-2 rounded-[10px] border border-[#343434]/60 bg-[#181818]/55 px-3 py-2.5 text-[12.5px] text-[#e5e5e5]">
+          <label className="mb-4 flex items-center gap-2 rounded-[10px] border border-line/60 bg-surface-sunken/55 px-3 py-2.5 text-[12.5px] text-[#e5e5e5]">
             <input
               type="checkbox"
               checked={remember}
               onChange={(event) => setRemember(event.target.checked)}
-              className="accent-[#d4d4d4]"
+              className="accent-accent"
             />
             Eingeloggt bleiben
           </label>
@@ -110,13 +110,13 @@ export default function LoginPage() {
 
           <Link
             href="/besucherportal"
-            className="mt-3 flex h-[36px] items-center justify-center rounded-[9px] border border-[#404040] text-[12.5px] font-medium text-[#e5e5e5] transition-colors hover:bg-[#232323]/65 hover:text-white"
+            className="mt-3 flex h-[36px] items-center justify-center rounded-[9px] border border-line-strong text-[12.5px] font-medium text-[#e5e5e5] transition-colors hover:bg-surface-raised/65 hover:text-white"
           >
             Besucherportal öffnen
           </Link>
         </div>
 
-        <p className="text-center text-[11px] text-[#8c8c8c] mt-8 tracking-[0.06em] uppercase font-medium">
+        <p className="text-center text-[11px] text-fg-subtle mt-8 tracking-[0.06em] uppercase font-medium">
           Federal Investigation Bureau
         </p>
       </motion.div>

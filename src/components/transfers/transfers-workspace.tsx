@@ -202,12 +202,12 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
+          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Aktenzeichen, Name oder Behörde suchen"
-            className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
+            className="h-[36px] w-full rounded-[9px] border border-line/70 bg-surface-sunken pl-8 pr-3 text-[13px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
           />
         </div>
         <div className="flex flex-wrap gap-1">
@@ -219,8 +219,8 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
               className={cn(
                 'rounded-[7px] border px-2 py-1 text-[11px] font-medium transition-colors',
                 statusFilter === option.value
-                  ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
-                  : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                  ? 'border-accent/45 bg-accent/14 text-accent'
+                  : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
               )}
             >
               {option.label}
@@ -230,10 +230,10 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
       </div>
 
       {filtered.length === 0 ? (
-        <section className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 py-14 text-center">
-          <FileSignature size={28} className="mx-auto mb-3 text-[#8c8c8c]" />
+        <section className="rounded-[14px] border border-[#373737]/45 bg-surface/70 py-14 text-center">
+          <FileSignature size={28} className="mx-auto mb-3 text-fg-subtle" />
           <p className="text-[14px] font-semibold text-white">Kein Versetzungsantrag vorhanden</p>
-          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
+          <p className="mt-1 text-[12.5px] text-fg-muted">
             {canManage ? 'Lege den ersten Antrag über „Antrag erstellen“ an.' : 'Erstellte Anträge erscheinen hier.'}
           </p>
         </section>
@@ -264,12 +264,12 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
           <div>
             <p className="mb-1.5 text-[12.5px] font-medium text-[#aeaeae]">Agent</p>
             {selectedAgent ? (
-              <div className="flex items-center gap-3 rounded-[10px] border border-[#d4d4d4]/35 bg-[#d4d4d4]/10 px-3 py-2.5">
+              <div className="flex items-center gap-3 rounded-[10px] border border-accent/35 bg-accent/10 px-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13.5px] font-semibold text-white">
                     {selectedAgent.firstName} {selectedAgent.lastName}
                   </p>
-                  <p className="truncate text-[11.5px] text-[#a6a6a6]">
+                  <p className="truncate text-[11.5px] text-fg-muted">
                     {displayBadgeNumber(selectedAgent.badgeNumber)} · {selectedAgent.rank?.name ?? 'Ohne Rang'}
                   </p>
                 </div>
@@ -278,23 +278,23 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
             ) : (
               <>
                 <div className="relative">
-                  <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
+                  <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-subtle" />
                   <input
                     value={agentQuery}
                     onChange={(event) => setAgentQuery(event.target.value)}
                     placeholder="Name oder Dienstnummer"
-                    className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
+                    className="h-[36px] w-full rounded-[9px] border border-line/70 bg-surface-sunken pl-8 pr-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
                   />
                 </div>
-                <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-[9px] border border-[#343434]/55 bg-[#181818]/45 p-1.5">
+                <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-[9px] border border-line/55 bg-surface-sunken/45 p-1.5">
                   {agentMatches.map((agent) => (
                     <button
                       key={agent.id}
                       type="button"
                       onClick={() => setAgentId(agent.id)}
-                      className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-2 text-left transition-colors hover:bg-[#232323]/70"
+                      className="flex w-full items-center gap-2 rounded-[8px] px-2.5 py-2 text-left transition-colors hover:bg-surface-raised/70"
                     >
-                      <span className="font-mono text-[11px] text-[#d4d4d4]">{displayBadgeNumber(agent.badgeNumber)}</span>
+                      <span className="font-mono text-[11px] text-accent">{displayBadgeNumber(agent.badgeNumber)}</span>
                       <span className="min-w-0 flex-1 truncate text-[13px] text-white">
                         {agent.firstName} {agent.lastName}
                       </span>
@@ -348,9 +348,9 @@ function TransferCard({
   const closed = request.status === 'CANCELLED' || request.status === 'DECLINED'
 
   return (
-    <article className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 p-4">
+    <article className="rounded-[14px] border border-[#373737]/45 bg-surface/70 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-[6px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/10 px-1.5 py-0.5 font-mono text-[11.5px] font-semibold text-[#d4d4d4]">
+        <span className="rounded-[6px] border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-mono text-[11.5px] font-semibold text-accent">
           {request.requestNumber}
         </span>
         <Badge variant={meta.variant}>{meta.label}</Badge>
@@ -359,11 +359,11 @@ function TransferCard({
 
       <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h3 className="text-[15px] font-semibold text-white">{request.agentName}</h3>
-        <span className="text-[12px] text-[#a6a6a6]">
+        <span className="text-[12px] text-fg-muted">
           {request.badgeNumber ?? '—'} · {request.rankName ?? 'Ohne Rang'}
         </span>
       </div>
-      <p className="mt-0.5 text-[12.5px] text-[#a6a6a6]">
+      <p className="mt-0.5 text-[12.5px] text-fg-muted">
         Ziel: {request.targetAuthority || 'noch nicht angegeben'}
       </p>
 
@@ -431,15 +431,15 @@ function SignatureBadge({
     <div
       className={cn(
         'rounded-[10px] border px-3 py-2',
-        signed ? 'border-[#1d4230]/60 bg-[#0d2419]/60' : 'border-[#343434]/45 bg-[#181818]/55',
+        signed ? 'border-[#1d4230]/60 bg-[#0d2419]/60' : 'border-line/45 bg-surface-sunken/55',
       )}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8c8c8c]">{meta.title}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">{meta.title}</p>
       <p className={cn('mt-1 truncate text-[12.5px]', signed ? 'text-[#9fd9b6]' : 'text-[#909090]')}>
         {signed ? signature?.name : 'Offen'}
       </p>
       {signed && signature?.signedAt && (
-        <p className="mt-0.5 text-[11px] text-[#8c8c8c]">{formatDateTime(signature.signedAt)}</p>
+        <p className="mt-0.5 text-[11px] text-fg-subtle">{formatDateTime(signature.signedAt)}</p>
       )}
     </div>
   )

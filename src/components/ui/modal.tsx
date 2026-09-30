@@ -33,6 +33,30 @@ function subscribeMobile(notify: () => void) {
   return () => media.removeEventListener('change', notify)
 }
 
+/**
+ * Enter in einem einfachen Eingabefeld löst den (einzigen) Primär-Knopf des
+ * Dialogs aus – wie bei einem echten Formular. Vorher passierte bei Enter in
+ * den meisten Dialogen nichts. Bewusst vorsichtig: nicht in Textareas,
+ * Such-/Auswahlfeldern, nicht wenn das Feld Enter selbst behandelt und nicht,
+ * wenn unklar ist, welcher Knopf gemeint wäre.
+ */
+function submitOnEnter(event: React.KeyboardEvent<HTMLElement>) {
+  if (event.key !== 'Enter' || event.defaultPrevented || event.shiftKey || event.nativeEvent.isComposing) return
+  const target = event.target as HTMLElement
+  if (!(target instanceof HTMLInputElement)) return
+  if (target.closest('form')) return // echtes Formular: der Browser macht das schon
+  const type = target.type
+  if (['search', 'checkbox', 'radio', 'file', 'button', 'submit', 'range', 'color'].includes(type)) return
+  if (target.getAttribute('role') === 'combobox' || target.getAttribute('aria-autocomplete')) return
+  const primaries = Array.from(
+    // Nur Primär-Knöpfe: Zerstörendes (danger) bleibt bewusst ein Klick.
+    event.currentTarget.querySelectorAll<HTMLButtonElement>('button[data-variant="primary"]'),
+  ).filter((button) => !button.disabled && button.offsetParent !== null)
+  if (primaries.length !== 1) return
+  event.preventDefault()
+  primaries[0].click()
+}
+
 /** Auf dem Handy fährt der Dialog als Sheet von unten ein – dort, wo der Daumen ist. */
 function useIsMobile() {
   return useSyncExternalStore(subscribeMobile, () => window.matchMedia(MOBILE_QUERY).matches, () => false)
@@ -74,7 +98,7 @@ export function Modal({ open, onClose, title, description, children, className, 
                 )}
               >
                 <div aria-hidden className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-line-strong sm:hidden" />
-                <div className="p-5 sm:p-6">
+                <div className="p-5 sm:p-6" onKeyDown={submitOnEnter}>
                   {title ? (
                     <div className="mb-5">
                       <Dialog.Title className="text-[15px] font-semibold text-white">

@@ -137,16 +137,16 @@ export default function ApplicationPortalPage() {
   if (authLoading) return <PageLoader />
 
   return (
-    <main className="min-h-screen bg-[#080808] bg-pattern text-[#f4f4f4]">
+    <main className="min-h-screen bg-canvas bg-pattern text-fg">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-5 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between gap-4 border-b border-[#343434]/55 pb-4">
+        <header className="flex items-center justify-between gap-4 border-b border-line/55 pb-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[13px] border border-[#d4d4d4]/25 bg-[#1e1e1e]">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[13px] border border-accent/25 bg-[#1e1e1e]">
               <Image src="/shield.webp" alt="FIB" width={40} height={40} priority className="rounded-full" />
             </div>
             <div className="min-w-0">
               <p className="text-[15px] font-semibold leading-tight text-white">FIB Bewerberportal</p>
-              <p className="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-[#d4d4d4]/75">
+              <p className="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-accent/75">
                 Discord Anmeldung
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function ApplicationPortalPage() {
             <button
               type="button"
               onClick={logout}
-              className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-[#404040] px-3 text-[12.5px] font-medium text-[#e5e5e5] transition-colors hover:bg-[#232323]/60"
+              className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-line-strong px-3 text-[12.5px] font-medium text-[#e5e5e5] transition-colors hover:bg-surface-raised/60"
             >
               <LogOut size={14} />
               Abmelden
@@ -167,7 +167,7 @@ export default function ApplicationPortalPage() {
           {!user ? (
             <section className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] lg:items-center">
               <div className="min-w-0">
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">Bewerbung</p>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/80">Bewerbung</p>
                 <h1 className="max-w-2xl text-[28px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[34px]">
                   Melde dich mit Discord an und reiche deine Bewerbung ein.
                 </h1>
@@ -176,14 +176,14 @@ export default function ApplicationPortalPage() {
                 </p>
               </div>
 
-              <div className="rounded-[16px] border border-[#373737]/55 bg-[#1b1b1b]/75 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
+              <div className="rounded-[16px] border border-[#373737]/55 bg-surface/75 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
                 <div className="mb-5 flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#5865f2]/15 text-[#9aa8ff]">
                     <MessageCircle size={18} />
                   </div>
                   <div>
                     <h2 className="text-[14px] font-semibold text-white">Discord-Konto verbinden</h2>
-                    <p className="mt-1 text-[12.5px] leading-5 text-[#a6a6a6]">
+                    <p className="mt-1 text-[12.5px] leading-5 text-fg-muted">
                       Zugriff erhältst du mit der konfigurierten Bewerberrolle.
                     </p>
                   </div>
@@ -241,7 +241,7 @@ function ApplicationOpenView({
   return (
     <section className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5 lg:grid-cols-[1fr_340px] lg:items-center">
       <div>
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">{formTitle}</p>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/80">{formTitle}</p>
         <h1 className="max-w-2xl text-[27px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[32px]">
           Bewerbung öffnen für {user.displayName}
         </h1>
@@ -261,16 +261,16 @@ function ApplicationOpenView({
 
 function AccountPanel({ user }: { user: PortalPayload['user'] }) {
   return (
-    <aside className="rounded-[16px] border border-[#373737]/55 bg-[#1b1b1b]/75 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
+    <aside className="rounded-[16px] border border-[#373737]/55 bg-surface/75 p-5 shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
       <div className="flex items-center gap-3">
         {user.avatarUrl ? (
           <span
-            className="h-12 w-12 shrink-0 rounded-full bg-cover bg-center ring-1 ring-[#d4d4d4]/25"
+            className="h-12 w-12 shrink-0 rounded-full bg-cover bg-center ring-1 ring-accent/25"
             style={{ backgroundImage: `url(${user.avatarUrl})` }}
             aria-label={user.displayName}
           />
         ) : (
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#d4d4d4] text-[15px] font-bold text-[#181818]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-[15px] font-bold text-surface-sunken">
             {user.displayName.charAt(0).toUpperCase()}
           </div>
         )}
@@ -281,9 +281,9 @@ function AccountPanel({ user }: { user: PortalPayload['user'] }) {
           </p>
         </div>
       </div>
-      <div className="mt-4 rounded-[12px] border border-[#343434]/55 bg-[#181818]/60 p-3">
+      <div className="mt-4 rounded-[12px] border border-line/55 bg-surface-sunken/60 p-3">
         <div className="flex items-start gap-2">
-          <UserRound size={15} className="mt-0.5 shrink-0 text-[#d4d4d4]" />
+          <UserRound size={15} className="mt-0.5 shrink-0 text-accent" />
           <p className="text-[12.5px] leading-5 text-[#aeaeae]">
             Dein Discord-Account wird nur zur Zuordnung deiner Bewerbung genutzt.
           </p>
@@ -299,7 +299,7 @@ function ApplicationStatusView({ application, user }: { application: PortalAppli
   return (
     <section className="mx-auto w-full max-w-4xl space-y-5">
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-[16px] border border-[#373737]/55 bg-[#1b1b1b]/75 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
+        <div className="rounded-[16px] border border-[#373737]/55 bg-surface/75 p-6 shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Badge variant={meta.variant}>{meta.label}</Badge>
             <span className="text-[12px] text-[#909090]">Aktualisiert {formatDateTime(application.updatedAt)}</span>
@@ -312,11 +312,11 @@ function ApplicationStatusView({ application, user }: { application: PortalAppli
               <h1 className="text-[22px] font-semibold leading-tight text-white">Deine Bewerbung ist eingereicht</h1>
               <p className="mt-2 text-[14px] leading-6 text-[#e5e5e5]">{application.statusText}</p>
               {application.caseNumber && (
-                <div className="mt-4 rounded-[12px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/10 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d4d4d4]/80">
+                <div className="mt-4 rounded-[12px] border border-accent/30 bg-accent/10 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent/80">
                     Dein Aktenzeichen
                   </p>
-                  <p className="mt-1 font-mono text-[20px] font-semibold tracking-wide text-[#d4d4d4]">
+                  <p className="mt-1 font-mono text-[20px] font-semibold tracking-wide text-accent">
                     {application.caseNumber}
                   </p>
                   <p className="mt-1.5 text-[12px] leading-5 text-[#c6c6c6]">
@@ -325,23 +325,23 @@ function ApplicationStatusView({ application, user }: { application: PortalAppli
                   </p>
                 </div>
               )}
-              <p className="mt-3 text-[12.5px] text-[#a6a6a6]">Eingereicht {formatDateTime(application.submittedAt)}</p>
+              <p className="mt-3 text-[12.5px] text-fg-muted">Eingereicht {formatDateTime(application.submittedAt)}</p>
             </div>
           </div>
         </div>
         <AccountPanel user={user} />
       </div>
 
-      <section className="rounded-[16px] border border-[#373737]/55 bg-[#1b1b1b]/75 p-5">
+      <section className="rounded-[16px] border border-[#373737]/55 bg-surface/75 p-5">
         <div className="mb-3 flex items-center gap-2">
-          <BadgeCheck size={16} className="text-[#d4d4d4]" />
+          <BadgeCheck size={16} className="text-accent" />
           <h2 className="text-[14px] font-semibold text-white">Deine Antworten</h2>
         </div>
         <div className="space-y-3">
           {application.answers.map((answer, index) => (
-            <div key={answer.id} className="rounded-[12px] border border-[#343434]/50 bg-[#181818]/55 p-3">
+            <div key={answer.id} className="rounded-[12px] border border-line/50 bg-surface-sunken/55 p-3">
               <div className="mb-1.5 flex items-start gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-surface-raised text-[11px] font-semibold text-accent">
                   {index + 1}
                 </span>
                 <p className="text-[12.5px] font-semibold text-white">{answer.questionTitle}</p>
@@ -378,9 +378,9 @@ function ApplicationForm({
     <section className="mx-auto w-full max-w-3xl">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">{formTitle}</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/80">{formTitle}</p>
           <h1 className="text-[22px] font-semibold text-white">Fragen beantworten</h1>
-          <p className="mt-1 text-[13px] leading-5 text-[#a6a6a6]">Fülle alle Pflichtfragen aus und sende deine Bewerbung ab.</p>
+          <p className="mt-1 text-[13px] leading-5 text-fg-muted">Fülle alle Pflichtfragen aus und sende deine Bewerbung ab.</p>
         </div>
         <Button type="button" variant="secondary" size="sm" onClick={onBack} disabled={submitting}>
           Zurück
@@ -392,7 +392,7 @@ function ApplicationForm({
           <Fragment key={question.id}>
             {question.section && question.section !== questions[index - 1]?.section && (
               <div className="pt-2">
-                <p className="border-b border-[#373737]/55 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d4d4d4]/85">
+                <p className="border-b border-[#373737]/55 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent/85">
                   {question.section}
                 </p>
               </div>
@@ -407,10 +407,10 @@ function ApplicationForm({
         ))}
       </div>
 
-      <div className="sticky bottom-0 mt-5 rounded-[14px] border border-[#373737]/55 bg-[#080808]/90 p-3 backdrop-blur-md">
+      <div className="sticky bottom-0 mt-5 rounded-[14px] border border-[#373737]/55 bg-canvas/90 p-3 backdrop-blur-md">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-[12.5px] text-[#a6a6a6]">
-            <ClipboardList size={15} className="text-[#d4d4d4]" />
+          <div className="flex items-center gap-2 text-[12.5px] text-fg-muted">
+            <ClipboardList size={15} className="text-accent" />
             {questions.length} Frage(n)
           </div>
           <Button type="button" onClick={onSubmit} loading={submitting} disabled={!answeredRequired}>
@@ -435,9 +435,9 @@ function QuestionField({
   onChange: (value: unknown) => void
 }) {
   return (
-    <section className="rounded-[14px] border border-[#373737]/55 bg-[#1b1b1b]/75 p-4">
+    <section className="rounded-[14px] border border-[#373737]/55 bg-surface/75 p-4">
       <div className="mb-3 flex items-start gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#232323] text-[11.5px] font-semibold text-[#d4d4d4]">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-surface-raised text-[11.5px] font-semibold text-accent">
           {index + 1}
         </span>
         <div className="min-w-0 flex-1">
@@ -445,7 +445,7 @@ function QuestionField({
             <h2 className="text-[14px] font-semibold text-white">{question.title}</h2>
             {question.required && <Badge variant="warning">Pflicht</Badge>}
           </div>
-          {question.description && <p className="mt-1 text-[12.5px] leading-5 text-[#a6a6a6]">{question.description}</p>}
+          {question.description && <p className="mt-1 text-[12.5px] leading-5 text-fg-muted">{question.description}</p>}
         </div>
       </div>
       <QuestionInput question={question} value={value} onChange={onChange} />
@@ -463,8 +463,8 @@ function QuestionInput({ question, value, onChange }: { question: ApplicationQue
         onChange={(event) => onChange(event.target.value)}
         disabled={readOnly}
         className={cn(
-          'h-[38px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]',
-          readOnly && 'cursor-not-allowed border-[#343434]/45 bg-[#181818]/70 text-[#a6a6a6]',
+          'h-[38px] w-full rounded-[9px] border border-line/70 bg-surface-sunken/60 px-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent',
+          readOnly && 'cursor-not-allowed border-line/45 bg-surface-sunken/70 text-fg-muted',
         )}
         placeholder={readOnly ? 'Wird automatisch ermittelt' : 'Antwort eingeben'}
       />
@@ -477,7 +477,7 @@ function QuestionInput({ question, value, onChange }: { question: ApplicationQue
         value={typeof value === 'string' ? value : ''}
         onChange={(event) => onChange(event.target.value)}
         rows={5}
-        className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
+        className="w-full resize-none rounded-[9px] border border-line/70 bg-surface-sunken/60 px-3 py-2.5 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent"
         placeholder="Antwort eingeben"
       />
     )
@@ -495,11 +495,11 @@ function QuestionInput({ question, value, onChange }: { question: ApplicationQue
             className={cn(
               'flex w-full items-center gap-2 rounded-[10px] border px-3 py-2.5 text-left text-[13px] transition-colors',
               selected === choice
-                ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/12 text-white'
-                : 'border-[#343434]/60 bg-[#181818]/45 text-[#e5e5e5] hover:border-[#404040]',
+                ? 'border-accent/45 bg-accent/12 text-white'
+                : 'border-line/60 bg-surface-sunken/45 text-[#e5e5e5] hover:border-line-strong',
             )}
           >
-            <span className={cn('h-3.5 w-3.5 rounded-full border', selected === choice ? 'border-[#d4d4d4] bg-[#d4d4d4]' : 'border-[#808080]')} />
+            <span className={cn('h-3.5 w-3.5 rounded-full border', selected === choice ? 'border-accent bg-accent' : 'border-[#808080]')} />
             {choice}
           </button>
         ))}
@@ -520,7 +520,7 @@ function QuestionInput({ question, value, onChange }: { question: ApplicationQue
             checked={selected.includes(choice)}
             onCheckedChange={() => toggle(choice)}
             label={choice}
-            className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/45 px-3 py-2.5 hover:border-[#404040]"
+            className="rounded-[10px] border border-line/60 bg-surface-sunken/45 px-3 py-2.5 hover:border-line-strong"
           />
         ))}
       </div>
@@ -543,8 +543,8 @@ function QuestionInput({ question, value, onChange }: { question: ApplicationQue
             className={cn(
               'h-10 rounded-[9px] border text-[13px] font-semibold transition-colors',
               selected === item
-                ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/16 text-[#d4d4d4]'
-                : 'border-[#343434]/60 bg-[#181818]/45 text-[#aeaeae] hover:border-[#404040]',
+                ? 'border-accent/45 bg-accent/16 text-accent'
+                : 'border-line/60 bg-surface-sunken/45 text-[#aeaeae] hover:border-line-strong',
             )}
           >
             {item}

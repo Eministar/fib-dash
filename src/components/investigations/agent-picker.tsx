@@ -69,9 +69,9 @@ export function AgentPicker({
   return (
     <div>
       <p className="mb-2 block text-[12.5px] font-medium text-[#aeaeae]">{label}</p>
-      {description && <p className="mb-2 text-[11.5px] text-[#8c8c8c]">{description}</p>}
+      {description && <p className="mb-2 text-[11.5px] text-fg-subtle">{description}</p>}
 
-      <div className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/35 p-3">
+      <div className="rounded-[10px] border border-line/60 bg-surface-sunken/35 p-3">
         {selectedAgents.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5">
             {selectedAgents.map((agent) => (
@@ -90,7 +90,7 @@ export function AgentPicker({
         )}
 
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8c8c8c]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -102,7 +102,7 @@ export function AgentPicker({
 
         <div className="mt-2 max-h-[220px] overflow-y-auto">
           {visible.length === 0 ? (
-            <p className="px-1 py-3 text-[12px] text-[#8c8c8c]">
+            <p className="px-1 py-3 text-[12px] text-fg-subtle">
               {needle ? 'Kein Agent gefunden.' : 'Alle passenden Agents sind bereits zugewiesen.'}
             </p>
           ) : (
@@ -115,13 +115,13 @@ export function AgentPicker({
                     disabled={disabled}
                     className={cn(
                       'flex w-full items-center justify-between gap-2 rounded-[7px] px-2 py-1.5 text-left text-[12.5px] transition-colors',
-                      'text-[#d4d4d4] hover:bg-[#232323] hover:text-white disabled:opacity-50',
+                      'text-accent hover:bg-surface-raised hover:text-white disabled:opacity-50',
                     )}
                   >
                     <span className="truncate">
                       {agentLabel(agent)}
                       {agent.rank && (
-                        <span className="ml-2 text-[11px] text-[#8c8c8c]">{agent.rank.name}</span>
+                        <span className="ml-2 text-[11px] text-fg-subtle">{agent.rank.name}</span>
                       )}
                     </span>
                     <Check className="h-3.5 w-3.5 shrink-0 opacity-0" />

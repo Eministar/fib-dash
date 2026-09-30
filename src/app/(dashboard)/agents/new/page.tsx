@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission, PERMISSIONS } from '@/lib/permissions'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
+import { toLocalDateInput } from '@/lib/utils'
 
 interface Rank {
   id: string
@@ -78,7 +79,7 @@ export default function NewAgentPage() {
     discordId: '',
     notes: '',
     units: [] as string[],
-    hireDate: new Date().toISOString().split('T')[0],
+    hireDate: toLocalDateInput(),
     applicationId: '',
     contractTemplateId: '',
   })
@@ -245,13 +246,13 @@ export default function NewAgentPage() {
 
             <div className="space-y-5">
               {(applications?.length ?? 0) > 0 && (
-                <div className="rounded-[12px] border border-[#343434]/55 bg-[#181818]/40 p-3.5">
+                <div className="rounded-[12px] border border-line/55 bg-surface-sunken/40 p-3.5">
                   <ApplicationPicker
                     applications={applications ?? []}
                     value={form.applicationId}
                     onChange={selectApplication}
                   />
-                  <p className="mt-1.5 text-[11.5px] leading-4 text-[#a6a6a6]">
+                  <p className="mt-1.5 text-[11.5px] leading-4 text-fg-muted">
                     Nur angenommene Bewerbungen, die noch nicht eingestellt wurden. Name und
                     Discord-ID werden automatisch übernommen.
                   </p>
@@ -261,7 +262,7 @@ export default function NewAgentPage() {
               {canAssignUnits ? (
                 <UnitMultiSelect value={form.units} units={units ?? undefined} onChange={(value) => update('units', value)} />
               ) : (
-                <div className="rounded-[10px] border border-[#343434]/50 bg-[#181818]/30 px-3 py-3 text-[11px] leading-5 text-[#858585]">
+                <div className="rounded-[10px] border border-line/50 bg-surface-sunken/30 px-3 py-3 text-[11px] leading-5 text-[#858585]">
                   Unit-Zuweisungen können nur markierte Unit-Leitungen ihrer eigenen Gruppe oder globale Administratoren vornehmen.
                 </div>
               )}
@@ -270,7 +271,7 @@ export default function NewAgentPage() {
 
           <div className="rounded-[12px] border border-[#4a3a12]/45 bg-[#302712]/30 p-3.5">
             <div className="flex items-start gap-2.5">
-              <FileSignature size={16} className="mt-0.5 shrink-0 text-[#d4d4d4]" />
+              <FileSignature size={16} className="mt-0.5 shrink-0 text-accent" />
               <div>
                 <p className="text-[13px] font-semibold text-white">
                   Arbeitsvertrag wird automatisch versendet

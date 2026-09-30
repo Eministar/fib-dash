@@ -37,7 +37,7 @@ export function DossierFilter({
   if (dossiers.length === 0) return null
 
   return (
-    <div className="rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-3">
+    <div className="rounded-[12px] border border-surface-hover bg-[#141414] p-3">
       <div className="mb-2 flex items-baseline justify-between px-1">
         <h2 className="flex items-center gap-1.5 text-[12px] font-semibold text-white">
           <Library size={13} />
@@ -66,11 +66,11 @@ export function DossierFilter({
               onClick={() => onChange(isActive ? null : dossier.id)}
               className={cn(
                 'flex items-center gap-2 rounded-[7px] px-1.5 py-1.5 text-left transition-colors',
-                isActive ? 'bg-[#a78bfa]/10 text-[#c4b5fd]' : 'text-[#a6a6a6] hover:bg-[#1e1e1e] hover:text-white',
+                isActive ? 'bg-[#a78bfa]/10 text-[#c4b5fd]' : 'text-fg-muted hover:bg-[#1e1e1e] hover:text-white',
               )}
             >
               <span className="min-w-0 flex-1 truncate text-[11.5px]">{dossier.title}</span>
-              <span className="font-mono text-[11px] text-[#8c8c8c]">{dossier.count}</span>
+              <span className="font-mono text-[11px] text-fg-subtle">{dossier.count}</span>
             </button>
           )
         })}

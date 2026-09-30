@@ -230,14 +230,14 @@ export default function RanksPage() {
         <button
           type="button"
           onClick={() => setActiveTab('ranks')}
-          className={`px-3 py-2 rounded-[8px] text-[12.5px] font-medium transition-colors ${activeTab === 'ranks' ? 'bg-[#d4d4d4] text-[#181818]' : 'bg-[#212121] text-[#a6a6a6] hover:text-[#eee]'}`}
+          className={`px-3 py-2 rounded-[8px] text-[12.5px] font-medium transition-colors ${activeTab === 'ranks' ? 'bg-accent text-surface-sunken' : 'bg-[#212121] text-fg-muted hover:text-[#eee]'}`}
         >
           Ränge
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('blacklist')}
-          className={`px-3 py-2 rounded-[8px] text-[12.5px] font-medium transition-colors ${activeTab === 'blacklist' ? 'bg-[#d4d4d4] text-[#181818]' : 'bg-[#212121] text-[#a6a6a6] hover:text-[#eee]'}`}
+          className={`px-3 py-2 rounded-[8px] text-[12.5px] font-medium transition-colors ${activeTab === 'blacklist' ? 'bg-accent text-surface-sunken' : 'bg-[#212121] text-fg-muted hover:text-[#eee]'}`}
         >
           DN-Blacklist
         </button>
@@ -245,7 +245,7 @@ export default function RanksPage() {
 
       {activeTab === 'ranks' ? (
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
-        <div className="divide-y divide-[#343434]">
+        <div className="divide-y divide-line">
           {ranks?.map((rank, i) => (
             <motion.div
               key={rank.id}
@@ -254,7 +254,7 @@ export default function RanksPage() {
               transition={{ delay: i * 0.02 }}
               className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#212121] transition-colors"
             >
-              <span className="w-10 shrink-0 text-right font-mono text-[11px] uppercase tracking-wider text-[#8c8c8c]" title="Sortierungsposition">Pos {rank.sortOrder}</span>
+              <span className="w-10 shrink-0 text-right font-mono text-[11px] uppercase tracking-wider text-fg-subtle" title="Sortierungsposition">Pos {rank.sortOrder}</span>
               <div className="h-3.5 w-3.5 rounded-full shrink-0" style={{ backgroundColor: rank.color }} />
               <div className="flex-1 min-w-0">
                 <span className="inline-flex flex-wrap items-center gap-2">
@@ -262,7 +262,7 @@ export default function RanksPage() {
                   <RankNumberBadge number={rank.internalNumber} />
                 </span>
                 {rank.badgeMin != null && rank.badgeMax != null && (
-                  <span className="ml-2 text-[11px] text-[#8c8c8c] font-mono">
+                  <span className="ml-2 text-[11px] text-fg-subtle font-mono">
                     DN {formatBadgeNumber(rank.badgeMin, '')}–{formatBadgeNumber(rank.badgeMax, '')}
                   </span>
                 )}
@@ -272,17 +272,17 @@ export default function RanksPage() {
               </div>
               <div className="flex gap-0.5">
                 <button onClick={() => openEdit(rank)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                  <Edit size={13} className="text-[#8c8c8c]" />
+                  <Edit size={13} className="text-fg-subtle" />
                 </button>
                 <button onClick={() => handleDelete(rank.id)} className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors">
-                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-fg-subtle hover:text-[#f87171]" />
                 </button>
               </div>
             </motion.div>
           ))}
           {(!ranks || ranks.length === 0) && (
             <div className="text-center py-16">
-              <Shield size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <Shield size={28} className="mx-auto mb-3 text-fg" strokeWidth={1.5} />
               <p className="text-[13px] text-[#909090]">Keine Ränge vorhanden</p>
             </div>
           )}
@@ -290,7 +290,7 @@ export default function RanksPage() {
       </div>
       ) : (
         <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
-          <div className="divide-y divide-[#343434]">
+          <div className="divide-y divide-line">
             {blacklistedBadges?.map((row, i) => (
               <motion.div
                 key={row.id}
@@ -304,16 +304,16 @@ export default function RanksPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13.5px] font-mono font-medium text-[#eee]">{displayBadgeNumber(row.badgeNumber)}</p>
-                  <p className="text-[11.5px] text-[#8c8c8c] truncate">{row.reason || 'Keine Begründung'}</p>
+                  <p className="text-[11.5px] text-fg-subtle truncate">{row.reason || 'Keine Begründung'}</p>
                 </div>
                 <button onClick={() => handleBlacklistDelete(row.id)} className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors">
-                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-fg-subtle hover:text-[#f87171]" />
                 </button>
               </motion.div>
             ))}
             {(!blacklistedBadges || blacklistedBadges.length === 0) && (
               <div className="text-center py-16">
-                <Ban size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+                <Ban size={28} className="mx-auto mb-3 text-fg" strokeWidth={1.5} />
                 <p className="text-[13px] text-[#909090]">Keine Dienstnummern gesperrt</p>
               </div>
             )}

@@ -54,7 +54,7 @@ function UserAvatar({ user }: { user: User }) {
   if (user.avatarUrl) {
     return (
       <span
-        className="h-9 w-9 shrink-0 rounded-full bg-cover bg-center ring-1 ring-[#d4d4d4]/20"
+        className="h-9 w-9 shrink-0 rounded-full bg-cover bg-center ring-1 ring-accent/20"
         style={{ backgroundImage: `url(${user.avatarUrl})` }}
         aria-label={user.displayName}
       />
@@ -62,7 +62,7 @@ function UserAvatar({ user }: { user: User }) {
   }
 
   return (
-    <div className="h-9 w-9 rounded-full bg-[#232323] flex items-center justify-center text-[12px] font-semibold text-[#d4d4d4]">
+    <div className="h-9 w-9 rounded-full bg-surface-raised flex items-center justify-center text-[12px] font-semibold text-accent">
       {user.displayName.charAt(0).toUpperCase()}
     </div>
   )
@@ -160,7 +160,7 @@ export default function UsersPage() {
       />
 
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
-        <div className="divide-y divide-[#343434]">
+        <div className="divide-y divide-line">
           {users?.map((user, index) => (
             <motion.div
               key={user.id}
@@ -174,26 +174,26 @@ export default function UsersPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[13.5px] font-medium text-[#eee]">{user.displayName}</p>
                   {user.discordOnly && (
-                    <span className="inline-flex items-center gap-1 rounded-[5px] border border-[#404040] bg-[#181818]/70 px-2 py-0.5 text-[11px] text-[#a6a6a6]">
+                    <span className="inline-flex items-center gap-1 rounded-[5px] border border-line-strong bg-surface-sunken/70 px-2 py-0.5 text-[11px] text-fg-muted">
                       <ShieldCheck size={10} /> Discord
                     </span>
                   )}
                 </div>
-                <p className="text-[11.5px] text-[#8c8c8c]">
+                <p className="text-[11.5px] text-fg-subtle">
                   @{user.discordUsername || user.username} · {user.groups.length ? user.groups.map((g) => g.name).join(', ') : 'Keine Gruppe'} · {user.permissions.length} direkte Rechte · Letzter Login: {formatDate(user.lastLoginAt)}
                 </p>
               </div>
-              <span className="text-[11.5px] font-medium text-[#a6a6a6] bg-[#212121] px-2 py-[3px] rounded-[5px]">
+              <span className="text-[11.5px] font-medium text-fg-muted bg-[#212121] px-2 py-[3px] rounded-[5px]">
                 {user.groups.length ? `${user.groups.length} Gruppen` : 'Keine Gruppe'}
               </span>
               <button onClick={() => openEdit(user)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                <Edit size={13} className="text-[#8c8c8c]" />
+                <Edit size={13} className="text-fg-subtle" />
               </button>
             </motion.div>
           ))}
           {(!users || users.length === 0) && (
             <div className="text-center py-16">
-              <UserCog size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <UserCog size={28} className="mx-auto mb-3 text-fg" strokeWidth={1.5} />
               <p className="text-[13px] text-[#909090]">Keine Discord-Benutzer gefunden</p>
             </div>
           )}
@@ -203,7 +203,7 @@ export default function UsersPage() {
       <Modal open={!!editUser} onClose={() => setEditUser(null)} title="Benutzer bearbeiten" size="lg">
         <div className="space-y-5">
           {editUser && (
-            <div className="flex items-center gap-3 rounded-[12px] border border-[#343434]/55 bg-[#181818]/45 p-3">
+            <div className="flex items-center gap-3 rounded-[12px] border border-line/55 bg-surface-sunken/45 p-3">
               <UserAvatar user={editUser} />
               <div className="min-w-0">
                 <p className="truncate text-[13.5px] font-semibold text-white">{editUser.displayName}</p>
@@ -216,7 +216,7 @@ export default function UsersPage() {
           {groupOptions && groupOptions.length > 0 && (
             <div>
               <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Gruppen (manuell zuweisen)</p>
-              <p className="text-[11px] text-[#8c8c8c] mb-2">
+              <p className="text-[11px] text-fg-subtle mb-2">
                 Discord-Gruppen werden automatisch über Rollen gesetzt. Hier kannst du Gruppen manuell hinzufügen.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -226,7 +226,7 @@ export default function UsersPage() {
                     checked={selectedGroupIds.includes(group.id)}
                     onCheckedChange={(checked) => toggleGroup(group.id, checked)}
                     label={group.name}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                    className="rounded-[8px] bg-surface-sunken/40 border border-line/50 px-3 py-2"
                   />
                 ))}
               </div>
@@ -237,7 +237,7 @@ export default function UsersPage() {
           {unitOptions && unitOptions.filter((u) => u.active).length > 0 && (
             <div>
               <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Units (direkt zuweisen)</p>
-              <p className="text-[11px] text-[#8c8c8c] mb-2">
+              <p className="text-[11px] text-fg-subtle mb-2">
                 Zusätzlich zu den Units des verknüpften Agents. Der Benutzer erhält die Rechte dieser Units.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -247,7 +247,7 @@ export default function UsersPage() {
                     checked={selectedUnitIds.includes(unit.id)}
                     onCheckedChange={(checked) => toggleUnit(unit.id, checked)}
                     label={unit.group ? `${unit.group.name} · ${unit.name}` : unit.name}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                    className="rounded-[8px] bg-surface-sunken/40 border border-line/50 px-3 py-2"
                   />
                 ))}
               </div>
@@ -257,8 +257,8 @@ export default function UsersPage() {
           {/* Discord Role Selection — shown when selected group has multiple roles */}
           {relevantDiscordRoles.length > 0 && editUser?.discordId && (
             <div>
-              <p className="block text-[12.5px] font-medium text-[#d4d4d4] mb-2">Discord-Rollen vergeben</p>
-              <p className="text-[11px] text-[#8c8c8c] mb-2">
+              <p className="block text-[12.5px] font-medium text-accent mb-2">Discord-Rollen vergeben</p>
+              <p className="text-[11px] text-fg-subtle mb-2">
                 Die ausgewählten Gruppen haben Discord-Rollen. Wähle, welche Rollen der Benutzer in Discord erhalten soll.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -268,7 +268,7 @@ export default function UsersPage() {
                     checked={selectedDiscordRoleIds.includes(role.id)}
                     onCheckedChange={(checked) => toggleDiscordRole(role.id, checked)}
                     label={role.name}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#d4d4d4]/20 px-3 py-2"
+                    className="rounded-[8px] bg-surface-sunken/40 border border-accent/20 px-3 py-2"
                   />
                 ))}
               </div>
@@ -278,7 +278,7 @@ export default function UsersPage() {
           {/* Direct Permissions */}
           <div>
             <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-1">Direkte Leserechte</p>
-            <p className="text-[11px] text-[#8c8c8c] mb-2">Zusätzlich zu den Gruppenrechten.</p>
+            <p className="text-[11px] text-fg-subtle mb-2">Zusätzlich zu den Gruppenrechten.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {READ_PERMISSIONS.map((permission) => (
                 <Checkbox
@@ -286,7 +286,7 @@ export default function UsersPage() {
                   checked={permissions.includes(permission)}
                   onCheckedChange={(checked) => togglePermission(permission, checked)}
                   label={PERMISSION_LABELS[permission]}
-                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                  className="rounded-[8px] bg-surface-sunken/40 border border-line/50 px-3 py-2"
                 />
               ))}
             </div>
@@ -300,7 +300,7 @@ export default function UsersPage() {
                   checked={permissions.includes(permission)}
                   onCheckedChange={(checked) => togglePermission(permission, checked)}
                   label={PERMISSION_LABELS[permission]}
-                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                  className="rounded-[8px] bg-surface-sunken/40 border border-line/50 px-3 py-2"
                 />
               ))}
             </div>

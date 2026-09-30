@@ -173,13 +173,13 @@ export const OrdnungenManager = forwardRef<OrdnungenManagerHandle, Props>(functi
     <div className="flex flex-wrap gap-2">
       <button
         onClick={openNewOrdnung}
-        className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-[#333333] px-3 text-[12.5px] font-medium text-[#f4f4f4] hover:bg-[#414141] transition-colors"
+        className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-[#333333] px-3 text-[12.5px] font-medium text-fg hover:bg-[#414141] transition-colors"
       >
         <Plus size={15} strokeWidth={2} /> Neue Ordnung
       </button>
       <button
         onClick={openNewCategory}
-        className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] hover:bg-[#333333] transition-colors"
+        className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-surface-raised px-3 text-[12.5px] font-medium text-fg hover:bg-[#333333] transition-colors"
       >
         <FolderPlus size={15} strokeWidth={2} /> Neue Kategorie
       </button>
@@ -225,8 +225,8 @@ export const OrdnungenManager = forwardRef<OrdnungenManagerHandle, Props>(functi
             <ColorField value={categoryForm.color} onChange={(v) => setCategoryForm((f) => ({ ...f, color: v }))} />
           </div>
           <div className="flex justify-end gap-2 pt-1">
-            <button onClick={() => setCategoryModalOpen(false)} className="h-9 px-3 rounded-[8px] bg-[#232323] text-[12.5px] text-[#d7d7d7]">Abbrechen</button>
-            <button disabled={saving} onClick={saveCategory} className="h-9 px-4 rounded-[8px] bg-[#333333] text-[12.5px] text-[#f4f4f4] disabled:opacity-50">Speichern</button>
+            <button onClick={() => setCategoryModalOpen(false)} className="h-9 px-3 rounded-[8px] bg-surface-raised text-[12.5px] text-[#d7d7d7]">Abbrechen</button>
+            <button disabled={saving} onClick={saveCategory} className="h-9 px-4 rounded-[8px] bg-[#333333] text-[12.5px] text-fg disabled:opacity-50">Speichern</button>
           </div>
         </div>
       </Modal>

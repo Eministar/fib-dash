@@ -38,7 +38,7 @@ export default function GlobalError({
 
   return (
     <html lang="de" className="dark" suppressHydrationWarning>
-      <body className="min-h-screen bg-[#080808] text-[#f4f4f4] font-sans" suppressHydrationWarning>
+      <body className="min-h-screen bg-canvas text-fg font-sans" suppressHydrationWarning>
         <title>Schwerer Fehler · FIB</title>
         <StatusPageFrame
           icon={ServerCrash}

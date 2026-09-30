@@ -219,7 +219,7 @@ export function MapWorkspace() {
       />
 
       {spots.length === 0 && !loading && dossierId && (
-        <p className="mt-3 text-[12px] text-[#8c8c8c]">
+        <p className="mt-3 text-[12px] text-fg-subtle">
           Diese Dauerakte hat keine Kartenpunkte.{' '}
           <button type="button" className="text-[#c4b5fd] hover:underline" onClick={() => setDossierId(null)}>
             Filter lösen
@@ -228,7 +228,7 @@ export function MapWorkspace() {
       )}
 
       {allSpots.length === 0 && !loading && canManage && (
-        <p className="mt-3 flex items-center gap-2 text-[12px] text-[#8c8c8c]">
+        <p className="mt-3 flex items-center gap-2 text-[12px] text-fg-subtle">
           <MapPin className="h-3.5 w-3.5" />
           Noch keine Markierungen. Klicke auf die Karte, um die erste zu setzen.
         </p>

@@ -25,23 +25,23 @@ export function PublicTable({ table }: { table: PublicationTable }) {
   return (
     <div>
       {table.rows.length > 8 && (
-        <label className="mb-3 flex items-center gap-2 rounded-[10px] border border-[#343434] bg-[#161616] px-3">
-          <Search size={15} className="text-[#8c8c8c]" aria-hidden />
+        <label className="mb-3 flex items-center gap-2 rounded-[10px] border border-line bg-[#161616] px-3">
+          <Search size={15} className="text-fg-subtle" aria-hidden />
           <span className="sr-only">Tabelle durchsuchen</span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tabelle durchsuchen …"
-            className="h-10 w-full bg-transparent text-[13.5px] text-white outline-none placeholder:text-[#8c8c8c]"
+            className="h-10 w-full bg-transparent text-[13.5px] text-white outline-none placeholder:text-fg-subtle"
           />
         </label>
       )}
-      <div className="overflow-x-auto rounded-[12px] border border-[#343434]">
+      <div className="overflow-x-auto rounded-[12px] border border-line">
         <table className="w-full border-collapse text-left text-[13px]">
           <thead className="bg-[#1c1c1c]">
             <tr>
               {table.columns.map((column, index) => (
-                <th key={index} scope="col" aria-sort={sort?.column === index ? (sort.descending ? 'descending' : 'ascending') : undefined} className="border-b border-[#343434] p-0 font-medium text-[#d4d4d4]">
+                <th key={index} scope="col" aria-sort={sort?.column === index ? (sort.descending ? 'descending' : 'ascending') : undefined} className="border-b border-line p-0 font-medium text-accent">
                   <button type="button" onClick={() => toggleSort(index)} className="flex w-full items-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-left hover:text-white focus-visible:outline focus-visible:outline-2">
                     {column}
                     {sort?.column === index && (sort.descending ? <ArrowDown size={13} /> : <ArrowUp size={13} />)}
@@ -60,7 +60,7 @@ export function PublicTable({ table }: { table: PublicationTable }) {
         </table>
         {rows.length === 0 && <p className="px-3 py-6 text-center text-[13px] text-[#909090]">{search ? 'Keine Treffer.' : 'Die Tabelle ist leer.'}</p>}
       </div>
-      <p className="mt-2 text-[12px] text-[#8c8c8c]">{rows.length} von {table.rows.length} Einträgen</p>
+      <p className="mt-2 text-[12px] text-fg-subtle">{rows.length} von {table.rows.length} Einträgen</p>
     </div>
   )
 }

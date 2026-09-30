@@ -17,6 +17,7 @@ import { cn, formatDateTime } from '@/lib/utils'
 import { AgreementDocument } from './agreement-document'
 import { AgreementEditor, emptyDraft, type AgreementDraft, type AgreementTemplateRow } from './agreement-editor'
 import { useUrlState } from '@/hooks/use-url-state'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 interface ListRow {
   id: string
@@ -104,12 +105,12 @@ function LinkRow({ agreementId, party, canManage, canRegenerate, onChanged }: { 
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-[#343434]/60 bg-[#181818]/55 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-line/60 bg-surface-sunken/55 px-3 py-2">
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12.5px] font-semibold text-white">{party.name}{party.role ? <span className="font-normal text-[#909090]"> · {party.role}</span> : null}</p>
-        <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">{state}</p>
+        <p className="mt-0.5 truncate text-[11px] text-fg-subtle">{state}</p>
       </div>
-      <input readOnly value={url} onFocus={(event) => event.target.select()} className="h-8 min-w-0 flex-1 rounded-[8px] border border-[#343434] bg-[#141414] px-2 text-[11.5px] text-[#a6a6a6]" />
+      <input readOnly value={url} onFocus={(event) => event.target.select()} className="h-8 min-w-0 flex-1 rounded-[8px] border border-line bg-[#141414] px-2 text-[11.5px] text-fg-muted" />
       <Button size="sm" variant="outline" onClick={copy}>{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? 'Kopiert' : 'Link'}</Button>
       {canManage && canRegenerate && !party.signedAt && !party.declinedAt && (
         <Button size="sm" variant="ghost" loading={loading} onClick={regenerate} aria-label="Link neu erzeugen"><RefreshCw size={13} /></Button>
@@ -121,6 +122,7 @@ function LinkRow({ agreementId, party, canManage, canRegenerate, onChanged }: { 
 export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
   const [tab, setTab] = useState<'agreements' | 'templates'>('agreements')
   const [search, setSearch] = useUrlState('q', '')
+  const debouncedSearch = useDebouncedValue(search)
   const [status, setStatus] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editor, setEditor] = useState<{ kind: 'agreement' | 'template'; id: string | null; draft: AgreementDraft } | null>(null)
@@ -129,10 +131,10 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
 
   const query = useMemo(() => {
     const params = new URLSearchParams()
-    if (search.trim()) params.set('search', search.trim())
+    if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
     if (status) params.set('status', status)
     return `/api/agreements${params.size ? `?${params}` : ''}`
-  }, [search, status])
+  }, [debouncedSearch, status])
 
   const { data: rows, loading, refetch } = useFetch<ListRow[]>(query)
   const { data: templates, refetch: refetchTemplates } = useFetch<AgreementTemplateRow[]>('/api/agreement-templates')
@@ -205,7 +207,7 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
       <div className="flex flex-wrap items-center gap-2">
         {(['agreements', 'templates'] as const).map((entry) => (
           <button key={entry} type="button" onClick={() => setTab(entry)}
-            className={cn('inline-flex h-9 items-center rounded-[9px] border px-3 text-[12.5px] font-semibold', tab === entry ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]' : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:text-white')}>
+            className={cn('inline-flex h-9 items-center rounded-[9px] border px-3 text-[12.5px] font-semibold', tab === entry ? 'border-accent/45 bg-accent/14 text-accent' : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:text-white')}>
             {entry === 'agreements' ? 'Verträge' : 'Vorlagen'}
           </button>
         ))}
@@ -223,22 +225,22 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
             <Select options={[{ value: '', label: 'Alle Status' }, ...AGREEMENT_STATUSES.map((value) => ({ value, label: AGREEMENT_STATUS_META[value].label }))]} value={status} onValueChange={setStatus} />
           </div>
           {loading && !rows ? <PageLoader /> : !rows?.length ? (
-            <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 px-4 py-10 text-center">
-              <FileSignature size={20} className="mx-auto text-[#8c8c8c]" />
-              <p className="mt-2 text-[13px] text-[#d4d4d4]">Keine Verträge gefunden</p>
+            <div className="rounded-[14px] border border-[#373737]/45 bg-surface/70 px-4 py-10 text-center">
+              <FileSignature size={20} className="mx-auto text-fg-subtle" />
+              <p className="mt-2 text-[13px] text-accent">Keine Verträge gefunden</p>
             </div>
           ) : (
             <div className="grid gap-2.5 sm:grid-cols-2">
               {rows.map((row) => {
                 const signedCount = row.parties.filter((party) => party.signedAt).length
                 return (
-                  <button key={row.id} type="button" onClick={() => setSelectedId(row.id)} className="rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-3.5 text-left hover:border-[#404040]">
+                  <button key={row.id} type="button" onClick={() => setSelectedId(row.id)} className="rounded-[12px] border border-surface-hover bg-[#141414] p-3.5 text-left hover:border-line-strong">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-[14px] font-semibold text-white">{row.title}</p>
                       <Badge variant={AGREEMENT_STATUS_META[row.status].variant}>{AGREEMENT_STATUS_META[row.status].label}</Badge>
                     </div>
-                    <p className="mt-1 truncate text-[12px] text-[#a6a6a6]">{row.parties.map((party) => party.name).join(' · ')}</p>
-                    <p className="mt-1 text-[11.5px] text-[#8c8c8c]">{signedCount} von {row.parties.length} unterschrieben · {formatDateTime(row.updatedAt)}</p>
+                    <p className="mt-1 truncate text-[12px] text-fg-muted">{row.parties.map((party) => party.name).join(' · ')}</p>
+                    <p className="mt-1 text-[11.5px] text-fg-subtle">{signedCount} von {row.parties.length} unterschrieben · {formatDateTime(row.updatedAt)}</p>
                   </button>
                 )
               })}
@@ -248,9 +250,9 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
       ) : (
         <div className="grid gap-2.5 sm:grid-cols-2">
           {(templates ?? []).map((template) => (
-            <div key={template.id} className="rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-3.5">
+            <div key={template.id} className="rounded-[12px] border border-surface-hover bg-[#141414] p-3.5">
               <p className="text-[14px] font-semibold text-white">{template.name}</p>
-              <p className="mt-1 text-[12px] text-[#8c8c8c]">{readContractClauses(template.clauses).length} Regelungen · Briefkopf {template.letterhead === 'FIB' ? 'FIB' : 'neutral'}</p>
+              <p className="mt-1 text-[12px] text-fg-subtle">{readContractClauses(template.clauses).length} Regelungen · Briefkopf {template.letterhead === 'FIB' ? 'FIB' : 'neutral'}</p>
               {canManage && (
                 <div className="mt-3 flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => setEditor({ kind: 'template', id: template.id, draft: templateDraft(template) })}>Bearbeiten</Button>
@@ -259,7 +261,7 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
               )}
             </div>
           ))}
-          {!templates?.length && <p className="text-[13px] text-[#8c8c8c]">Noch keine Vorlagen.</p>}
+          {!templates?.length && <p className="text-[13px] text-fg-subtle">Noch keine Vorlagen.</p>}
         </div>
       )}
 
@@ -276,7 +278,7 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
               </div>
             )}
             {detail.status === 'DRAFT' ? (
-              <p className="text-[12px] text-[#a6a6a6]">Die Links funktionieren erst nach dem Freigeben.</p>
+              <p className="text-[12px] text-fg-muted">Die Links funktionieren erst nach dem Freigeben.</p>
             ) : (
               <p className="text-[11px] text-[#c08a5a]">Wer einen Link besitzt, kann für diese Partei unterschreiben. Nur an die vorgesehene Stelle weitergeben.</p>
             )}

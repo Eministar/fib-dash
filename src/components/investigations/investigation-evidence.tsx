@@ -141,11 +141,11 @@ export function InvestigationEvidence({
       </div>
 
       {evidence.length === 0 ? (
-        <p className="py-3 text-[12.5px] text-[#8c8c8c]">Keine Asservate zu dieser Akte.</p>
+        <p className="py-3 text-[12.5px] text-fg-subtle">Keine Asservate zu dieser Akte.</p>
       ) : (
         <ul className="space-y-2">
           {evidence.map((item) => (
-            <li key={item.id} className="rounded-[10px] border border-[#232323] bg-[#111111] p-3">
+            <li key={item.id} className="rounded-[10px] border border-surface-raised bg-[#111111] p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -164,7 +164,7 @@ export function InvestigationEvidence({
                       {item.description}
                     </p>
                   )}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8c8c8c]">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-fg-subtle">
                     {item.seizedAt && <span>Sichergestellt {formatDateTime(item.seizedAt)}</span>}
                     {item.seizedLocation && (
                       <span className="inline-flex items-center gap-1.5">
@@ -198,7 +198,7 @@ export function InvestigationEvidence({
                     <button
                       type="button"
                       onClick={() => void handleDelete(item)}
-                      className="text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
+                      className="text-fg-subtle transition-colors hover:text-[#fca5a5]"
                       aria-label="Asservat löschen"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -302,7 +302,7 @@ export function InvestigationEvidence({
           />
 
           <div className="flex items-center justify-between pt-1">
-            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-[#8c8c8c]">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-fg-subtle">
               <Boxes className="h-3.5 w-3.5" />
               Nummer wird automatisch vergeben
             </span>

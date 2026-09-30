@@ -46,7 +46,7 @@ import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { cn, formatDateTime } from '@/lib/utils'
+import { cn, formatDateTime, toLocalDateTimeInput } from '@/lib/utils'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { renderMarkdown } from '@/lib/markdown'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
@@ -143,7 +143,7 @@ function localDateTimeValue(days = 0) {
   const date = new Date()
   date.setDate(date.getDate() + days)
   date.setMinutes(0, 0, 0)
-  return date.toISOString().slice(0, 16)
+  return toLocalDateTimeInput(date)
 }
 
 function documentPreview(content: string) {
@@ -411,9 +411,9 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
         <aside className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#343434]/45 flex items-center justify-between">
-            <p className="text-[12px] uppercase tracking-[0.14em] font-semibold text-[#a6a6a6]">Ablage</p>
-            <button type="button" onClick={refetch} className="p-1.5 rounded-[7px] text-[#909090] hover:text-[#d4d4d4] hover:bg-[#232323]/70">
+          <div className="px-4 py-3 border-b border-line/45 flex items-center justify-between">
+            <p className="text-[12px] uppercase tracking-[0.14em] font-semibold text-fg-muted">Ablage</p>
+            <button type="button" onClick={refetch} className="p-1.5 rounded-[7px] text-[#909090] hover:text-accent hover:bg-surface-raised/70">
               <RefreshCw size={13} />
             </button>
           </div>
@@ -433,17 +433,17 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
                   <p className="flex-1 truncate text-[12.5px] font-semibold text-[#e5e5e5]">{folder.name}</p>
                   {canManage && (
                     <div className="flex items-center gap-0.5">
-                      <button type="button" onClick={() => openEditFolder(folder)} className="p-1 rounded text-[#8c8c8c] hover:text-[#d4d4d4]">
+                      <button type="button" onClick={() => openEditFolder(folder)} className="p-1 rounded text-fg-subtle hover:text-accent">
                         <Pencil size={11} />
                       </button>
-                      <button type="button" onClick={() => requestDeleteFolder(folder)} className="p-1 rounded text-[#8c8c8c] hover:text-red-400">
+                      <button type="button" onClick={() => requestDeleteFolder(folder)} className="p-1 rounded text-fg-subtle hover:text-red-400">
                         <Trash2 size={11} />
                       </button>
                     </div>
                   )}
                 </div>
                 {folder.documents.length === 0 ? (
-                  <p className="px-7 py-1 text-[11px] text-[#8c8c8c]">Keine Dokumente</p>
+                  <p className="px-7 py-1 text-[11px] text-fg-subtle">Keine Dokumente</p>
                 ) : (
                   folder.documents.map((document) => (
                     <DocumentButton key={document.id} document={document} color={folder.color} active={selectedId === document.id} onClick={() => setSelectedId(document.id)} />
@@ -453,8 +453,8 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
             ))}
             {allDocuments.length === 0 && (
               <div className="py-12 text-center">
-                <FileText size={24} className="mx-auto mb-2 text-[#8c8c8c]" />
-                <p className="text-[12.5px] text-[#a6a6a6]">Keine Dokumente vorhanden</p>
+                <FileText size={24} className="mx-auto mb-2 text-fg-subtle" />
+                <p className="text-[12.5px] text-fg-muted">Keine Dokumente vorhanden</p>
               </div>
             )}
           </div>
@@ -463,7 +463,7 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
         <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 overflow-hidden">
           {selectedDocument ? (
             <div className="flex min-h-[680px] flex-col">
-              <div className="border-b border-[#343434]/45 p-4 space-y-3">
+              <div className="border-b border-line/45 p-4 space-y-3">
                 <div className="flex flex-col gap-3 md:flex-row md:items-end">
                   <Input
                     label="Titel"
@@ -500,7 +500,7 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
                   {documentDirty ? ' · ungespeicherte Änderungen' : ''}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-1.5 border-b border-[#343434]/45 bg-[#181818]/70 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-1.5 border-b border-line/45 bg-surface-sunken/70 px-3 py-2">
                 <WriterTool icon={Heading1} label="H1" onClick={() => insertBlock('# Überschrift\n')} disabled={!canManage} />
                 <WriterTool icon={Heading2} label="H2" onClick={() => insertBlock('## Abschnitt\n')} disabled={!canManage} />
                 <WriterTool icon={Bold} label="Fett" onClick={() => applyMarkdown('**', '**', 'fetter Text')} disabled={!canManage} />
@@ -512,18 +512,18 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
                 <WriterTool icon={ListTodo} label="Checkliste" onClick={() => insertBlock('- [ ] Aufgabe\n- [ ] Aufgabe\n')} disabled={!canManage} />
                 <WriterTool icon={Quote} label="Zitat" onClick={() => insertBlock('> Hinweis\n')} disabled={!canManage} />
                 <WriterTool icon={Table} label="Tabelle" onClick={() => insertBlock('| Thema | Status | Notiz |\n| --- | --- | --- |\n|  |  |  |\n')} disabled={!canManage} />
-                <div className="ml-auto flex rounded-[8px] border border-[#343434]/70 bg-[#181818]/70 p-0.5">
+                <div className="ml-auto flex rounded-[8px] border border-line/70 bg-surface-sunken/70 p-0.5">
                   <button
                     type="button"
                     onClick={() => setWriterMode('split')}
-                    className={cn('inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2 text-[11.5px]', writerMode === 'split' ? 'bg-[#d4d4d4] text-[#181818]' : 'text-[#a6a6a6] hover:text-white')}
+                    className={cn('inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2 text-[11.5px]', writerMode === 'split' ? 'bg-accent text-surface-sunken' : 'text-fg-muted hover:text-white')}
                   >
                     <SplitSquareHorizontal size={12} /> Schreiben
                   </button>
                   <button
                     type="button"
                     onClick={() => setWriterMode('preview')}
-                    className={cn('inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2 text-[11.5px]', writerMode === 'preview' ? 'bg-[#d4d4d4] text-[#181818]' : 'text-[#a6a6a6] hover:text-white')}
+                    className={cn('inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2 text-[11.5px]', writerMode === 'preview' ? 'bg-accent text-surface-sunken' : 'text-fg-muted hover:text-white')}
                   >
                     <Eye size={12} /> Vorschau
                   </button>
@@ -539,13 +539,13 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
                       setContent(e.target.value)
                     }}
                     readOnly={!canManage}
-                    className="min-h-[560px] resize-none border-r border-[#343434]/45 bg-[#080808]/45 p-5 font-mono text-[13.5px] leading-7 text-[#f4f4f4] outline-none placeholder:text-[#8c8c8c]"
+                    className="min-h-[560px] resize-none border-r border-line/45 bg-canvas/45 p-5 font-mono text-[13.5px] leading-7 text-fg outline-none placeholder:text-fg-subtle"
                     placeholder="Markdown schreiben..."
                   />
                 )}
-                <div className="min-h-[560px] overflow-y-auto bg-[#181818]/35 p-5">
+                <div className="min-h-[560px] overflow-y-auto bg-surface-sunken/35 p-5">
                   <article
-                    className="markdown-document mx-auto max-w-3xl rounded-[12px] border border-[#343434]/55 bg-[#131313]/70 p-6 shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
+                    className="markdown-document mx-auto max-w-3xl rounded-[12px] border border-line/55 bg-[#131313]/70 p-6 shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
                     dangerouslySetInnerHTML={{ __html: previewHtml }}
                   />
                 </div>
@@ -553,8 +553,8 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
             </div>
           ) : (
             <div className="flex min-h-[680px] flex-col items-center justify-center text-center">
-              <FileText size={30} className="mb-3 text-[#8c8c8c]" />
-              <p className="text-[13px] text-[#a6a6a6]">Dokument auswählen oder neu erstellen</p>
+              <FileText size={30} className="mb-3 text-fg-subtle" />
+              <p className="text-[13px] text-fg-muted">Dokument auswählen oder neu erstellen</p>
             </div>
           )}
         </section>
@@ -671,7 +671,7 @@ function WriterTool({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-[#a6a6a6] transition-colors hover:bg-[#232323] hover:text-white disabled:pointer-events-none disabled:opacity-35"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-fg-muted transition-colors hover:bg-surface-raised hover:text-white disabled:pointer-events-none disabled:opacity-35"
     >
       <Icon size={15} strokeWidth={2} />
     </button>
@@ -685,11 +685,11 @@ function DocumentButton({ document, color, active, onClick }: { document: SruDoc
       onClick={onClick}
       className={cn(
         'w-full rounded-[10px] px-3 py-2 text-left transition-colors',
-        active ? 'bg-[#d4d4d4]/12 border border-[#d4d4d4]/30' : 'border border-transparent hover:bg-[#232323]/65',
+        active ? 'bg-accent/12 border border-accent/30' : 'border border-transparent hover:bg-surface-raised/65',
       )}
     >
       <span className="mb-1 block h-1 w-8 rounded-full" style={{ backgroundColor: color ?? '#d4d4d4' }} />
-      <p className="truncate text-[13px] font-medium text-[#f4f4f4]">{document.title}</p>
+      <p className="truncate text-[13px] font-medium text-fg">{document.title}</p>
       <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-4 text-[#909090]">{documentPreview(document.content)}</p>
     </button>
   )
@@ -730,7 +730,10 @@ function SruCalendar({ canManage }: { canManage: boolean }) {
           ...form,
           module: 'SRU',
           description: form.description.trim() || null,
-          endsAt: form.endsAt || null,
+          // Ortszeit aus dem Formular → echter Zeitstempel. Roh gesendet las der Server
+          // „20:00“ in seiner Zeitzone (UTC) – der Termin stand dann bei allen auf 22:00.
+          startsAt: new Date(form.startsAt).toISOString(),
+          endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : null,
           location: form.location.trim() || null,
           agentId: form.agentId || null,
         }),
@@ -784,11 +787,11 @@ function SruCalendar({ canManage }: { canManage: boolean }) {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-[6px] border border-[#d4d4d4]/20 bg-[#d4d4d4]/8 px-2 py-0.5 text-[11px] font-semibold text-[#d4d4d4]">{calendarTypeLabel(event.type)}</span>
+                  <span className="rounded-[6px] border border-accent/20 bg-accent/8 px-2 py-0.5 text-[11px] font-semibold text-accent">{calendarTypeLabel(event.type)}</span>
                   {event.discordAnnouncement && <Megaphone size={13} className="text-[#38bdf8]" />}
                 </div>
                 <h3 className="mt-2 text-[14px] font-semibold text-white">{event.title}</h3>
-                <p className="mt-1 text-[12px] text-[#a6a6a6]">{formatDateTime(event.startsAt)}{event.endsAt ? ` -> ${formatDateTime(event.endsAt)}` : ''}</p>
+                <p className="mt-1 text-[12px] text-fg-muted">{formatDateTime(event.startsAt)}{event.endsAt ? ` -> ${formatDateTime(event.endsAt)}` : ''}</p>
               </div>
               {canManage && (
                 <button type="button" onClick={() => requestDeleteEvent(event)} className="rounded-[7px] p-1.5 text-[#909090] transition-colors hover:bg-[#321218]/60 hover:text-[#fca5a5]">
@@ -799,7 +802,7 @@ function SruCalendar({ canManage }: { canManage: boolean }) {
             {event.location && <p className="mt-3 text-[12.5px] text-[#d2d2d2]">Ort: {event.location}</p>}
             {event.description && <p className="mt-2 text-[12.5px] leading-relaxed text-[#c3c3c3]">{event.description}</p>}
             {event.agent && (
-              <Link href={`/agents/${event.agent.id}`} className="mt-3 inline-flex text-[12px] text-[#d4d4d4] hover:text-white">
+              <Link href={`/agents/${event.agent.id}`} className="mt-3 inline-flex text-[12px] text-accent hover:text-white">
                 {event.agent.firstName} {event.agent.lastName} #{displayBadgeNumber(event.agent.badgeNumber)}
               </Link>
             )}
@@ -809,8 +812,8 @@ function SruCalendar({ canManage }: { canManage: boolean }) {
 
       {(events ?? []).length === 0 && (
         <div className="glass-panel-elevated rounded-[14px] p-12 text-center">
-          <CalendarDays size={28} className="mx-auto mb-3 text-[#d4d4d4]/35" />
-          <p className="text-[13px] text-[#a6a6a6]">Keine S.R.U.-Termine vorhanden</p>
+          <CalendarDays size={28} className="mx-auto mb-3 text-accent/35" />
+          <p className="text-[13px] text-fg-muted">Keine S.R.U.-Termine vorhanden</p>
         </div>
       )}
 
@@ -825,7 +828,7 @@ function SruCalendar({ canManage }: { canManage: boolean }) {
           <Input label="Ort optional" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
           <Select label="Agent-Bezug" value={form.agentId} onValueChange={(agentId) => setForm({ ...form, agentId })} options={agentOptions} />
           <Textarea label="Beschreibung" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
-          <label className="flex items-center gap-2 rounded-[9px] border border-[#343434]/60 bg-[#181818] px-3 py-2 text-[12.5px] text-[#c3c3c3]">
+          <label className="flex items-center gap-2 rounded-[9px] border border-line/60 bg-surface-sunken px-3 py-2 text-[12.5px] text-[#c3c3c3]">
             <input type="checkbox" checked={form.discordAnnouncement} onChange={(e) => setForm({ ...form, discordAnnouncement: e.target.checked })} />
             Discord-Ankündigung senden
           </label>
@@ -863,8 +866,8 @@ export default function SruPage() {
               className={cn(
                 'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors',
                 active
-                  ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
-                  : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                  ? 'border-accent/45 bg-accent/14 text-accent'
+                  : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
               )}
             >
               <Icon size={14} strokeWidth={2} />

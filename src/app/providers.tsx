@@ -7,6 +7,7 @@ import { AuthProvider } from '@/context/auth-context'
 import { ToastProvider } from '@/components/ui/toast'
 import { ConfirmProvider } from '@/components/ui/confirm-dialog'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { TitleTooltips } from '@/components/ui/title-tooltips'
 import { ChunkLoadGuard } from '@/components/runtime/chunk-load-guard'
 import { ScrollToTop } from '@/components/layout/scroll-to-top'
 
@@ -25,6 +26,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               <ChunkLoadGuard />
               {children}
               <ScrollToTop />
+              <TitleTooltips />
             </TooltipProvider>
           </ConfirmProvider>
         </ToastProvider>

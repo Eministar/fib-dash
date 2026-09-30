@@ -56,6 +56,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || busy}
         aria-busy={busy || undefined}
+        data-variant={variant}
         onClick={handleClick}
         className={cn(
           'inline-flex items-center justify-center font-medium transition-all duration-150',

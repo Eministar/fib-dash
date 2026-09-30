@@ -105,7 +105,7 @@ export default function UserGroupsPage() {
       />
 
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
-        <div className="divide-y divide-[#343434]">
+        <div className="divide-y divide-line">
           {groups?.map((group, i) => (
             <motion.div
               key={group.id}
@@ -114,28 +114,28 @@ export default function UserGroupsPage() {
               transition={{ delay: i * 0.02 }}
               className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#212121] transition-colors"
             >
-              <div className="h-8 w-8 rounded-full bg-[#232323] flex items-center justify-center text-[12px] font-semibold text-[#d4d4d4]">
+              <div className="h-8 w-8 rounded-full bg-surface-raised flex items-center justify-center text-[12px] font-semibold text-accent">
                 {group.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13.5px] font-medium text-[#eee]">{group.name}</p>
-                <p className="text-[11.5px] text-[#8c8c8c] truncate">
+                <p className="text-[11.5px] text-fg-subtle truncate">
                   {group.description || 'Keine Beschreibung'} · {group.permissions.length} Rechte · {group._count.users} Benutzer
                 </p>
               </div>
               <div className="flex gap-0.5">
                 <button onClick={() => openEdit(group)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                  <Edit size={13} className="text-[#8c8c8c]" />
+                  <Edit size={13} className="text-fg-subtle" />
                 </button>
                 <button onClick={() => deleteGroup(group)} className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors">
-                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-fg-subtle hover:text-[#f87171]" />
                 </button>
               </div>
             </motion.div>
           ))}
           {(!groups || groups.length === 0) && (
             <div className="text-center py-16">
-              <Users size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <Users size={28} className="mx-auto mb-3 text-fg" strokeWidth={1.5} />
               <p className="text-[13px] text-[#909090]">Keine Benutzergruppen vorhanden</p>
             </div>
           )}
@@ -155,7 +155,7 @@ export default function UserGroupsPage() {
                   checked={form.permissions.includes(permission)}
                   onCheckedChange={(checked) => togglePermission(permission, checked)}
                   label={PERMISSION_LABELS[permission]}
-                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                  className="rounded-[8px] bg-surface-sunken/40 border border-line/50 px-3 py-2"
                 />
               ))}
             </div>
@@ -169,7 +169,7 @@ export default function UserGroupsPage() {
                   checked={form.permissions.includes(permission)}
                   onCheckedChange={(checked) => togglePermission(permission, checked)}
                   label={PERMISSION_LABELS[permission]}
-                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                  className="rounded-[8px] bg-surface-sunken/40 border border-line/50 px-3 py-2"
                 />
               ))}
             </div>

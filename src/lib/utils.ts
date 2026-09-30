@@ -17,6 +17,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Wert für `<input type="datetime-local">` in ORTSZEIT. `toISOString()`
+ * liefert UTC – im Sommer zeigte ein Formular damit 2 Stunden zu früh an,
+ * und jedes Speichern verschob den Zeitpunkt erneut.
+ */
+export function toLocalDateTimeInput(value: Date | string | number | null | undefined = new Date()): string {
+  if (value === null || value === undefined || value === '') return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** Wert für `<input type="date">` in Ortszeit (siehe `toLocalDateTimeInput`). */
+export function toLocalDateInput(value: Date | string | number | null | undefined = new Date()): string {
+  return toLocalDateTimeInput(value).slice(0, 10)
+}
+
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return '—'
   const d = new Date(date)

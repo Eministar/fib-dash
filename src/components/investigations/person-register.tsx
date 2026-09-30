@@ -36,6 +36,7 @@ import type {
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 const catalogPhotoUrl = (id: string) => `/api/investigations/photos/${id}/image`
 /** Neue Fotos kommen aus dem Katalog; `photoUrl` bleibt für Altbestände. */
@@ -113,6 +114,7 @@ export function PersonRegister() {
   const canDelete = hasPermission(user, 'investigations:delete')
 
   const [search, setSearch] = useUrlState('q', '')
+  const debouncedSearch = useDebouncedValue(search)
   const [wantedOnly, setWantedOnly] = useState(false)
   // `null` = Editor geschlossen, sonst der Modus. Anlegen und Bearbeiten teilen
   // sich dasselbe Formular, damit die Felder nicht auseinanderlaufen.
@@ -128,11 +130,11 @@ export function PersonRegister() {
 
   const query = useMemo(() => {
     const params = new URLSearchParams()
-    if (search.trim()) params.set('search', search.trim())
+    if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
     if (wantedOnly) params.set('wanted', 'true')
     const suffix = params.toString()
     return `/api/persons${suffix ? `?${suffix}` : ''}`
-  }, [search, wantedOnly])
+  }, [debouncedSearch, wantedOnly])
 
   const { data, loading, refetch } = useFetch<Person[]>(canView ? query : null)
   const {
@@ -244,7 +246,7 @@ export function PersonRegister() {
         <Checkbox checked={wantedOnly} onCheckedChange={setWantedOnly} label="Nur zur Fahndung" />
       </FilterBar>
 
-      {loading ? (
+      {loading && !data ? (
         <PageLoader />
       ) : persons.length === 0 ? (
         <EmptyState
@@ -275,7 +277,7 @@ export function PersonRegister() {
               key={person.id}
               type="button"
               onClick={() => setSelectedId(person.id)}
-              className="rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-3.5 text-left transition-colors hover:border-[#404040] hover:bg-[#181818]"
+              className="rounded-[12px] border border-surface-hover bg-[#141414] p-3.5 text-left transition-colors hover:border-line-strong hover:bg-surface-sunken"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-[11.5px] text-[#d4af37]">{person.personNumber}</span>
@@ -290,8 +292,8 @@ export function PersonRegister() {
               <p className="mt-1.5 text-[14px] font-semibold text-white">
                 {person.firstName} {person.lastName}
               </p>
-              {person.alias && <p className="text-[12px] text-[#a6a6a6]">alias &bdquo;{person.alias}&ldquo;</p>}
-              <p className="mt-1 text-[11.5px] text-[#8c8c8c]">
+              {person.alias && <p className="text-[12px] text-fg-muted">alias &bdquo;{person.alias}&ldquo;</p>}
+              <p className="mt-1 text-[11.5px] text-fg-subtle">
                 {person._count ? `${person._count.investigations} Ermittlung(en)` : ''}
                 {person.identifier ? ` · Kennung ${person.identifier}` : ''}
               </p>
@@ -352,25 +354,25 @@ export function PersonRegister() {
               <div className="sm:col-span-2"><PersonDossiers personId={detail.id} /></div>
               {detail.alias && (
                 <div>
-                  <dt className="text-[#8c8c8c]">Alias</dt>
+                  <dt className="text-fg-subtle">Alias</dt>
                   <dd className="text-[#e4e4e4]">{detail.alias}</dd>
                 </div>
               )}
               {detail.identifier && (
                 <div>
-                  <dt className="text-[#8c8c8c]">Kennung</dt>
+                  <dt className="text-fg-subtle">Kennung</dt>
                   <dd className="text-[#e4e4e4]">{detail.identifier}</dd>
                 </div>
               )}
               {detail.dateOfBirth && (
                 <div>
-                  <dt className="text-[#8c8c8c]">Geburtsdatum</dt>
+                  <dt className="text-fg-subtle">Geburtsdatum</dt>
                   <dd className="text-[#e4e4e4]">{formatDate(detail.dateOfBirth)}</dd>
                 </div>
               )}
               {detail.phone && (
                 <div>
-                  <dt className="text-[#8c8c8c]">Telefon</dt>
+                  <dt className="text-fg-subtle">Telefon</dt>
                   <dd className="text-[#e4e4e4]">{detail.phone}</dd>
                 </div>
               )}
@@ -378,7 +380,7 @@ export function PersonRegister() {
 
             {detail.notes && (
               <div>
-                <p className="mb-1 text-[12px] font-medium text-[#a6a6a6]">Notizen</p>
+                <p className="mb-1 text-[12px] font-medium text-fg-muted">Notizen</p>
                 <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c4c4c4]">
                   {detail.notes}
                 </p>
@@ -396,18 +398,18 @@ export function PersonRegister() {
 
             {detail.vehiclesOwned.length > 0 && (
               <div>
-                <p className="mb-2 text-[12px] font-medium text-[#a6a6a6]">
+                <p className="mb-2 text-[12px] font-medium text-fg-muted">
                   Fahrzeuge ({detail.vehiclesOwned.length})
                 </p>
                 <ul className="space-y-1.5">
                   {detail.vehiclesOwned.map((vehicle) => (
                     <li
                       key={vehicle.id}
-                      className="flex flex-wrap items-center gap-2 rounded-[9px] border border-[#232323] bg-[#111111] px-2.5 py-2 text-[12.5px] text-white"
+                      className="flex flex-wrap items-center gap-2 rounded-[9px] border border-surface-raised bg-[#111111] px-2.5 py-2 text-[12.5px] text-white"
                     >
-                      <Car className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
+                      <Car className="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
                       {[vehicle.plate, vehicle.model].filter(Boolean).join(' · ') || vehicle.vehicleNumber}
-                      <span className="font-mono text-[11px] text-[#8c8c8c]">{vehicle.vehicleNumber}</span>
+                      <span className="font-mono text-[11px] text-fg-subtle">{vehicle.vehicleNumber}</span>
                       {vehicle.stolen && <Badge variant="danger">Gestohlen</Badge>}
                       {vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}
                     </li>
@@ -417,18 +419,18 @@ export function PersonRegister() {
             )}
 
             <div>
-              <p className="mb-2 text-[12px] font-medium text-[#a6a6a6]">
+              <p className="mb-2 text-[12px] font-medium text-fg-muted">
                 Ermittlungen ({detail.investigations.length})
               </p>
               {detail.investigations.length === 0 ? (
-                <p className="text-[12.5px] text-[#8c8c8c]">Diese Person ist keiner Akte zugeordnet.</p>
+                <p className="text-[12.5px] text-fg-subtle">Diese Person ist keiner Akte zugeordnet.</p>
               ) : (
                 <ul className="space-y-2">
                   {detail.investigations.map((link) => (
                     <li key={link.id}>
                       <Link
                         href={`/investigations/${link.investigation.id}`}
-                        className="block rounded-[9px] border border-[#232323] bg-[#111111] p-2.5 transition-colors hover:border-[#404040]"
+                        className="block rounded-[9px] border border-surface-raised bg-[#111111] p-2.5 transition-colors hover:border-line-strong"
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-[11.5px] text-[#d4af37]">

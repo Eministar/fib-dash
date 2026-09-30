@@ -60,7 +60,7 @@ export default function OrdnungenPage() {
       {isLoading && <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-16 animate-pulse rounded-[12px] bg-[#1c1c1c]" />)}</div>}
 
       {!isLoading && matches === 0 && search.trim() && (
-        <p className="rounded-[12px] border border-[#343434] px-4 py-8 text-center text-[13px] text-[#909090]">Keine Ordnung passt zu „{search.trim()}“.</p>
+        <p className="rounded-[12px] border border-line px-4 py-8 text-center text-[13px] text-[#909090]">Keine Ordnung passt zu „{search.trim()}“.</p>
       )}
 
       <div className="space-y-8">
@@ -70,8 +70,8 @@ export default function OrdnungenPage() {
             <section key={category.id} aria-labelledby={`kategorie-${category.id}`}>
               <div className="mb-2 flex items-center gap-2.5 px-1">
                 <CategoryIcon size={15} strokeWidth={2} style={{ color: category.color }} aria-hidden />
-                <h2 id={`kategorie-${category.id}`} className="text-[13.5px] font-semibold text-[#f4f4f4]">{category.label}</h2>
-                <span className="text-[12px] text-[#8c8c8c]">{items.length}</span>
+                <h2 id={`kategorie-${category.id}`} className="text-[13.5px] font-semibold text-fg">{category.label}</h2>
+                <span className="text-[12px] text-fg-subtle">{items.length}</span>
                 {canManage && (
                   <div className="ml-auto flex">
                     <IconButton label="Kategorie bearbeiten" onClick={() => managerRef.current?.openEditCategory(category)}><Pencil size={13} /></IconButton>
@@ -82,9 +82,9 @@ export default function OrdnungenPage() {
               {category.description && <p className="mb-2 px-1 text-[12px] text-[#909090]">{category.description}</p>}
 
               {items.length === 0
-                ? <p className="rounded-[12px] border border-dashed border-[#343434] px-4 py-4 text-[12.5px] text-[#8c8c8c]">Noch keine Ordnung in diesem Bereich.</p>
+                ? <p className="rounded-[12px] border border-dashed border-line px-4 py-4 text-[12.5px] text-fg-subtle">Noch keine Ordnung in diesem Bereich.</p>
                 : (
-                  <ul className="divide-y divide-[#2c2c2c] overflow-hidden rounded-[12px] border border-[#343434] bg-[#161616]">
+                  <ul className="divide-y divide-[#2c2c2c] overflow-hidden rounded-[12px] border border-line bg-[#161616]">
                     {items.map((ordnung) => {
                       const Icon = ordnungIcon(ordnung.icon)
                       return (
@@ -95,7 +95,7 @@ export default function OrdnungenPage() {
                               <span className="block truncate text-[14px] font-medium text-[#f2f2f2]">{ordnung.title}</span>
                               <span className="mt-0.5 block truncate text-[12.5px] text-[#909090]">{ordnung.description}</span>
                             </span>
-                            <ChevronRight size={16} className="shrink-0 text-[#8c8c8c] group-hover:text-white" aria-hidden />
+                            <ChevronRight size={16} className="shrink-0 text-fg-subtle group-hover:text-white" aria-hidden />
                           </Link>
                           {canManage && (
                             <div className="flex shrink-0">

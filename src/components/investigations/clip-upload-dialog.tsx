@@ -248,7 +248,7 @@ export function ClipUploadDialog({
           onClick={() => !uploading && inputRef.current?.click()}
           className={cn(
             'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed px-4 py-8 text-center transition-colors',
-            dragging ? 'border-[#a78bfa] bg-[#a78bfa]/5' : 'border-[#343434] bg-[#141414] hover:border-[#4a4a4a]',
+            dragging ? 'border-[#a78bfa] bg-[#a78bfa]/5' : 'border-line bg-[#141414] hover:border-[#4a4a4a]',
             uploading && 'pointer-events-none opacity-60',
           )}
         >
@@ -256,7 +256,7 @@ export function ClipUploadDialog({
             <>
               <FileVideo className="h-6 w-6 text-[#a78bfa]" />
               <p className="text-[13px] font-medium text-white">{file.name}</p>
-              <p className="text-[12px] text-[#8c8c8c]">{formatBytes(file.size)}</p>
+              <p className="text-[12px] text-fg-subtle">{formatBytes(file.size)}</p>
               {!uploading && (
                 <button
                   type="button"
@@ -264,7 +264,7 @@ export function ClipUploadDialog({
                     event.stopPropagation()
                     setFile(null)
                   }}
-                  className="mt-1 inline-flex items-center gap-1 text-[11.5px] text-[#a6a6a6] hover:text-white"
+                  className="mt-1 inline-flex items-center gap-1 text-[11.5px] text-fg-muted hover:text-white"
                 >
                   <X className="h-3 w-3" />
                   Andere Datei wählen
@@ -273,9 +273,9 @@ export function ClipUploadDialog({
             </>
           ) : (
             <>
-              <UploadCloud className="h-6 w-6 text-[#8c8c8c]" />
-              <p className="text-[13px] text-[#d4d4d4]">Clip hierher ziehen oder klicken</p>
-              <p className="text-[11.5px] text-[#8c8c8c]">MP4, WebM, MOV oder MKV</p>
+              <UploadCloud className="h-6 w-6 text-fg-subtle" />
+              <p className="text-[13px] text-accent">Clip hierher ziehen oder klicken</p>
+              <p className="text-[11.5px] text-fg-subtle">MP4, WebM, MOV oder MKV</p>
             </>
           )}
           <input
@@ -289,13 +289,13 @@ export function ClipUploadDialog({
 
         {uploading && (
           <div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#232323]">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-raised">
               <div
                 className="h-full rounded-full bg-[#a78bfa] transition-[width] duration-200"
                 style={{ width: `${progress.percent}%` }}
               />
             </div>
-            <p className="mt-1.5 flex flex-wrap gap-x-2 text-[11.5px] text-[#8c8c8c]">
+            <p className="mt-1.5 flex flex-wrap gap-x-2 text-[11.5px] text-fg-subtle">
               <span>
                 {progress.percent}% übertragen
                 {progress.percent === 100 ? ' – wird zusammengesetzt…' : ''}

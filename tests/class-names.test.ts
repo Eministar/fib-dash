@@ -13,3 +13,12 @@ test('cn kennt die eigenen Tokens', () => {
   assert.equal(cn('bg-surface bg-surface-raised'), 'bg-surface-raised')
   assert.equal(cn('text-[13px] text-fg'), 'text-[13px] text-fg')
 })
+
+test('Datumsfelder werden in Ortszeit befüllt', async () => {
+  const { toLocalDateTimeInput, toLocalDateInput } = await import('../src/lib/utils')
+  const date = new Date(2026, 8, 30, 0, 30) // 30.09.2026 00:30 Ortszeit
+  assert.equal(toLocalDateTimeInput(date), '2026-09-30T00:30')
+  assert.equal(toLocalDateInput(date), '2026-09-30')
+  assert.equal(toLocalDateTimeInput(null), '')
+  assert.equal(toLocalDateTimeInput('kaputt'), '')
+})

@@ -127,8 +127,16 @@ body {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
+/* Globale title-Tooltips: nur einblenden – die Position steckt im inline-transform. */
+.title-tooltip {
+  animation: title-tooltip-in 120ms ease-out;
+}
+@keyframes title-tooltip-in {
+  from { opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .tooltip-content { animation: none; }
+  .tooltip-content,
+  .title-tooltip { animation: none; }
 }
 
 /* ─── Seitenwechsel (React <ViewTransition> in der Dashboard-Shell) ───

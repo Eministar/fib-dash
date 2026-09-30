@@ -22,6 +22,7 @@ import { useInvestigationToast } from '@/components/investigations/use-investiga
 import type { BodycamClip } from '@/components/investigations/types'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useUrlState } from '@/hooks/use-url-state'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 export function BodycamCatalog() {
   const { user } = useAuth()
@@ -34,6 +35,7 @@ export function BodycamCatalog() {
   const canManage = hasPermission(user, 'investigations:manage')
 
   const [search, setSearch] = useUrlState('q', '')
+  const debouncedSearch = useDebouncedValue(search)
   const [agentId, setAgentId] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -41,14 +43,15 @@ export function BodycamCatalog() {
 
   const query = useMemo(() => {
     const params = new URLSearchParams()
-    if (search.trim()) params.set('search', search.trim())
+    if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
     if (agentId) params.set('recordedByAgentId', agentId)
-    if (from) params.set('from', new Date(from).toISOString())
+    // Mit Uhrzeit = Ortszeit-Mitternacht. Ohne liest JS das Datum als UTC und 0–2 Uhr fehlten.
+    if (from) params.set('from', new Date(`${from}T00:00:00`).toISOString())
     // Bis-Datum einschließlich: sonst fallen alle Clips des Tages heraus.
     if (to) params.set('to', new Date(`${to}T23:59:59`).toISOString())
     const suffix = params.toString()
     return `/api/investigations/clips${suffix ? `?${suffix}` : ''}`
-  }, [search, agentId, from, to])
+  }, [debouncedSearch, agentId, from, to])
 
   const { data, loading, refetch, error } = useFetch<BodycamClip[]>(canView ? query : null)
   const agents = useMemo(() => [...new Map((data ?? []).flatMap(clip => clip.recordedByAgent ? [[clip.recordedByAgent.id, clip.recordedByAgent] as const] : [])).values()], [data])
@@ -105,7 +108,7 @@ export function BodycamCatalog() {
       </div>
 
       {error && <p role="alert" className="mb-4 text-sm text-red-300">{error}</p>}
-      {loading ? (
+      {loading && !data ? (
         <PageLoader />
       ) : clips.length === 0 ? (
         <EmptyState

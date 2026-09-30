@@ -33,11 +33,11 @@ function CommitRow({ entry, current }: { entry: CommitLegendEntry; current: bool
       animate={{ opacity: 1, y: 0 }}
       className={`relative rounded-[13px] border px-4 py-3.5 transition-colors ${
         current
-          ? 'border-[#d4d4d4]/35 bg-[#d4d4d4]/[0.07]'
-          : 'border-[#343434]/65 bg-[#181818]/75 hover:border-[#494949]'
+          ? 'border-accent/35 bg-accent/[0.07]'
+          : 'border-line/65 bg-surface-sunken/75 hover:border-[#494949]'
       }`}
     >
-      {current && <span className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-[#d4d4d4]" />}
+      {current && <span className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-accent" />}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -51,10 +51,10 @@ function CommitRow({ entry, current }: { entry: CommitLegendEntry; current: bool
               </span>
             )}
           </div>
-          <h2 className="mt-2 text-[13px] font-semibold leading-5 text-[#f4f4f4]">{entry.subject}</h2>
+          <h2 className="mt-2 text-[13px] font-semibold leading-5 text-fg">{entry.subject}</h2>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#858585]">
             <span className="inline-flex items-center gap-1.5">
-              <GitCommit size={12} className="text-[#8c8c8c]" />
+              <GitCommit size={12} className="text-fg-subtle" />
               <span className="font-mono text-[#adadad]">{entry.shortCommit}</span>
             </span>
             <span>{entry.author}</span>
@@ -67,7 +67,7 @@ function CommitRow({ entry, current }: { entry: CommitLegendEntry; current: bool
           href={entry.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-[8px] border border-[#404040] px-2.5 py-1.5 text-[11px] font-semibold text-[#a5a5a5] transition-colors hover:border-[#d4d4d4]/40 hover:text-[#c3c3c3]"
+          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-[8px] border border-line-strong px-2.5 py-1.5 text-[11px] font-semibold text-[#a5a5a5] transition-colors hover:border-accent/40 hover:text-[#c3c3c3]"
         >
           <ExternalLink size={11} /> GitHub
         </a>
@@ -95,7 +95,7 @@ export default function ReleasesPage() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-[#404040] bg-[#1e1e1e] px-3 text-[11px] font-semibold text-[#bcbcbc] transition-colors hover:border-[#d4d4d4]/40 hover:text-[#c3c3c3]"
+            className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-line-strong bg-[#1e1e1e] px-3 text-[11px] font-semibold text-[#bcbcbc] transition-colors hover:border-accent/40 hover:text-[#c3c3c3]"
           >
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             Aktualisieren
@@ -110,12 +110,12 @@ export default function ReleasesPage() {
       )}
 
       <section className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]">
-        <div className="relative overflow-hidden rounded-[16px] border border-[#d4d4d4]/25 bg-[radial-gradient(circle_at_top_right,rgba(212,212,212,0.13),transparent_50%),#1b1b1b] p-5 sm:p-6">
-          <div className="absolute -right-10 -top-12 h-36 w-36 rounded-full border border-[#d4d4d4]/10" />
+        <div className="relative overflow-hidden rounded-[16px] border border-accent/25 bg-[radial-gradient(circle_at_top_right,rgba(212,212,212,0.13),transparent_50%),#1b1b1b] p-5 sm:p-6">
+          <div className="absolute -right-10 -top-12 h-36 w-36 rounded-full border border-accent/10" />
           <div className="relative">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#d4d4d4]/80">Aktuell ausgeliefert</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent/80">Aktuell ausgeliefert</p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-[10px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/[0.1] px-3 py-2 font-mono text-[14px] font-semibold text-[#f0d776]">
+              <span className="inline-flex items-center gap-2 rounded-[10px] border border-accent/30 bg-accent/[0.1] px-3 py-2 font-mono text-[14px] font-semibold text-[#f0d776]">
                 <GitCommit size={16} /> {data?.currentBuildShort ?? 'build-…'}
               </span>
               <span className="text-[11px] text-[#9d9d9d]">App-Version {data?.appVersion ?? '1.1.3'}</span>
@@ -124,35 +124,35 @@ export default function ReleasesPage() {
               {currentCommit?.subject ?? 'Die aktuelle Commit-Zuordnung wird gerade aus GitHub geladen.'}
             </p>
             {currentCommit && (
-              <p className="mt-2 text-[11px] text-[#8c8c8c]">
+              <p className="mt-2 text-[11px] text-fg-subtle">
                 Commit <span className="font-mono text-[#adadad]">{currentCommit.commit}</span> · {currentCommit.author}
               </p>
             )}
           </div>
         </div>
 
-        <div className="rounded-[16px] border border-[#343434]/70 bg-[#1b1b1b]/70 p-5">
+        <div className="rounded-[16px] border border-line/70 bg-surface/70 p-5">
           <div className="flex items-center gap-2 text-[#e2e2e2]">
-            <History size={16} className="text-[#d4d4d4]" />
+            <History size={16} className="text-accent" />
             <h2 className="text-[12px] font-semibold">Commit-Verzeichnis</h2>
           </div>
           <dl className="mt-4 space-y-3 text-[11px]">
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-[#8c8c8c]">Repository</dt>
+              <dt className="text-fg-subtle">Repository</dt>
               <dd className="inline-flex min-w-0 items-center gap-1.5 font-mono text-[#bcbcbc]">
                 <GitBranch size={12} /> {data?.repository ?? 'FIB Dashboard'}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-[#8c8c8c]">Zuordnungen</dt>
+              <dt className="text-fg-subtle">Zuordnungen</dt>
               <dd className="font-semibold tabular-nums text-[#e2e2e2]">{data?.entries.length ?? '—'}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-[#8c8c8c]">Quelle</dt>
+              <dt className="text-fg-subtle">Quelle</dt>
               <dd className="text-[#6ee7b7]">{data?.source === 'snapshot' ? 'Gespeicherter Snapshot' : 'GitHub live'}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-[#8c8c8c]">Letzte Sync</dt>
+              <dt className="text-fg-subtle">Letzte Sync</dt>
               <dd className="text-right text-[#bcbcbc]">{data ? formatDate(data.generatedAt) : '—'}</dd>
             </div>
           </dl>
@@ -162,15 +162,15 @@ export default function ReleasesPage() {
       <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-[13px] font-semibold text-[#f4f4f4]">Alle Commits</h2>
-            <p className="mt-1 text-[11px] text-[#8c8c8c]">Automatisch aus dem öffentlichen GitHub-Verlauf synchronisiert.</p>
+            <h2 className="text-[13px] font-semibold text-fg">Alle Commits</h2>
+            <p className="mt-1 text-[11px] text-fg-subtle">Automatisch aus dem öffentlichen GitHub-Verlauf synchronisiert.</p>
           </div>
-          <span className="rounded-md bg-[#242424] px-2 py-1 font-mono text-[11px] text-[#8c8c8c]">ID = build + SHA</span>
+          <span className="rounded-md bg-[#242424] px-2 py-1 font-mono text-[11px] text-fg-subtle">ID = build + SHA</span>
         </div>
 
         {loading && !data ? (
           <div className="space-y-2">
-            {[0, 1, 2].map((item) => <div key={item} className="h-[92px] animate-pulse rounded-[13px] border border-[#343434]/50 bg-[#1b1b1b]/55" />)}
+            {[0, 1, 2].map((item) => <div key={item} className="h-[92px] animate-pulse rounded-[13px] border border-line/50 bg-surface/55" />)}
           </div>
         ) : data?.entries.length ? (
           <div className="space-y-2.5">

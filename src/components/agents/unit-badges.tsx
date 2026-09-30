@@ -24,7 +24,7 @@ interface UnitBadgesProps {
 
 export function UnitBadges({ agent, units, unitsByKey, maxVisible, emptyClassName }: UnitBadgesProps) {
   const keys = agentUnitKeys(agent)
-  if (keys.length === 0) return <span className={cn('text-[11px] text-[#8c8c8c]', emptyClassName)}>—</span>
+  if (keys.length === 0) return <span className={cn('text-[11px] text-fg-subtle', emptyClassName)}>—</span>
 
   const map = unitsByKey ?? new Map((units ?? []).map((unit) => [unit.key, unit]))
   const visibleKeys = maxVisible ? keys.slice(0, maxVisible) : keys
@@ -40,7 +40,7 @@ export function UnitBadges({ agent, units, unitsByKey, maxVisible, emptyClassNam
             title={unitInfo?.name ?? getUnitLabel(unitKey)}
             className={cn(
               'inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-[7px] border px-2 py-[3px] text-[11px] font-semibold leading-none',
-              unitInfo ? 'border-[#343434]/70 bg-[#181818]/80 text-[#e2e2e2]' : getUnitBadgeClass(unitKey)
+              unitInfo ? 'border-line/70 bg-surface-sunken/80 text-[#e2e2e2]' : getUnitBadgeClass(unitKey)
             )}
             style={unitInfo ? { borderColor: `${unitInfo.color}70`, backgroundColor: `${unitInfo.color}14` } : undefined}
           >
@@ -55,7 +55,7 @@ export function UnitBadges({ agent, units, unitsByKey, maxVisible, emptyClassNam
         )
       })}
       {overflow > 0 && (
-        <span className="inline-flex rounded-[7px] border border-[#343434]/70 bg-[#181818]/80 px-2 py-[3px] text-[11px] font-semibold leading-none text-[#a6a6a6]">
+        <span className="inline-flex rounded-[7px] border border-line/70 bg-surface-sunken/80 px-2 py-[3px] text-[11px] font-semibold leading-none text-fg-muted">
           +{overflow}
         </span>
       )}

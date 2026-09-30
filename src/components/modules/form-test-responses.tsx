@@ -49,8 +49,8 @@ export function FormTestResponses({ testId }: { testId: string }) {
       <div className="mx-auto max-w-5xl">
         <PageHeader title="Abgaben" description="Die Auswertung konnte nicht geladen werden." eyebrow="Auswertung" />
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
-          <p className="text-[13px] text-[#a6a6a6]">{loadError ?? 'Auswertung nicht verfügbar'}</p>
+          <Clipboard size={26} className="mx-auto mb-2 text-fg-subtle" />
+          <p className="text-[13px] text-fg-muted">{loadError ?? 'Auswertung nicht verfügbar'}</p>
         </div>
       </div>
     )
@@ -82,8 +82,8 @@ export function FormTestResponses({ testId }: { testId: string }) {
 
       {responses.length === 0 ? (
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
-          <p className="text-[13px] text-[#a6a6a6]">Noch keine Abgaben vorhanden</p>
+          <Clipboard size={26} className="mx-auto mb-2 text-fg-subtle" />
+          <p className="text-[13px] text-fg-muted">Noch keine Abgaben vorhanden</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -96,15 +96,15 @@ export function FormTestResponses({ testId }: { testId: string }) {
           <QuestionAnalytics questions={data.test.questions} responses={responses} />
 
           <section className="glass-panel-elevated overflow-hidden rounded-[14px] border border-[#373737]/45">
-            <div className="border-b border-[#343434]/45 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a6a6a6]">Abgaben</p>
+            <div className="border-b border-line/45 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-fg-muted">Abgaben</p>
             </div>
-            <div className="divide-y divide-[#343434]/35">
+            <div className="divide-y divide-line/35">
               {responses.map((response) => (
                 <Link
                   key={response.id}
                   href={`/form-tests/manage/${testId}/responses/${response.id}`}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#232323]/55"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-raised/55"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13.5px] font-semibold text-white">
@@ -116,7 +116,7 @@ export function FormTestResponses({ testId }: { testId: string }) {
                   <Badge variant={response.reviewedAt ? 'success' : 'warning'}>
                     {response.reviewedAt ? 'Bewertet' : 'Offen'}
                   </Badge>
-                  <span className="flex items-center gap-1 text-[12px] font-medium text-[#d4d4d4]">
+                  <span className="flex items-center gap-1 text-[12px] font-medium text-accent">
                     Öffnen
                     <ChevronRight size={14} />
                   </span>

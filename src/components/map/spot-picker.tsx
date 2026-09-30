@@ -55,7 +55,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
   return (
     <div className="space-y-3">
       {value.length === 0 ? (
-        <div className="flex items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 py-5 text-sm text-[#8c8c8c]">
+        <div className="flex items-center gap-2 rounded-lg border border-dashed border-line px-4 py-5 text-sm text-fg-subtle">
           <MapPin size={18} />
           Noch keine Kartenpunkte verknüpft.
         </div>
@@ -67,11 +67,11 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
                 type="button"
                 onClick={() => toggle(spot)}
                 aria-label={`${spot.title} entfernen`}
-                className="flex items-center gap-1.5 rounded-full border border-[#343434] px-3 py-1.5 text-[12px] text-[#d4d4d4] hover:border-[#fca5a5]"
+                className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-[12px] text-accent hover:border-[#fca5a5]"
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} />
                 {spot.title}
-                <span className="text-[#8c8c8c]">×</span>
+                <span className="text-fg-subtle">×</span>
               </button>
             </li>
           ))}
@@ -112,16 +112,16 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
                       type="button"
                       onClick={() => toggle(spot)}
                       aria-pressed={selectedIds.includes(spot.id)}
-                      className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-[12.5px] ${selectedIds.includes(spot.id) ? 'border-[#a78bfa] bg-[#a78bfa]/10 text-white' : 'border-[#282828] text-[#c4c4c4] hover:border-[#404040]'}`}
+                      className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-[12.5px] ${selectedIds.includes(spot.id) ? 'border-[#a78bfa] bg-[#a78bfa]/10 text-white' : 'border-[#282828] text-[#c4c4c4] hover:border-line-strong'}`}
                     >
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: category.hex }} />
                       <span className="min-w-0 truncate">{spot.title}</span>
-                      <span className="ml-auto shrink-0 text-[11px] text-[#8c8c8c]">{category.label}</span>
+                      <span className="ml-auto shrink-0 text-[11px] text-fg-subtle">{category.label}</span>
                     </button>
                   </li>
                 )
               })}
-              {visible.length === 0 && <li className="px-1 py-3 text-[12px] text-[#8c8c8c]">Keine passenden Punkte.</li>}
+              {visible.length === 0 && <li className="px-1 py-3 text-[12px] text-fg-subtle">Keine passenden Punkte.</li>}
             </ul>
 
             {canCreate && (
@@ -130,7 +130,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
                 {placing ? 'Platzierung abbrechen' : 'Neuen Punkt setzen'}
               </Button>
             )}
-            {placing && !pendingPosition && <p className="text-[11.5px] text-[#a6a6a6]">Klicke auf die Karte, um die Position zu wählen.</p>}
+            {placing && !pendingPosition && <p className="text-[11.5px] text-fg-muted">Klicke auf die Karte, um die Position zu wählen.</p>}
             <Button type="button" size="sm" onClick={() => setOpen(false)}>Fertig ({value.length})</Button>
           </div>
         </div>
