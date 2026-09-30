@@ -40,39 +40,39 @@ interface NavContentProps {
 }
 
 export const mainNav: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view', color: '#0a84ff' },
-  { name: 'Ordnungen', href: '/ordnungen', icon: FileText, color: '#8e8e93' },
-  { name: 'Aushänge', href: '/publications', icon: Megaphone, permission: 'publications:manage', color: '#ff9f0a' },
-  { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view', color: '#30d158' },
-  { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view', color: '#0a84ff' },
-  { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view', color: '#636366' },
-  { name: 'Rangänderungen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view', color: '#5e5ce6' },
-  { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view', color: '#ff453a' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
+  { name: 'Ordnungen', href: '/ordnungen', icon: FileText },
+  { name: 'Aushänge', href: '/publications', icon: Megaphone, permission: 'publications:manage' },
+  { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view' },
+  { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view' },
+  { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
+  { name: 'Rangänderungen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
+  { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
   // Ohne `permission`: Sanktionen und Katalog sind für jeden eingeloggten Agent einsehbar.
-  { name: 'Sanktionen', href: '/sanktionen', icon: Gavel, color: '#ff375f' },
-  { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield, color: '#bf5af2' },
-  { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view', color: '#30b0c7' },
-  { name: 'Karte', href: '/map', icon: Map, permission: 'map:view', color: '#34c759' },
-  { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view', color: '#ff9f0a' },
-  { name: 'Vereinbarungen', href: '/vertraege', icon: FileSignature, permission: 'agreements:view', color: '#ac8e68' },
-  { name: 'Uploads', href: '/uploads', icon: FolderUp, permission: 'uploads:view', color: '#64d2ff' },
+  { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
+  { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield },
+  { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
+  { name: 'Karte', href: '/map', icon: Map, permission: 'map:view' },
+  { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
+  { name: 'Vereinbarungen', href: '/vertraege', icon: FileSignature, permission: 'agreements:view' },
+  { name: 'Uploads', href: '/uploads', icon: FolderUp, permission: 'uploads:view' },
 ]
 
 export const adminNav: NavItem[] = [
-  { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view', color: '#8e8e93' },
-  { name: 'Ränge', href: '/admin/ranks', icon: Shield, permission: 'ranks:manage', color: '#8e8e93' },
-  { name: 'Ausbildungen', href: '/admin/trainings', icon: GraduationCap, permission: 'trainings:manage', color: '#8e8e93' },
-  { name: 'Units verwalten', href: '/admin/units', icon: Briefcase, permission: 'units:manage', color: '#8e8e93' },
-  { name: 'Benutzer', href: '/admin/users', icon: UserCog, permission: 'users:manage', color: '#8e8e93' },
-  { name: 'Benutzergruppen', href: '/admin/user-groups', icon: Users, permission: 'groups:manage', color: '#8e8e93' },
-  { name: 'API-Tokens', href: '/admin/api-tokens', icon: KeyRound, permission: 'groups:manage', color: '#8e8e93' },
-  { name: 'Exporte', href: '/exports', icon: Download, permission: 'exports:view', color: '#8e8e93' },
-  { name: 'Einstellungen', href: '/admin/settings', icon: Settings, permission: 'settings:manage', color: '#8e8e93' },
+  { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
+  { name: 'Ränge', href: '/admin/ranks', icon: Shield, permission: 'ranks:manage' },
+  { name: 'Ausbildungen', href: '/admin/trainings', icon: GraduationCap, permission: 'trainings:manage' },
+  { name: 'Units verwalten', href: '/admin/units', icon: Briefcase, permission: 'units:manage' },
+  { name: 'Benutzer', href: '/admin/users', icon: UserCog, permission: 'users:manage' },
+  { name: 'Benutzergruppen', href: '/admin/user-groups', icon: Users, permission: 'groups:manage' },
+  { name: 'API-Tokens', href: '/admin/api-tokens', icon: KeyRound, permission: 'groups:manage' },
+  { name: 'Exporte', href: '/exports', icon: Download, permission: 'exports:view' },
+  { name: 'Einstellungen', href: '/admin/settings', icon: Settings, permission: 'settings:manage' },
 ]
 
 export const accountNav: NavItem[] = [
-  { name: 'Mein Konto', href: '/account', icon: KeyRound, color: '#0a84ff' },
-  { name: 'Build-Historie', href: '/releases', icon: History, color: '#636366' },
+  { name: 'Mein Konto', href: '/account', icon: KeyRound },
+  { name: 'Build-Historie', href: '/releases', icon: History },
 ]
 
 function isActivePath(pathname: string, href: string) {
@@ -104,17 +104,6 @@ function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem
   const Icon = item.icon
   const badgeLabel = badge ? (badge > 99 ? '99+' : String(badge)) : null
 
-  // macOS-Einstellungen: farbige, flache Icon-Kachel; die aktive Zeile in Systemblau.
-  const tile = (
-    <span
-      className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] text-white"
-      style={{ backgroundColor: item.color ?? '#8e8e93' }}
-      aria-hidden
-    >
-      <Icon size={15} strokeWidth={2} />
-    </span>
-  )
-
   const link = (
     <Link
       href={item.href}
@@ -124,21 +113,18 @@ function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem
       onClick={onNavigate}
       className={cn(
         'group relative flex items-center rounded-[8px] text-[13.5px] transition-colors duration-100',
-        compact ? 'mx-auto h-10 w-10 justify-center' : 'gap-2.5 px-2 py-[5px]',
+        compact ? 'mx-auto h-9 w-9 justify-center' : 'gap-3 px-2.5 py-[7px]',
         active
-          ? compact ? 'bg-[#3a3a3c]' : 'bg-[#0a84ff] text-white font-medium'
-          : 'text-[#e5e5ea] hover:bg-[#2c2c2e]'
+          ? 'bg-[#2c2c2e] text-white font-medium'
+          : 'text-[#98989d] hover:bg-[#1c1c1e] hover:text-[#f5f5f7]'
       )}
     >
-      {tile}
+      <Icon size={17} strokeWidth={1.75} className={cn('shrink-0', active ? 'text-white' : 'text-[#8e8e93] group-hover:text-[#c7c7cc]')} aria-hidden />
       {!compact && <span className="truncate">{item.name}</span>}
       {badgeLabel && (compact ? (
-        <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-[#ff453a] ring-2 ring-[#161617]" aria-hidden />
+        <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#f5f5f7]" aria-hidden />
       ) : (
-        <span className={cn(
-          'ml-auto min-w-[20px] rounded-full px-1.5 py-px text-center text-[11px] font-semibold tabular-nums',
-          active ? 'bg-white/25 text-white' : 'bg-[#ff453a] text-white',
-        )}>
+        <span className="ml-auto min-w-[20px] rounded-full bg-[#3a3a3c] px-1.5 py-px text-center text-[11px] font-medium tabular-nums text-[#e5e5ea]">
           {badgeLabel}
           <span className="sr-only"> offen</span>
         </span>

@@ -159,13 +159,15 @@ interface AccentTokens {
   glow: string
 }
 
+// Bewusst einfarbig: die Zahlen sollen sprechen, nicht sechs verschiedene Akzentfarben.
+const NEUTRAL_ACCENT: AccentTokens = { text: '#c7c7cc', bg: 'rgba(255,255,255,0.06)', ring: 'rgba(255,255,255,0.14)', glow: 'rgba(255,255,255,0.08)' }
 const ACCENTS: Record<AccentKey, AccentTokens> = {
-  emerald: { text: '#34d399', bg: 'rgba(52,211,153,0.10)', ring: 'rgba(52,211,153,0.28)', glow: 'rgba(52,211,153,0.20)' },
-  sky: { text: '#7dd3fc', bg: 'rgba(56,189,248,0.10)', ring: 'rgba(56,189,248,0.28)', glow: 'rgba(56,189,248,0.18)' },
-  amber: { text: '#fbbf24', bg: 'rgba(251,191,36,0.10)', ring: 'rgba(251,191,36,0.28)', glow: 'rgba(251,191,36,0.18)' },
-  gold: { text: '#cfcfcf', bg: 'rgba(212,212,212,0.10)', ring: 'rgba(212,212,212,0.30)', glow: 'rgba(212,212,212,0.22)' },
-  mint: { text: '#5eead4', bg: 'rgba(94,234,212,0.10)', ring: 'rgba(94,234,212,0.28)', glow: 'rgba(94,234,212,0.20)' },
-  rose: { text: '#fda4af', bg: 'rgba(244,114,182,0.10)', ring: 'rgba(244,114,182,0.30)', glow: 'rgba(244,114,182,0.20)' },
+  emerald: NEUTRAL_ACCENT,
+  sky: NEUTRAL_ACCENT,
+  amber: NEUTRAL_ACCENT,
+  gold: NEUTRAL_ACCENT,
+  mint: NEUTRAL_ACCENT,
+  rose: NEUTRAL_ACCENT,
 }
 
 const panelClass = 'rounded-xl border border-[#38383a] bg-[#1c1c1e]'
