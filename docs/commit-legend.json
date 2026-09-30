@@ -1,7 +1,34 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-09-30T18:03:02.249Z",
+  "generatedAt": "2026-09-30T18:40:01.435Z",
   "entries": [
+    {
+      "buildId": "build-5fde43893d",
+      "commit": "5fde43893de210b4cc2e0be66a7b6ddc90a54d12",
+      "shortCommit": "5fde43893d",
+      "subject": "feat: flacher macOS-Look und Skeletons statt Ladeanzeigen",
+      "author": "Eministar",
+      "date": "2026-09-30T18:38:28Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/5fde43893de210b4cc2e0be66a7b6ddc90a54d12"
+    },
+    {
+      "buildId": "build-73e19190b1",
+      "commit": "73e19190b168fecf081588e42dfb61220a64ded9",
+      "shortCommit": "73e19190b1",
+      "subject": "feat: Dienst-Nachfrage erst nach 2,5 Stunden statt 30 Minuten",
+      "author": "Eministar",
+      "date": "2026-09-30T18:38:26Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/73e19190b168fecf081588e42dfb61220a64ded9"
+    },
+    {
+      "buildId": "build-b598981e0b",
+      "commit": "b598981e0b40098ce57bc7dd67c7152ac3de3fd8",
+      "shortCommit": "b598981e0b",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-09-30T18:03:02Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/b598981e0b40098ce57bc7dd67c7152ac3de3fd8"
+    },
     {
       "buildId": "build-c8a9bd5228",
       "commit": "c8a9bd52283d4d46d332c558c78f7c0f3b077ec6",
