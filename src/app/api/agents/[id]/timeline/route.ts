@@ -5,18 +5,23 @@ import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { sessionDurationMs } from '@/lib/duty-times'
 import { PROBATION_ENTRY_RATING_LABELS, PROBATION_STATUS_LABELS, PROBATION_TYPE_LABELS } from '@/lib/probations'
 import { sanctionMeasureLabel } from '@/lib/sanction-catalog'
+import { sanctionStatusLabel } from '@/lib/sanctions'
+import { displayBadgeNumber } from '@/lib/badge-number'
+import { formatDateTime } from '@/lib/utils'
+import { formatDuration, type TimelineDetail, type TimelineEntry, type TimelineResponse } from '@/lib/agent-timeline'
 
-type TimelineItem = {
-  id: string
+type Draft = Omit<TimelineEntry, 'occurredAt' | 'details' | 'description'> & {
+  /** Bisheriger Typ-Name – externe API-Nutzer lesen `type` weiter. */
   type: string
-  title: string
+  occurredAt: Date
   description?: string | null
-  createdAt: Date
-  meta?: Record<string, unknown>
+  details?: (TimelineDetail | null | false | undefined)[]
 }
 
-function push(items: TimelineItem[], item: TimelineItem) {
-  items.push(item)
+/** Nur befüllte Details übernehmen – leere Felder wären in der Akte Rauschen. */
+function detail(label: string, value: unknown): TimelineDetail | null {
+  if (value === null || value === undefined || value === '') return null
+  return { label, value: String(value) }
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +44,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       },
       sanctions: { include: { issuedBy: { select: { displayName: true } } } },
       agentNotes: { include: { author: { select: { displayName: true } } } },
+      recordEntries: { include: { author: { select: { displayName: true } } } },
       terminations: { include: { terminatedBy: { select: { displayName: true } } } },
       trainings: { include: { training: true } },
       absenceNotices: true,
@@ -59,150 +65,252 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   })
   if (!agent) return notFound('Agent')
 
-  const items: TimelineItem[] = []
-  push(items, {
+  const drafts: Draft[] = []
+  const push = (draft: Draft) => drafts.push(draft)
+
+  push({
     id: `hire-${agent.id}`,
     type: 'hire',
+    category: 'status',
+    tone: 'positive',
     title: 'Einstellung',
-    description: `${agent.firstName} ${agent.lastName} als ${agent.rank.name}`,
-    createdAt: agent.hireDate,
+    description: `Eingestellt als ${agent.rank.name}`,
+    occurredAt: agent.hireDate,
   })
 
   for (const log of agent.promotionLogs) {
-    push(items, {
+    const promoted = log.newRank.sortOrder < log.oldRank.sortOrder
+    push({
       id: `rank-${log.id}`,
-      type: log.newRank.sortOrder < log.oldRank.sortOrder ? 'promotion' : 'demotion',
-      title: log.newRank.sortOrder < log.oldRank.sortOrder ? 'Beförderung' : 'Degradierung',
+      type: promoted ? 'promotion' : 'demotion',
+      category: 'rank',
+      tone: promoted ? 'positive' : 'negative',
+      title: promoted ? 'Beförderung' : 'Degradierung',
       description: `${log.oldRank.name} → ${log.newRank.name}${log.note ? ` · ${log.note}` : ''}`,
-      createdAt: log.createdAt,
-      meta: { actor: log.performedBy?.displayName ?? 'Gelöscht', oldBadgeNumber: log.oldBadgeNumber, newBadgeNumber: log.newBadgeNumber },
+      occurredAt: log.createdAt,
+      details: [
+        log.oldBadgeNumber !== log.newBadgeNumber && log.newBadgeNumber
+          ? detail('Dienstnummer', `${displayBadgeNumber(log.oldBadgeNumber)} → ${displayBadgeNumber(log.newBadgeNumber)}`)
+          : null,
+        detail('Durchgeführt von', log.performedBy?.displayName ?? 'Gelöschter Benutzer'),
+      ],
     })
   }
 
   for (const sanction of agent.sanctions) {
-    push(items, {
+    push({
       id: `sanction-${sanction.id}`,
       type: 'sanction',
-      title: `Sanktion · Penal Grade ${sanction.penalGrade}`,
+      category: 'sanction',
+      tone: 'negative',
+      title: `Sanktion · PG ${sanction.penalGrade}`,
       description: sanction.reason,
-      createdAt: sanction.createdAt,
-      meta: { status: sanction.status, measure: sanctionMeasureLabel(sanction.level), actor: sanction.issuedBy?.displayName ?? 'Gelöscht' },
+      occurredAt: sanction.createdAt,
+      details: [
+        detail('Maßnahme', sanctionMeasureLabel(sanction.level)),
+        detail('Status', sanctionStatusLabel(sanction.status)),
+        detail('Ausgestellt von', sanction.issuedBy?.displayName ?? 'Gelöschter Benutzer'),
+      ],
     })
   }
 
   for (const note of agent.agentNotes) {
-    push(items, {
+    push({
       id: `note-${note.id}`,
       type: 'note',
+      category: 'note',
+      tone: 'neutral',
       title: note.title || 'Notiz',
       description: note.content,
-      createdAt: note.createdAt,
-      meta: { author: note.author?.displayName ?? 'Gelöscht', pinned: note.pinned },
+      occurredAt: note.createdAt,
+      details: [
+        detail('Verfasst von', note.author?.displayName ?? 'Gelöschter Benutzer'),
+        note.pinned ? detail('Markierung', 'Angepinnt') : null,
+      ],
+    })
+  }
+
+  for (const record of agent.recordEntries) {
+    const positive = record.kind === 'POSITIVE'
+    push({
+      id: `record-${record.id}`,
+      type: 'record',
+      category: 'record',
+      tone: positive ? 'positive' : 'negative',
+      title: `${positive ? 'Positiver' : 'Negativer'} Akteneintrag · ${record.title}`,
+      description: record.content,
+      occurredAt: record.createdAt,
+      details: [
+        detail('Verfasst von', record.author?.displayName ?? (record.source === 'manual' ? 'Gelöschter Benutzer' : 'System')),
+      ],
     })
   }
 
   for (const termination of agent.terminations) {
-    push(items, {
+    push({
       id: `termination-${termination.id}`,
       type: 'termination',
+      category: 'status',
+      tone: 'negative',
       title: 'Kündigung',
       description: termination.reason,
-      createdAt: termination.terminatedAt,
-      meta: { actor: termination.terminatedBy?.displayName ?? 'Gelöscht' },
+      occurredAt: termination.terminatedAt,
+      details: [
+        detail('Letzter Rang', termination.previousRank),
+        detail('Durchgeführt von', termination.terminatedBy?.displayName ?? 'Gelöschter Benutzer'),
+      ],
     })
   }
 
+  // Nur abgeschlossene Ausbildungen sind Ereignisse; offene stehen in der Agent-Ansicht.
   for (const training of agent.trainings) {
-    push(items, {
+    if (!training.completed) continue
+    push({
       id: `training-${training.id}`,
       type: 'training',
-      title: training.completed ? 'Ausbildung abgeschlossen' : 'Ausbildung offen',
+      category: 'training',
+      tone: 'positive',
+      title: 'Ausbildung abgeschlossen',
       description: training.training.label,
-      createdAt: training.updatedAt,
-      meta: { completed: training.completed },
+      occurredAt: training.updatedAt,
     })
   }
 
   for (const absence of agent.absenceNotices) {
-    push(items, {
+    push({
       id: `absence-${absence.id}`,
       type: 'absence',
+      category: 'absence',
+      tone: 'neutral',
       title: 'Abmeldung',
       description: absence.reason,
-      createdAt: absence.startsAt,
-      meta: { endsAt: absence.endsAt, source: absence.source },
+      occurredAt: absence.startsAt,
+      details: [
+        detail('Bis', formatDateTime(absence.endsAt)),
+        detail('Eingetragen über', absence.source === 'discord' ? 'Discord' : 'Dashboard'),
+      ],
     })
   }
 
   for (const duty of agent.dutySessions) {
-    push(items, {
+    push({
       id: `duty-${duty.id}`,
       type: 'duty',
-      title: duty.clockOutAt ? 'Dienstzeit beendet' : 'Dienstzeit gestartet',
-      description: duty.clockOutAt ? undefined : 'Aktive Dienstzeit',
-      createdAt: duty.clockInAt,
-      meta: { clockOutAt: duty.clockOutAt, durationMs: sessionDurationMs(duty) },
+      category: 'duty',
+      tone: 'neutral',
+      title: duty.clockOutAt ? 'Dienst' : 'Im Dienst',
+      description: null,
+      occurredAt: duty.clockInAt,
+      details: [
+        duty.clockOutAt ? detail('Ende', formatDateTime(duty.clockOutAt)) : detail('Status', 'Läuft noch'),
+        detail('Dauer', formatDuration(sessionDurationMs(duty))),
+      ],
     })
   }
 
   for (const playtime of agent.playtimeSessions) {
-    push(items, {
+    push({
       id: `playtime-${playtime.id}`,
       type: 'playtime',
+      category: 'duty',
+      tone: 'neutral',
       title: 'Spielzeit',
       description: playtime.playerName,
-      createdAt: playtime.startedAt,
-      meta: { endedAt: playtime.endedAt, durationMs: sessionDurationMs({ clockInAt: playtime.startedAt, clockOutAt: playtime.endedAt }) },
+      occurredAt: playtime.startedAt,
+      details: [
+        detail('Dauer', formatDuration(sessionDurationMs({ clockInAt: playtime.startedAt, clockOutAt: playtime.endedAt }))),
+      ],
     })
   }
 
   for (const probation of agent.probations) {
-    push(items, {
+    push({
       id: `probation-${probation.id}`,
       type: 'probation',
+      category: 'probation',
+      tone: probation.status === 'FAILED' ? 'negative' : probation.status === 'PASSED' ? 'positive' : 'neutral',
       title: `${PROBATION_TYPE_LABELS[probation.type]}: ${PROBATION_STATUS_LABELS[probation.status]}`,
       description: probation.resultNote,
-      createdAt: probation.startsAt,
-      meta: { endsAt: probation.endsAt, decidedBy: probation.decidedBy?.displayName ?? null },
+      occurredAt: probation.startsAt,
+      details: [
+        detail('Ende', formatDateTime(probation.endsAt)),
+        detail('Entschieden von', probation.decidedBy?.displayName),
+      ],
     })
 
     for (const entry of probation.entries) {
-      push(items, {
+      push({
         id: `probation-entry-${entry.id}`,
         type: 'probation',
-        title: `Probezeit-Eintrag: ${PROBATION_ENTRY_RATING_LABELS[entry.rating]}`,
+        category: 'probation',
+        tone: 'neutral',
+        title: `Probezeit-Bewertung: ${PROBATION_ENTRY_RATING_LABELS[entry.rating]}`,
         description: entry.comment,
-        createdAt: entry.createdAt,
-        meta: {
-          probationType: PROBATION_TYPE_LABELS[probation.type],
-          author: entry.createdBy?.displayName ?? 'Gelöscht',
-        },
+        occurredAt: entry.createdAt,
+        details: [
+          detail('Probezeit', PROBATION_TYPE_LABELS[probation.type]),
+          detail('Bewertet von', entry.createdBy?.displayName ?? 'Gelöschter Benutzer'),
+        ],
       })
     }
   }
 
   for (const event of agent.calendarEvents) {
-    push(items, {
+    push({
       id: `event-${event.id}`,
       type: 'calendar',
+      category: 'calendar',
+      tone: 'neutral',
       title: event.title,
       description: event.description,
-      createdAt: event.startsAt,
-      meta: { eventType: event.type, location: event.location, endsAt: event.endsAt },
+      occurredAt: event.startsAt,
+      details: [
+        detail('Ort', event.location),
+        event.endsAt ? detail('Ende', formatDateTime(event.endsAt)) : null,
+      ],
     })
   }
 
   for (const audit of agent.auditLogs) {
-    push(items, {
+    push({
       id: `audit-${audit.id}`,
       type: 'audit',
+      category: 'audit',
+      tone: 'neutral',
       title: audit.action,
       description: audit.details,
-      createdAt: audit.createdAt,
-      meta: { actor: audit.user?.displayName ?? 'Gelöscht', oldValue: audit.oldValue, newValue: audit.newValue },
+      occurredAt: audit.createdAt,
+      details: [
+        detail('Von', audit.user?.displayName ?? 'System'),
+        audit.oldValue || audit.newValue ? detail('Änderung', `${audit.oldValue ?? '—'} → ${audit.newValue ?? '—'}`) : null,
+      ],
     })
   }
 
-  items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-  return success({ agent: { id: agent.id, firstName: agent.firstName, lastName: agent.lastName, badgeNumber: agent.badgeNumber }, items })
+  drafts.sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
+
+  const response: TimelineResponse = {
+    agent: {
+      id: agent.id,
+      firstName: agent.firstName,
+      lastName: agent.lastName,
+      badgeNumber: agent.badgeNumber,
+      rankName: agent.rank.name,
+      status: agent.status,
+      hireDate: agent.hireDate.toISOString(),
+    },
+    items: drafts.map((draft) => ({
+      id: draft.id,
+      // Abwärtskompatibel für API-Nutzer: bisherige Felder `type` und `createdAt`.
+      type: draft.type,
+      createdAt: draft.occurredAt.toISOString(),
+      category: draft.category,
+      tone: draft.tone,
+      title: draft.title,
+      description: draft.description?.trim() || null,
+      occurredAt: draft.occurredAt.toISOString(),
+      details: (draft.details ?? []).filter((item): item is TimelineDetail => Boolean(item)),
+    })),
+  }
+  return success(response)
 }

@@ -160,15 +160,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#000000]">
+    <div className="flex min-h-screen bg-[#000000] print:block print:bg-white">
       <Sidebar />
       <main className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Rechtsbündig über dem Inhalt: erreichbar von jeder Seite, ohne
             das Layout der einzelnen Ansichten anzufassen. */}
-        <div className="flex justify-end px-3 pt-16 sm:px-6 lg:px-8 lg:pt-4">
+        <div className="flex justify-end px-3 pt-16 sm:px-6 lg:px-8 lg:pt-4 print:hidden">
           <GlobalSearch />
         </div>
-        <div className="w-full flex-1 px-3 pb-10 pt-3 sm:px-6 lg:px-8">
+        <div className="w-full flex-1 px-3 pb-10 pt-3 sm:px-6 lg:px-8 print:p-0">
           <ConnectionBanner />
           {/* Nur beim Seitenwechsel überblenden – Datenaktualisierungen laufen nicht über Transitions. */}
           <ViewTransition key={pathname} enter="page-enter" exit="page-exit" default="none">

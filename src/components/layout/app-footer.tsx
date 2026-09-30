@@ -17,7 +17,7 @@ function GitHubLogo({ className }: { className?: string }) {
 
 export function AppFooter() {
   return (
-    <footer className="mt-auto px-3 pb-5 sm:px-6 lg:px-8">
+    <footer className="mt-auto px-3 pb-5 sm:px-6 lg:px-8 print:hidden">
       <div className="flex flex-col gap-2 border-t border-[#38383a]/65 pt-4 text-[11px] text-[#8e8e93] sm:flex-row sm:items-center sm:justify-between">
         <p>
           Entwickelt von{' '}

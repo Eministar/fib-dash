@@ -24,7 +24,7 @@ export function ScrollToTop() {
       onClick={scrollToTop}
       aria-label="Nach oben scrollen"
       title="Nach oben"
-      className={`fixed bottom-5 right-5 z-40 inline-flex h-10 w-10 items-center justify-center rounded-[11px] border border-[#d4d4d4]/35 bg-[#1c1c1e]/92 text-[#d4d4d4] shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl transition-[opacity,transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-[#2c2c2e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000] ${visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-3 opacity-0'}`}
+      className={`print:hidden fixed bottom-5 right-5 z-40 inline-flex h-10 w-10 items-center justify-center rounded-[11px] border border-[#d4d4d4]/35 bg-[#1c1c1e]/92 text-[#d4d4d4] shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl transition-[opacity,transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-[#2c2c2e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000] ${visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-3 opacity-0'}`}
     >
       <ArrowUp size={17} strokeWidth={2.2} />
     </button>

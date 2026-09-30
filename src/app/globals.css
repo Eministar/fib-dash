@@ -1830,3 +1830,52 @@ select option:hover {
     opacity: 0.025;
   }
 }
+
+/* ─── Personalakte: Druck / PDF-Export ───
+   Der Zeitstrahl wird beim Drucken zu einem hellen, amtlichen Auszug:
+   weißes Papier, dunkle Schrift, dezente Trennlinien, kein Eintrag wird
+   über einen Seitenumbruch zerrissen. Die App-Hülle blendet sich per
+   `print:hidden` selbst aus. */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm 18mm;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    color-scheme: light;
+  }
+  .timeline-print,
+  .timeline-print * {
+    color: #1d1d1f !important;
+    background-color: transparent !important;
+    border-color: #d2d2d7 !important;
+    box-shadow: none !important;
+  }
+  .timeline-print .timeline-print-muted,
+  .timeline-print time,
+  .timeline-print dt,
+  .timeline-print .timeline-month-label {
+    color: #6e6e73 !important;
+  }
+  .timeline-print .timeline-list {
+    border: 1px solid #d2d2d7 !important;
+    border-radius: 8px;
+  }
+  .timeline-print .timeline-entry {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .timeline-print .timeline-month-label {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .timeline-print .timeline-dot-positive { background-color: #248a3d !important; }
+  .timeline-print .timeline-dot-negative { background-color: #d70015 !important; }
+  .timeline-print .timeline-dot-neutral { background-color: #8e8e93 !important; }
+  .timeline-print .timeline-entry span[aria-hidden] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

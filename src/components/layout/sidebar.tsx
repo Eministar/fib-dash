@@ -304,7 +304,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 border-b border-[#38383a] bg-[#161617]/85 backdrop-blur-xl">
+      <div className="lg:hidden print:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 border-b border-[#38383a] bg-[#161617]/85 backdrop-blur-xl">
         <button
           onClick={() => setMobileOpen(true)}
           className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-[#d4d4d4] hover:bg-[#2c2c2e] transition-colors"
@@ -319,7 +319,7 @@ export function Sidebar() {
         <div className="w-9" aria-hidden />
       </div>
 
-      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-[#38383a]/70 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-14' : 'w-[244px]')}>
+      <aside className={cn('hidden lg:flex lg:flex-col print:!hidden sidebar-gradient border-r border-[#38383a]/70 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-14' : 'w-[244px]')}>
         <button type="button" onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed}
           aria-label={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
           title={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
@@ -363,7 +363,7 @@ export function Sidebar() {
         )}
       </AnimatePresence>
 
-      <div className={cn("hidden lg:block lg:shrink-0 transition-[width] duration-200 motion-reduce:transition-none", collapsed ? "lg:w-14" : "lg:w-[244px]")} />
+      <div className={cn("hidden lg:block print:!hidden lg:shrink-0 transition-[width] duration-200 motion-reduce:transition-none", collapsed ? "lg:w-14" : "lg:w-[244px]")} />
     </>
   )
 }

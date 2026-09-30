@@ -35,7 +35,7 @@ export function ConnectionBanner() {
   return (
     <div
       role="status"
-      className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-amber-500/30 bg-amber-500/[0.08] px-4 py-2.5 text-[12.5px] text-amber-100"
+      className="print:hidden mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-amber-500/30 bg-amber-500/[0.08] px-4 py-2.5 text-[12.5px] text-amber-100"
     >
       <WifiOff size={15} className="shrink-0 text-amber-300" />
       <span className="min-w-0 flex-1">

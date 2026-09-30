@@ -143,7 +143,7 @@ export const ENDPOINTS: EndpointSpec[] = [
     path: '/agents/{id}/timeline',
     category: 'Agents',
     summary: 'Agent-Timeline',
-    description: 'Vollständige Historie: Beförderungen, Kündigungen, Notizen, Audit-Logs.',
+    description: 'Personalakte als Zeitstrahl: Einstellung, Beförderungen, Sanktionen, Ausbildungen, Abmeldungen, Notizen, Akteneinträge, Kündigungen, Probezeit, Termine, Dienstzeiten, Audit-Logs. Jeder Eintrag hat `category`, `tone`, `title`, `description`, `occurredAt` und beschriftete `details` (`label`/`value`). `type` und `createdAt` bleiben aus Kompatibilitätsgründen erhalten.',
     scope: 'agents:view',
     params: [{ name: 'id', in: 'path', required: true, description: 'Agent-ID', schema: { type: 'string' } }],
   },

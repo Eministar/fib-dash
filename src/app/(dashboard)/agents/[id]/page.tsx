@@ -888,7 +888,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex gap-1.5 flex-wrap">
             <AgentAvatar agent={agent} size="sm" ringColor={agent.rank?.color} className="mr-1" />
             <Link href={`/agents/${id}/timeline`}>
-              <Button variant="secondary" size="sm"><History size={14} strokeWidth={1.75} /> Akte</Button>
+              <Button variant="secondary" size="sm"><History size={14} strokeWidth={1.75} /> Personalakte</Button>
             </Link>
             <a href={`/api/exports?type=agent&format=html&agentId=${id}`} target="_blank" rel="noreferrer">
               <Button variant="secondary" size="sm"><Download size={14} strokeWidth={1.75} /> Export</Button>
