@@ -24,6 +24,7 @@ import {
 } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
 import { tokenizedWhere } from '@/lib/search-match'
+import { checklistFromTemplate, openRolesFromTemplate, toTemplateData } from '@/lib/investigation-templates'
 
 export const dynamic = 'force-dynamic'
 
@@ -127,6 +128,17 @@ export async function POST(req: NextRequest) {
     const dossierId = cleanText(body.dossierId) || null
     if (dossierId && !await prisma.dossier.findUnique({ where: { id: dossierId }, select: { id: true } })) return error('Dauerakte wurde nicht gefunden', 404)
 
+    // Vorlage: Checkliste und offene Rollen werden in die Akte kopiert, damit
+    // spätere Änderungen an der Vorlage laufende Akten nicht verändern.
+    const templateId = cleanText(body.templateId) || null
+    let templateCopy: { checklist: ReturnType<typeof checklistFromTemplate>; openRoles: ReturnType<typeof openRolesFromTemplate> } | null = null
+    if (templateId) {
+      const template = await prisma.investigationTemplate.findUnique({ where: { id: templateId } })
+      if (!template || !template.active) return error('Aktenvorlage wurde nicht gefunden oder ist deaktiviert', 404)
+      const data = toTemplateData(template)
+      templateCopy = { checklist: checklistFromTemplate(data.checklist), openRoles: openRolesFromTemplate(data.roles) }
+    }
+
     const caseNumber = await nextInvestigationCaseNumber()
 
     const investigation = await prisma.investigation.create({
@@ -139,6 +151,7 @@ export async function POST(req: NextRequest) {
         classified,
         leadAgentId,
         createdById: user.id,
+        ...(templateCopy ? { templateId, checklist: templateCopy.checklist, openRoles: templateCopy.openRoles } : {}),
         ...(dossierId ? { dossiers: { connect: { id: dossierId } } } : {}),
         assignees: { create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })) },
         mapSpots: { connect: mapSpotIds.map((id) => ({ id })) },

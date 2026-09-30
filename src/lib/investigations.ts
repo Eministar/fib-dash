@@ -142,6 +142,7 @@ export const investigationListInclude = {
 export const investigationDetailInclude = {
   leadAgent: { select: agentSelect },
   createdBy: { select: userSelect },
+  template: { select: { id: true, name: true } },
   assignees: {
     orderBy: { createdAt: 'asc' },
     select: {

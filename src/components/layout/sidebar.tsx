@@ -68,6 +68,7 @@ export const adminNav: NavItem[] = [
   { name: 'API-Tokens', href: '/admin/api-tokens', icon: KeyRound, permission: 'groups:manage' },
   { name: 'Exporte', href: '/exports', icon: Download, permission: 'exports:view' },
   { name: 'Einstellungen', href: '/admin/settings', icon: Settings, permission: 'settings:manage' },
+  { name: 'Aktenvorlagen', href: '/admin/investigation-templates', icon: Settings, permission: 'investigations:templates' },
 ]
 
 export const accountNav: NavItem[] = [

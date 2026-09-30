@@ -1757,6 +1757,16 @@ model Investigation {
   leadAgent   Agent?  @relation("InvestigationLeadAgent", fields: [leadAgentId], references: [id], onDelete: SetNull)
 
   closedAt    DateTime?
+
+  /// Vorlage, aus der die Akte angelegt wurde (nur zur Nachvollziehbarkeit).
+  templateId String?
+  template   InvestigationTemplate? @relation("InvestigationTemplateUsage", fields: [templateId], references: [id], onDelete: SetNull)
+  /// Abhakbare Arbeitsschritte: `[{ id, label, done, doneAt, doneBy }]`.
+  checklist  Json?
+  /// Offene Beteiligte aus der Vorlage, die noch einer Person zugeordnet werden:
+  /// `[{ id, role, label }]`. Zugeordnete Rollen wandern in `persons`.
+  openRoles  Json?
+
   createdById String?
   createdBy   User?     @relation("InvestigationCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now())
@@ -1775,6 +1785,40 @@ model Investigation {
   @@index([priority, updatedAt])
   @@index([leadAgentId])
   @@index([createdById])
+  @@index([templateId])
+}
+
+/// Vorlage für neue Einsatzakten (z. B. Drogen, Korruption, Raub). Füllt beim
+/// Anlegen Titel, Abschnitte, Priorität, Verschlusssache und Beteiligte vor und
+/// gibt der Akte eine Checkliste mit. Änderungen an der Vorlage wirken nur auf
+/// künftige Akten – bestehende behalten ihre Kopie.
+model InvestigationTemplate {
+  id          String                @id @default(cuid())
+  name        String                @db.VarChar(100)
+  description String?               @db.Text
+  /// Wird dem Aktentitel vorangestellt, z. B. "Drogen – ".
+  titlePrefix String?               @db.VarChar(80)
+  /// Vorbereitete Abschnitte der Zusammenfassung (Markdown).
+  summary     String?               @db.Text
+  priority    InvestigationPriority @default(NORMAL)
+  classified  Boolean               @default(false)
+  /// Arbeitsschritte als Text-Liste: `["Tatort sichern", …]`.
+  checklist   Json                  @default("[]")
+  /// Rollen-Platzhalter: `[{ role: "SUSPECT", label: "Tatverdächtiger" }]`.
+  roles       Json                  @default("[]")
+  /// Vorgeschlagene Fallführung (Agent-ID, wird beim Anlegen geprüft).
+  leadAgentId String?
+  /// Vorgeschlagene Ermittler (Agent-IDs).
+  assigneeIds Json                  @default("[]")
+  active      Boolean               @default(true)
+  sortOrder   Int                   @default(0)
+  createdById String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  investigations Investigation[] @relation("InvestigationTemplateUsage")
+
+  @@index([active, sortOrder])
 }
 
 /// Zusätzlich zugewiesene Ermittler. Sie behalten Zugriff auf Verschlusssachen.

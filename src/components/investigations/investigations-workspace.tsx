@@ -42,6 +42,7 @@ import { useInvestigationToast } from '@/components/investigations/use-investiga
 import type { AgentLite, InvestigationListItem } from '@/components/investigations/types'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigation-templates'
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'Alle Status' },
@@ -55,6 +56,8 @@ const PRIORITY_FILTER_OPTIONS = [
 ]
 
 type CreateForm = {
+  /** Gewählte Aktenvorlage ('' = ohne Vorlage). */
+  templateId: string
   title: string
   dossierId: string
   affiliation: '' | 'yes' | 'no'
@@ -72,6 +75,7 @@ type CreateForm = {
  *  Ermittler soll eine bewusste Entscheidung sein, nicht der Normalfall. */
 function emptyForm(): CreateForm {
   return {
+    templateId: '',
     title: '',
     dossierId: '',
     affiliation: '',
@@ -116,6 +120,20 @@ export function InvestigationsWorkspace() {
 
   const { data, loading, refetch } = useFetch<InvestigationListItem[]>(canView ? query : null)
   const { data: agents } = useFetch<AgentLite[]>(canManage && createOpen ? '/api/agents' : null)
+  const { data: templates, loading: templatesLoading, error: templatesError } = useFetch<InvestigationTemplateData[]>(canManage && createOpen ? '/api/investigation-templates' : null)
+  const selectedTemplate = templates?.find((template) => template.id === form.templateId) ?? null
+  // Was die zuletzt gewählte Vorlage vorausgefüllt hat. Nur solange Titel und
+  // Zusammenfassung unverändert sind, darf ein Vorlagenwechsel sie ersetzen.
+  const [prefill, setPrefill] = useState(() => templatePrefill(null))
+
+  const applyTemplate = (template: InvestigationTemplateData | null) => {
+    const next = templatePrefill(template, agents?.map(agent => agent.id))
+    setForm((prev) => ({
+      ...mergeTemplatePrefill(prev, prefill, next),
+      templateId: template?.id ?? '',
+    }))
+    setPrefill(next)
+  }
   const dossiers = useFetch<{ items: { id: string; title: string }[] }>(createOpen && form.affiliation === 'yes' ? `/api/investigations/dossiers?search=${encodeURIComponent(dossierSearch)}` : null)
 
   const agentOptions = useMemo(
@@ -132,7 +150,7 @@ export function InvestigationsWorkspace() {
   if (!canView) return <UnauthorizedContent />
 
   const handleCreate = async () => {
-    if (!form.title.trim()) {
+    if (!form.title.trim() || form.title.trim() === prefill.title.trim()) {
       toastError('Titel fehlt', 'Bitte einen Titel für die Akte angeben.')
       return
     }
@@ -141,7 +159,8 @@ export function InvestigationsWorkspace() {
       const created = await execute('/api/investigations', {
         method: 'POST',
         body: JSON.stringify({
-          title: form.title,
+          title: composeTitle(selectedTemplate?.titlePrefix, form.title),
+          templateId: form.templateId || null,
           dossierId: form.affiliation === 'yes' ? form.dossierId : null,
           summary: form.summary,
           status: form.status,
@@ -156,6 +175,7 @@ export function InvestigationsWorkspace() {
       toastSuccess('Akte angelegt', 'Die Ermittlungsakte wurde erstellt.')
       setCreateOpen(false)
       setForm(emptyForm())
+      setPrefill(templatePrefill(null))
       await refetch()
       if (created && typeof created === 'object' && 'id' in created) router.push(`/investigations/${created.id}`)
     } catch (cause) {
@@ -169,6 +189,59 @@ export function InvestigationsWorkspace() {
   const filtered = Boolean(search.trim()) || status !== 'ALL' || priority !== 'ALL'
 
   const steps: WizardStep[] = [
+    {
+      id: 'vorlage',
+      label: 'Vorlage',
+      content: (
+        <div className="space-y-3">
+          <p className="text-[12.5px] leading-relaxed text-[#98989d]">
+            Eine Vorlage füllt Titel, Abschnitte, Priorität und Beteiligte vor und gibt der Akte eine Checkliste mit. Alles bleibt danach änderbar.
+          </p>
+          {templatesLoading && !templates ? (
+            <ListSkeleton rows={3} compact />
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[null, ...(templates ?? [])].map((template) => {
+                const active = (template?.id ?? '') === form.templateId
+                const meta = template
+                  ? [
+                      template.checklist.length ? `${template.checklist.length} Checklistenpunkte` : null,
+                      template.roles.length ? `${template.roles.length} offene Rollen` : null,
+                      INVESTIGATION_PRIORITY_LABELS[template.priority],
+                      template.classified ? 'Verschlusssache' : null,
+                    ].filter(Boolean).join(' · ')
+                  : 'Leere Akte, alles selbst ausfüllen'
+                return (
+                  <button
+                    key={template?.id ?? 'none'}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => applyTemplate(template)}
+                    className={cn(
+                      'rounded-[10px] border p-3.5 text-left transition-colors',
+                      active ? 'border-[#0a84ff] bg-[#0a84ff]/10' : 'border-[#38383a] hover:border-[#48484a] hover:bg-[#1c1c1e]',
+                    )}
+                  >
+                    <span className="block text-[13.5px] font-semibold text-white">{template?.name ?? 'Ohne Vorlage'}</span>
+                    {template?.description && <span className="mt-1 block text-[12.5px] leading-relaxed text-[#98989d]">{template.description}</span>}
+                    <span className="mt-1.5 block text-[11.5px] text-[#8e8e93]">{meta}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {templatesError && <p role="alert" className="text-sm text-red-400">Vorlagen konnten nicht geladen werden: {templatesError}</p>}
+          {templates && templates.length === 0 && (
+            <p className="text-[12px] text-[#8e8e93]">
+              Noch keine Vorlagen vorhanden.
+              {hasPermission(user, 'investigations:templates') && (
+                <> <Link href="/admin/investigation-templates" className="text-[#0a84ff] hover:underline">Vorlagen anlegen</Link></>
+              )}
+            </p>
+          )}
+        </div>
+      ),
+    },
     {
       id: 'zusammenhang', label: 'Zusammenhang',
       invalid: !form.affiliation ? 'Bitte wähle, ob der Vorfall zu einer bestehenden Dauerakte gehört.' : form.affiliation === 'yes' && !form.dossierId ? 'Bitte die zugehörige Dauerakte auswählen.' : undefined,
@@ -193,7 +266,8 @@ export function InvestigationsWorkspace() {
     {
       id: 'anlass',
       label: 'Anlass',
-      invalid: form.title.trim() ? undefined : 'Bitte einen Titel für die Akte angeben.',
+      // Nur das Präfix der Vorlage („Drogen –“) ist noch kein Titel.
+      invalid: form.title.trim() && form.title.trim() !== prefill.title.trim() ? undefined : 'Bitte einen Titel für die Akte angeben.',
       content: (
         <div className="space-y-4">
           <Input
@@ -294,7 +368,14 @@ export function InvestigationsWorkspace() {
       content: (
         <dl className="grid gap-2.5 text-[12.5px]">
           {([
-            ['Titel', form.title || '—'],
+            ['Vorlage', selectedTemplate?.name ?? 'Ohne Vorlage'],
+            ['Titel', composeTitle(selectedTemplate?.titlePrefix, form.title) || '—'],
+            ...(selectedTemplate
+              ? [
+                  ['Checkliste', selectedTemplate.checklist.length ? `${selectedTemplate.checklist.length} Punkte` : 'Keine'],
+                  ['Offene Rollen', selectedTemplate.roles.length ? selectedTemplate.roles.map((role) => role.label).join(', ') : 'Keine'],
+                ]
+              : []),
             ['Status', INVESTIGATION_STATUS_LABELS[form.status as keyof typeof INVESTIGATION_STATUS_LABELS] ?? form.status],
             ['Priorität', INVESTIGATION_PRIORITY_LABELS[form.priority as keyof typeof INVESTIGATION_PRIORITY_LABELS] ?? form.priority],
             ['Fallführung', agentOptions.find((option) => option.value === form.leadAgentId)?.label ?? 'Keine Fallführung'],

@@ -70,6 +70,7 @@ import type {
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
+import { InvestigationTemplateProgress } from './investigation-template-progress'
 
 function localDateTimeValue(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
@@ -372,6 +373,8 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
       </div>
 
       <TabBar tabs={tabs} active={activeTab} onSelect={selectTab} label="Bereiche der Akte" />
+
+      {activeTab === 'chronologie' && <InvestigationTemplateProgress investigation={investigation} persons={persons ?? []} canManage={canManage} onChanged={refetch} />}
 
       {activeTab === 'chronologie' && (
         <SectionCard

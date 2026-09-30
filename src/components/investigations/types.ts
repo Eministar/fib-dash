@@ -190,6 +190,9 @@ export type InvestigationListItem = {
 }
 
 export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assignees'> & {
+  template: { id: string; name: string } | null
+  checklist: unknown
+  openRoles: unknown
   assignees: InvestigationAssignee[]
   entries: InvestigationEntry[]
   persons: InvestigationPersonLink[]

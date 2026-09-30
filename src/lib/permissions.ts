@@ -51,6 +51,7 @@ export const PERMISSIONS = [
   'investigations:manage',
   'investigations:classified',
   'investigations:delete',
+  'investigations:templates',
   'map:view',
   'map:manage',
   'notes:view',
@@ -130,6 +131,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'investigations:manage': 'Ermittlungsakten verwalten',
   'investigations:classified': 'Verschlusssachen einsehen',
   'investigations:delete': 'Ermittlungsakten löschen',
+  'investigations:templates': 'Aktenvorlagen verwalten',
   'map:view': 'Karte ansehen',
   'map:manage': 'Karte verwalten (Punkte setzen, bearbeiten, verschieben, löschen)',
   'notes:view': 'Notizen ansehen',
@@ -206,6 +208,7 @@ const IMPLIED_PERMISSIONS: Partial<Record<Permission, Permission[]>> = {
   // bewusst kein `investigations:manage` – Einsicht ist nicht Bearbeitung.
   'investigations:classified': ['investigations:view'],
   'investigations:delete': ['investigations:view'],
+  'investigations:templates': ['investigations:view', 'agents:view'],
   'map:manage': ['map:view'],
   'notes:manage': ['notes:view', 'agents:view'],
   'ranks:manage': ['ranks:view'],
