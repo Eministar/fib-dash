@@ -5,6 +5,7 @@
  */
 
 export const SEARCH_GROUPS = {
+  agents: 'Agents',
   investigations: 'Einsatzakten',
   dossiers: 'Dauerakten',
   persons: 'Personen',
@@ -33,6 +34,12 @@ export const SEARCH_LIMIT_PER_GROUP = 6
 /** Kürzester Suchbegriff. Ein Zeichen träfe faktisch alles. */
 export const SEARCH_MIN_LENGTH = 2
 
+/** Ein Suchbegriff ist lang genug – Zahlen (Dienstnummer „7“) schon ab einer Ziffer. */
+export function isSearchable(term: string): boolean {
+  const trimmed = term.trim()
+  return trimmed.length >= SEARCH_MIN_LENGTH || /^#?\d+$/.test(trimmed)
+}
+
 /**
  * Schneidet einen Textausschnitt um die Fundstelle heraus, damit man den
  * Treffer im Kontext sieht statt nur den Anfang eines langen Feldes.
@@ -42,10 +49,13 @@ export function excerpt(text: string | null | undefined, term: string, radius = 
   const clean = text.replace(/\s+/g, ' ').trim()
   if (!clean) return undefined
 
-  const position = clean.toLowerCase().indexOf(term.toLowerCase())
+  // Bei mehreren Suchwörtern um das erste herum ausschneiden, das vorkommt.
+  const lower = clean.toLowerCase()
+  const word = term.toLowerCase().split(/\s+/).find((candidate) => candidate && lower.includes(candidate)) ?? term.toLowerCase()
+  const position = lower.indexOf(word)
   if (position < 0) return clean.length > radius * 2 ? `${clean.slice(0, radius * 2)}…` : clean
 
   const start = Math.max(0, position - radius)
-  const end = Math.min(clean.length, position + term.length + radius)
+  const end = Math.min(clean.length, position + word.length + radius)
   return `${start > 0 ? '…' : ''}${clean.slice(start, end)}${end < clean.length ? '…' : ''}`
 }

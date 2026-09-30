@@ -33,6 +33,9 @@ import type {
   PersonLink,
   Vehicle,
 } from '@/components/investigations/types'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUrlState } from '@/hooks/use-url-state'
+import { useTrackRecentItem } from '@/hooks/use-recent-items'
 
 const catalogPhotoUrl = (id: string) => `/api/investigations/photos/${id}/image`
 /** Neue Fotos kommen aus dem Katalog; `photoUrl` bleibt für Altbestände. */
@@ -102,13 +105,14 @@ export function PersonRegister() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const { toastSuccess, toastError } = useInvestigationToast()
+  const confirm = useConfirm()
   const { execute, loading: saving } = useApi()
 
   const canView = hasPermission(user, 'investigations:view')
   const canManage = hasPermission(user, 'investigations:manage')
   const canDelete = hasPermission(user, 'investigations:delete')
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [wantedOnly, setWantedOnly] = useState(false)
   // `null` = Editor geschlossen, sonst der Modus. Anlegen und Bearbeiten teilen
   // sich dasselbe Formular, damit die Felder nicht auseinanderlaufen.
@@ -136,6 +140,12 @@ export function PersonRegister() {
     loading: detailLoading,
     refetch: refetchDetail,
   } = useFetch<PersonDetail>(selectedId ? `/api/persons/${selectedId}` : null)
+  useTrackRecentItem(detail ? {
+    href: `/investigations/persons?person=${encodeURIComponent(detail.id)}`,
+    title: `${detail.firstName} ${detail.lastName}`,
+    subtitle: detail.personNumber,
+    kind: 'person',
+  } : null)
 
   if (!canView) return <UnauthorizedContent />
 
@@ -178,9 +188,11 @@ export function PersonRegister() {
   const handleDelete = async () => {
     if (!detail) return
     if (
-      !window.confirm(
-        `Personenakte ${detail.personNumber} (${detail.firstName} ${detail.lastName}) endgültig löschen?`,
-      )
+      !(await confirm({
+        title: `Personenakte ${detail.personNumber} endgültig löschen?`,
+        description: `${detail.firstName} ${detail.lastName} wird mit allen Verknüpfungen aus dem Register entfernt.`,
+        tone: 'danger',
+      }))
     ) {
       return
     }
@@ -279,7 +291,7 @@ export function PersonRegister() {
                 {person.firstName} {person.lastName}
               </p>
               {person.alias && <p className="text-[12px] text-[#a6a6a6]">alias &bdquo;{person.alias}&ldquo;</p>}
-              <p className="mt-1 text-[11.5px] text-[#6a6a6a]">
+              <p className="mt-1 text-[11.5px] text-[#8c8c8c]">
                 {person._count ? `${person._count.investigations} Ermittlung(en)` : ''}
                 {person.identifier ? ` · Kennung ${person.identifier}` : ''}
               </p>
@@ -340,25 +352,25 @@ export function PersonRegister() {
               <div className="sm:col-span-2"><PersonDossiers personId={detail.id} /></div>
               {detail.alias && (
                 <div>
-                  <dt className="text-[#6a6a6a]">Alias</dt>
+                  <dt className="text-[#8c8c8c]">Alias</dt>
                   <dd className="text-[#e4e4e4]">{detail.alias}</dd>
                 </div>
               )}
               {detail.identifier && (
                 <div>
-                  <dt className="text-[#6a6a6a]">Kennung</dt>
+                  <dt className="text-[#8c8c8c]">Kennung</dt>
                   <dd className="text-[#e4e4e4]">{detail.identifier}</dd>
                 </div>
               )}
               {detail.dateOfBirth && (
                 <div>
-                  <dt className="text-[#6a6a6a]">Geburtsdatum</dt>
+                  <dt className="text-[#8c8c8c]">Geburtsdatum</dt>
                   <dd className="text-[#e4e4e4]">{formatDate(detail.dateOfBirth)}</dd>
                 </div>
               )}
               {detail.phone && (
                 <div>
-                  <dt className="text-[#6a6a6a]">Telefon</dt>
+                  <dt className="text-[#8c8c8c]">Telefon</dt>
                   <dd className="text-[#e4e4e4]">{detail.phone}</dd>
                 </div>
               )}
@@ -393,9 +405,9 @@ export function PersonRegister() {
                       key={vehicle.id}
                       className="flex flex-wrap items-center gap-2 rounded-[9px] border border-[#232323] bg-[#111111] px-2.5 py-2 text-[12.5px] text-white"
                     >
-                      <Car className="h-3.5 w-3.5 shrink-0 text-[#6a6a6a]" />
+                      <Car className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
                       {[vehicle.plate, vehicle.model].filter(Boolean).join(' · ') || vehicle.vehicleNumber}
-                      <span className="font-mono text-[11px] text-[#6a6a6a]">{vehicle.vehicleNumber}</span>
+                      <span className="font-mono text-[11px] text-[#8c8c8c]">{vehicle.vehicleNumber}</span>
                       {vehicle.stolen && <Badge variant="danger">Gestohlen</Badge>}
                       {vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}
                     </li>
@@ -409,7 +421,7 @@ export function PersonRegister() {
                 Ermittlungen ({detail.investigations.length})
               </p>
               {detail.investigations.length === 0 ? (
-                <p className="text-[12.5px] text-[#6a6a6a]">Diese Person ist keiner Akte zugeordnet.</p>
+                <p className="text-[12.5px] text-[#8c8c8c]">Diese Person ist keiner Akte zugeordnet.</p>
               ) : (
                 <ul className="space-y-2">
                   {detail.investigations.map((link) => (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { ExternalLink, FileText, Lock, Pin, Plus, Table2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
@@ -12,6 +12,8 @@ import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { PUBLICATION_STATUS, type PublicationKind, type PublicationStatus } from '@/lib/publications'
 import { formatDate } from '@/lib/utils'
+import { useUrlState } from '@/hooks/use-url-state'
+import { matchesSearch } from '@/lib/search-match'
 
 interface PublicationListItem {
   id: string
@@ -33,10 +35,9 @@ export default function PublicationsPage() {
   const { user } = useAuth()
   const canManage = hasPermission(user, 'publications:manage')
   const { data, loading, error } = useFetch<PublicationListItem[]>(canManage ? '/api/publications' : null)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const items = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    return (data ?? []).filter((item) => !query || `${item.title} ${item.summary ?? ''}`.toLowerCase().includes(query))
+    return (data ?? []).filter((item) => matchesSearch(search, [item.title, item.summary]))
   }, [data, search])
 
   if (!canManage) return <UnauthorizedContent />

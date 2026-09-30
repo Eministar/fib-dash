@@ -47,7 +47,7 @@ export function DossierFilter({
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="inline-flex items-center gap-1 text-[10.5px] text-[#c4b5fd] hover:underline"
+            className="inline-flex items-center gap-1 text-[11px] text-[#c4b5fd] hover:underline"
           >
             <X size={11} />
             Filter lösen
@@ -70,7 +70,7 @@ export function DossierFilter({
               )}
             >
               <span className="min-w-0 flex-1 truncate text-[11.5px]">{dossier.title}</span>
-              <span className="font-mono text-[10.5px] text-[#6a6a6a]">{dossier.count}</span>
+              <span className="font-mono text-[11px] text-[#8c8c8c]">{dossier.count}</span>
             </button>
           )
         })}

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { investigationVisibilityWhere } from '@/lib/investigations'
 import { cleanText, nextPersonNumber, parseDate, routeError } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
+import { tokenizedWhere } from '@/lib/search-match'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,15 +21,14 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.PersonWhereInput = {}
     if (wantedOnly) where.wanted = true
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search } },
-        { lastName: { contains: search } },
-        { alias: { contains: search } },
-        { identifier: { contains: search } },
-        { personNumber: { contains: search } },
-      ]
-    }
+    const searchWhere = tokenizedWhere<Prisma.PersonWhereInput>(search, (token) => [
+      { firstName: { contains: token } },
+      { lastName: { contains: token } },
+      { alias: { contains: token } },
+      { identifier: { contains: token } },
+      { personNumber: { contains: token } },
+    ])
+    if (searchWhere) Object.assign(where, searchWhere)
 
     const persons = await prisma.person.findMany({
       where,

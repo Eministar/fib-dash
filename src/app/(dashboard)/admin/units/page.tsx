@@ -47,6 +47,8 @@ import {
   type UnitModuleSelection,
 } from '@/lib/unit-modules'
 import { cn } from '@/lib/utils'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { matchesSearch } from '@/lib/search-match'
 
 const MODULE_PERMISSIONS = moduleControlledPermissions()
 const EXTRA_PERMISSIONS = PERMISSIONS.filter((permission) => !MODULE_PERMISSIONS.has(permission))
@@ -163,7 +165,7 @@ function AccessBadge({ access }: { access: UnitModuleAccess }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em]',
+        'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em]',
         manage ? 'bg-[#d4d4d4]/10 text-[#c3c3c3]' : 'bg-[#38bdf8]/10 text-[#7dd3fc]',
       )}
     >
@@ -197,7 +199,7 @@ function ToggleSetting({
     >
       <span className="min-w-0 flex-1">
         <span className="block text-[12px] font-semibold text-[#f4f4f4]">{title}</span>
-        <span className="mt-1 block text-[10px] leading-4 text-[#767676]">{description}</span>
+        <span className="mt-1 block text-[11px] leading-4 text-[#8c8c8c]">{description}</span>
       </span>
       <span
         className={cn(
@@ -225,7 +227,7 @@ function UnitFlowExplanation() {
   return (
     <section className="mb-6 overflow-hidden rounded-[17px] border border-[#3c3c3c]/75 bg-[linear-gradient(120deg,rgba(28,28,28,0.96),rgba(22,22,22,0.8))]">
       <div className="border-b border-[#343434]/60 px-5 py-4 sm:px-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7dd3fc]/80">Das neue Modell</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7dd3fc]/80">Das neue Modell</p>
         <h2 className="mt-1 text-[14px] font-semibold text-white">Eine Gruppe bündelt Navigation, Module und Ränge</h2>
       </div>
       <div className="grid gap-2 p-4 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:p-5">
@@ -239,11 +241,11 @@ function UnitFlowExplanation() {
                 </span>
                 <span>
                   <span className="block text-[11px] font-semibold text-[#f4f4f4]">{step.title}</span>
-                  <span className="mt-0.5 block text-[9.5px] leading-4 text-[#767676]">{step.text}</span>
+                  <span className="mt-0.5 block text-[11px] leading-4 text-[#8c8c8c]">{step.text}</span>
                 </span>
               </div>
               {index < steps.length - 1 && (
-                <ArrowRight className="mx-auto rotate-90 text-[#565656] sm:rotate-0" size={15} />
+                <ArrowRight className="mx-auto rotate-90 text-[#8c8c8c] sm:rotate-0" size={15} />
               )}
             </div>
           )
@@ -255,13 +257,13 @@ function UnitFlowExplanation() {
 
 function ModuleChips({ modules, color }: { modules: UnitModuleSelection; color: string }) {
   const entries = selectedModuleEntries(modules)
-  if (entries.length === 0) return <span className="text-[10px] text-[#767676]">Keine Arbeitsbereiche</span>
+  if (entries.length === 0) return <span className="text-[11px] text-[#8c8c8c]">Keine Arbeitsbereiche</span>
   return (
     <div className="flex flex-wrap gap-1.5">
       {entries.map((module) => (
         <span
           key={module.key}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border border-[#373737]/75 bg-[#181818]/75 px-2 py-1.5 text-[10px] text-[#b8b8b8]"
+          className="inline-flex items-center gap-1.5 rounded-[8px] border border-[#373737]/75 bg-[#181818]/75 px-2 py-1.5 text-[11px] text-[#b8b8b8]"
         >
           <UnitIcon icon={module.icon} size={11} style={{ color }} />
           {module.shortLabel}
@@ -293,7 +295,7 @@ function SubRankReorderItem({
         <button
           type="button"
           onPointerDown={(e) => controls.start(e)}
-          className="flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-[8px] border border-[#343434]/50 bg-[#161616]/60 text-[#686868] transition-colors hover:border-[#2a5584] hover:text-[#adadad] active:cursor-grabbing"
+          className="flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-[8px] border border-[#343434]/50 bg-[#161616]/60 text-[#8c8c8c] transition-colors hover:border-[#2a5584] hover:text-[#adadad] active:cursor-grabbing"
           title="Reihenfolge verschieben"
           aria-label="Reihenfolge verschieben"
         >
@@ -309,26 +311,26 @@ function SubRankReorderItem({
           <span className="flex flex-wrap items-center gap-2">
             <span className="truncate text-[11.5px] font-semibold text-[#e2e2e2]">{unit.name}</span>
             {unit.isLeadership && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#d4d4d4]/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#c3c3c3]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#d4d4d4]/10 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#c3c3c3]">
                 <ShieldCheck size={9} /> Leitung
               </span>
             )}
             <span
               className={cn(
-                'rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider',
+                'rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider',
                 unit.active ? 'bg-[#34d399]/[0.08] text-[#6ee7b7]' : 'bg-[#727272]/10 text-[#8f8f8f]',
               )}
             >
               {unit.active ? 'aktiv' : 'inaktiv'}
             </span>
           </span>
-          <span className="mt-1 block font-mono text-[9px] text-[#696969]">
+          <span className="mt-1 block font-mono text-[11px] text-[#8c8c8c]">
             {unit.key}
             {unit.discordRoleId ? ` · Discord ${unit.discordRoleId}` : ''}
           </span>
         </span>
       </div>
-      <div className="flex items-center gap-3 text-[9.5px] text-[#767676]">
+      <div className="flex items-center gap-3 text-[11px] text-[#8c8c8c]">
         <span className="inline-flex items-center gap-1">
           <Users size={11} /> {unitCounts.agents}
         </span>
@@ -339,7 +341,7 @@ function SubRankReorderItem({
       <button
         type="button"
         onClick={onEdit}
-        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-2.5 text-[10px] font-semibold text-[#bcbcbc] transition-colors hover:border-[#d4d4d4]/35 hover:text-[#d4d4d4]"
+        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-2.5 text-[11px] font-semibold text-[#bcbcbc] transition-colors hover:border-[#d4d4d4]/35 hover:text-[#d4d4d4]"
       >
         <Edit3 size={12} /> Rang bearbeiten
       </button>
@@ -353,6 +355,7 @@ export default function UnitsPage() {
   const { data: discordData } = useFetch<DiscordResponse>('/api/discord/config')
   const { execute, loading: saving } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const [localGroups, setLocalGroups] = useState<UnitGroup[]>([])
   const [query, setQuery] = useState('')
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
@@ -444,7 +447,7 @@ export default function UnitsPage() {
     }
   }
   const promoteUnitToGroup = async (unit: Unit) => {
-    if (!window.confirm(`„${unit.name}“ als neue Unitgruppe übernehmen? Die bestehende Unit bleibt als erste Unterunit erhalten.`)) return
+    if (!(await confirm({ title: `„${unit.name}“ als Unitgruppe übernehmen?`, description: 'Die bestehende Unit bleibt als erste Unterunit der neuen Gruppe erhalten.', confirmLabel: 'Übernehmen' }))) return
     try {
       await execute(`/api/unit-groups/from-unit/${unit.id}`, { method: 'POST', body: JSON.stringify({}) })
       addToast({ type: 'success', title: 'Unitgruppe erstellt', message: `${unit.name} ist jetzt die erste Unterunit der neuen Gruppe.` })
@@ -454,15 +457,15 @@ export default function UnitsPage() {
     }
   }
   const deleteGroup = async () => {
-    if (!editingGroup || !window.confirm(`Unitgruppe „${editingGroup.name}“ wirklich löschen? Verschiebe zuerst alle Unterränge.`)) return
+    if (!editingGroup || !(await confirm({ title: `Unitgruppe „${editingGroup.name}“ löschen?`, description: 'Verschiebe vorher alle Unterränge in eine andere Gruppe.', tone: 'danger' }))) return
     try { await execute(`/api/unit-groups/${editingGroup.id}`, { method: 'DELETE' }); addToast({ type: 'success', title: 'Unitgruppe gelöscht' }); setGroupModalOpen(false); await refreshAll() } catch (error) { addToast({ type: 'error', title: 'Unitgruppe konnte nicht gelöscht werden', message: error instanceof Error ? error.message : '' }) }
   }
   const deleteUnit = async () => {
-    if (!editingUnit || !window.confirm(`Unterrang „${editingUnit.name}“ wirklich löschen?`)) return
+    if (!editingUnit || !(await confirm({ title: `Unterrang „${editingUnit.name}“ löschen?`, tone: 'danger' }))) return
     try { await execute(`/api/units/${editingUnit.id}`, { method: 'DELETE' }); addToast({ type: 'success', title: 'Unterrang gelöscht' }); setUnitModalOpen(false); await refreshAll() } catch (error) { addToast({ type: 'error', title: 'Unterrang konnte nicht gelöscht werden', message: error instanceof Error ? error.message : '' }) }
   }
 
-  if (unitsLoading || groupsLoading) return <PageLoader />
+  if (unitsLoading || groupsLoading) return <PageLoader withHeader />
   const loadError = unitsError || groupsError
 
   return (
@@ -481,13 +484,13 @@ export default function UnitsPage() {
 
       <div className="mb-4 rounded-[15px] border border-[#343434]/70 bg-[#181818]/55 p-3">
         <label className="relative block max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6e6e6e]" size={14} />
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" size={14} />
           <span className="sr-only">Unitgruppen durchsuchen</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Gruppe oder Unterrang suchen"
-            className="h-9 w-full rounded-[9px] border border-[#343434]/70 bg-[#161616]/70 pl-9 pr-3 text-[12px] text-[#f4f4f4] outline-none transition-all placeholder:text-[#808080] focus:border-[#d4d4d4]"
+            className="h-9 w-full rounded-[9px] border border-[#343434]/70 bg-[#161616]/70 pl-9 pr-3 text-[12px] text-[#f4f4f4] outline-none transition-all placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
           />
         </label>
       </div>
@@ -533,24 +536,24 @@ export default function UnitsPage() {
                       <h2 className="truncate text-[14px] font-semibold text-[#f4f4f4]">{group.name}</h2>
                       <span
                         className={cn(
-                          'rounded-md px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider',
+                          'rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider',
                           group.active ? 'bg-[#34d399]/[0.08] text-[#6ee7b7]' : 'bg-[#727272]/10 text-[#8f8f8f]',
                         )}
                       >
                         {group.active ? 'Aktiv' : 'Inaktiv'}
                       </span>
                     </div>
-                    <p className="mt-1 font-mono text-[9.5px] text-[#696969]">{group.key}</p>
-                    <p className="mt-1.5 line-clamp-2 text-[10.5px] leading-4 text-[#7d7d7d]">
+                    <p className="mt-1 font-mono text-[11px] text-[#8c8c8c]">{group.key}</p>
+                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-4 text-[#8c8c8c]">
                       {group.description || 'Keine Beschreibung hinterlegt'}
                     </p>
                   </div>
                 </div>
                 <div className="min-w-0 lg:border-l lg:border-[#343434]/55 lg:pl-5">
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-[#767676]">Gemeinsame Arbeitsbereiche</p>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8c8c8c]">Gemeinsame Arbeitsbereiche</p>
                     {group.showInNavigation && (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-[#6ee7b7]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#6ee7b7]">
                         <Navigation size={10} /> Sidebar
                       </span>
                     )}
@@ -560,19 +563,19 @@ export default function UnitsPage() {
                 <div className="flex flex-col gap-3 lg:border-l lg:border-[#343434]/55 lg:pl-5">
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-[10px] bg-[#161616]/55 px-2.5 py-2.5">
-                      <span className="flex items-center gap-1 text-[8.5px] font-semibold uppercase tracking-[0.08em] text-[#767676]">
+                      <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8c8c8c]">
                         <Layers3 size={10} /> Ränge
                       </span>
                       <span className="mt-1 block text-[14px] font-semibold text-[#e2e2e2]">{group.units.length}</span>
                     </div>
                     <div className="rounded-[10px] bg-[#161616]/55 px-2.5 py-2.5">
-                      <span className="flex items-center gap-1 text-[8.5px] font-semibold uppercase tracking-[0.08em] text-[#767676]">
+                      <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8c8c8c]">
                         <ShieldCheck size={10} /> Leitung
                       </span>
                       <span className="mt-1 block text-[14px] font-semibold text-[#e2e2e2]">{leadershipCount}</span>
                     </div>
                     <div className="rounded-[10px] bg-[#161616]/55 px-2.5 py-2.5">
-                      <span className="flex items-center gap-1 text-[8.5px] font-semibold uppercase tracking-[0.08em] text-[#767676]">
+                      <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8c8c8c]">
                         <Users size={10} /> Agents
                       </span>
                       <span className="mt-1 block text-[14px] font-semibold text-[#e2e2e2]">{counts.agents}</span>
@@ -582,14 +585,14 @@ export default function UnitsPage() {
                     <button
                       type="button"
                       onClick={() => openCreateUnit(group.id)}
-                      className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[8px] bg-[#d4d4d4]/10 px-2.5 text-[10px] font-semibold text-[#c3c3c3] transition-colors hover:bg-[#d4d4d4]/16"
+                      className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[8px] bg-[#d4d4d4]/10 px-2.5 text-[11px] font-semibold text-[#c3c3c3] transition-colors hover:bg-[#d4d4d4]/16"
                     >
                       <Plus size={12} /> Rang hinzufügen
                     </button>
                     <button
                       type="button"
                       onClick={() => openEditGroup(group)}
-                      className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-2.5 text-[10px] font-semibold text-[#bcbcbc] transition-colors hover:border-[#d4d4d4]/35 hover:text-[#d4d4d4]"
+                      className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-2.5 text-[11px] font-semibold text-[#bcbcbc] transition-colors hover:border-[#d4d4d4]/35 hover:text-[#d4d4d4]"
                     >
                       <Edit3 size={12} /> Bearbeiten
                     </button>
@@ -600,8 +603,8 @@ export default function UnitsPage() {
                 <div className="border-t border-[#343434]/70 bg-[#161616]/35 px-5 py-4 lg:px-6">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#767676]">Unterränge dieser Gruppe</p>
-                      <p className="mt-1 text-[10.5px] text-[#6e6e6e]">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8c8c8c]">Unterränge dieser Gruppe</p>
+                      <p className="mt-1 text-[11px] text-[#8c8c8c]">
                         Verschiebe Ränge am Griff, um die Reihenfolge direkt festzulegen. Markiere Leitungsränge für automatische Rollen.
                       </p>
                     </div>
@@ -625,7 +628,7 @@ export default function UnitsPage() {
                       ))}
                     </Reorder.Group>
                   ) : (
-                    <div className="rounded-[11px] border border-dashed border-[#414141] px-4 py-8 text-center text-[10.5px] text-[#767676]">
+                    <div className="rounded-[11px] border border-dashed border-[#414141] px-4 py-8 text-center text-[11px] text-[#8c8c8c]">
                       Noch keine Unterränge. Füge den ersten Rang hinzu.
                     </div>
                   )}
@@ -638,8 +641,8 @@ export default function UnitsPage() {
         <section className="overflow-hidden rounded-[16px] border border-dashed border-[#4a4a4a] bg-[#181818]/45">
           <div className="flex flex-col gap-3 border-b border-[#343434]/55 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#767676]">Einzelne Units</p>
-              <p className="mt-1 text-[10.5px] text-[#6e6e6e]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#8c8c8c]">Einzelne Units</p>
+              <p className="mt-1 text-[11px] text-[#8c8c8c]">
                 Diese Units sind noch keiner Gruppe zugeordnet. Bearbeite sie, verschiebe sie in eine bestehende Gruppe oder übernimm sie direkt als neue Gruppe.
               </p>
             </div>
@@ -649,11 +652,7 @@ export default function UnitsPage() {
           </div>
           <div className="divide-y divide-[#343434]/50">
             {ungroupedUnits
-              .filter(
-                (unit) =>
-                  !query.trim() ||
-                  `${unit.name} ${unit.key}`.toLocaleLowerCase('de').includes(query.trim().toLocaleLowerCase('de')),
-              )
+              .filter((unit) => matchesSearch(query, [unit.name, unit.key]))
               .map((unit) => {
                 const counts = unit.assignmentCounts ?? { agents: 0, directUsers: 0 }
                 return (
@@ -667,9 +666,9 @@ export default function UnitsPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="truncate text-[11.5px] font-semibold text-[#e2e2e2]">{unit.name}</span>
-                        <span className="font-mono text-[9px] text-[#696969]">{unit.key}</span>
+                        <span className="font-mono text-[11px] text-[#8c8c8c]">{unit.key}</span>
                       </div>
-                      <span className="mt-1 block text-[10px] text-[#767676]">
+                      <span className="mt-1 block text-[11px] text-[#8c8c8c]">
                         {counts.agents} Agents · {counts.directUsers} direkte Benutzer
                       </span>
                     </div>
@@ -678,14 +677,14 @@ export default function UnitsPage() {
                         type="button"
                         onClick={() => void promoteUnitToGroup(unit)}
                         disabled={saving}
-                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/[0.06] px-2.5 text-[10px] font-semibold text-[#c3c3c3] transition-colors hover:border-[#d4d4d4]/60 hover:bg-[#d4d4d4]/[0.12] disabled:pointer-events-none disabled:opacity-50"
+                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/[0.06] px-2.5 text-[11px] font-semibold text-[#c3c3c3] transition-colors hover:border-[#d4d4d4]/60 hover:bg-[#d4d4d4]/[0.12] disabled:pointer-events-none disabled:opacity-50"
                       >
                         <Layers3 size={12} /> Als Gruppe nutzen
                       </button>
                       <button
                         type="button"
                         onClick={() => openEditUnit(unit)}
-                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-2.5 text-[10px] font-semibold text-[#bcbcbc] hover:border-[#d4d4d4]/35 hover:text-[#d4d4d4]"
+                        className="inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-2.5 text-[11px] font-semibold text-[#bcbcbc] hover:border-[#d4d4d4]/35 hover:text-[#d4d4d4]"
                       >
                         <Edit3 size={12} /> Bearbeiten
                       </button>
@@ -694,7 +693,7 @@ export default function UnitsPage() {
                 )
               })}
             {ungroupedUnits.length === 0 && (
-              <div className="px-5 py-8 text-center text-[10.5px] text-[#767676]">
+              <div className="px-5 py-8 text-center text-[11px] text-[#8c8c8c]">
                 Alle Units sind bereits in einer Gruppe organisiert.
               </div>
             )}
@@ -703,7 +702,7 @@ export default function UnitsPage() {
 
         {visibleGroups.length === 0 && ungroupedUnits.length === 0 && (
           <div className="rounded-[16px] border border-dashed border-[#404040] py-16 text-center">
-            <Layers3 size={28} className="mx-auto mb-3 text-[#686868]" strokeWidth={1.5} />
+            <Layers3 size={28} className="mx-auto mb-3 text-[#8c8c8c]" strokeWidth={1.5} />
             <p className="text-[13px] font-medium text-[#aeaeae]">Noch keine Unitgruppen vorhanden</p>
             <Button className="mt-4" size="sm" onClick={openCreateGroup}>
               <Plus size={13} /> Erste Unitgruppe erstellen
@@ -730,22 +729,22 @@ export default function UnitsPage() {
                 onClick={() => goToGroupStep(index)}
                 className={cn(
                   'flex min-w-0 items-center gap-2 rounded-[9px] px-2.5 py-2 text-left transition-colors sm:px-3',
-                  active ? 'bg-[#242424] text-white' : 'text-[#767676] hover:bg-[#1d1d1d] hover:text-[#aeaeae]',
+                  active ? 'bg-[#242424] text-white' : 'text-[#8c8c8c] hover:bg-[#1d1d1d] hover:text-[#aeaeae]',
                 )}
               >
                 <span
                   className={cn(
-                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[9.5px] font-bold',
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold',
                     active && 'border-[#d4d4d4]/60 bg-[#d4d4d4]/12 text-[#d4d4d4]',
                     complete && 'border-[#34d399]/45 bg-[#34d399]/10 text-[#6ee7b7]',
-                    !active && !complete && 'border-[#464646] text-[#767676]',
+                    !active && !complete && 'border-[#464646] text-[#8c8c8c]',
                   )}
                 >
                   {complete ? <Check size={11} strokeWidth={2.7} /> : index + 1}
                 </span>
                 <span className="hidden min-w-0 sm:block">
-                  <span className="block truncate text-[10.5px] font-semibold">{step.label}</span>
-                  <span className="mt-0.5 block truncate text-[8.5px] opacity-60">{step.description}</span>
+                  <span className="block truncate text-[11px] font-semibold">{step.label}</span>
+                  <span className="mt-0.5 block truncate text-[11px] opacity-60">{step.description}</span>
                 </span>
               </button>
             )
@@ -754,9 +753,9 @@ export default function UnitsPage() {
         <div className="min-h-[420px]">
           {groupStep === 0 && (
             <section>
-              <p className="text-[9.5px] font-bold uppercase tracking-[0.15em] text-[#d4d4d4]/75">Schritt 1 · Identität</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#d4d4d4]/75">Schritt 1 · Identität</p>
               <h3 className="mt-1.5 text-[16px] font-semibold text-white">Wie heißt diese Unitgruppe?</h3>
-              <p className="mt-1 text-[11px] leading-5 text-[#767676]">
+              <p className="mt-1 text-[11px] leading-5 text-[#8c8c8c]">
                 Die Gruppe ist die sichtbare Klammer. Darunter legst du später Ränge wie Leitung, Senior oder Agent an.
               </p>
               <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_220px]">
@@ -779,7 +778,7 @@ export default function UnitsPage() {
                       onChange={(event) => setGroupForm({ ...groupForm, description: event.target.value })}
                       rows={4}
                       placeholder="Wofür ist diese Unit zuständig?"
-                      className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13px] leading-5 text-[#f4f4f4] outline-none transition-all placeholder:text-[#808080] focus:border-[#d4d4d4]"
+                      className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13px] leading-5 text-[#f4f4f4] outline-none transition-all placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
                     />
                   </div>
                 </div>
@@ -795,7 +794,7 @@ export default function UnitsPage() {
                     <p className="mt-3 max-w-full truncate text-[13px] font-semibold text-white">
                       {groupForm.name.trim() || 'Name der Unitgruppe'}
                     </p>
-                    <p className="mt-1 text-[9.5px] uppercase tracking-[0.12em] text-[#767676]">Vorschau</p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#8c8c8c]">Vorschau</p>
                   </div>
                 </div>
               </div>
@@ -816,7 +815,7 @@ export default function UnitsPage() {
                           'flex aspect-square items-center justify-center rounded-lg border transition-all',
                           groupForm.icon === option.key
                             ? 'border-[#d4d4d4]/55 bg-[#d4d4d4]/12 text-[#d4d4d4]'
-                            : 'border-transparent text-[#777777] hover:border-[#464646] hover:bg-[#242424]',
+                            : 'border-transparent text-[#8c8c8c] hover:border-[#464646] hover:bg-[#242424]',
                         )}
                       >
                         <UnitIcon icon={option.key} size={15} />
@@ -829,24 +828,24 @@ export default function UnitsPage() {
           )}
           {groupStep === 1 && (
             <section>
-              <p className="text-[9.5px] font-bold uppercase tracking-[0.15em] text-[#7dd3fc]/80">Schritt 2 · Arbeitsbereiche</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#7dd3fc]/80">Schritt 2 · Arbeitsbereiche</p>
               <h3 className="mt-1.5 text-[16px] font-semibold text-white">Was darf die ganze Gruppe?</h3>
-              <p className="mt-1 text-[11px] leading-5 text-[#767676]">
+              <p className="mt-1 text-[11px] leading-5 text-[#8c8c8c]">
                 Diese Auswahl gilt automatisch für jeden Unterrang der Gruppe. Einzelne Ränge müssen nicht mehr separat konfiguriert werden.
               </p>
               <div className="mt-5 grid gap-2 sm:grid-cols-2">
                 <div className="flex items-center gap-3 rounded-[11px] border border-[#38bdf8]/15 bg-[#38bdf8]/[0.045] px-3 py-2.5">
                   <Eye size={14} className="text-[#7dd3fc]" />
                   <span>
-                    <span className="block text-[10.5px] font-semibold text-[#a8ddf6]">Nur ansehen</span>
-                    <span className="text-[9.5px] text-[#767676]">Öffnen, aber nicht verändern</span>
+                    <span className="block text-[11px] font-semibold text-[#a8ddf6]">Nur ansehen</span>
+                    <span className="text-[11px] text-[#8c8c8c]">Öffnen, aber nicht verändern</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-3 rounded-[11px] border border-[#d4d4d4]/15 bg-[#d4d4d4]/[0.045] px-3 py-2.5">
                   <Settings2 size={14} className="text-[#d4d4d4]" />
                   <span>
-                    <span className="block text-[10.5px] font-semibold text-[#c3c3c3]">Bearbeiten</span>
-                    <span className="text-[9.5px] text-[#767676]">Erstellen und verwalten</span>
+                    <span className="block text-[11px] font-semibold text-[#c3c3c3]">Bearbeiten</span>
+                    <span className="text-[11px] text-[#8c8c8c]">Erstellen und verwalten</span>
                   </span>
                 </div>
               </div>
@@ -874,7 +873,7 @@ export default function UnitsPage() {
                             'flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border',
                             selected
                               ? 'border-[#d4d4d4]/30 bg-[#d4d4d4]/10 text-[#d4d4d4]'
-                              : 'border-[#3c3c3c] bg-[#242424] text-[#7f7f7f]',
+                              : 'border-[#3c3c3c] bg-[#242424] text-[#8c8c8c]',
                           )}
                         >
                           <UnitIcon icon={module.icon} size={16} />
@@ -883,7 +882,7 @@ export default function UnitsPage() {
                           <span className={cn('block text-[12px] font-semibold', selected ? 'text-white' : 'text-[#adadad]')}>
                             {module.label}
                           </span>
-                          <span className="mt-1 block text-[10px] leading-4 text-[#737373]">{module.description}</span>
+                          <span className="mt-1 block text-[11px] leading-4 text-[#8c8c8c]">{module.description}</span>
                         </span>
                         <span
                           className={cn(
@@ -900,8 +899,8 @@ export default function UnitsPage() {
                             type="button"
                             onClick={() => setGroupModuleAccess(module.key, 'view')}
                             className={cn(
-                              'inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] text-[9.5px] font-semibold',
-                              access === 'view' ? 'bg-[#38bdf8]/12 text-[#7dd3fc]' : 'text-[#767676] hover:bg-[#242424]',
+                              'inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] text-[11px] font-semibold',
+                              access === 'view' ? 'bg-[#38bdf8]/12 text-[#7dd3fc]' : 'text-[#8c8c8c] hover:bg-[#242424]',
                             )}
                           >
                             <Eye size={11} /> Ansehen
@@ -910,8 +909,8 @@ export default function UnitsPage() {
                             type="button"
                             onClick={() => setGroupModuleAccess(module.key, 'manage')}
                             className={cn(
-                              'inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] text-[9.5px] font-semibold',
-                              access === 'manage' ? 'bg-[#d4d4d4]/14 text-[#d4d4d4]' : 'text-[#767676] hover:bg-[#242424]',
+                              'inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] text-[11px] font-semibold',
+                              access === 'manage' ? 'bg-[#d4d4d4]/14 text-[#d4d4d4]' : 'text-[#8c8c8c] hover:bg-[#242424]',
                             )}
                           >
                             <Settings2 size={11} /> Bearbeiten
@@ -926,9 +925,9 @@ export default function UnitsPage() {
           )}
           {groupStep === 2 && (
             <section>
-              <p className="text-[9.5px] font-bold uppercase tracking-[0.15em] text-[#6ee7b7]/80">Schritt 3 · Rollen & Start</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#6ee7b7]/80">Schritt 3 · Rollen & Start</p>
               <h3 className="mt-1.5 text-[16px] font-semibold text-white">Wann und wie wird die Gruppe sichtbar?</h3>
-              <p className="mt-1 text-[11px] leading-5 text-[#767676]">
+              <p className="mt-1 text-[11px] leading-5 text-[#8c8c8c]">
                 Die beiden Discord-Rollen werden für alle Unterränge beziehungsweise nur für markierte Leitungsränge synchronisiert.
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -973,16 +972,16 @@ export default function UnitsPage() {
                   <span className="flex items-center gap-2">
                     <SlidersHorizontal size={14} className="text-[#838383]" /> Erweiterte Einzelrechte
                   </span>
-                  <span className="flex items-center gap-2 text-[9.5px] font-normal text-[#6e6e6e]">
+                  <span className="flex items-center gap-2 text-[11px] font-normal text-[#8c8c8c]">
                     {groupForm.permissions.length} ausgewählt <ChevronRight size={13} className="transition-transform group-open:rotate-90" />
                   </span>
                 </summary>
-                <p className="mb-3 mt-3 text-[10.5px] leading-5 text-[#6e6e6e]">
+                <p className="mb-3 mt-3 text-[11px] leading-5 text-[#8c8c8c]">
                   Nur für Sonderfälle. Rechte der Arbeitsbereiche werden automatisch vergeben.
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="mb-2 text-[9.5px] font-bold uppercase tracking-[0.12em] text-[#767676]">Ansehen</p>
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8c8c8c]">Ansehen</p>
                     <div className="max-h-48 space-y-1.5 overflow-auto pr-1">
                       {EXTRA_READ_PERMISSIONS.map((permission) => (
                         <Checkbox
@@ -996,7 +995,7 @@ export default function UnitsPage() {
                     </div>
                   </div>
                   <div>
-                    <p className="mb-2 text-[9.5px] font-bold uppercase tracking-[0.12em] text-[#767676]">Bearbeiten</p>
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8c8c8c]">Bearbeiten</p>
                     <div className="max-h-48 space-y-1.5 overflow-auto pr-1">
                       {EXTRA_MANAGE_PERMISSIONS.map((permission) => (
                         <Checkbox
@@ -1016,7 +1015,7 @@ export default function UnitsPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-[11.5px] font-semibold text-[#fda4af]">Gefahrenbereich</p>
-                      <p className="mt-1 text-[10px] leading-4 text-[#8f6b7a]">
+                      <p className="mt-1 text-[11px] leading-4 text-[#8f6b7a]">
                         Gruppe kann nur gelöscht werden, wenn keine Unterränge mehr zugeordnet sind.
                       </p>
                     </div>
@@ -1037,7 +1036,7 @@ export default function UnitsPage() {
           >
             <ArrowLeft size={13} /> {groupStep === 0 ? 'Abbrechen' : 'Zurück'}
           </Button>
-          <div className="hidden min-w-0 items-center gap-2 text-[10px] text-[#757575] sm:flex">
+          <div className="hidden min-w-0 items-center gap-2 text-[11px] text-[#8c8c8c] sm:flex">
             <UnitIcon icon={groupForm.icon} size={13} style={{ color: groupForm.color }} />
             <span className="truncate">
               {groupForm.name.trim() || 'Neue Unitgruppe'} · {selectedModuleEntries(groupForm.modules).length} Bereiche
@@ -1064,9 +1063,9 @@ export default function UnitsPage() {
       >
         <div className="space-y-5">
           <div>
-            <p className="text-[9.5px] font-bold uppercase tracking-[0.15em] text-[#d4d4d4]/75">Unitrang</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#d4d4d4]/75">Unitrang</p>
             <h3 className="mt-1.5 text-[16px] font-semibold text-white">Welche Rolle hat dieser Unterrang?</h3>
-            <p className="mt-1 text-[11px] leading-5 text-[#767676]">
+            <p className="mt-1 text-[11px] leading-5 text-[#8c8c8c]">
               Ein Unterrang ist die konkrete Zuordnung eines Agents innerhalb einer Unitgruppe. Markiere alle Ränge, die zur Leitung gehören.
             </p>
           </div>
@@ -1090,7 +1089,7 @@ export default function UnitsPage() {
               onChange={(event) => setUnitForm({ ...unitForm, description: event.target.value })}
               rows={3}
               placeholder="Wofür steht dieser Rang?"
-              className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13px] leading-5 text-[#f4f4f4] outline-none transition-all placeholder:text-[#808080] focus:border-[#d4d4d4]"
+              className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13px] leading-5 text-[#f4f4f4] outline-none transition-all placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
             />
           </div>
           <Select
@@ -1134,7 +1133,7 @@ export default function UnitsPage() {
                       'flex aspect-square items-center justify-center rounded-lg border transition-all',
                       unitForm.icon === option.key
                         ? 'border-[#d4d4d4]/55 bg-[#d4d4d4]/12 text-[#d4d4d4]'
-                        : 'border-transparent text-[#777777] hover:border-[#464646] hover:bg-[#242424]',
+                        : 'border-transparent text-[#8c8c8c] hover:border-[#464646] hover:bg-[#242424]',
                     )}
                   >
                     <UnitIcon icon={option.key} size={15} />
@@ -1154,7 +1153,7 @@ export default function UnitsPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[11.5px] font-semibold text-[#fda4af]">Gefahrenbereich</p>
-                  <p className="mt-1 text-[10px] leading-4 text-[#8f6b7a]">Zuweisungen müssen vor dem Löschen entfernt werden.</p>
+                  <p className="mt-1 text-[11px] leading-4 text-[#8f6b7a]">Zuweisungen müssen vor dem Löschen entfernt werden.</p>
                 </div>
                 <Button type="button" variant="danger" size="sm" onClick={() => void deleteUnit()} disabled={saving}>
                   <Trash2 size={12} /> Unterrang löschen

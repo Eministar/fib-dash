@@ -23,6 +23,7 @@ import { runAgentStatusAutomation } from '@/lib/absence-status'
 import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
 import { queueContractForNewAgent } from '@/lib/contract-service'
 import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+import { agentMatchScore, matchesAgent } from '@/lib/search-match'
 
 function validDiscordId(value: string | null | undefined) {
   const id = value?.trim()
@@ -45,16 +46,11 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get('status')
   const rankId = searchParams.get('rankId')
 
+  // Die Suche läuft nach dem Laden über die gemeinsame Suchlogik (siehe
+  // lib/search-match): Vollnamen, Dienstnummern ohne Präfix/Nullen und
+  // Discord-IDs – auch die am verknüpften Benutzerkonto – lassen sich mit
+  // einem SQL-`contains` nicht sauber abbilden.
   const where: Record<string, unknown> = {}
-  if (search) {
-    const canSearchDiscordId = /^\d{17,22}$/.test(search.trim())
-    where.OR = [
-      { firstName: { contains: search } },
-      { lastName: { contains: search } },
-      { badgeNumber: { contains: search } },
-      ...(canSearchDiscordId ? [{ discordId: { contains: search } }] : []),
-    ]
-  }
   if (status) where.status = status
   else where.status = { not: 'TERMINATED' }
   if (rankId) where.rankId = rankId
@@ -65,6 +61,8 @@ export async function GET(req: NextRequest) {
       include: {
         rank: true,
         trainings: { include: { training: { include: { minRank: true } } } },
+        user: { select: { discordId: true } },
+        codename: { select: { name: true } },
       },
       orderBy: [{ rank: { sortOrder: 'asc' } }, { badgeNumber: 'asc' }],
     }),
@@ -83,12 +81,22 @@ export async function GET(req: NextRequest) {
   }
   const discordMembers = cachedDiscordMembers ?? []
   const discordMemberIds = new Set(discordMembers.map((member) => member.user?.id).filter(Boolean))
-  const avatarUrls = await resolveAgentAvatarUrls(agents)
+  const matchingAgents = search?.trim()
+    ? agents
+      .filter((agent) => matchesAgent(search, agent))
+      .map((agent, index) => ({ agent, index, score: agentMatchScore(search, agent) }))
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .map(({ agent }) => agent)
+    : agents
+  const avatarUrls = await resolveAgentAvatarUrls(matchingAgents)
 
-  return success(agents.map((agent) => {
-    const discordId = validDiscordId(agent.discordId)
+  return success(matchingAgents.map(({ user, codename, ...agent }) => {
+    // Viele Agents sind nur über ihr Benutzerkonto mit Discord verknüpft.
+    const discordId = validDiscordId(agent.discordId) || validDiscordId(user?.discordId)
     return {
       ...withAgentTrainingRows(agent, trainings),
+      discordId: agent.discordId || user?.discordId || null,
+      codename: codename?.name ?? null,
       avatarUrl: agentAvatarUrl(agent, avatarUrls),
       discordMember: {
         checked: canCheckDiscordMembers && cachedDiscordMembers !== null && !!discordId,

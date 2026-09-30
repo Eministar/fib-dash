@@ -11,15 +11,15 @@ import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 
-const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: PageLoader })
-const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
-const ModuleCalendar = dynamic(() => import('@/components/modules/module-calendar').then(mod => mod.ModuleCalendar), { loading: PageLoader })
-const FormTests = dynamic(() => import('@/components/modules/form-tests').then(mod => mod.FormTests), { loading: PageLoader })
-const HrApplications = dynamic(() => import('@/components/applications/hr-applications').then(mod => mod.HrApplications), { loading: PageLoader })
-const ApplicationFormSettings = dynamic(() => import('@/components/applications/application-form-settings').then(mod => mod.ApplicationFormSettings), { loading: PageLoader })
-const ProbationsWorkspace = dynamic(() => import('@/components/probations/probations-workspace').then(mod => mod.ProbationsWorkspace), { loading: PageLoader })
-const ContractsWorkspace = dynamic(() => import('@/components/contracts/contracts-workspace').then(mod => mod.ContractsWorkspace), { loading: PageLoader })
-const TransfersWorkspace = dynamic(() => import('@/components/transfers/transfers-workspace').then(mod => mod.TransfersWorkspace), { loading: PageLoader })
+const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: () => <PageLoader /> })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: () => <PageLoader /> })
+const ModuleCalendar = dynamic(() => import('@/components/modules/module-calendar').then(mod => mod.ModuleCalendar), { loading: () => <PageLoader /> })
+const FormTests = dynamic(() => import('@/components/modules/form-tests').then(mod => mod.FormTests), { loading: () => <PageLoader /> })
+const HrApplications = dynamic(() => import('@/components/applications/hr-applications').then(mod => mod.HrApplications), { loading: () => <PageLoader /> })
+const ApplicationFormSettings = dynamic(() => import('@/components/applications/application-form-settings').then(mod => mod.ApplicationFormSettings), { loading: () => <PageLoader /> })
+const ProbationsWorkspace = dynamic(() => import('@/components/probations/probations-workspace').then(mod => mod.ProbationsWorkspace), { loading: () => <PageLoader /> })
+const ContractsWorkspace = dynamic(() => import('@/components/contracts/contracts-workspace').then(mod => mod.ContractsWorkspace), { loading: () => <PageLoader /> })
+const TransfersWorkspace = dynamic(() => import('@/components/transfers/transfers-workspace').then(mod => mod.TransfersWorkspace), { loading: () => <PageLoader /> })
 
 type Tab = 'documents' | 'applications' | 'contracts' | 'transfers' | 'settings' | 'tests' | 'probations' | 'tasks' | 'calendar'
 

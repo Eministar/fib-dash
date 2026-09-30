@@ -42,7 +42,7 @@ function Viewer({ upload }: { upload: Upload }) {
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-wider text-[#7a7a7a]">{label}</p>
+      <p className="text-[11px] uppercase tracking-wider text-[#8c8c8c]">{label}</p>
       <div className="mt-0.5 text-sm text-[#e4e4e4]">{children}</div>
     </div>
   )
@@ -141,7 +141,7 @@ export function UploadDetail({
 
         {!!metadataEntries.length && (
           <div className="rounded-lg border border-[#343434] p-3">
-            <p className="mb-2 text-[11px] uppercase tracking-wider text-[#7a7a7a]">Zusatzfelder</p>
+            <p className="mb-2 text-[11px] uppercase tracking-wider text-[#8c8c8c]">Zusatzfelder</p>
             <dl className="grid gap-1 text-xs sm:grid-cols-2">
               {metadataEntries.map(([key, value]) => (
                 <div key={key} className="flex gap-2">

@@ -107,7 +107,7 @@ export function PersonLinks({
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-[12.5px] text-[#6a6a6a]">Keine Verbindungen erfasst.</p>
+        <p className="text-[12.5px] text-[#8c8c8c]">Keine Verbindungen erfasst.</p>
       ) : (
         <ul className="space-y-1.5">
           {rows.map((row) => (
@@ -117,12 +117,12 @@ export function PersonLinks({
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Network className="h-3.5 w-3.5 shrink-0 text-[#6a6a6a]" />
+                  <Network className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
                   <span className="text-[13px] text-white">
                     {row.peer.firstName} {row.peer.lastName}
                   </span>
                   <Badge>{PERSON_LINK_TYPE_LABELS[row.type]}</Badge>
-                  <span className="text-[10.5px] uppercase tracking-[0.1em] text-[#5a5a5a]">
+                  <span className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">
                     {row.outgoing ? 'ausgehend' : 'eingehend'}
                   </span>
                 </div>
@@ -135,7 +135,7 @@ export function PersonLinks({
                 <button
                   type="button"
                   onClick={() => void handleRemove(row)}
-                  className="shrink-0 text-[#6a6a6a] transition-colors hover:text-[#fca5a5]"
+                  className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                   aria-label="Verbindung entfernen"
                 >
                   <X className="h-4 w-4" />

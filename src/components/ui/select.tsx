@@ -41,22 +41,22 @@ export interface SelectProps {
 
 const triggerBase = cn(
   'flex w-full min-w-0 items-center justify-between gap-2',
-  'bg-[#181818] text-[#f4f4f4] border border-[#343434]/70',
-  'focus:outline-none focus:border-[#d4d4d4] focus:shadow-[0_0_0_3px_rgba(212,212,212,0.08)]',
-  'data-[state=open]:border-[#d4d4d4]/60',
+  'bg-surface-sunken text-fg border border-line/70',
+  'focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(212,212,212,0.08)]',
+  'data-[state=open]:border-accent/60',
   'disabled:cursor-not-allowed disabled:opacity-40',
   'transition-all duration-150',
   'px-3 text-left',
-  '[&_[data-placeholder]]:text-[#808080]',
+  '[&_[data-placeholder]]:text-fg-subtle',
   'aria-invalid:border-red-900'
 )
 
 const itemBase = cn(
   'relative flex cursor-pointer select-none items-center rounded-[7px] py-1.5 pl-2 pr-8',
-  'text-[13.5px] text-[#f4f4f4] outline-none',
+  'text-[13.5px] text-fg outline-none',
   'data-[disabled]:pointer-events-none data-[disabled]:opacity-40',
-  'data-[highlighted]:bg-[#232323] data-[highlighted]:text-white',
-  'data-[state=checked]:text-[#d4d4d4]'
+  'data-[highlighted]:bg-surface-raised data-[highlighted]:text-white',
+  'data-[state=checked]:text-accent'
 )
 
 export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function Select(
@@ -126,10 +126,10 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
         >
           <SelectPrimitive.Value
             placeholder={placeholder}
-            className="flex-1 min-w-0 truncate text-left text-[#f4f4f4] data-[placeholder]:text-[#808080]"
+            className="flex-1 min-w-0 truncate text-left text-fg data-[placeholder]:text-fg-subtle"
           />
           <SelectPrimitive.Icon>
-            <ChevronDown className="h-3.5 w-3.5 text-[#a6a6a6] shrink-0 opacity-80" />
+            <ChevronDown className="h-3.5 w-3.5 text-fg-muted shrink-0 opacity-80" />
           </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
         <SelectPrimitive.Portal>
@@ -138,7 +138,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
             sideOffset={6}
             className={cn(
               'z-[200] max-h-72 overflow-hidden rounded-[10px] min-w-[var(--radix-select-trigger-width)]',
-              'glass-panel-elevated border border-[#404040]/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]',
+              'glass-panel-elevated border border-line-strong/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]',
             )}
           >
             <SelectPrimitive.Viewport className="p-1.5 max-h-72 overflow-y-auto">
@@ -146,7 +146,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
                 const internal = toInternal(opt.value)
                 return (
                   <SelectPrimitive.Item key={internal} value={internal} className={itemBase}>
-                    <span className="absolute right-1.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-[#d4d4d4]">
+                    <span className="absolute right-1.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-accent">
                       <SelectPrimitive.ItemIndicator>
                         <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
                       </SelectPrimitive.ItemIndicator>

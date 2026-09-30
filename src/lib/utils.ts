@@ -1,5 +1,17 @@
 import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { extendTailwindMerge } from 'tailwind-merge'
+
+// Die eigenen Design-Tokens aus globals.css (@theme) bekannt machen. Sonst
+// hält tailwind-merge z. B. `text-caption` für eine Textfarbe und wirft es
+// neben `text-fg` stillschweigend raus.
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: ['caption', 'label', 'body', 'title', 'heading'],
+      radius: ['chip', 'control', 'panel', 'card'],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

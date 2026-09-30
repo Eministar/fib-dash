@@ -45,6 +45,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // Folge-Builds auf dem Server nutzen den Cache in .next/ (Next 16: Beta, opt-in).
     turbopackFileSystemCacheForBuild: true,
+    // Sanfte Überblendung beim Seitenwechsel (React <ViewTransition>, siehe dashboard-shell).
+    // Browser ohne View-Transitions-API wechseln wie bisher ohne Animation.
+    viewTransition: true,
   },
   images: {
     unoptimized: true,

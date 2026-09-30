@@ -125,7 +125,7 @@ export default function CalendarPage() {
   }
 
   if (!canView) return <UnauthorizedContent />
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   return (
     <div className="max-w-6xl mx-auto space-y-5">

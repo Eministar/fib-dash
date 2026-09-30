@@ -5,7 +5,6 @@ import Link from 'next/link'
 import {
   ArrowDownRight,
   ArrowDown,
-  ArrowLeft,
   ArrowRight,
   ArrowUp,
   ArrowUpRight,
@@ -37,6 +36,9 @@ import { cn, formatDateTime } from '@/lib/utils'
 import { hasPermission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import type { RankChangeVoteSummary, RankChangeVoteValue } from '@/lib/rank-change-votes'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useTrackRecentItem } from '@/hooks/use-recent-items'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 
 type Person = { id: string; displayName: string; discordId: string | null; avatarUrl: string | null }
 type Rank = { id: string; name: string; color: string; sortOrder: number }
@@ -163,11 +165,11 @@ function SnapshotComparison({ before, after }: { before: Snapshot; after: Snapsh
     <div className="divide-y divide-[#343434]/45 overflow-hidden rounded-[10px] border border-[#343434]/55 bg-[#161616]/50">
       {rows.map((row) => (
         <div key={row.label} className="grid gap-1.5 px-3 py-2.5 sm:grid-cols-[105px_1fr_18px_1fr] sm:items-center">
-          <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#686868]">{row.label}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8c8c8c]">{row.label}</span>
           <span className={cn('break-words text-[12px]', row.changed ? 'text-[#a6a6a6] line-through decoration-[#f87171]/55' : 'text-[#a6a6a6]')}>
             {row.oldValue}
           </span>
-          <ArrowRight size={12} className="hidden text-[#808080] sm:block" />
+          <ArrowRight size={12} className="hidden text-[#8c8c8c] sm:block" />
           <span className={cn('break-words text-[12px] font-medium', row.changed ? 'text-[#f4f4f4]' : 'text-[#a6a6a6]')}>
             {row.newValue}
           </span>
@@ -184,6 +186,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
   const { data, loading, error: loadError, refetch } = useFetch<DetailPayload>(canView ? `/api/rank-change-entries/${entryId}` : null)
   const { execute, loading: mutating } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const [formMode, setFormMode] = useState<FormMode | null>(null)
   const [form, setForm] = useState<EntryForm>({ proposedRankId: '', newBadgeNumber: '', note: '', reason: '' })
   const [comment, setComment] = useState('')
@@ -191,6 +194,12 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
   const [voting, setVoting] = useState(false)
 
   const entry = data?.entry
+  useTrackRecentItem(entry ? {
+    href: `/promotions/${entryId}`,
+    title: `${entry.agent.firstName} ${entry.agent.lastName}`,
+    subtitle: `${entry.currentRank.name} → ${entry.proposedRank.name}`,
+    kind: 'rank-change',
+  } : null)
   const direction = entry && entry.proposedRank.sortOrder > entry.currentRank.sortOrder ? 'DEMOTION' : 'PROMOTION'
   const accent = direction === 'DEMOTION' ? '#f87171' : '#34d399'
   const DirectionIcon = direction === 'DEMOTION' ? ArrowDownRight : ArrowUpRight
@@ -259,7 +268,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
   }
 
   const removeComment = async (commentId: string) => {
-    if (!window.confirm('Kommentar wirklich löschen?')) return
+    if (!(await confirm({ title: 'Kommentar löschen?', tone: 'danger' }))) return
     try {
       await execute(`/api/rank-change-entries/${entry.id}/comments/${commentId}`, { method: 'DELETE' })
       await refetch()
@@ -269,7 +278,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
   }
 
   const reviewProposal = async (proposal: Proposal, action: 'ACCEPT' | 'REJECT') => {
-    if (action === 'ACCEPT' && !window.confirm('Diesen Vorschlag übernehmen und den Eintrag ändern?')) return
+    if (action === 'ACCEPT' && !(await confirm({ title: 'Vorschlag übernehmen?', description: 'Der Eintrag wird entsprechend dem Vorschlag geändert.', confirmLabel: 'Übernehmen' }))) return
     setReviewingId(proposal.id)
     try {
       await execute(`/api/rank-change-entries/${entry.id}/proposals/${proposal.id}`, {
@@ -304,10 +313,15 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
   return (
     <div className="mx-auto max-w-[1180px] pb-10">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <Link href="/promotions" className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#a6a6a6] transition-colors hover:text-white">
-          <ArrowLeft size={14} /> Rangänderungen
-        </Link>
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.13em] text-[#808080]">Akte · Rev. {entry.revision}</span>
+        <Breadcrumbs
+          className="mb-0"
+          items={[
+            { label: 'Rangänderungen', href: '/promotions' },
+            { label: entry.list.name, href: '/promotions' },
+            { label: `${entry.agent.firstName} ${entry.agent.lastName}` },
+          ]}
+        />
+        <span className="font-mono text-[11px] uppercase tracking-[0.13em] text-[#8c8c8c]">Akte · Rev. {entry.revision}</span>
       </div>
 
       <section className="relative overflow-hidden rounded-[16px] border border-[#404040]/65 bg-[linear-gradient(135deg,rgba(33,33,33,.96),rgba(8,8,8,.96))] p-5 shadow-[0_18px_48px_rgba(0,0,0,.2)] sm:p-6">
@@ -317,10 +331,10 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
             <AgentAvatar agent={entry.agent} size="lg" ringColor={entry.proposedRank.color} />
             <div className="min-w-0">
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                <span className="text-[10.5px] font-semibold uppercase tracking-[0.13em]" style={{ color: accent }}>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.13em]" style={{ color: accent }}>
                   <span className="inline-flex items-center gap-1"><DirectionIcon size={12} /> {direction === 'DEMOTION' ? 'D-Rank' : 'Up-Rank'}</span>
                 </span>
-                <span className={cn('rounded-[5px] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide', entry.executed ? 'bg-[#34d399]/12 text-[#6ee7b7]' : 'bg-[#fbbf24]/12 text-[#d6d6d6]')}>
+                <span className={cn('rounded-[5px] px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide', entry.executed ? 'bg-[#34d399]/12 text-[#6ee7b7]' : 'bg-[#fbbf24]/12 text-[#d6d6d6]')}>
                   {entry.executed ? 'Durchgeführt' : 'Offen'}
                 </span>
               </div>
@@ -332,7 +346,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <RankTag rank={entry.currentRank} />
-                <ArrowRight size={14} className="text-[#686868]" />
+                <ArrowRight size={14} className="text-[#8c8c8c]" />
                 <RankTag rank={entry.proposedRank} />
                 {entry.newBadgeNumber && <span className="text-[11px] font-medium text-[#d4d4d4]">neue DN #{displayBadgeNumber(entry.newBadgeNumber)}</span>}
               </div>
@@ -382,7 +396,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
               <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#d4d4d4]/10 text-[#d4d4d4]"><FilePenLine size={14} /></span>
               <h2 className="text-[14px] font-semibold text-white">Begründung</h2>
             </div>
-            <p className={cn('whitespace-pre-wrap text-[13px] leading-6', entry.note ? 'text-[#d0d0d0]' : 'italic text-[#686868]')}>
+            <p className={cn('whitespace-pre-wrap text-[13px] leading-6', entry.note ? 'text-[#d0d0d0]' : 'italic text-[#8c8c8c]')}>
               {entry.note || 'Für diesen Eintrag wurde keine Begründung hinterlegt.'}
             </p>
           </section>
@@ -393,10 +407,10 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
                 <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#fbbf24]/10 text-[#d6d6d6]"><FilePenLine size={14} /></span>
                 <h2 className="text-[14px] font-semibold text-white">Änderungsvorschläge</h2>
               </div>
-              <span className="text-[10.5px] font-medium text-[#a6a6a6]">{openProposals} offen · {entry.proposals.length} gesamt</span>
+              <span className="text-[11px] font-medium text-[#a6a6a6]">{openProposals} offen · {entry.proposals.length} gesamt</span>
             </div>
             {entry.proposals.length === 0 ? (
-              <p className="rounded-[10px] border border-dashed border-[#404040]/55 px-4 py-7 text-center text-[12px] text-[#686868]">Noch keine Änderungsvorschläge.</p>
+              <p className="rounded-[10px] border border-dashed border-[#404040]/55 px-4 py-7 text-center text-[12px] text-[#8c8c8c]">Noch keine Änderungsvorschläge.</p>
             ) : (
               <div className="space-y-3">
                 {entry.proposals.map((proposal) => {
@@ -406,14 +420,14 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
                       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="text-[12.5px] font-semibold text-[#f4f4f4]">{personName(proposal.author)}</p>
-                          <p className="mt-0.5 text-[10.5px] text-[#686868]">{formatDateTime(proposal.createdAt)} · basiert auf Revision {proposal.baseRevision}</p>
+                          <p className="mt-0.5 text-[11px] text-[#8c8c8c]">{formatDateTime(proposal.createdAt)} · basiert auf Revision {proposal.baseRevision}</p>
                         </div>
-                        <span className={cn('rounded-[5px] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide', tone.className)}>{tone.label}</span>
+                        <span className={cn('rounded-[5px] px-2 py-1 text-[11px] font-semibold uppercase tracking-wide', tone.className)}>{tone.label}</span>
                       </div>
                       {proposal.reason && <p className="mb-3 whitespace-pre-wrap text-[12px] leading-5 text-[#c3c3c3]">{proposal.reason}</p>}
                       <SnapshotComparison before={proposal.beforeState} after={proposal.afterState} />
                       {proposal.reviewedAt && (
-                        <p className="mt-3 text-[10.5px] text-[#909090]">
+                        <p className="mt-3 text-[11px] text-[#909090]">
                           Geprüft von {personName(proposal.reviewedBy)} am {formatDateTime(proposal.reviewedAt)}
                           {proposal.reviewNote ? ` · ${proposal.reviewNote}` : ''}
                         </p>
@@ -439,10 +453,10 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
             <div className="mb-4 flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#38bdf8]/10 text-[#7dd3fc]"><MessageSquare size={14} /></span>
               <h2 className="text-[14px] font-semibold text-white">Kommentare</h2>
-              <span className="text-[10.5px] text-[#686868]">{entry.comments.length}</span>
+              <span className="text-[11px] text-[#8c8c8c]">{entry.comments.length}</span>
             </div>
             <div className="space-y-3">
-              {entry.comments.length === 0 && <p className="py-2 text-[12px] italic text-[#686868]">Noch keine Kommentare.</p>}
+              {entry.comments.length === 0 && <p className="py-2 text-[12px] italic text-[#8c8c8c]">Noch keine Kommentare.</p>}
               {entry.comments.map((item) => {
                 const canDelete = item.authorId === data.currentUserId || data.permissions.canModerateComments
                 return (
@@ -459,9 +473,9 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[11.5px] font-semibold text-[#f4f4f4]">{personName(item.author)}</p>
                         <div className="flex items-center gap-1.5">
-                          <time className="text-[10px] text-[#686868]">{formatDateTime(item.createdAt)}</time>
+                          <time className="text-[11px] text-[#8c8c8c]">{formatDateTime(item.createdAt)}</time>
                           {canDelete && (
-                            <button onClick={() => removeComment(item.id)} className="rounded-[5px] p-1 text-[#808080] opacity-0 transition-all hover:bg-[#321218]/60 hover:text-[#fca5a5] group-hover:opacity-100 focus-visible:opacity-100" aria-label="Kommentar löschen">
+                            <button onClick={() => removeComment(item.id)} className="rounded-[5px] p-1 text-[#8c8c8c] opacity-0 transition-all hover:bg-[#321218]/60 hover:text-[#fca5a5] group-hover:opacity-100 focus-visible:opacity-100" aria-label="Kommentar löschen">
                               <Trash2 size={11} />
                             </button>
                           )}
@@ -477,7 +491,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
               <div className="mt-4 border-t border-[#343434]/45 pt-4">
                 <Textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Kommentar zur Rangänderung …" rows={3} maxLength={2000} />
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="text-[10px] tabular-nums text-[#808080]">{comment.length}/2000</span>
+                  <span className="text-[11px] tabular-nums text-[#8c8c8c]">{comment.length}/2000</span>
                   <Button size="sm" loading={mutating} disabled={!comment.trim()} onClick={submitComment}><Send size={12} /> Kommentieren</Button>
                 </div>
               </div>
@@ -498,14 +512,14 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
                       <p className="text-[11.5px] font-semibold text-[#f4f4f4]">
                         {record.action === 'CREATED' ? 'Eintrag erstellt' : record.action === 'PROPOSAL_ACCEPTED' ? 'Vorschlag übernommen' : 'Direkt bearbeitet'}
                       </p>
-                      <p className="mt-0.5 text-[10px] text-[#686868]">Revision {record.revision} · {personName(record.actor)} · {formatDateTime(record.createdAt)}</p>
+                      <p className="mt-0.5 text-[11px] text-[#8c8c8c]">Revision {record.revision} · {personName(record.actor)} · {formatDateTime(record.createdAt)}</p>
                     </div>
                   </div>
                   {record.action !== 'CREATED' && <SnapshotComparison before={record.beforeState} after={record.afterState} />}
                 </article>
               ))}
               {entry.history.length === 0 && (
-                <p className="text-[12px] text-[#686868]">Dieser ältere Eintrag besitzt noch keinen protokollierten Versionsstand.</p>
+                <p className="text-[12px] text-[#8c8c8c]">Dieser ältere Eintrag besitzt noch keinen protokollierten Versionsstand.</p>
               )}
             </div>
           </section>
@@ -513,19 +527,19 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
 
         <aside className="space-y-4">
           <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
-            <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.13em] text-[#686868]">Akteninformationen</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.13em] text-[#8c8c8c]">Akteninformationen</p>
             <dl className="space-y-3">
               <div className="flex items-start gap-2.5">
                 <UserRound size={14} className="mt-0.5 text-[#d4d4d4]" />
-                <div><dt className="text-[10px] text-[#686868]">Eingereicht von</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{personName(entry.createdBy)}</dd></div>
+                <div><dt className="text-[11px] text-[#8c8c8c]">Eingereicht von</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{personName(entry.createdBy)}</dd></div>
               </div>
               <div className="flex items-start gap-2.5">
                 <Clock3 size={14} className="mt-0.5 text-[#d4d4d4]" />
-                <div><dt className="text-[10px] text-[#686868]">Eingereicht am</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{formatDateTime(entry.createdAt)}</dd></div>
+                <div><dt className="text-[11px] text-[#8c8c8c]">Eingereicht am</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{formatDateTime(entry.createdAt)}</dd></div>
               </div>
               <div className="flex items-start gap-2.5">
                 <ShieldCheck size={14} className="mt-0.5 text-[#d4d4d4]" />
-                <div><dt className="text-[10px] text-[#686868]">Freigabe</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{entry.executed ? `Durchgeführt von ${personName(entry.executedBy)}` : 'Noch nicht durchgeführt'}</dd></div>
+                <div><dt className="text-[11px] text-[#8c8c8c]">Freigabe</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{entry.executed ? `Durchgeführt von ${personName(entry.executedBy)}` : 'Noch nicht durchgeführt'}</dd></div>
               </div>
             </dl>
           </section>

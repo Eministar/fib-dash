@@ -11,9 +11,9 @@ import { useAuth } from '@/context/auth-context'
 import { hasPermission, type Permission } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 
-const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
-const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: PageLoader })
-const ModuleCalendar = dynamic(() => import('@/components/modules/module-calendar').then(mod => mod.ModuleCalendar), { loading: PageLoader })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: () => <PageLoader /> })
+const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: () => <PageLoader /> })
+const ModuleCalendar = dynamic(() => import('@/components/modules/module-calendar').then(mod => mod.ModuleCalendar), { loading: () => <PageLoader /> })
 
 type Tab = 'documents' | 'tasks' | 'calendar'
 

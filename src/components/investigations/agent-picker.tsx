@@ -8,15 +8,14 @@ import { AlertTriangle, Check, Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import type { AgentLite } from '@/components/investigations/types'
+import { matchesAgent } from '@/lib/search-match'
 
 function agentLabel(agent: AgentLite) {
   return `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`
 }
 
 function matches(agent: AgentLite, needle: string) {
-  if (!needle) return true
-  const haystack = `${agent.firstName} ${agent.lastName} ${agent.badgeNumber} ${agent.rank?.name ?? ''}`
-  return haystack.toLowerCase().includes(needle)
+  return matchesAgent(needle, agent)
 }
 
 interface AgentPickerProps {
@@ -70,7 +69,7 @@ export function AgentPicker({
   return (
     <div>
       <p className="mb-2 block text-[12.5px] font-medium text-[#aeaeae]">{label}</p>
-      {description && <p className="mb-2 text-[11.5px] text-[#6f6f6f]">{description}</p>}
+      {description && <p className="mb-2 text-[11.5px] text-[#8c8c8c]">{description}</p>}
 
       <div className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/35 p-3">
         {selectedAgents.length > 0 && (
@@ -91,7 +90,7 @@ export function AgentPicker({
         )}
 
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#808080]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8c8c8c]" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -103,7 +102,7 @@ export function AgentPicker({
 
         <div className="mt-2 max-h-[220px] overflow-y-auto">
           {visible.length === 0 ? (
-            <p className="px-1 py-3 text-[12px] text-[#6a6a6a]">
+            <p className="px-1 py-3 text-[12px] text-[#8c8c8c]">
               {needle ? 'Kein Agent gefunden.' : 'Alle passenden Agents sind bereits zugewiesen.'}
             </p>
           ) : (
@@ -122,7 +121,7 @@ export function AgentPicker({
                     <span className="truncate">
                       {agentLabel(agent)}
                       {agent.rank && (
-                        <span className="ml-2 text-[11px] text-[#6a6a6a]">{agent.rank.name}</span>
+                        <span className="ml-2 text-[11px] text-[#8c8c8c]">{agent.rank.name}</span>
                       )}
                     </span>
                     <Check className="h-3.5 w-3.5 shrink-0 opacity-0" />

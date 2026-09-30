@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { investigationVisibilityWhere } from '@/lib/investigations'
 import { cleanText, nextVehicleNumber, routeError } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
+import { tokenizedWhere } from '@/lib/search-match'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,19 +21,15 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.VehicleWhereInput = {}
     if (flaggedOnly) where.OR = [{ stolen: true }, { wanted: true }]
-    if (search) {
-      where.AND = [
-        {
-          OR: [
-            { plate: { contains: search } },
-            { model: { contains: search } },
-            { vehicleNumber: { contains: search } },
-            { ownerPerson: { lastName: { contains: search } } },
-            { ownerPerson: { alias: { contains: search } } },
-          ],
-        },
-      ]
-    }
+    const searchWhere = tokenizedWhere<Prisma.VehicleWhereInput>(search, (token) => [
+      { plate: { contains: token } },
+      { model: { contains: token } },
+      { vehicleNumber: { contains: token } },
+      { ownerPerson: { firstName: { contains: token } } },
+      { ownerPerson: { lastName: { contains: token } } },
+      { ownerPerson: { alias: { contains: token } } },
+    ])
+    if (searchWhere) where.AND = searchWhere.AND
 
     const vehicles = await prisma.vehicle.findMany({
       where,

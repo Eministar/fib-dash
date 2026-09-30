@@ -19,6 +19,7 @@ import { Modal } from '@/components/ui/modal'
 import { AgentPicker } from '@/components/investigations/agent-picker'
 import type { AgentLite } from '@/components/investigations/types'
 import { CodenameHistory } from '@/components/codenames/codename-history'
+import { useUrlState } from '@/hooks/use-url-state'
 
 type Codename = { id: string; name: string; category: string | null; retired: boolean; retiredReason: string | null; currentAgent: AgentLite | null; _count?: { assignments: number } }
 type Catalog = { items: Codename[]; total: number; prefix: string; categories?: string[] }
@@ -30,7 +31,7 @@ export default function CodenamesPage() {
   const canManage = hasPermission(user, 'codenames:manage')
   const canSettings = hasPermission(user, 'settings:manage')
   const [tab, setTab] = useState('catalog')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [status, setStatus] = useState('')
   const [category, setCategory] = useState('')
   const [page, setPage] = useState(1)

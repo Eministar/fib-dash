@@ -14,7 +14,7 @@ import { stripApplicationCaseNumber } from '@/lib/application-case-number'
 import { useToast } from '@/components/ui/toast'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
-import { ArrowLeft, FileSignature } from 'lucide-react'
+import { FileSignature } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission, PERMISSIONS } from '@/lib/permissions'
@@ -168,16 +168,9 @@ export default function NewAgentPage() {
   return (
     <div>
       <PageHeader
+        breadcrumbs={[{ label: 'Agents', href: '/agents' }, { label: 'Neuer Agent' }]}
         title="Neuer Agent"
         description="Neuen Mitarbeiter anlegen"
-        action={
-          <Link href="/agents">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft size={15} strokeWidth={1.75} />
-              Zurück
-            </Button>
-          </Link>
-        }
       />
 
       <div className="glass-panel-elevated mx-auto w-full max-w-6xl rounded-[14px] p-6">

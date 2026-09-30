@@ -99,7 +99,7 @@ export function SpotDetailDialog({
             <div className="flex items-center gap-2 text-[12px] font-medium text-[#a6a6a6]">
               <span className="h-2 w-2 rounded-full" style={{ background: category.hex }} />
               {category.label}
-              <span className="ml-auto font-mono text-[11px] text-[#6a6a6a]">
+              <span className="ml-auto font-mono text-[11px] text-[#8c8c8c]">
                 {spot.x.toFixed(1)} / {spot.y.toFixed(1)}
               </span>
             </div>
@@ -131,7 +131,7 @@ export function SpotDetailDialog({
                         {investigation.caseNumber} · {investigation.title}
                       </Link>
                       {investigation.classified && (
-                        <span className="rounded bg-[#7f1d1d]/40 px-1.5 text-[10.5px] text-[#fca5a5]">Verschluss</span>
+                        <span className="rounded bg-[#7f1d1d]/40 px-1.5 text-[11px] text-[#fca5a5]">Verschluss</span>
                       )}
                     </li>
                   ))}
@@ -145,18 +145,18 @@ export function SpotDetailDialog({
               <p className="text-[11.5px] font-medium text-[#a6a6a6]">
                 Beobachtungen
                 {spot.observations.length > 0 && (
-                  <span className="ml-2 font-mono text-[10.5px] text-[#6a6a6a]">{spot.observations.length}</span>
+                  <span className="ml-2 font-mono text-[11px] text-[#8c8c8c]">{spot.observations.length}</span>
                 )}
               </p>
 
               {spot.observations.length === 0 ? (
-                <p className="text-[12px] text-[#808080]">Noch nichts beobachtet.</p>
+                <p className="text-[12px] text-[#8c8c8c]">Noch nichts beobachtet.</p>
               ) : (
                 <ul className="max-h-40 space-y-2 overflow-y-auto pr-1">
                   {spot.observations.map((entry) => (
                     <li key={entry.id} className="rounded-[8px] border border-[#232323] bg-[#111111] p-2.5">
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-mono text-[10.5px] text-[#a78bfa]">
+                        <span className="font-mono text-[11px] text-[#a78bfa]">
                           {formatDateTime(entry.observedAt)}
                         </span>
                         {canManage && (
@@ -164,7 +164,7 @@ export function SpotDetailDialog({
                             type="button"
                             onClick={() => void removeObservation(entry.id)}
                             disabled={savingNote}
-                            className="shrink-0 text-[#6a6a6a] hover:text-[#fca5a5] disabled:opacity-50"
+                            className="shrink-0 text-[#8c8c8c] hover:text-[#fca5a5] disabled:opacity-50"
                             aria-label="Beobachtung löschen"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -172,7 +172,7 @@ export function SpotDetailDialog({
                         )}
                       </div>
                       <p className="mt-1 whitespace-pre-wrap text-[12px] leading-relaxed text-[#c4c4c4]">{entry.note}</p>
-                      <p className="mt-1 text-[10.5px] text-[#6a6a6a]">{entry.createdByName}</p>
+                      <p className="mt-1 text-[11px] text-[#8c8c8c]">{entry.createdByName}</p>
                     </li>
                   ))}
                 </ul>
@@ -211,7 +211,7 @@ export function SpotDetailDialog({
               )}
             </div>
 
-            <p className="mt-5 border-t border-[#232323] pt-3 text-[11.5px] text-[#6a6a6a]">
+            <p className="mt-5 border-t border-[#232323] pt-3 text-[11.5px] text-[#8c8c8c]">
               {spot.createdByName} · {formatDateTime(spot.createdAt)}
             </p>
 

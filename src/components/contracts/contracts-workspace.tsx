@@ -541,7 +541,7 @@ function ContractListRow({
             {contract.counterpartyRole ? ` · ${contract.counterpartyRole}` : ''}
             {contract.application ? ` · Bewerbung: ${contract.application.applicantDisplayName}` : ''}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-[#808080]">
+          <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">
             {contract.status === 'SIGNED'
               ? `Unterschrieben ${formatDateTime(contract.signedAt)} von ${contract.signedName ?? '—'}`
               : contract.sentAt
@@ -603,7 +603,7 @@ function PendingAgentListRow({
           <p className="mt-0.5 truncate text-[11.5px] text-[#909090]">
             DN {displayBadgeNumber(row.badgeNumber)} · {row.rank?.name ?? '—'} · seit {formatDateTime(row.hireDate)}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-[#808080]">
+          <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">
             {hasOpenContract
               ? `Vertrag versendet · ${row.latestContract?.sendCount ?? 0}× angeschrieben`
               : row.latestContract
@@ -648,7 +648,7 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 py-14 text-center">
-      <Icon size={28} className="mx-auto mb-3 text-[#808080]" />
+      <Icon size={28} className="mx-auto mb-3 text-[#8c8c8c]" />
       <p className="text-[14px] font-semibold text-white">{title}</p>
       <p className="mx-auto mt-1 max-w-md text-[12.5px] text-[#a6a6a6]">{description}</p>
     </div>

@@ -11,8 +11,8 @@ import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 
-const AgentSearches = dynamic(() => import('@/components/internal-affairs/agent-searches').then(mod => mod.AgentSearches), { loading: PageLoader })
-const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
+const AgentSearches = dynamic(() => import('@/components/internal-affairs/agent-searches').then(mod => mod.AgentSearches), { loading: () => <PageLoader /> })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: () => <PageLoader /> })
 
 const EMPTY_INTERNAL_AFFAIRS_DOCUMENT = `# Neuer Internal-Affairs-Bericht
 

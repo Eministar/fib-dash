@@ -40,15 +40,15 @@ export function TabBar({
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a78bfa]/35',
               isActive
                 ? 'border-[#a78bfa]/40 bg-[#a78bfa]/10 text-[#c4b5fd]'
-                : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                : 'border-line/60 bg-surface-sunken/55 text-fg-muted hover:border-line-strong hover:text-white',
             )}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span
                 className={cn(
-                  'rounded-full px-1.5 font-mono text-[10.5px]',
-                  isActive ? 'bg-[#a78bfa]/20 text-[#c4b5fd]' : 'bg-[#232323] text-[#808080]',
+                  'rounded-full px-1.5 font-mono text-[11px]',
+                  isActive ? 'bg-[#a78bfa]/20 text-[#c4b5fd]' : 'bg-surface-raised text-fg-subtle',
                 )}
               >
                 {tab.count}

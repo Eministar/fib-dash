@@ -15,18 +15,25 @@ export function EmptyState({
   title,
   hint,
   action,
+  inline = false,
 }: {
   icon: LucideIcon
   title: string
   hint?: string
   action?: ReactNode
+  /** Ohne eigenen Kartenrahmen – für Leerzustände innerhalb einer bestehenden Karte. */
+  inline?: boolean
 }) {
-  return (
-    <Card className="py-12 text-center">
-      <Icon className="mx-auto h-8 w-8 text-[#4a4a4a]" />
+  const content = (
+    <>
+      <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-accent/10 bg-accent/5">
+        <Icon className="h-[18px] w-[18px] text-[#8a8a8a]" strokeWidth={1.6} />
+      </span>
       <p className="mt-3 text-[13.5px] text-[#c4c4c4]">{title}</p>
-      {hint && <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-relaxed text-[#808080]">{hint}</p>}
-      {action && <div className="mt-4 flex justify-center gap-2">{action}</div>}
-    </Card>
+      {hint && <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-relaxed text-[#909090]">{hint}</p>}
+      {action && <div className="mt-4 flex flex-wrap justify-center gap-2">{action}</div>}
+    </>
   )
+  if (inline) return <div className="py-10 text-center">{content}</div>
+  return <Card className="py-12 text-center">{content}</Card>
 }

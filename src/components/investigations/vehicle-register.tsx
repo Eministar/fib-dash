@@ -35,6 +35,7 @@ import type {
   Person,
   Vehicle,
 } from '@/components/investigations/types'
+import { useUrlState } from '@/hooks/use-url-state'
 
 type VehicleDetail = Vehicle & {
   investigations: {
@@ -54,7 +55,7 @@ export function VehicleRegister() {
   const canManage = hasPermission(user, 'investigations:manage')
   const canDelete = hasPermission(user, 'investigations:delete')
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [flaggedOnly, setFlaggedOnly] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [form, setForm] = useState<VehicleForm>(emptyVehicleForm)
@@ -193,7 +194,7 @@ export function VehicleRegister() {
                 {vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}
               </div>
               <p className="mt-1.5 text-[14px] font-semibold text-white">{vehicleLabel(vehicle)}</p>
-              <p className="mt-1 text-[11.5px] text-[#6a6a6a]">
+              <p className="mt-1 text-[11.5px] text-[#8c8c8c]">
                 {vehicle.color ? `${vehicle.color} · ` : ''}
                 {vehicle.ownerPerson
                   ? `Halter: ${vehicle.ownerPerson.firstName} ${vehicle.ownerPerson.lastName}`
@@ -264,24 +265,24 @@ export function VehicleRegister() {
             <dl className="grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
               {detail.plate && (
                 <div>
-                  <dt className="text-[#6a6a6a]">Kennzeichen</dt>
+                  <dt className="text-[#8c8c8c]">Kennzeichen</dt>
                   <dd className="font-mono text-[#e4e4e4]">{detail.plate}</dd>
                 </div>
               )}
               {detail.model && (
                 <div>
-                  <dt className="text-[#6a6a6a]">Modell</dt>
+                  <dt className="text-[#8c8c8c]">Modell</dt>
                   <dd className="text-[#e4e4e4]">{detail.model}</dd>
                 </div>
               )}
               {detail.color && (
                 <div>
-                  <dt className="text-[#6a6a6a]">Farbe</dt>
+                  <dt className="text-[#8c8c8c]">Farbe</dt>
                   <dd className="text-[#e4e4e4]">{detail.color}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-[#6a6a6a]">Halter</dt>
+                <dt className="text-[#8c8c8c]">Halter</dt>
                 <dd className="text-[#e4e4e4]">
                   {detail.ownerPerson ? (
                     <Link
@@ -311,7 +312,7 @@ export function VehicleRegister() {
                 Ermittlungen ({detail.investigations.length})
               </p>
               {detail.investigations.length === 0 ? (
-                <p className="text-[12.5px] text-[#6a6a6a]">Keiner Akte zugeordnet.</p>
+                <p className="text-[12.5px] text-[#8c8c8c]">Keiner Akte zugeordnet.</p>
               ) : (
                 <ul className="space-y-2">
                   {detail.investigations.map((link) => (

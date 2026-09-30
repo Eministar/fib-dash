@@ -133,7 +133,7 @@ export default function LegalCaseBatchPage() {
                     <span className="font-mono text-[11px] font-semibold text-[#a78bfa]">
                       {legalCase.caseNumber}
                     </span>
-                    <span className="rounded-full border border-[#343434]/60 bg-[#181818]/60 px-2 py-[1px] text-[10.5px] font-semibold text-[#a6a6a6]">
+                    <span className="rounded-full border border-[#343434]/60 bg-[#181818]/60 px-2 py-[1px] text-[11px] font-semibold text-[#a6a6a6]">
                       {index + 1}. Klage
                     </span>
                   </div>
@@ -160,7 +160,7 @@ export default function LegalCaseBatchPage() {
                       {resolveViolation(sanction.violationCode) && (
                         <span className="text-[#d4d4d4]">{resolveViolation(sanction.violationCode)!.label}</span>
                       )}
-                      <span className="text-[#686868]">· {sanction.reason}</span>
+                      <span className="text-[#8c8c8c]">· {sanction.reason}</span>
                     </div>
                   ))}
                 </div>

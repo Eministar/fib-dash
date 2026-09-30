@@ -5,6 +5,7 @@ import { error, notFound, success, unauthorized } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@/generated/prisma'
+import { tokenizedWhere } from '@/lib/search-match'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,20 +85,20 @@ export async function GET(req: NextRequest) {
       where.agentId = agentId
     }
 
-    if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { caseNumber: { contains: search } },
-        { allegation: { contains: search } },
-        { statement: { contains: search } },
-        { previousFirstName: { contains: search } },
-        { previousLastName: { contains: search } },
-        { previousBadgeNumber: { contains: search } },
-        { agent: { firstName: { contains: search } } },
-        { agent: { lastName: { contains: search } } },
-        { agent: { badgeNumber: { contains: search } } },
-      ]
-    }
+    const searchWhere = tokenizedWhere(search, (token) => [
+      { title: { contains: token } },
+      { caseNumber: { contains: token } },
+      { allegation: { contains: token } },
+      { statement: { contains: token } },
+      { previousFirstName: { contains: token } },
+      { previousLastName: { contains: token } },
+      { previousBadgeNumber: { contains: token } },
+      { agent: { firstName: { contains: token } } },
+      { agent: { lastName: { contains: token } } },
+      { agent: { badgeNumber: { contains: token } } },
+      { agent: { discordId: { contains: token } } },
+    ])
+    if (searchWhere) Object.assign(where, searchWhere)
 
     const daws = await prisma.internalAffairsDaw.findMany({
       where,

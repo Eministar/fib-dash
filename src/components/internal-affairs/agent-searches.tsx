@@ -28,6 +28,8 @@ import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { cn, formatDateTime, getStatusLabel } from '@/lib/utils'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { matchesAgent } from '@/lib/search-match'
 
 type RankLite = { id: string; name: string; color: string }
 
@@ -122,12 +124,12 @@ function ResultCard({ entry, canManage, onDelete }: {
             </span>
             <div className="min-w-0">
               <p className="truncate text-[12.5px] font-semibold text-[#f4f4f4]">{searchDate(entry.conductedAt)}</p>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[10.5px] text-[#7d7d7d]"><Clock3 size={10} /> {searchTime(entry.conductedAt)} Uhr</p>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#8c8c8c]"><Clock3 size={10} /> {searchTime(entry.conductedAt)} Uhr</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className={cn(
-              'inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[9.5px] font-bold uppercase tracking-[0.08em]',
+              'inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-bold uppercase tracking-[0.08em]',
               entry.prohibitedItemsFound
                 ? 'border-[#fb7185]/25 bg-[#fb7185]/[0.08] text-[#fda4af]'
                 : 'border-[#34d399]/20 bg-[#34d399]/[0.07] text-[#6ee7b7]',
@@ -139,7 +141,7 @@ function ResultCard({ entry, canManage, onDelete }: {
               <button
                 type="button"
                 onClick={() => onDelete(entry)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6e6e6e] opacity-100 transition-colors hover:bg-[#fb7185]/10 hover:text-[#fda4af] sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8c8c8c] opacity-100 transition-colors hover:bg-[#fb7185]/10 hover:text-[#fda4af] sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                 aria-label={`Durchsuchung vom ${searchDate(entry.conductedAt)} löschen`}
               >
                 <Trash2 size={12} />
@@ -150,25 +152,25 @@ function ResultCard({ entry, canManage, onDelete }: {
 
         <div className="grid gap-4 px-4 py-4 sm:grid-cols-[1fr_190px]">
           <div>
-            <p className="mb-2 flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-[0.13em] text-[#7d7d7d]">
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.13em] text-[#8c8c8c]">
               <PackageOpen size={11} /> Gefundene / abgenommene Gegenstände
             </p>
             {entry.foundItems ? (
               <p className="whitespace-pre-wrap text-[12.5px] leading-5 text-[#d5d5d5]">{entry.foundItems}</p>
             ) : (
-              <p className="text-[12px] italic text-[#6e6e6e]">Keine Gegenstände dokumentiert</p>
+              <p className="text-[12px] italic text-[#8c8c8c]">Keine Gegenstände dokumentiert</p>
             )}
             {entry.notes && (
               <div className="mt-4 border-t border-[#343434]/45 pt-3">
-                <p className="mb-1 text-[9.5px] font-bold uppercase tracking-[0.13em] text-[#7d7d7d]">Ergebnis / Notiz</p>
+                <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.13em] text-[#8c8c8c]">Ergebnis / Notiz</p>
                 <p className="whitespace-pre-wrap text-[12px] leading-5 text-[#aeaeae]">{entry.notes}</p>
               </div>
             )}
           </div>
           <aside className="rounded-xl border border-[#343434]/55 bg-[#161616]/45 p-3">
-            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#6d6d6d]">Eingetragen von</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c8c8c]">Eingetragen von</p>
             <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] font-medium text-[#d3d3d3]"><UserRoundCheck size={12} className="text-[#7dd3fc]" /> {entry.createdBy?.displayName ?? 'Gelöschter Benutzer'}</p>
-            <p className="mt-2 text-[10px] leading-4 text-[#6e6e6e]">Erfasst am<br />{formatDateTime(entry.createdAt)}</p>
+            <p className="mt-2 text-[11px] leading-4 text-[#8c8c8c]">Erfasst am<br />{formatDateTime(entry.createdAt)}</p>
           </aside>
         </div>
       </div>
@@ -184,6 +186,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
   const [form, setForm] = useState<SearchForm>(() => emptyForm())
   const { execute, loading: saving } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
 
   useEffect(() => {
     if (!selectedAgentId && agents?.length) setSelectedAgentId(agents[0].id)
@@ -197,13 +200,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
   const activeSearchFile = searchFile?.id === selectedAgentId ? searchFile : null
 
   const filteredAgents = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase('de-DE')
-    if (!needle) return agents ?? []
-    return (agents ?? []).filter((agent) => (
-      `${agent.firstName} ${agent.lastName} ${agent.badgeNumber} ${agent.rank.name}`
-        .toLocaleLowerCase('de-DE')
-        .includes(needle)
-    ))
+    return (agents ?? []).filter((agent) => matchesAgent(query, agent))
   }, [agents, query])
 
   const totalSearches = useMemo(
@@ -238,7 +235,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
   }
 
   const deleteSearch = async (entry: SearchEntry) => {
-    if (!window.confirm(`Durchsuchung vom ${searchDate(entry.conductedAt)} wirklich löschen?`)) return
+    if (!(await confirm({ title: `Durchsuchung vom ${searchDate(entry.conductedAt)} löschen?`, tone: 'danger' }))) return
     try {
       await execute(`/api/internal-affairs/searches/${entry.id}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Durchsuchung gelöscht' })
@@ -268,12 +265,12 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
           <div className="border-b border-[#343434]/65 p-3.5">
             <label className="relative block">
               <span className="sr-only">Agents durchsuchen</span>
-              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6d6d6d]" />
+              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Name, Dienstnummer oder Rang"
-                className="h-9 w-full rounded-[9px] border border-[#343434]/75 bg-[#1b1b1b]/75 pl-9 pr-3 text-[12px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#656565] focus:border-[#0ea5e9]/55 focus:ring-2 focus:ring-[#0ea5e9]/10"
+                className="h-9 w-full rounded-[9px] border border-[#343434]/75 bg-[#1b1b1b]/75 pl-9 pr-3 text-[12px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#0ea5e9]/55 focus:ring-2 focus:ring-[#0ea5e9]/10"
               />
             </label>
           </div>
@@ -296,23 +293,23 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                   <AgentAvatar agent={agent} size="md" ringColor={selected ? '#0ea5e9' : agent.rank.color} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="font-mono text-[9.5px] font-bold text-[#7dd3fc]">{displayBadgeNumber(agent.badgeNumber)}</span>
+                      <span className="font-mono text-[11px] font-bold text-[#7dd3fc]">{displayBadgeNumber(agent.badgeNumber)}</span>
                       <span className="truncate text-[12px] font-semibold text-[#e5e5e5]">{agent.firstName} {agent.lastName}</span>
                     </span>
-                    <span className="mt-0.5 block truncate text-[10px] text-[#767676]">{agent.rank.name} · {getStatusLabel(agent.status)}</span>
-                    <span className="mt-1 block text-[9.5px] text-[#686868]">
+                    <span className="mt-0.5 block truncate text-[11px] text-[#8c8c8c]">{agent.rank.name} · {getStatusLabel(agent.status)}</span>
+                    <span className="mt-1 block text-[11px] text-[#8c8c8c]">
                       {agent.searchCount === 0 ? 'Noch keine Durchsuchung' : `${agent.searchCount} ${agent.searchCount === 1 ? 'Eintrag' : 'Einträge'} · zuletzt ${searchDate(agent.lastSearchAt!)}`}
                     </span>
                   </span>
-                  <ChevronRight size={13} className={cn('shrink-0 transition-transform', selected ? 'translate-x-0.5 text-[#7dd3fc]' : 'text-[#595959] group-hover:translate-x-0.5')} />
+                  <ChevronRight size={13} className={cn('shrink-0 transition-transform', selected ? 'translate-x-0.5 text-[#7dd3fc]' : 'text-[#8c8c8c] group-hover:translate-x-0.5')} />
                 </button>
               )
             })}
 
             {filteredAgents.length === 0 && (
               <div className="px-4 py-12 text-center">
-                <Search size={21} className="mx-auto mb-2 text-[#595959]" />
-                <p className="text-[11.5px] text-[#767676]">Keine Agents gefunden</p>
+                <Search size={21} className="mx-auto mb-2 text-[#8c8c8c]" />
+                <p className="text-[11.5px] text-[#8c8c8c]">Keine Agents gefunden</p>
               </div>
             )}
           </div>
@@ -325,9 +322,9 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                 <div className="flex min-w-0 items-center gap-3.5">
                   <AgentAvatar agent={selectedAgent} size="lg" ringColor="#0ea5e9" />
                   <div className="min-w-0">
-                    <p className="text-[9.5px] font-bold uppercase tracking-[0.16em] text-[#7dd3fc]">Durchsuchungsakte · {displayBadgeNumber(selectedAgent.badgeNumber)}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7dd3fc]">Durchsuchungsakte · {displayBadgeNumber(selectedAgent.badgeNumber)}</p>
                     <h2 className="mt-1 truncate text-[19px] font-semibold tracking-[-0.02em] text-white">{selectedAgent.firstName} {selectedAgent.lastName}</h2>
-                    <p className="mt-0.5 truncate text-[10.5px] text-[#7d7d7d]">{selectedAgent.rank.name} · {getStatusLabel(selectedAgent.status)}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">{selectedAgent.rank.name} · {getStatusLabel(selectedAgent.status)}</p>
                   </div>
                 </div>
                 {canManage && <Button size="sm" onClick={openCreate}><Plus size={13} /> Durchsuchung hinzufügen</Button>}
@@ -347,7 +344,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                   <div className="flex min-h-[380px] flex-col items-center justify-center rounded-[15px] border border-dashed border-[#3d3d3d] bg-[#181818]/38 px-6 text-center">
                     <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#0ea5e9]/20 bg-[#0ea5e9]/[0.06] text-[#5bbde7]"><Archive size={23} strokeWidth={1.6} /></span>
                     <p className="text-[13px] font-semibold text-[#c6c6c6]">Noch keine Durchsuchung dokumentiert</p>
-                    <p className="mt-1.5 max-w-sm text-[11px] leading-5 text-[#727272]">Neue Einträge erscheinen hier chronologisch mit Ergebnis, Gegenständen und erfassender Person.</p>
+                    <p className="mt-1.5 max-w-sm text-[11px] leading-5 text-[#8c8c8c]">Neue Einträge erscheinen hier chronologisch mit Ergebnis, Gegenständen und erfassender Person.</p>
                     {canManage && <Button className="mt-5" size="sm" onClick={openCreate}><Plus size={13} /> Erste Durchsuchung eintragen</Button>}
                   </div>
                 )}
@@ -355,7 +352,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
             </>
           ) : (
             <div className="flex min-h-[600px] flex-col items-center justify-center px-6 text-center">
-              <FileSearch size={30} className="mb-3 text-[#5f5f5f]" strokeWidth={1.5} />
+              <FileSearch size={30} className="mb-3 text-[#8c8c8c]" strokeWidth={1.5} />
               <p className="text-[13px] text-[#919191]">Wähle einen Agent aus, um die Durchsuchungsakte zu öffnen.</p>
             </div>
           )}
@@ -389,7 +386,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                 type="button"
                 onClick={() => setForm({ ...form, prohibitedItemsFound: false })}
                 aria-pressed={!form.prohibitedItemsFound}
-                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', !form.prohibitedItemsFound ? 'bg-[#34d399]/12 text-[#6ee7b7] shadow-[inset_0_0_0_1px_rgba(52,211,153,.2)]' : 'text-[#767676] hover:text-[#aeaeae]')}
+                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', !form.prohibitedItemsFound ? 'bg-[#34d399]/12 text-[#6ee7b7] shadow-[inset_0_0_0_1px_rgba(52,211,153,.2)]' : 'text-[#8c8c8c] hover:text-[#aeaeae]')}
               >
                 <ShieldCheck size={14} /> Nein
               </button>
@@ -397,7 +394,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
                 type="button"
                 onClick={() => setForm({ ...form, prohibitedItemsFound: true })}
                 aria-pressed={form.prohibitedItemsFound}
-                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', form.prohibitedItemsFound ? 'bg-[#fb7185]/12 text-[#fda4af] shadow-[inset_0_0_0_1px_rgba(251,113,133,.2)]' : 'text-[#767676] hover:text-[#aeaeae]')}
+                className={cn('flex h-9 items-center justify-center gap-2 rounded-[8px] text-[12px] font-semibold transition-colors', form.prohibitedItemsFound ? 'bg-[#fb7185]/12 text-[#fda4af] shadow-[inset_0_0_0_1px_rgba(251,113,133,.2)]' : 'text-[#8c8c8c] hover:text-[#aeaeae]')}
               >
                 <ShieldAlert size={14} /> Ja
               </button>
@@ -420,7 +417,7 @@ export function AgentSearches({ canManage }: { canManage: boolean }) {
             rows={3}
           />
 
-          <div className="rounded-[10px] border border-[#0ea5e9]/15 bg-[#0ea5e9]/[0.045] px-3 py-2.5 text-[10.5px] leading-4 text-[#868686]">
+          <div className="rounded-[10px] border border-[#0ea5e9]/15 bg-[#0ea5e9]/[0.045] px-3 py-2.5 text-[11px] leading-4 text-[#868686]">
             Ersteller und Eintragungszeit werden automatisch gespeichert. Einträge bleiben unverändert; Korrekturen erfolgen durch Löschen und erneutes Erfassen.
           </div>
 

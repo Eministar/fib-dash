@@ -20,10 +20,12 @@ import { SpotEditorDialog, type SpotFormValues } from '@/components/map/spot-edi
 import { SpotList } from '@/components/map/spot-list'
 import { DossierFilter, filterSpotsByDossier } from '@/components/map/dossier-filter'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 export function MapWorkspace() {
   const { user } = useAuth()
   const { toastSuccess, toastError } = useInvestigationToast()
+  const confirm = useConfirm()
   const { execute, loading: saving } = useApi()
 
   const canView = hasPermission(user, 'map:view')
@@ -102,7 +104,7 @@ export function MapWorkspace() {
 
   const handleDelete = async () => {
     if (!detailSpot) return
-    if (!window.confirm(`Markierung „${detailSpot.title}“ endgültig löschen?`)) return
+    if (!(await confirm({ title: `Markierung „${detailSpot.title}“ löschen?`, tone: 'danger' }))) return
     try {
       await execute(`/api/map/spots/${detailSpot.id}`, { method: 'DELETE' })
       toastSuccess('Markierung gelöscht', `„${detailSpot.title}“ wurde entfernt.`)
@@ -217,7 +219,7 @@ export function MapWorkspace() {
       />
 
       {spots.length === 0 && !loading && dossierId && (
-        <p className="mt-3 text-[12px] text-[#6a6a6a]">
+        <p className="mt-3 text-[12px] text-[#8c8c8c]">
           Diese Dauerakte hat keine Kartenpunkte.{' '}
           <button type="button" className="text-[#c4b5fd] hover:underline" onClick={() => setDossierId(null)}>
             Filter lösen
@@ -226,7 +228,7 @@ export function MapWorkspace() {
       )}
 
       {allSpots.length === 0 && !loading && canManage && (
-        <p className="mt-3 flex items-center gap-2 text-[12px] text-[#6a6a6a]">
+        <p className="mt-3 flex items-center gap-2 text-[12px] text-[#8c8c8c]">
           <MapPin className="h-3.5 w-3.5" />
           Noch keine Markierungen. Klicke auf die Karte, um die erste zu setzen.
         </p>

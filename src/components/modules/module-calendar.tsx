@@ -12,9 +12,11 @@ import { Select } from '@/components/ui/select'
 import { Modal } from '@/components/ui/modal'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
+import { useHiddenIds, useUndoable } from '@/hooks/use-undoable'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { displayBadgeNumber } from '@/lib/badge-number'
+import { useUrlState } from '@/hooks/use-url-state'
 
 export type ModuleCalendarKey = 'ACADEMY' | 'HR' | 'SRU' | 'AIR_SUPPORT' | 'DETECTIVE' | 'INTERNAL_AFFAIRS' | 'LAD'
 
@@ -91,9 +93,9 @@ function DateBadge({ iso, color }: { iso: string; color: string }) {
           className="flex h-[58px] w-[58px] flex-col items-center justify-center rounded-[10px] border shrink-0"
           style={{ borderColor: `${color}55`, backgroundColor: `${color}10` }}
       >
-        <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color }}>{MONTHS_DE[d.getMonth()]}</span>
+        <span className="text-[11px] uppercase font-bold tracking-wider" style={{ color }}>{MONTHS_DE[d.getMonth()]}</span>
         <span className="text-[20px] font-bold leading-none text-white">{d.getDate()}</span>
-        <span className="text-[9px] text-[#a6a6a6] mt-0.5">{DAYS_DE[d.getDay()]}</span>
+        <span className="text-[11px] text-[#a6a6a6] mt-0.5">{DAYS_DE[d.getDay()]}</span>
       </div>
   )
 }
@@ -103,11 +105,13 @@ export function ModuleCalendar({
                                  eventTypes, defaultType, color, canManage,
                                }: ModuleCalendarProps) {
   const { data: events, loading, refetch } = useFetch<CalendarEvent[]>(`/api/calendar-events?module=${module}`)
+  const { hidden: hiddenEvents, hide: hideEvent, show: showEvent } = useHiddenIds()
+  const runUndoable = useUndoable()
   const { data: agents } = useFetch<Agent[]>(canManage ? '/api/agents' : null)
   const { execute } = useApi()
   const { addToast } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
-  const [filter, setFilter] = useState<'upcoming' | 'past' | 'all'>('upcoming')
+  const [filter, setFilter] = useUrlState<'upcoming' | 'past' | 'all'>('filter', 'upcoming')
   const [nowMs, setNowMs] = useState<number | null>(null)
   const [form, setForm] = useState({
     title: '', description: '', type: defaultType, startsAt: localDateTimeValue(),
@@ -131,11 +135,11 @@ export function ModuleCalendar({
 
   const { upcoming, past } = useMemo(() => {
     const now = nowMs ?? 0
-    const list = events ?? []
+    const list = (events ?? []).filter((e) => !hiddenEvents.has(e.id))
     const upcoming = list.filter((e) => new Date(e.startsAt).getTime() >= now).sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt))
     const past = list.filter((e) => new Date(e.startsAt).getTime() < now).sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt))
     return { upcoming, past }
-  }, [events, nowMs])
+  }, [events, hiddenEvents, nowMs])
 
   const displayed = filter === 'upcoming' ? upcoming : filter === 'past' ? past : [...upcoming, ...past]
 
@@ -161,15 +165,18 @@ export function ModuleCalendar({
     }
   }
 
-  const deleteEvent = async (event: CalendarEvent) => {
-    if (!confirm(`Termin "${event.title}" löschen?`)) return
-    try {
-      await execute(`/api/calendar-events/${event.id}`, { method: 'DELETE' })
-      addToast({ type: 'success', title: deleteToastTitle })
-      await refetch()
-    } catch (err) {
-      addToast({ type: 'error', title: 'Termin konnte nicht gelöscht werden', message: err instanceof Error ? err.message : '' })
-    }
+  const deleteEvent = (event: CalendarEvent) => {
+    runUndoable({
+      title: deleteToastTitle,
+      message: event.title,
+      apply: () => hideEvent(event.id),
+      revert: () => showEvent(event.id),
+      commit: async () => {
+        await execute(`/api/calendar-events/${event.id}`, { method: 'DELETE' })
+        await refetch()
+      },
+      errorTitle: 'Termin konnte nicht gelöscht werden',
+    })
   }
 
   if (loading) return <PageLoader />
@@ -190,15 +197,15 @@ export function ModuleCalendar({
         {/* KPI Strip */}
         <div className="grid grid-cols-3 gap-3">
           <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-            <p className="text-[10.5px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Kommend</p>
+            <p className="text-[11px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Kommend</p>
             <p className="mt-1 text-[22px] font-bold text-white">{upcoming.length}</p>
           </div>
           <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-            <p className="text-[10.5px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Vergangen</p>
+            <p className="text-[11px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Vergangen</p>
             <p className="mt-1 text-[22px] font-bold text-white">{past.length}</p>
           </div>
           <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-            <p className="text-[10.5px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Nächster</p>
+            <p className="text-[11px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Nächster</p>
             <p className="mt-1 text-[13.5px] font-semibold text-white truncate">{upcoming[0] ? (relativeDay(upcoming[0].startsAt) ?? new Date(upcoming[0].startsAt).toLocaleDateString('de-DE')) : '—'}</p>
           </div>
         </div>
@@ -245,13 +252,13 @@ export function ModuleCalendar({
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5 mb-1">
                         <span
-                            className="rounded-[5px] border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                            className="rounded-[5px] border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
                             style={{ borderColor: `${color}40`, backgroundColor: `${color}14`, color }}
                         >
                           {eventTypeLabel(event.type, eventTypes)}
                         </span>
                             {rel && (
-                                <span className="rounded-[5px] bg-[#212121] px-1.5 py-0.5 text-[10px] font-semibold text-[#a6a6a6]">
+                                <span className="rounded-[5px] bg-[#212121] px-1.5 py-0.5 text-[11px] font-semibold text-[#a6a6a6]">
                             {rel}
                           </span>
                             )}

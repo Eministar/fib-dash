@@ -80,7 +80,7 @@ export function OrdnungOutline({ entries, variant }: { entries: OutlineEntry[]; 
 
   return (
     <nav aria-label="Abschnitte" className="sticky top-4 hidden max-h-[calc(100vh-2rem)] overflow-y-auto xl:block">
-      <p className="mb-2 flex items-center gap-2 px-3 text-[11.5px] font-medium uppercase tracking-[0.08em] text-[#808080]">
+      <p className="mb-2 flex items-center gap-2 px-3 text-[11.5px] font-medium uppercase tracking-[0.08em] text-[#8c8c8c]">
         <ListTree size={13} /> Abschnitte
       </p>
       <OutlineLinks entries={entries} active={active} />

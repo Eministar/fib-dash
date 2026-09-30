@@ -4,6 +4,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useSyncExternalStore } from 'react'
 
 interface ModalProps {
   open: boolean
@@ -13,16 +14,33 @@ interface ModalProps {
   children: React.ReactNode
   className?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
+  /** Name für Screenreader, wenn der Dialog seine Überschrift selbst rendert. */
+  ariaTitle?: string
 }
 
 const sizes = {
-  sm: 'max-w-[380px]',
-  md: 'max-w-[460px]',
-  lg: 'max-w-[560px]',
-  xl: 'max-w-[720px]',
+  sm: 'sm:max-w-[380px]',
+  md: 'sm:max-w-[460px]',
+  lg: 'sm:max-w-[560px]',
+  xl: 'sm:max-w-[720px]',
 }
 
-export function Modal({ open, onClose, title, description, children, className, size = 'md' }: ModalProps) {
+const MOBILE_QUERY = '(max-width: 639px)'
+
+function subscribeMobile(notify: () => void) {
+  const media = window.matchMedia(MOBILE_QUERY)
+  media.addEventListener('change', notify)
+  return () => media.removeEventListener('change', notify)
+}
+
+/** Auf dem Handy fährt der Dialog als Sheet von unten ein – dort, wo der Daumen ist. */
+function useIsMobile() {
+  return useSyncExternalStore(subscribeMobile, () => window.matchMedia(MOBILE_QUERY).matches, () => false)
+}
+
+export function Modal({ open, onClose, title, description, children, className, size = 'md', ariaTitle }: ModalProps) {
+  const mobile = useIsMobile()
+  const hidden = mobile ? { opacity: 1, y: '100%' } : { opacity: 0, scale: 0.96, y: 6 }
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <AnimatePresence>
@@ -34,31 +52,36 @@ export function Modal({ open, onClose, title, description, children, className, 
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="fixed inset-0 bg-[#080808]/60 backdrop-blur-[2px] z-50"
+                className="fixed inset-0 bg-canvas/60 backdrop-blur-[2px] z-50"
               />
             </Dialog.Overlay>
             <Dialog.Content asChild>
               <motion.div
-                initial={{ opacity: 0, scale: 0.96, y: 6 }}
+                initial={hidden}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96, y: 6 }}
-                transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                exit={hidden}
+                transition={mobile ? { type: 'spring', damping: 34, stiffness: 380 } : { duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                 className={cn(
-                  'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-                  'w-[calc(100%-2rem)]', sizes[size],
-                  'glass-panel-elevated rounded-[16px]',
-                  'max-h-[85vh] overflow-y-auto',
+                  'fixed z-50',
+                  // Handy: Sheet am unteren Rand
+                  'inset-x-0 bottom-0 w-full max-h-[90dvh] rounded-t-card rounded-b-none pb-[env(safe-area-inset-bottom)]',
+                  // Ab sm: zentrierter Dialog
+                  'sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
+                  'sm:w-[calc(100%-2rem)] sm:max-h-[85vh] sm:rounded-card sm:pb-0',
+                  sizes[size],
+                  'glass-panel-elevated overflow-y-auto overscroll-contain',
                   className
                 )}
               >
-                <div className="p-6">
+                <div aria-hidden className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-line-strong sm:hidden" />
+                <div className="p-5 sm:p-6">
                   {title ? (
                     <div className="mb-5">
                       <Dialog.Title className="text-[15px] font-semibold text-white">
                         {title}
                       </Dialog.Title>
                       {description ? (
-                        <Dialog.Description className="text-[13px] text-[#a6a6a6] mt-1">
+                        <Dialog.Description className="text-[13px] text-fg-muted mt-1">
                           {description}
                         </Dialog.Description>
                       ) : (
@@ -69,7 +92,7 @@ export function Modal({ open, onClose, title, description, children, className, 
                     </div>
                   ) : (
                     <>
-                      <Dialog.Title className="sr-only">Dialog</Dialog.Title>
+                      <Dialog.Title className="sr-only">{ariaTitle ?? 'Dialog'}</Dialog.Title>
                       <Dialog.Description className="sr-only">
                         {description ?? 'Dialogfenster'}
                       </Dialog.Description>
@@ -79,7 +102,7 @@ export function Modal({ open, onClose, title, description, children, className, 
                 </div>
                 <Dialog.Close asChild>
                   <button
-                    className="absolute top-4 right-4 p-1.5 rounded-[8px] text-[#909090] hover:text-[#d4d4d4] hover:bg-[#232323]/60 transition-colors"
+                    className="absolute top-4 right-4 p-1.5 rounded-[8px] text-[#909090] hover:text-accent hover:bg-surface-raised/60 transition-colors"
                     aria-label="Schließen"
                   >
                     <X size={15} strokeWidth={2} />

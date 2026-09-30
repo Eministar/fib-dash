@@ -37,10 +37,13 @@ import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { useToast } from '@/components/ui/toast'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
+import { useHiddenIds, useUndoable } from '@/hooks/use-undoable'
 import { useAuth } from '@/context/auth-context'
 import { cn, formatDate } from '@/lib/utils'
 import { hasPermission, type Permission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { matchesAgent } from '@/lib/search-match'
 
 type TaskModule = 'ACADEMY' | 'HR' | 'SRU' | 'AIR_SUPPORT' | 'DETECTIVE' | 'INTERNAL_AFFAIRS' | 'LAD'
 type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED'
@@ -184,7 +187,7 @@ function AssigneePill({ agent, onRemove }: { agent: AssignmentAgent; onRemove?: 
   return (
     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#212121] border border-[#373737]/60 text-[11.5px] text-[#e5e5e5]">
       <span
-        className="h-4 w-4 rounded-full flex items-center justify-center text-[8.5px] font-bold text-[#181818]"
+        className="h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold text-[#181818]"
         style={{ backgroundColor: agent.rank?.color || '#d4d4d4' }}
       >
         {initials}
@@ -194,7 +197,7 @@ function AssigneePill({ agent, onRemove }: { agent: AssignmentAgent; onRemove?: 
         className="hover:text-[#d4d4d4] transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
-        {agentLabel(agent)} <span className="text-[10px] text-[#909090] font-mono">#{displayBadgeNumber(agent.badgeNumber)}</span>
+        {agentLabel(agent)} <span className="text-[11px] text-[#909090] font-mono">#{displayBadgeNumber(agent.badgeNumber)}</span>
       </Link>
       {onRemove && (
         <button
@@ -224,18 +227,9 @@ function AssigneeManager({ agents, selected, onChange }: AssigneeManagerProps) {
   const selectedSet = useMemo(() => new Set(selected), [selected])
 
   const filtered = useMemo(() => {
-    const s = search.toLowerCase().trim()
     return agents
       .filter((o) => o.status !== 'TERMINATED')
-      .filter((o) => {
-        if (!s) return true
-        return (
-          o.firstName.toLowerCase().includes(s) ||
-          o.lastName.toLowerCase().includes(s) ||
-          o.badgeNumber.toLowerCase().includes(s) ||
-          o.rank.name.toLowerCase().includes(s)
-        )
-      })
+      .filter((o) => matchesAgent(search, o))
       .slice(0, 60)
   }, [agents, search])
 
@@ -262,14 +256,14 @@ function AssigneeManager({ agents, selected, onChange }: AssigneeManagerProps) {
       <div className="relative">
         <Search
           size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#808080]"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]"
           strokeWidth={1.75}
         />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Agent suchen…"
-          className="w-full h-[34px] pl-9 pr-3 rounded-[8px] text-[13px] bg-[#181818]/60 text-[#f4f4f4] border border-[#343434]/70 focus:outline-none focus:border-[#d4d4d4] placeholder:text-[#808080] transition-all"
+          className="w-full h-[34px] pl-9 pr-3 rounded-[8px] text-[13px] bg-[#181818]/60 text-[#f4f4f4] border border-[#343434]/70 focus:outline-none focus:border-[#d4d4d4] placeholder:text-[#8c8c8c] transition-all"
         />
       </div>
       <div className="max-h-[220px] overflow-y-auto rounded-[10px] border border-[#343434]/40 bg-[#181818]/40">
@@ -335,10 +329,20 @@ export function TaskBoard({
   const [showArchived, setShowArchived] = useState(false)
   const queryUrl = canView ? `/api/task-lists?module=${module}${showArchived ? '&archived=true' : ''}` : null
 
-  const { data: lists, loading, refetch, setData } = useFetch<TaskList[]>(queryUrl)
+  const { data: fetchedLists, loading, refetch, setData } = useFetch<TaskList[]>(queryUrl)
+  const { hidden: hiddenTasks, hide: hideTask, show: showTask } = useHiddenIds()
+  // Gelöschte Aufgaben verschwinden sofort, auch wenn die Löschung noch im Rückgängig-Fenster steht.
+  const lists = useMemo(
+    () => hiddenTasks.size === 0
+      ? fetchedLists
+      : fetchedLists?.map((list) => ({ ...list, tasks: list.tasks.filter((task) => !hiddenTasks.has(task.id)) })),
+    [fetchedLists, hiddenTasks],
+  )
   const { data: agents } = useFetch<AgentForPicker[]>(canEdit ? '/api/agents' : null)
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
+  const runUndoable = useUndoable()
 
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [listModalOpen, setListModalOpen] = useState(false)
@@ -452,7 +456,7 @@ export function TaskBoard({
   }
 
   const deleteList = async (list: TaskList) => {
-    if (!confirm(`Liste "${list.title}" mit allen Aufgaben wirklich löschen?`)) return
+    if (!(await confirm({ title: `Liste „${list.title}“ löschen?`, description: 'Alle Aufgaben in dieser Liste werden mitgelöscht.', tone: 'danger' }))) return
     try {
       await execute(`/api/task-lists/${list.id}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Liste gelöscht' })
@@ -559,15 +563,18 @@ export function TaskBoard({
     }
   }
 
-  const deleteTask = async (task: TaskItem) => {
-    if (!confirm(`Aufgabe "${task.title}" löschen?`)) return
-    try {
-      await execute(`/api/tasks/${task.id}`, { method: 'DELETE' })
-      addToast({ type: 'success', title: 'Aufgabe gelöscht' })
-      await refetch()
-    } catch (e) {
-      addToast({ type: 'error', title: 'Fehler', message: e instanceof Error ? e.message : '' })
-    }
+  const deleteTask = (task: TaskItem) => {
+    runUndoable({
+      title: 'Aufgabe gelöscht',
+      message: task.title,
+      apply: () => hideTask(task.id),
+      revert: () => showTask(task.id),
+      commit: async () => {
+        await execute(`/api/tasks/${task.id}`, { method: 'DELETE' })
+        await refetch()
+      },
+      errorTitle: 'Aufgabe konnte nicht gelöscht werden',
+    })
   }
 
   if (!canView) return <UnauthorizedContent />
@@ -604,7 +611,7 @@ export function TaskBoard({
       </div>
 
       <div className="flex items-center justify-between gap-2 mb-4">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-[#808080] font-semibold">{accentLabel}</p>
+        <p className="text-[11px] uppercase tracking-[0.16em] text-[#8c8c8c] font-semibold">{accentLabel}</p>
         {canEdit && (
           <button
             type="button"
@@ -624,7 +631,7 @@ export function TaskBoard({
 
       {visibleLists.length === 0 ? (
         <div className="glass-panel-elevated rounded-[14px] py-16 text-center border border-white/[0.04]">
-          <ListChecks size={28} className="mx-auto text-[#808080] mb-3" strokeWidth={1.5} />
+          <ListChecks size={28} className="mx-auto text-[#8c8c8c] mb-3" strokeWidth={1.5} />
           <p className="text-[13px] text-[#aeaeae] mb-4">Noch keine Listen vorhanden</p>
           {canEdit && (
             <Button size="sm" onClick={openCreateList}>
@@ -682,7 +689,7 @@ export function TaskBoard({
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <h3 className="text-[14px] font-semibold text-white tracking-[-0.01em]">{list.title}</h3>
                       {list.archived && (
-                        <span className="inline-flex items-center gap-1 text-[10.5px] uppercase tracking-[0.12em] text-[#909090] bg-[#181818]/60 px-2 py-0.5 rounded-full border border-[#343434]/60">
+                        <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.12em] text-[#909090] bg-[#181818]/60 px-2 py-0.5 rounded-full border border-[#343434]/60">
                           <Archive size={9} /> Archiv
                         </span>
                       )}
@@ -760,7 +767,7 @@ export function TaskBoard({
                       <div className="border-t border-[#343434]/40">
                         {list.tasks.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-8 text-center">
-                            <ListChecks size={20} className="text-[#808080] mb-2" strokeWidth={1.5} />
+                            <ListChecks size={20} className="text-[#8c8c8c] mb-2" strokeWidth={1.5} />
                             <p className="text-[12.5px] text-[#919191]">Noch keine Aufgaben</p>
                           </div>
                         ) : (
@@ -813,7 +820,7 @@ export function TaskBoard({
                                       </p>
                                       <span
                                         className={cn(
-                                          'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[5px] text-[10px] font-medium border',
+                                          'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[5px] text-[11px] font-medium border',
                                           priority.tone,
                                         )}
                                       >
@@ -846,7 +853,7 @@ export function TaskBoard({
                                         ))}
                                       </div>
                                     )}
-                                    <p className="text-[10.5px] text-[#808080] mt-2">
+                                    <p className="text-[11px] text-[#8c8c8c] mt-2">
                                       {task.createdBy?.displayName ?? 'Gelöscht'} · erstellt {formatDate(task.createdAt)}
                                     </p>
                                   </div>

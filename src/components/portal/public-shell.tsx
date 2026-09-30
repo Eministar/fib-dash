@@ -46,7 +46,7 @@ export function PublicShell({ active, actions, children }: { active?: PublicSect
         </nav>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
-      <footer className="border-t border-[#343434]/60 py-5 text-center text-[11.5px] text-[#6f6f6f]">
+      <footer className="border-t border-[#343434]/60 py-5 text-center text-[11.5px] text-[#8c8c8c]">
         Federal Investigation Bureau · Öffentlicher Bereich
       </footer>
     </div>

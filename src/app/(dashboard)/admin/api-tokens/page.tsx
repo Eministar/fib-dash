@@ -17,6 +17,7 @@ import { useAuth } from '@/context/auth-context'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface ApiToken {
   id: string
@@ -63,6 +64,7 @@ export default function ApiTokensPage() {
   const usersApi = useApi<UserOption[]>()
   const settingsApi = useApi<{ maxPerUser: number | null }>()
   const { addToast } = useToast()
+  const confirm = useConfirm()
 
   const [createOpen, setCreateOpen] = useState(false)
   const [detailToken, setDetailToken] = useState<ApiToken | null>(null)
@@ -140,7 +142,7 @@ export default function ApiTokensPage() {
   }
 
   const revoke = async (token: ApiToken) => {
-    if (!confirm(`Token "${token.name}" widerrufen? Bestehende Aufrufe werden sofort abgelehnt.`)) return
+    if (!(await confirm({ title: `Token „${token.name}“ widerrufen?`, description: 'Bestehende Aufrufe mit diesem Token werden sofort abgelehnt.', confirmLabel: 'Widerrufen', tone: 'danger' }))) return
     try {
       await revokeApi.execute(`/api/api-tokens/${token.id}`, { method: 'DELETE', body: JSON.stringify({ reason: 'Vom Benutzer widerrufen' }) })
       addToast({ type: 'success', title: 'Token widerrufen' })
@@ -151,7 +153,7 @@ export default function ApiTokensPage() {
   }
 
   const hardDelete = async (token: ApiToken) => {
-    if (!confirm(`Token "${token.name}" ENDGÜLTIG löschen? Inklusive Usage-Logs. Dies kann nicht rückgängig gemacht werden.`)) return
+    if (!(await confirm({ title: `Token „${token.name}“ endgültig löschen?`, description: 'Der Token und alle zugehörigen Usage-Logs werden entfernt. Das lässt sich nicht rückgängig machen.', confirmLabel: 'Endgültig löschen', tone: 'danger', requireText: token.name }))) return
     try {
       await deleteApi.execute(`/api/api-tokens/${token.id}?hard=1`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Token gelöscht' })
@@ -170,7 +172,7 @@ export default function ApiTokensPage() {
     }
   }
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   const activeCount = tokens.filter((t) => !t.revokedAt).length
   const limitDisplay = maxPerUser === null ? <InfinityIcon size={11} className="inline" /> : `${activeCount} / ${maxPerUser}`
@@ -230,13 +232,13 @@ export default function ApiTokensPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13.5px] font-medium text-[#eee]">{token.name}</p>
-                  <code className="text-[10.5px] font-mono text-[#d4d4d4]/70">{token.prefix}…</code>
+                  <code className="text-[11px] font-mono text-[#d4d4d4]/70">{token.prefix}…</code>
                   {token.revokedAt && <RevokedBadge />}
                   {!token.revokedAt && token.expiresAt && new Date(token.expiresAt) < new Date() && (
                     <ExpiredBadge />
                   )}
                 </div>
-                <p className="text-[11.5px] text-[#808080]">
+                <p className="text-[11.5px] text-[#8c8c8c]">
                   {token.scopes.length === 0 ? 'Auto Perm' : `${token.scopes.length} Scopes`} ·
                   {' '}
                   {token.usageCount} Aufrufe · {token.lastUsedAt
@@ -253,7 +255,7 @@ export default function ApiTokensPage() {
                   className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors"
                   title="Details"
                 >
-                  <Activity size={13} className="text-[#808080]" />
+                  <Activity size={13} className="text-[#8c8c8c]" />
                 </button>
                 {!token.revokedAt && (
                   <button
@@ -261,7 +263,7 @@ export default function ApiTokensPage() {
                     className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors"
                     title="Widerrufen"
                   >
-                    <ShieldOff size={13} className="text-[#808080] hover:text-[#fbbf24]" />
+                    <ShieldOff size={13} className="text-[#8c8c8c] hover:text-[#fbbf24]" />
                   </button>
                 )}
                 <button
@@ -269,16 +271,16 @@ export default function ApiTokensPage() {
                   className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors"
                   title="Endgültig löschen"
                 >
-                  <Trash2 size={13} className="text-[#808080] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
                 </button>
               </div>
             </motion.div>
           ))}
           {(!tokens || tokens.length === 0) && (
             <div className="text-center py-16">
-              <KeyRound size={28} className="mx-auto mb-3 text-[#333]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#999]">Noch keine API-Tokens vorhanden</p>
-              <p className="text-[11.5px] text-[#666] mt-1">Erstelle deinen ersten Token, um die API programmatisch zu nutzen.</p>
+              <KeyRound size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#909090]">Noch keine API-Tokens vorhanden</p>
+              <p className="text-[11.5px] text-[#8c8c8c] mt-1">Erstelle deinen ersten Token, um die API programmatisch zu nutzen.</p>
             </div>
           )}
         </div>
@@ -308,7 +310,7 @@ export default function ApiTokensPage() {
                 selfId={user?.id}
                 selfName={user?.displayName ?? 'Ich'}
               />
-              <p className="text-[10.5px] text-[#808080] mt-1.5">
+              <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                 Standardmäßig erhältst du den Token. Als Administrator kannst du ihn auch für andere Benutzer anlegen.
               </p>
             </div>
@@ -353,7 +355,7 @@ export default function ApiTokensPage() {
                 )}
               >
                 <p className="text-[12.5px] font-semibold">Auto Perm</p>
-                <p className="text-[10.5px] text-[#909090] mt-0.5">Rechte automatisch vom Inhaber übernehmen</p>
+                <p className="text-[11px] text-[#909090] mt-0.5">Rechte automatisch vom Inhaber übernehmen</p>
               </button>
               <button
                 type="button"
@@ -366,7 +368,7 @@ export default function ApiTokensPage() {
                 )}
               >
                 <p className="text-[12.5px] font-semibold">Eigene Scopes</p>
-                <p className="text-[10.5px] text-[#909090] mt-0.5">Token auf ausgewählte Rechte begrenzen</p>
+                <p className="text-[11px] text-[#909090] mt-0.5">Token auf ausgewählte Rechte begrenzen</p>
               </button>
             </div>
           </div>
@@ -384,11 +386,11 @@ export default function ApiTokensPage() {
                 {form.scopes.length === userPermissionSet.size ? 'Keine' : 'Alle eigenen Rechte'}
               </button>
             </div>
-            <p className="text-[11px] text-[#808080] mb-3">
+            <p className="text-[11px] text-[#8c8c8c] mb-3">
               Token-Scopes sind immer eine Teilmenge der Inhaber-Rechte.
             </p>
             <div className="max-h-[260px] overflow-y-auto space-y-2 pr-1">
-              <p className="text-[10.5px] font-semibold text-[#d4d4d4] uppercase tracking-wider">Leserechte</p>
+              <p className="text-[11px] font-semibold text-[#d4d4d4] uppercase tracking-wider">Leserechte</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {READ_PERMISSIONS.filter((p) => userPermissionSet.has(p)).map((p) => (
                   <Checkbox
@@ -400,7 +402,7 @@ export default function ApiTokensPage() {
                   />
                 ))}
               </div>
-              <p className="text-[10.5px] font-semibold text-[#d4d4d4] uppercase tracking-wider mt-3">Schreibrechte</p>
+              <p className="text-[11px] font-semibold text-[#d4d4d4] uppercase tracking-wider mt-3">Schreibrechte</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {MANAGE_PERMISSIONS.filter((p) => userPermissionSet.has(p)).map((p) => (
                   <Checkbox
@@ -558,7 +560,7 @@ function LimitConfigModal({
             <InfinityIcon size={16} />
             <div>
               <p className="text-[12.5px] font-semibold">Unbegrenzt</p>
-              <p className="text-[10.5px] text-[#909090] mt-0.5">Keine Obergrenze</p>
+              <p className="text-[11px] text-[#909090] mt-0.5">Keine Obergrenze</p>
             </div>
           </button>
           <button
@@ -574,7 +576,7 @@ function LimitConfigModal({
             <Lock size={16} />
             <div>
               <p className="text-[12.5px] font-semibold">Begrenzt</p>
-              <p className="text-[10.5px] text-[#909090] mt-0.5">Max. Anzahl festlegen</p>
+              <p className="text-[11px] text-[#909090] mt-0.5">Max. Anzahl festlegen</p>
             </div>
           </button>
         </div>
@@ -645,14 +647,14 @@ function UserPicker({
             </option>
           ))}
       </select>
-      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#808080]">▾</div>
+      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#8c8c8c]">▾</div>
     </div>
   )
 }
 
 function RevokedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9.5px] font-semibold bg-red-500/10 text-red-300 border border-red-500/30">
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-300 border border-red-500/30">
       <ShieldOff size={9} /> widerrufen
     </span>
   )
@@ -660,7 +662,7 @@ function RevokedBadge() {
 
 function ExpiredBadge() {
   return (
-    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9.5px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
       abgelaufen
     </span>
   )
@@ -706,29 +708,29 @@ function TokenDetailModal({ token, onClose }: { token: ApiToken | null; onClose:
           <div>
             <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Letzte Aufrufe</p>
             <div className="rounded-[10px] border border-[#343434] overflow-hidden">
-              {loading && <div className="p-4 text-center text-[12px] text-[#808080]"><RefreshCw size={12} className="inline animate-spin" /> lade…</div>}
+              {loading && <div className="p-4 text-center text-[12px] text-[#8c8c8c]"><RefreshCw size={12} className="inline animate-spin" /> lade…</div>}
               {!loading && details && details.recentUsage.length === 0 && (
-                <div className="p-4 text-center text-[12px] text-[#808080]">Noch keine Aufrufe</div>
+                <div className="p-4 text-center text-[12px] text-[#8c8c8c]">Noch keine Aufrufe</div>
               )}
               {!loading && details && details.recentUsage.length > 0 && (
                 <div className="divide-y divide-[#343434]/60 max-h-[300px] overflow-y-auto">
                   {details.recentUsage.map((u, i) => (
                     <div key={i} className="flex items-center gap-3 px-3 py-2 text-[11.5px]">
                       <span className={cn(
-                        'font-mono font-semibold w-12 text-center rounded px-1 py-0.5 text-[10px]',
+                        'font-mono font-semibold w-12 text-center rounded px-1 py-0.5 text-[11px]',
                         u.method === 'GET' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300',
                       )}>
                         {u.method}
                       </span>
                       <code className="flex-1 font-mono text-[#d4d4d4] truncate">{u.path}</code>
                       <span className={cn(
-                        'font-mono text-[10.5px] w-9 text-right',
+                        'font-mono text-[11px] w-9 text-right',
                         u.statusCode >= 500 ? 'text-red-300' : u.statusCode >= 400 ? 'text-amber-300' : 'text-emerald-300',
                       )}>
                         {u.statusCode}
                       </span>
-                      <span className="font-mono text-[#808080] w-14 text-right">{u.durationMs}ms</span>
-                      <span className="text-[#808080] w-24 text-right">
+                      <span className="font-mono text-[#8c8c8c] w-14 text-right">{u.durationMs}ms</span>
+                      <span className="text-[#8c8c8c] w-24 text-right">
                         {format(new Date(u.createdAt), 'dd.MM. HH:mm:ss', { locale: de })}
                       </span>
                     </div>
@@ -746,7 +748,7 @@ function TokenDetailModal({ token, onClose }: { token: ApiToken | null; onClose:
 function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2">
-      <p className="text-[10.5px] text-[#808080] uppercase tracking-wider">{label}</p>
+      <p className="text-[11px] text-[#8c8c8c] uppercase tracking-wider">{label}</p>
       <p className={cn('text-[12.5px] text-[#eee] mt-0.5', mono && 'font-mono text-[#d4d4d4]/80')}>{value}</p>
     </div>
   )

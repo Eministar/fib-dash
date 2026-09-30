@@ -26,6 +26,8 @@ import {
   type RankChangeEntry,
   type RankChangeList,
 } from '@/components/rank-changes/rank-change-list-card'
+import { useUrlState } from '@/hooks/use-url-state'
+import { matchesAgent, matchesSearch } from '@/lib/search-match'
 
 interface Rank { id: string; name: string; sortOrder: number; color: string }
 interface Agent {
@@ -67,25 +69,16 @@ export default function RankChangeListsPage() {
   const [entryForm, setEntryForm] = useState({ agentId: '', proposedRankId: '', newBadgeNumber: '', note: '' })
   const [agentSearch, setAgentSearch] = useState('')
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [directionFilter, setDirectionFilter] = useState<'' | RankChangeDirection>('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
+  const [statusFilter, setStatusFilter] = useUrlState<StatusFilter>('status', '')
   const [rankFilter, setRankFilter] = useState('')
   const [submitterFilter, setSubmitterFilter] = useState('')
 
   const rows = useMemo(() => lists ?? [], [lists])
 
   const activeAgents = agents?.filter((agent) => agent.status !== 'TERMINATED') || []
-  const filteredAgents = activeAgents.filter((agent) => {
-    const query = agentSearch.trim().toLowerCase()
-    if (!query) return true
-    return (
-      agent.badgeNumber.toLowerCase().includes(query) ||
-      agent.firstName.toLowerCase().includes(query) ||
-      agent.lastName.toLowerCase().includes(query) ||
-      agent.rank.name.toLowerCase().includes(query)
-    )
-  })
+  const filteredAgents = activeAgents.filter((agent) => matchesAgent(agentSearch, agent))
   const selectedAgent = activeAgents.find((agent) => agent.id === entryForm.agentId)
 
   // Gemischte Listen: jeder Rang außer dem aktuellen ist wählbar, die Richtung
@@ -129,29 +122,22 @@ export default function RankChangeListsPage() {
     if (statusFilter === 'executed' && !entry.executed) return false
     if (rankFilter && entry.currentRank.id !== rankFilter && entry.proposedRank.id !== rankFilter) return false
     if (submitterFilter && entry.createdBy?.id !== submitterFilter) return false
-    const query = search.trim().toLowerCase()
-    if (!query) return true
-    const haystack = [
-      entry.agent.firstName,
-      entry.agent.lastName,
-      entry.agent.badgeNumber,
-      entry.newBadgeNumber ?? '',
+    return matchesAgent(search, entry.agent, [
+      entry.newBadgeNumber,
       entry.currentRank.name,
       entry.proposedRank.name,
-      entry.note ?? '',
-      entry.createdBy?.displayName ?? '',
-      entry.executedBy?.displayName ?? '',
-    ].join(' ').toLowerCase()
-    return haystack.includes(query)
+      entry.note,
+      entry.createdBy?.displayName,
+      entry.executedBy?.displayName,
+    ])
   }, [directionFilter, statusFilter, rankFilter, submitterFilter, search])
 
   const visibleLists = useMemo(() => {
-    const query = search.trim().toLowerCase()
     return rows
       .map((list) => {
         const matchingEntries = sortEntriesByRank(list.entries.filter(matchesFilters))
         // Ein Treffer im Listennamen hält die Liste sichtbar, auch wenn kein Eintrag passt.
-        const listNameMatches = Boolean(query) && list.name.toLowerCase().includes(query)
+        const listNameMatches = Boolean(search.trim()) && matchesSearch(search, [list.name])
         return { list, entries: matchingEntries, listNameMatches }
       })
       .filter(({ entries, listNameMatches }) => !filterActive || entries.length > 0 || listNameMatches)
@@ -312,7 +298,7 @@ export default function RankChangeListsPage() {
   }
 
   if (!canView) return <UnauthorizedContent />
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   const allEntries = rows.flatMap((list) => list.entries)
   const promotionEntries = allEntries.filter((entry) => entryDirection(entry) === 'PROMOTION').length
@@ -347,12 +333,12 @@ export default function RankChangeListsPage() {
         <div className="glass-panel-elevated mb-4 rounded-[14px] border border-[#373737]/45 p-3.5">
           <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-5">
             <div className="relative">
-              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#808080]" />
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Name, DN, Rang, Notiz..."
-                className="h-[38px] w-full rounded-[8px] border border-[#343434]/70 bg-[#181818] pl-9 pr-3 text-[13.5px] text-[#f4f4f4] placeholder:text-[#808080] transition-all duration-150 focus:border-[#d4d4d4] focus:shadow-[0_0_0_3px_rgba(212,212,212,0.08)] focus:outline-none"
+                className="h-[38px] w-full rounded-[8px] border border-[#343434]/70 bg-[#181818] pl-9 pr-3 text-[13.5px] text-[#f4f4f4] placeholder:text-[#8c8c8c] transition-all duration-150 focus:border-[#d4d4d4] focus:shadow-[0_0_0_3px_rgba(212,212,212,0.08)] focus:outline-none"
               />
             </div>
             <Select
@@ -516,7 +502,7 @@ export default function RankChangeListsPage() {
           {selectedAgent && (
             <>
               <div className="rounded-[8px] bg-[#212121] px-3 py-2.5">
-                <p className="text-[13px] text-[#888]">
+                <p className="text-[13px] text-[#a6a6a6]">
                   Aktueller Rang: <strong className="text-[#eee]">{selectedAgent.rank.name}</strong>
                 </p>
               </div>
@@ -558,7 +544,7 @@ export default function RankChangeListsPage() {
       </Modal>
 
       <Modal open={!!executeEntry} onClose={() => setExecuteEntry(null)} title={`${executeEntry ? actionLabel(executeEntry.direction) : 'Rangänderung'} ausführen`}>
-        <p className="mb-5 text-[13px] text-[#888]">
+        <p className="mb-5 text-[13px] text-[#a6a6a6]">
           Die Rangänderung für {executeEntry?.name} wird jetzt durchgeführt. Rang und Dienstnummer werden sofort geändert. Fortfahren?
         </p>
         <div className="flex justify-end gap-2">
@@ -568,7 +554,7 @@ export default function RankChangeListsPage() {
       </Modal>
 
       <Modal open={!!undoEntry} onClose={() => setUndoEntry(null)} title="Beförderung rückgängig machen">
-        <p className="mb-5 text-[13px] text-[#888]">
+        <p className="mb-5 text-[13px] text-[#a6a6a6]">
           Die Beförderung für {undoEntry?.name} wird zurückgesetzt. Rang und Dienstnummer werden auf den Stand vor der Durchführung gesetzt. Fortfahren?
         </p>
         <div className="flex justify-end gap-2">
@@ -583,7 +569,7 @@ export default function RankChangeListsPage() {
 function RankChangeStat({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
     <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-      <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[#a6a6a6]">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#a6a6a6]">{label}</p>
       <p className={`mt-1 text-[22px] font-bold tabular-nums ${tone}`}>{value}</p>
     </div>
   )

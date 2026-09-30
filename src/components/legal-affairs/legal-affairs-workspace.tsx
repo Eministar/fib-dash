@@ -11,8 +11,8 @@ import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 
-const LegalCases = dynamic(() => import('@/components/legal-affairs/legal-cases').then(mod => mod.LegalCases), { loading: PageLoader })
-const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: PageLoader })
+const LegalCases = dynamic(() => import('@/components/legal-affairs/legal-cases').then(mod => mod.LegalCases), { loading: () => <PageLoader /> })
+const ModuleDocuments = dynamic(() => import('@/components/modules/module-documents').then(mod => mod.ModuleDocuments), { loading: () => <PageLoader /> })
 
 const EMPTY_LAD_DOCUMENT = `# Neues Dokument der Legal Affairs Division
 

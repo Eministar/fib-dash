@@ -44,8 +44,8 @@ export default async function PublicNoticeBoardPage() {
                       </span>
                       {item.summary && <span className="mt-0.5 block truncate text-[12.5px] text-[#909090]">{item.summary}</span>}
                     </span>
-                    <span className="hidden shrink-0 text-[12px] text-[#808080] sm:block">{formatDate(item.publishedAt ?? item.updatedAt)}</span>
-                    <ChevronRight size={16} className="shrink-0 text-[#6f6f6f] group-hover:text-white" aria-hidden />
+                    <span className="hidden shrink-0 text-[12px] text-[#8c8c8c] sm:block">{formatDate(item.publishedAt ?? item.updatedAt)}</span>
+                    <ChevronRight size={16} className="shrink-0 text-[#8c8c8c] group-hover:text-white" aria-hidden />
                   </Link>
                 </li>
               )

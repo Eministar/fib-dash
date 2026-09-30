@@ -21,6 +21,8 @@ import {
   pressReleaseExcerpt,
   type PressReleaseStatusValue,
 } from '@/lib/press-releases'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 interface PressRelease {
   id: string
@@ -76,7 +78,7 @@ function formFromRelease(release: PressRelease): PressForm {
 function StatusPill({ status }: { status: PressReleaseStatusValue }) {
   const meta = PRESS_RELEASE_STATUS_META[status]
   return (
-    <span className={cn('inline-flex items-center rounded-[6px] border px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.08em]', meta.tone)}>
+    <span className={cn('inline-flex items-center rounded-[6px] border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]', meta.tone)}>
       {meta.label}
     </span>
   )
@@ -89,10 +91,15 @@ export function PressSpeakerWorkspace() {
   const { data: releases, loading, refetch } = useFetch<PressRelease[]>(canView ? '/api/press-releases?scope=manage' : null)
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [form, setForm] = useState<PressForm>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Verglichen wird mit dem gespeicherten Stand der gewählten Mitteilung (bzw. dem leeren Formular).
+  const baselineRelease = selectedId ? releases?.find((release) => release.id === selectedId) ?? null : null
+  const dirty = canManage && JSON.stringify(form) !== JSON.stringify(baselineRelease ? formFromRelease(baselineRelease) : EMPTY_FORM)
+  useUnsavedChanges(dirty)
 
   if (!canView) return <UnauthorizedContent />
   if (loading) return <PageLoader />
@@ -105,12 +112,17 @@ export function PressSpeakerWorkspace() {
   const previewText = form.summary.trim() || pressReleaseExcerpt(form.content || 'Inhalt der Pressemitteilung erscheint hier.')
   const previewHtml = renderMarkdown(form.content.trim() || 'Inhalt der Pressemitteilung erscheint hier.')
 
-  const openNew = () => {
+  const discardChanges = async () =>
+    !dirty || confirm({ title: 'Ungespeicherte Änderungen verwerfen?', confirmLabel: 'Verwerfen', cancelLabel: 'Weiter bearbeiten', tone: 'danger' })
+
+  const openNew = async () => {
+    if (!(await discardChanges())) return
     setSelectedId(null)
     setForm(EMPTY_FORM)
   }
 
-  const openRelease = (release: PressRelease) => {
+  const openRelease = async (release: PressRelease) => {
+    if (release.id !== selectedId && !(await discardChanges())) return
     setSelectedId(release.id)
     setForm(formFromRelease(release))
   }
@@ -139,7 +151,7 @@ export function PressSpeakerWorkspace() {
 
   const deleteRelease = async () => {
     if (!selectedRelease || !canManage) return
-    if (!confirm(`Pressemitteilung "${selectedRelease.title}" wirklich löschen?`)) return
+    if (!(await confirm({ title: `Pressemitteilung „${selectedRelease.title}“ löschen?`, tone: 'danger' }))) return
     setSaving(true)
     try {
       await execute(`/api/press-releases/${selectedRelease.id}`, { method: 'DELETE' })
@@ -229,7 +241,7 @@ export function PressSpeakerWorkspace() {
                   <p className="line-clamp-2 text-[12px] leading-5 text-[#a6a6a6]">
                     {release.summary || pressReleaseExcerpt(release.content)}
                   </p>
-                  <p className="mt-2 text-[10.5px] text-[#686868]">
+                  <p className="mt-2 text-[11px] text-[#8c8c8c]">
                     {formatDateTime(release.publishedAt ?? release.updatedAt)} · {release.updatedBy?.displayName ?? release.createdBy?.displayName ?? 'System'}
                   </p>
                 </button>
@@ -237,7 +249,7 @@ export function PressSpeakerWorkspace() {
             </div>
           ) : (
             <div className="px-4 py-16 text-center">
-              <FileText size={28} className="mx-auto mb-3 text-[#808080]" strokeWidth={1.5} />
+              <FileText size={28} className="mx-auto mb-3 text-[#8c8c8c]" strokeWidth={1.5} />
               <p className="text-[13px] font-medium text-white">Keine Pressemitteilungen</p>
               <p className="mt-1 text-[12px] text-[#909090]">Erstelle den ersten Entwurf.</p>
             </div>
@@ -396,7 +408,7 @@ export function PressSpeakerWorkspace() {
 function PressStat({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
     <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-      <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[#a6a6a6]">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#a6a6a6]">{label}</p>
       <p className={cn('mt-1 text-[22px] font-bold tabular-nums', tone)}>{value}</p>
     </div>
   )

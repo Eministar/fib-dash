@@ -1,13 +1,15 @@
 import { NextRequest } from 'next/server'
 
 import { success } from '@/lib/api-response'
-import { requirePermission } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { investigationVisibilityWhere } from '@/lib/investigations'
 import { routeError } from '@/lib/investigations-server'
 import { mapCategory } from '@/lib/map-spots'
-import { SEARCH_LIMIT_PER_GROUP, SEARCH_MIN_LENGTH, excerpt, type SearchHit } from '@/lib/global-search'
+import { SEARCH_LIMIT_PER_GROUP, excerpt, isSearchable, type SearchHit } from '@/lib/global-search'
+import { agentMatchScore, matchesAgent, tokenizedWhere } from '@/lib/search-match'
+import { displayBadgeNumber } from '@/lib/badge-number'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,64 +23,83 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(req: NextRequest) {
   try {
-    const user = await requirePermission('investigations:view')
+    // Jeder Angemeldete darf suchen; welche Gruppen er sieht, entscheiden seine Rechte.
+    const user = await requireAuth()
     const term = req.nextUrl.searchParams.get('q')?.trim() ?? ''
-    if (term.length < SEARCH_MIN_LENGTH) return success<SearchHit[]>([])
+    if (!isSearchable(term)) return success<SearchHit[]>([])
 
     const take = SEARCH_LIMIT_PER_GROUP
+    const canSeeInvestigations = hasPermission(user, 'investigations:view')
+    const canSeeAgents = hasPermission(user, 'agents:view')
     const visible = investigationVisibilityWhere(user)
     const canSeeMap = hasPermission(user, 'map:view')
+    // Jedes Suchwort muss in irgendeinem Feld stehen („Max Mustermann“, „Vinewood Bank“).
+    const words = <T,>(fields: (token: string) => T[]) => tokenizedWhere(term, fields) ?? {}
+    const none = <T,>() => Promise.resolve([] as T[])
 
-    const [investigations, dossiers, persons, vehicles, entries, mapSpots] = await Promise.all([
-      prisma.investigation.findMany({
+    const [agents, investigations, dossiers, persons, vehicles, entries, mapSpots] = await Promise.all([
+      // Agents sind wenige – geladen wird alles, gefiltert mit derselben Logik
+      // wie in der Agent-Liste (Dienstnummer ohne Präfix, Discord-ID am Konto …).
+      canSeeAgents
+        ? prisma.agent.findMany({
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              badgeNumber: true,
+              discordId: true,
+              status: true,
+              rank: { select: { name: true } },
+              user: { select: { discordId: true, displayName: true } },
+              codename: { select: { name: true } },
+            },
+          })
+        : none<never>(),
+      !canSeeInvestigations ? none<never>() : prisma.investigation.findMany({
         where: {
           AND: [
             visible,
-            { OR: [{ title: { contains: term } }, { caseNumber: { contains: term } }, { summary: { contains: term } }] },
+            words((token) => [{ title: { contains: token } }, { caseNumber: { contains: token } }, { summary: { contains: token } }]),
           ],
         },
         select: { id: true, caseNumber: true, title: true, summary: true, classified: true },
         orderBy: { updatedAt: 'desc' },
         take,
       }),
-      prisma.dossier.findMany({
-        where: { OR: [{ title: { contains: term } }, { address: { contains: term } }, { description: { contains: term } }] },
+      !canSeeInvestigations ? none<never>() : prisma.dossier.findMany({
+        where: words((token) => [{ title: { contains: token } }, { address: { contains: token } }, { description: { contains: token } }]),
         select: { id: true, title: true, kind: true, address: true, description: true },
         orderBy: { updatedAt: 'desc' },
         take,
       }),
-      prisma.person.findMany({
-        where: {
-          OR: [
-            { firstName: { contains: term } },
-            { lastName: { contains: term } },
-            { alias: { contains: term } },
-            { personNumber: { contains: term } },
-            { identifier: { contains: term } },
-          ],
-        },
+      !canSeeInvestigations ? none<never>() : prisma.person.findMany({
+        where: words((token) => [
+          { firstName: { contains: token } },
+          { lastName: { contains: token } },
+          { alias: { contains: token } },
+          { personNumber: { contains: token } },
+          { identifier: { contains: token } },
+        ]),
         select: { id: true, personNumber: true, firstName: true, lastName: true, alias: true },
         orderBy: { lastName: 'asc' },
         take,
       }),
-      prisma.vehicle.findMany({
-        where: {
-          OR: [
-            { plate: { contains: term } },
-            { model: { contains: term } },
-            { vehicleNumber: { contains: term } },
-            { color: { contains: term } },
-          ],
-        },
+      !canSeeInvestigations ? none<never>() : prisma.vehicle.findMany({
+        where: words((token) => [
+          { plate: { contains: token } },
+          { model: { contains: token } },
+          { vehicleNumber: { contains: token } },
+          { color: { contains: token } },
+        ]),
         select: { id: true, vehicleNumber: true, plate: true, model: true, color: true },
         orderBy: { updatedAt: 'desc' },
         take,
       }),
-      prisma.investigationEntry.findMany({
+      !canSeeInvestigations ? none<never>() : prisma.investigationEntry.findMany({
         where: {
           AND: [
             { investigation: visible },
-            { OR: [{ title: { contains: term } }, { content: { contains: term } }, { location: { contains: term } }] },
+            words((token) => [{ title: { contains: token } }, { content: { contains: token } }, { location: { contains: token } }]),
           ],
         },
         select: {
@@ -91,9 +112,9 @@ export async function GET(req: NextRequest) {
         orderBy: { occurredAt: 'desc' },
         take,
       }),
-      canSeeMap
+      canSeeMap && canSeeInvestigations
         ? prisma.mapSpot.findMany({
-            where: { OR: [{ title: { contains: term } }, { description: { contains: term } }] },
+            where: words((token) => [{ title: { contains: token } }, { description: { contains: token } }]),
             select: { id: true, title: true, category: true, description: true },
             orderBy: { updatedAt: 'desc' },
             take,
@@ -101,7 +122,29 @@ export async function GET(req: NextRequest) {
         : Promise.resolve([]),
     ])
 
+    const agentHits = agents
+      .filter((agent) => matchesAgent(term, agent))
+      .map((agent, index) => ({
+        agent,
+        index,
+        // Ausgeschiedene nach hinten, sonst nach Relevanz.
+        score: agentMatchScore(term, agent) - (agent.status === 'TERMINATED' ? 1000 : 0),
+      }))
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .slice(0, take)
+      .map(({ agent }) => agent)
+
     const hits: SearchHit[] = [
+      ...agentHits.map((agent) => ({
+        id: agent.id,
+        group: 'agents' as const,
+        code: `#${displayBadgeNumber(agent.badgeNumber)}`,
+        title: `${agent.firstName} ${agent.lastName}`,
+        hint: [agent.rank?.name, agent.codename?.name ? `„${agent.codename.name}“` : null, agent.status === 'TERMINATED' ? 'ausgeschieden' : null]
+          .filter(Boolean)
+          .join(' · ') || undefined,
+        href: `/agents/${agent.id}`,
+      })),
       ...investigations.map((row) => ({
         id: row.id,
         group: 'investigations' as const,

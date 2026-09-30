@@ -45,7 +45,7 @@ export function SessionRecoveryScreen({ message, onRetry, onClearCache }: Sessio
           </Button>
         </div>
 
-        <p className="mt-5 text-[11px] text-[#808080]">
+        <p className="mt-5 text-[11px] text-[#8c8c8c]">
           Cache löschen entfernt lokale Browserdaten dieser App und meldet dich ab.
         </p>
       </div>

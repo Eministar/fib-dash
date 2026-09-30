@@ -290,13 +290,13 @@ export default function FormTestLinkPage() {
     }
   }
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   if (!data) {
     return (
       <div className="mx-auto max-w-3xl">
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 px-6 py-16 text-center">
-          <FileQuestion size={30} className="mx-auto mb-3 text-[#808080]" />
+          <FileQuestion size={30} className="mx-auto mb-3 text-[#8c8c8c]" />
           <p className="text-[14px] font-semibold text-white">Test nicht verfügbar</p>
           <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-5 text-[#a6a6a6]">
             {loadError ?? 'Der Link ist nicht aktiv oder nicht verfügbar.'}
@@ -349,14 +349,14 @@ export default function FormTestLinkPage() {
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-[12px] border border-[#343434]/60 bg-[#181818]/45 px-4 py-3">
-              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[#737373]">
+              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[#8c8c8c]">
                 <ClipboardCheck size={13} className="text-[#d4d4d4]" />
                 Umfang
               </div>
               <p className="mt-1.5 text-[14px] font-semibold text-white">{data.questionCount} Frage(n)</p>
             </div>
             <div className="rounded-[12px] border border-[#343434]/60 bg-[#181818]/45 px-4 py-3">
-              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[#737373]">
+              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[#8c8c8c]">
                 <Clock size={13} className="text-[#d4d4d4]" />
                 Zeitlimit
               </div>
@@ -542,7 +542,7 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
       <input
         value={typeof value === 'string' ? value : ''}
         onChange={(event) => onChange(event.target.value)}
-        className="h-[38px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]"
+        className="h-[38px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
         placeholder="Antwort eingeben"
       />
     )
@@ -554,7 +554,7 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
         value={typeof value === 'string' ? value : ''}
         onChange={(event) => onChange(event.target.value)}
         rows={5}
-        className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]"
+        className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
         placeholder="Antwort eingeben"
       />
     )
@@ -564,7 +564,7 @@ function QuestionInput({ question, value, onChange }: { question: FormQuestion; 
     const selected = typeof value === 'string' ? value : ''
     return (
       <div className="space-y-2">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-[#737373]">Nur eine Antwort wählbar</p>
+        <p className="text-[11px] font-medium uppercase tracking-wide text-[#8c8c8c]">Nur eine Antwort wählbar</p>
         {(question.options?.choices ?? []).map((choice) => (
           <button
             key={choice}

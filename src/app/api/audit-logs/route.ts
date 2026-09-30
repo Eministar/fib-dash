@@ -5,6 +5,7 @@ import { success, error, unauthorized , forbidden } from '@/lib/api-response'
 import { actionsForGroup, allGroupedActions } from '@/lib/audit-log-groups'
 import type { Prisma } from '@/generated/prisma/client'
 import { runAuditLogCleanup } from '@/lib/audit-log-retention'
+import { tokenizedWhere } from '@/lib/search-match'
 
 function clampNumber(raw: string | null, fallback: number, min: number, max: number) {
   const parsed = Number.parseInt(raw ?? '', 10)
@@ -38,27 +39,20 @@ export async function GET(req: NextRequest) {
     }
 
     if (search) {
-      const or: Prisma.AuditLogWhereInput[] = [
-        { action: { contains: search } },
-        { details: { contains: search } },
-        { oldValue: { contains: search } },
-        { newValue: { contains: search } },
-        { user: { displayName: { contains: search } } },
-        { agent: { firstName: { contains: search } } },
-        { agent: { lastName: { contains: search } } },
-        { agent: { badgeNumber: { contains: search } } },
-      ]
-      // "Vorname Nachname"-Suche über beide Felder
-      const tokens = search.split(/\s+/).filter(Boolean)
-      if (tokens.length >= 2) {
-        or.push({
-          agent: {
-            firstName: { contains: tokens[0] },
-            lastName: { contains: tokens.slice(1).join(' ') },
-          },
-        })
-      }
-      where.OR = or
+      // Jedes Wort muss irgendwo passen: „Max Mustermann befördert“ findet genau das.
+      const tokenWhere = tokenizedWhere<Prisma.AuditLogWhereInput>(search, (token) => [
+        { action: { contains: token } },
+        { details: { contains: token } },
+        { oldValue: { contains: token } },
+        { newValue: { contains: token } },
+        { user: { displayName: { contains: token } } },
+        { user: { discordId: { contains: token } } },
+        { agent: { firstName: { contains: token } } },
+        { agent: { lastName: { contains: token } } },
+        { agent: { badgeNumber: { contains: token } } },
+        { agent: { discordId: { contains: token } } },
+      ])
+      if (tokenWhere) Object.assign(where, tokenWhere)
     }
 
     const [logs, total] = await Promise.all([

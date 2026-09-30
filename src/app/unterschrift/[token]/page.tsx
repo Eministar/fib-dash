@@ -64,7 +64,7 @@ export default function AgreementSigningPage() {
   if (state.kind === 'error') {
     return (
       <main className="mx-auto max-w-xl px-5 py-20 text-center">
-        <ShieldX className="mx-auto text-[#808080]" size={28} />
+        <ShieldX className="mx-auto text-[#8c8c8c]" size={28} />
         <h1 className="mt-3 text-xl font-semibold text-white">Link ungültig</h1>
         <p className="mt-2 text-sm text-[#a6a6a6]">{state.message}</p>
       </main>

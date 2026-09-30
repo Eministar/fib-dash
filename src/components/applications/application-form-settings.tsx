@@ -24,6 +24,7 @@ import {
   type ApplicationQuestionOptions,
   type ApplicationQuestionType,
 } from '@/lib/job-applications'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 interface ApplicationFormSettingsProps {
   canManage: boolean
@@ -124,6 +125,7 @@ export function ApplicationFormSettings({ canManage }: ApplicationFormSettingsPr
   // alle paar Sekunden im Hintergrund) den Draft NICHT mehr überschreiben — sonst
   // gehen ungespeicherte Eingaben verloren.
   const [dirty, setDirty] = useState(false)
+  useUnsavedChanges(dirty)
 
   const editDraft: typeof setDraft = (value) => {
     setDirty(true)

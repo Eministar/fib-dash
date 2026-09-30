@@ -37,6 +37,7 @@ import type {
   StatisticsSeriesPoint,
   StatisticsStaffRow,
 } from '@/lib/statistics'
+import { matchesSearch } from '@/lib/search-match'
 
 const panelClass = 'rounded-[16px] border border-[#323232]/55 bg-[#1b1b1b]/72 shadow-[0_1px_2px_rgba(0,0,0,.14),0_14px_36px_rgba(0,0,0,.16),inset_0_1px_0_rgba(255,255,255,.025)]'
 const surfaceClass = 'rounded-[11px] border border-white/[0.055] bg-[#181818]/55'
@@ -81,7 +82,7 @@ const activityMeta: Record<StatisticsPayload['latestActivity'][number]['type'], 
 
 function DeltaLabel({ metric }: { metric: StatisticsMetric }) {
   const delta = metric.current - metric.previous
-  if (delta === 0) return <span className="text-[#797979]">wie zuvor</span>
+  if (delta === 0) return <span className="text-[#8c8c8c]">wie zuvor</span>
   return (
     <span className={delta > 0 ? 'text-[#6ee7b7]' : 'text-[#fca5a5]'}>
       {delta > 0 ? '+' : ''}{delta} zur Vorperiode
@@ -108,16 +109,16 @@ function MetricCard({
       <span className="absolute inset-x-0 top-0 h-px opacity-80" style={{ background: `linear-gradient(90deg, transparent, ${color.color}, transparent)` }} />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#868686]">{label}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#868686]">{label}</p>
           <p className="mt-2 text-[27px] font-semibold leading-none tracking-[-0.035em] text-white tabular-nums">{metric.current}</p>
         </div>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border" style={{ color: color.color, backgroundColor: color.bg, borderColor: color.border }}>
           <Icon size={17} strokeWidth={1.9} />
         </span>
       </div>
-      <div className="mt-3 flex items-center justify-between gap-2 text-[10.5px]">
+      <div className="mt-3 flex items-center justify-between gap-2 text-[11px]">
         <DeltaLabel metric={metric} />
-        <span className="truncate text-[#656565]" title={hint}>{hint}</span>
+        <span className="truncate text-[#8c8c8c]" title={hint}>{hint}</span>
       </div>
     </article>
   )
@@ -149,7 +150,7 @@ function ActivityChart({ points }: { points: StatisticsSeriesPoint[] }) {
     <div>
       <div className="mb-4 flex flex-wrap gap-x-4 gap-y-2">
         {seriesLegend.map((item) => (
-          <span key={item.field} className="inline-flex items-center gap-1.5 text-[10.5px] text-[#a6a6a6]">
+          <span key={item.field} className="inline-flex items-center gap-1.5 text-[11px] text-[#a6a6a6]">
             <span className="h-2 w-2 rounded-[2px]" style={{ backgroundColor: item.color }} />
             {item.label}
           </span>
@@ -178,9 +179,9 @@ function ActivityChart({ points }: { points: StatisticsSeriesPoint[] }) {
                       />
                     )
                   })}
-                  {total > 0 && <span className="absolute inset-x-0 top-1 text-center text-[9px] font-semibold text-white/75 tabular-nums">{total}</span>}
+                  {total > 0 && <span className="absolute inset-x-0 top-1 text-center text-[10px] font-semibold text-white/75 tabular-nums">{total}</span>}
                 </div>
-                <span className={cn('mt-2 truncate text-center text-[9px] text-[#686868]', !showLabel && 'invisible')}>{point.shortLabel}</span>
+                <span className={cn('mt-2 truncate text-center text-[10px] text-[#8c8c8c]', !showLabel && 'invisible')}>{point.shortLabel}</span>
               </div>
             )
           })}
@@ -206,7 +207,7 @@ function LeaderCard({ label, row, value, icon: Icon }: { label: string; row: Sta
     <div className={cn(surfaceClass, 'flex min-w-0 items-center gap-3 px-3 py-2.5')}>
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#d4d4d4]/10 text-[#d4d4d4]"><Icon size={14} /></span>
       <div className="min-w-0">
-        <p className="text-[9.5px] uppercase tracking-[0.12em] text-[#686868]">{label}</p>
+        <p className="text-[11px] uppercase tracking-[0.12em] text-[#8c8c8c]">{label}</p>
         <p className="mt-0.5 truncate text-[11.5px] font-medium text-[#e5e5e5]">{row ? `${row.displayName} · ${value}` : 'Noch keine Daten'}</p>
       </div>
     </div>
@@ -221,8 +222,7 @@ export default function StatisticsPage() {
   const { data, loading, error, refetch } = useFetch<StatisticsPayload>(canView ? `/api/statistics?range=${range}` : null)
 
   const filteredStaff = useMemo(() => {
-    const query = staffSearch.trim().toLocaleLowerCase('de-DE')
-    return (data?.staff ?? []).filter((row) => !query || row.displayName.toLocaleLowerCase('de-DE').includes(query))
+    return (data?.staff ?? []).filter((row) => matchesSearch(staffSearch, [row.displayName]))
   }, [data?.staff, staffSearch])
 
   if (!canView) return <UnauthorizedContent />
@@ -263,7 +263,7 @@ export default function StatisticsPage() {
                 aria-pressed={range === option.value}
                 title={option.label}
                 className={cn(
-                  'h-8 rounded-[7px] px-2.5 text-[10.5px] font-semibold transition-colors sm:px-3',
+                  'h-8 rounded-[7px] px-2.5 text-[11px] font-semibold transition-colors sm:px-3',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40',
                   range === option.value ? 'bg-[#d4d4d4] text-[#181818] shadow-[0_2px_8px_rgba(212,212,212,.2)]' : 'text-[#909090] hover:bg-[#282828] hover:text-white',
                 )}
@@ -275,9 +275,9 @@ export default function StatisticsPage() {
         )}
       />
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#353535]/55 bg-[#181818]/65 px-3.5 py-2 text-[10.5px]">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#353535]/55 bg-[#181818]/65 px-3.5 py-2 text-[11px]">
         <span className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.12em] text-[#d4d4d4]"><Activity size={12} /> {data.period.label}</span>
-        <span className="font-mono text-[#797979]">{periodText}</span>
+        <span className="font-mono text-[#8c8c8c]">{periodText}</span>
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6" aria-label="Kennzahlen">
@@ -290,7 +290,7 @@ export default function StatisticsPage() {
       </section>
 
       <section className={cn(panelClass, 'mt-3 p-4 sm:p-5')}>
-        <SectionHeading icon={BarChart3} title="Personalbewegung im Verlauf" description="Alle erfassten Personalereignisse nach Tag, Woche oder Monat gestapelt." aside={<span className="font-mono text-[10px] text-[#686868]">GESAMT {data.series.reduce((sum, point) => sum + seriesLegend.reduce((value, item) => value + point[item.field], 0), 0)}</span>} />
+        <SectionHeading icon={BarChart3} title="Personalbewegung im Verlauf" description="Alle erfassten Personalereignisse nach Tag, Woche oder Monat gestapelt." aside={<span className="font-mono text-[11px] text-[#8c8c8c]">GESAMT {data.series.reduce((sum, point) => sum + seriesLegend.reduce((value, item) => value + point[item.field], 0), 0)}</span>} />
         <ActivityChart points={data.series} />
       </section>
 
@@ -307,7 +307,7 @@ export default function StatisticsPage() {
                 <span className="text-right text-[11px] font-semibold text-[#e5e5e5] tabular-nums">{rank.count}</span>
               </div>
             ))}
-            {data.rankDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#686868]">Keine aktiven Agents vorhanden.</p>}
+            {data.rankDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8c8c8c]">Keine aktiven Agents vorhanden.</p>}
           </div>
         </section>
 
@@ -316,16 +316,16 @@ export default function StatisticsPage() {
           <div className="space-y-3">
             {data.trainingDistribution.slice(0, 8).map((training) => (
               <div key={training.id}>
-                <div className="mb-1 flex items-center justify-between gap-3 text-[10.5px]">
+                <div className="mb-1 flex items-center justify-between gap-3 text-[11px]">
                   <span className="truncate text-[#bcbcbc]">{training.label}</span>
-                  <span className="shrink-0 text-[#797979] tabular-nums">{training.completed}/{training.total} · {training.percentage}%</span>
+                  <span className="shrink-0 text-[#8c8c8c] tabular-nums">{training.completed}/{training.total} · {training.percentage}%</span>
                 </div>
                 <span className="block h-1.5 overflow-hidden rounded-full bg-[#161616]">
                   <span className="block h-full rounded-full bg-[linear-gradient(90deg,#a98622,#e5c85c)]" style={{ width: `${training.percentage}%` }} />
                 </span>
               </div>
             ))}
-            {data.trainingDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#686868]">Keine Ausbildungszuweisungen vorhanden.</p>}
+            {data.trainingDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8c8c8c]">Keine Ausbildungszuweisungen vorhanden.</p>}
           </div>
         </section>
       </div>
@@ -339,7 +339,7 @@ export default function StatisticsPage() {
               return (
                 <div key={item.status} className={cn(surfaceClass, 'relative overflow-hidden p-3')}>
                   <span className="absolute inset-x-0 top-0 h-px" style={{ backgroundColor: colors[index] }} />
-                  <p className="text-[9.5px] uppercase tracking-[0.1em] text-[#686868]">{item.label}</p>
+                  <p className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">{item.label}</p>
                   <p className="mt-2 text-[20px] font-semibold text-white tabular-nums">{item.count}</p>
                   <div className="mt-2 h-1 rounded-full bg-[#161616]">
                     <span className="block h-full rounded-full" style={{ width: `${applicationTotal > 0 ? (item.count / applicationTotal) * 100 : 0}%`, backgroundColor: colors[index] }} />
@@ -360,7 +360,7 @@ export default function StatisticsPage() {
               ['Neue Ausbildungsarten', data.additional.newTrainingTypes.current],
             ].map(([label, value]) => (
               <div key={String(label)} className={cn(surfaceClass, 'p-3')}>
-                <dt className="text-[9.5px] leading-4 text-[#797979]">{label}</dt>
+                <dt className="text-[11px] leading-4 text-[#8c8c8c]">{label}</dt>
                 <dd className="mt-1 text-[18px] font-semibold text-[#e5e5e5] tabular-nums">{value}</dd>
               </div>
             ))}
@@ -375,8 +375,8 @@ export default function StatisticsPage() {
           description="Wer hat Einstellungen, Ausbildungen und Personalmaßnahmen im gewählten Zeitraum bearbeitet?"
           aside={(
             <label className="relative block w-full sm:w-[230px]">
-              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#686868]" />
-              <input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="PDler suchen…" className="h-8 w-full rounded-[8px] border border-[#404040]/65 bg-[#161616]/75 pl-8 pr-3 text-[11px] text-white outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]/55 focus:ring-2 focus:ring-[#d4d4d4]/12" />
+              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
+              <input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="PDler suchen…" className="h-8 w-full rounded-[8px] border border-[#404040]/65 bg-[#161616]/75 pl-8 pr-3 text-[11px] text-white outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]/55 focus:ring-2 focus:ring-[#d4d4d4]/12" />
             </label>
           )}
         />
@@ -390,7 +390,7 @@ export default function StatisticsPage() {
         <div className="overflow-x-auto rounded-[11px] border border-white/[0.055]">
           <table className="w-full min-w-[920px] border-collapse text-left">
             <thead className="bg-[#161616]/90">
-              <tr className="text-[9.5px] uppercase tracking-[0.1em] text-[#797979]">
+              <tr className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">
                 <th className="px-3 py-2.5 font-semibold">PDler / Bearbeiter</th>
                 <th className="px-3 py-2.5 text-center font-semibold">Einstellungen</th>
                 <th className="px-3 py-2.5 text-center font-semibold">Ausbildungen</th>
@@ -406,7 +406,7 @@ export default function StatisticsPage() {
                 <tr key={row.id} className="transition-colors hover:bg-[#282828]/55">
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 text-center font-mono text-[9.5px] text-[#656565]">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="w-5 text-center font-mono text-[11px] text-[#8c8c8c]">{String(index + 1).padStart(2, '0')}</span>
                       <StaffAvatar row={row} />
                       <span className="max-w-[240px] truncate text-[11.5px] font-medium text-[#e5e5e5]">{row.displayName}</span>
                     </div>
@@ -422,9 +422,9 @@ export default function StatisticsPage() {
               ))}
             </tbody>
           </table>
-          {filteredStaff.length === 0 && <p className="bg-[#1a1a1a]/45 px-4 py-10 text-center text-[12px] italic text-[#686868]">{staffSearch ? 'Kein Bearbeiter passt zur Suche.' : 'In diesem Zeitraum wurden noch keine Maßnahmen erfasst.'}</p>}
+          {filteredStaff.length === 0 && <p className="bg-[#1a1a1a]/45 px-4 py-10 text-center text-[12px] italic text-[#8c8c8c]">{staffSearch ? 'Kein Bearbeiter passt zur Suche.' : 'In diesem Zeitraum wurden noch keine Maßnahmen erfasst.'}</p>}
         </div>
-        <p className="mt-2.5 text-[10px] leading-4 text-[#656565]">Ausbildungen zählen neu als abgeschlossen markierte Ausbildungszuweisungen. Änderungen ohne neuen Abschluss werden nicht als Leistung gezählt.</p>
+        <p className="mt-2.5 text-[11px] leading-4 text-[#8c8c8c]">Ausbildungen zählen neu als abgeschlossen markierte Ausbildungszuweisungen. Änderungen ohne neuen Abschluss werden nicht als Leistung gezählt.</p>
       </section>
 
       <section className={cn(panelClass, 'mt-3 p-4 sm:p-5')}>
@@ -438,17 +438,17 @@ export default function StatisticsPage() {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px]" style={{ color: meta.color, backgroundColor: meta.bg }}><Icon size={15} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[11.5px] font-medium text-[#e5e5e5]">{item.subject}</p>
-                  <p className="mt-0.5 truncate text-[10.5px] text-[#868686]">{item.title} · von {item.actor}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-[#868686]">{item.title} · von {item.actor}</p>
                 </div>
-                <time className="shrink-0 text-[9.5px] text-[#656565]">{formatDateTime(item.createdAt)}</time>
+                <time className="shrink-0 text-[11px] text-[#8c8c8c]">{formatDateTime(item.createdAt)}</time>
               </article>
             )
           })}
-          {data.latestActivity.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#686868] lg:col-span-2">Keine Personalbewegungen im gewählten Zeitraum.</p>}
+          {data.latestActivity.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8c8c8c] lg:col-span-2">Keine Personalbewegungen im gewählten Zeitraum.</p>}
         </div>
       </section>
 
-      <div className="mt-3 flex items-center justify-between gap-3 px-1 text-[9.5px] text-[#585858]">
+      <div className="mt-3 flex items-center justify-between gap-3 px-1 text-[11px] text-[#8c8c8c]">
         <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={11} /> Datenstand {formatDateTime(data.period.end)}</span>
         <span className="font-mono uppercase tracking-[0.1em]">FIB · Personalstatistik</span>
       </div>

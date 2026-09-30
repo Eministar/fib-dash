@@ -34,7 +34,7 @@ export default async function UnitHubPage({ params }: { params: Promise<{ key: s
             <UnitIcon icon={unit.icon} size={25} strokeWidth={1.8} />
           </div>
           <div className="min-w-0">
-            <p className="mb-1 text-[9.5px] font-bold uppercase tracking-[0.18em]" style={{ color: unit.color }}>Unit-Arbeitsbereich</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: unit.color }}>Unit-Arbeitsbereich</p>
             <h1 className="truncate text-[24px] font-semibold tracking-[-0.025em] text-white sm:text-[28px]">{unit.name}</h1>
             {unit.description && <p className="mt-1.5 max-w-2xl text-[12.5px] leading-5 text-[#979797]">{unit.description}</p>}
           </div>
@@ -61,14 +61,14 @@ export default async function UnitHubPage({ params }: { params: Promise<{ key: s
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h2 className="truncate text-[14px] font-semibold text-[#f4f4f4]">{module.label}</h2>
-                  <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-[0.08em] ${module.access === 'manage' ? 'bg-[#d4d4d4]/12 text-[#d4d4d4]' : 'bg-[#38bdf8]/10 text-[#7dd3fc]'}`}>
+                  <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] ${module.access === 'manage' ? 'bg-[#d4d4d4]/12 text-[#d4d4d4]' : 'bg-[#38bdf8]/10 text-[#7dd3fc]'}`}>
                     {module.access === 'manage' ? <Settings2 size={9} /> : <Eye size={9} />}
                     {module.access === 'manage' ? 'Verwalten' : 'Ansehen'}
                   </span>
                 </div>
                 <p className="mt-2 text-[11.5px] leading-5 text-[#8d8d8d]">{module.description}</p>
               </div>
-              <ArrowRight size={15} className="mt-1 shrink-0 text-[#636363] transition-transform group-hover:translate-x-0.5 group-hover:text-[#d4d4d4]" />
+              <ArrowRight size={15} className="mt-1 shrink-0 text-[#8c8c8c] transition-transform group-hover:translate-x-0.5 group-hover:text-[#d4d4d4]" />
             </div>
           </Link>
         ))}

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import { ThemeProvider } from '@/context/theme-context'
 import { AuthProvider } from '@/context/auth-context'
 import { ToastProvider } from '@/components/ui/toast'
+import { ConfirmProvider } from '@/components/ui/confirm-dialog'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { ChunkLoadGuard } from '@/components/runtime/chunk-load-guard'
 import { ScrollToTop } from '@/components/layout/scroll-to-top'
 
@@ -18,9 +20,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
-          <ChunkLoadGuard />
-          {children}
-          <ScrollToTop />
+          <ConfirmProvider>
+            <TooltipProvider>
+              <ChunkLoadGuard />
+              {children}
+              <ScrollToTop />
+            </TooltipProvider>
+          </ConfirmProvider>
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -99,7 +99,7 @@ export function FormTestResponseDetail({ testId, responseId }: { testId: string;
       <div className="mx-auto max-w-3xl">
         <PageHeader title="Abgabe" description="Die Abgabe konnte nicht geladen werden." eyebrow="Auswertung" />
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#808080]" />
+          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
           <p className="text-[13px] text-[#a6a6a6]">{loadError ?? 'Abgabe nicht verfügbar'}</p>
           <Link href={listHref} className="mt-4 inline-block">
             <Button variant="secondary" size="sm">
@@ -147,7 +147,7 @@ export function FormTestResponseDetail({ testId, responseId }: { testId: string;
             return (
               <div key={answer.id} className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/45 p-3">
                 <div className="mb-2 flex items-start gap-2">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[10px] font-semibold text-[#d4d4d4]">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">

@@ -15,6 +15,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { displayBadgeNumber, formatBadgeNumber } from '@/lib/badge-number'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface Rank {
   id: string
@@ -51,6 +52,7 @@ export default function RanksPage() {
   const { data: discordData, loading: discordLoading, refetch: refetchDiscord } = useFetch<DiscordConfigResponse>('/api/discord/config')
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
 
   const [activeTab, setActiveTab] = useState<'ranks' | 'blacklist'>('ranks')
   const [modalOpen, setModalOpen] = useState(false)
@@ -178,7 +180,7 @@ export default function RanksPage() {
   }
 
   const handleReassignBadges = async () => {
-    if (!confirm('Dienstnummern für alle aktiven Agents anhand der aktuellen Rangbereiche neu vergeben?')) return
+    if (!(await confirm({ title: 'Dienstnummern neu vergeben?', description: 'Alle aktiven Agents erhalten eine Dienstnummer anhand der aktuellen Rangbereiche. Bisherige Nummern können sich ändern.', confirmLabel: 'Neu vergeben' }))) return
     setReassigningBadges(true)
     try {
       const result = await execute('/api/ranks/reassign-badges', { method: 'POST' }) as { updated?: number } | null
@@ -195,7 +197,7 @@ export default function RanksPage() {
     }
   }
 
-  if (loading || blacklistLoading || discordLoading) return <PageLoader />
+  if (loading || blacklistLoading || discordLoading) return <PageLoader withHeader />
 
   const roleOptions = [
     { value: '', label: 'Keine Discord-Rolle' },
@@ -252,7 +254,7 @@ export default function RanksPage() {
               transition={{ delay: i * 0.02 }}
               className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#212121] transition-colors"
             >
-              <span className="w-10 shrink-0 text-right font-mono text-[9.5px] uppercase tracking-wider text-[#686868]" title="Sortierungsposition">Pos {rank.sortOrder}</span>
+              <span className="w-10 shrink-0 text-right font-mono text-[11px] uppercase tracking-wider text-[#8c8c8c]" title="Sortierungsposition">Pos {rank.sortOrder}</span>
               <div className="h-3.5 w-3.5 rounded-full shrink-0" style={{ backgroundColor: rank.color }} />
               <div className="flex-1 min-w-0">
                 <span className="inline-flex flex-wrap items-center gap-2">
@@ -260,7 +262,7 @@ export default function RanksPage() {
                   <RankNumberBadge number={rank.internalNumber} />
                 </span>
                 {rank.badgeMin != null && rank.badgeMax != null && (
-                  <span className="ml-2 text-[10px] text-[#808080] font-mono">
+                  <span className="ml-2 text-[11px] text-[#8c8c8c] font-mono">
                     DN {formatBadgeNumber(rank.badgeMin, '')}–{formatBadgeNumber(rank.badgeMax, '')}
                   </span>
                 )}
@@ -270,18 +272,18 @@ export default function RanksPage() {
               </div>
               <div className="flex gap-0.5">
                 <button onClick={() => openEdit(rank)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                  <Edit size={13} className="text-[#808080]" />
+                  <Edit size={13} className="text-[#8c8c8c]" />
                 </button>
                 <button onClick={() => handleDelete(rank.id)} className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors">
-                  <Trash2 size={13} className="text-[#808080] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
                 </button>
               </div>
             </motion.div>
           ))}
           {(!ranks || ranks.length === 0) && (
             <div className="text-center py-16">
-              <Shield size={28} className="mx-auto mb-3 text-[#333]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#999]">Keine Ränge vorhanden</p>
+              <Shield size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#909090]">Keine Ränge vorhanden</p>
             </div>
           )}
         </div>
@@ -302,17 +304,17 @@ export default function RanksPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13.5px] font-mono font-medium text-[#eee]">{displayBadgeNumber(row.badgeNumber)}</p>
-                  <p className="text-[11.5px] text-[#808080] truncate">{row.reason || 'Keine Begründung'}</p>
+                  <p className="text-[11.5px] text-[#8c8c8c] truncate">{row.reason || 'Keine Begründung'}</p>
                 </div>
                 <button onClick={() => handleBlacklistDelete(row.id)} className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors">
-                  <Trash2 size={13} className="text-[#808080] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
                 </button>
               </motion.div>
             ))}
             {(!blacklistedBadges || blacklistedBadges.length === 0) && (
               <div className="text-center py-16">
-                <Ban size={28} className="mx-auto mb-3 text-[#333]" strokeWidth={1.5} />
-                <p className="text-[13px] text-[#999]">Keine Dienstnummern gesperrt</p>
+                <Ban size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+                <p className="text-[13px] text-[#909090]">Keine Dienstnummern gesperrt</p>
               </div>
             )}
           </div>

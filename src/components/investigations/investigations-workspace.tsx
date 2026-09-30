@@ -40,6 +40,7 @@ import { PhotoPicker, type CatalogPhoto } from '@/components/investigations/phot
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
 import type { AgentLite, InvestigationListItem } from '@/components/investigations/types'
+import { useUrlState } from '@/hooks/use-url-state'
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'Alle Status' },
@@ -96,7 +97,7 @@ export function InvestigationsWorkspace() {
 
   const [status, setStatus] = useState('OPEN_ONLY')
   const [priority, setPriority] = useState('ALL')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [createOpen, setCreateOpen] = useState(false)
   const [chooseType, setChooseType] = useState(false)
   const [dossierSearch, setDossierSearch] = useState('')
@@ -301,7 +302,7 @@ export function InvestigationsWorkspace() {
             ['Bilder', form.photos.length ? `${form.photos.length} ausgewählt` : 'Keine'],
           ] as [string, string][]).map(([label, value]) => (
             <div key={label} className="flex flex-wrap gap-x-3 border-b border-[#1e1e1e] pb-2">
-              <dt className="w-36 shrink-0 text-[#808080]">{label}</dt>
+              <dt className="w-36 shrink-0 text-[#8c8c8c]">{label}</dt>
               <dd className="min-w-0 text-[#d4d4d4]">{value}</dd>
             </div>
           ))}
@@ -400,7 +401,7 @@ export function InvestigationsWorkspace() {
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-4 text-[12px] text-[#808080]">
+                <div className="flex shrink-0 items-center gap-4 text-[12px] text-[#8c8c8c]">
                   <span className="inline-flex items-center gap-1.5" title="Einträge">
                     <FolderOpen className="h-3.5 w-3.5" />
                     {investigation._count.entries}
@@ -416,7 +417,7 @@ export function InvestigationsWorkspace() {
                 </div>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#6a6a6a]">
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8c8c8c]">
                 <span>
                   Fallführung:{' '}
                   {investigation.leadAgent

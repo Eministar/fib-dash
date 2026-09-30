@@ -21,6 +21,7 @@ import {
 } from '@/lib/investigations'
 import { formatDateTime } from '@/lib/utils'
 import type { AgentLite, Evidence, InvestigationEntry } from '@/components/investigations/types'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info'
 
@@ -83,6 +84,7 @@ export function InvestigationEvidence({
   onChanged,
 }: InvestigationEvidenceProps) {
   const { mutate, saving } = useInvestigationMutation(onChanged)
+  const confirm = useConfirm()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<EvidenceForm>(emptyForm)
 
@@ -117,8 +119,8 @@ export function InvestigationEvidence({
       errorTitle: 'Änderung fehlgeschlagen',
     })
 
-  const handleDelete = (item: Evidence) => {
-    if (!window.confirm(`Asservat ${item.itemNumber} „${item.title}" löschen?`)) return
+  const handleDelete = async (item: Evidence) => {
+    if (!(await confirm({ title: `Asservat ${item.itemNumber} löschen?`, description: `„${item.title}“ wird aus der Akte entfernt.`, tone: 'danger' }))) return
     return mutate(`/api/investigations/evidence/${item.id}`, {
       method: 'DELETE',
       successTitle: 'Asservat gelöscht',
@@ -139,7 +141,7 @@ export function InvestigationEvidence({
       </div>
 
       {evidence.length === 0 ? (
-        <p className="py-3 text-[12.5px] text-[#6a6a6a]">Keine Asservate zu dieser Akte.</p>
+        <p className="py-3 text-[12.5px] text-[#8c8c8c]">Keine Asservate zu dieser Akte.</p>
       ) : (
         <ul className="space-y-2">
           {evidence.map((item) => (
@@ -162,7 +164,7 @@ export function InvestigationEvidence({
                       {item.description}
                     </p>
                   )}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#6a6a6a]">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8c8c8c]">
                     {item.seizedAt && <span>Sichergestellt {formatDateTime(item.seizedAt)}</span>}
                     {item.seizedLocation && (
                       <span className="inline-flex items-center gap-1.5">
@@ -196,7 +198,7 @@ export function InvestigationEvidence({
                     <button
                       type="button"
                       onClick={() => void handleDelete(item)}
-                      className="text-[#6a6a6a] transition-colors hover:text-[#fca5a5]"
+                      className="text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                       aria-label="Asservat löschen"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -300,7 +302,7 @@ export function InvestigationEvidence({
           />
 
           <div className="flex items-center justify-between pt-1">
-            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-[#6a6a6a]">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-[#8c8c8c]">
               <Boxes className="h-3.5 w-3.5" />
               Nummer wird automatisch vergeben
             </span>

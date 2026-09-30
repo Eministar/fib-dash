@@ -135,7 +135,7 @@ export function AgreementEditor({
         {draft.clauses.map((clause, index) => (
           <div key={clause.key} className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11.5px] text-[#808080]">§ {index + 1}</span>
+              <span className="text-[11.5px] text-[#8c8c8c]">§ {index + 1}</span>
               <Input value={clause.title} maxLength={200} placeholder="Überschrift"
                 onChange={(event) => set({ clauses: draft.clauses.map((entry, i) => (i === index ? { ...entry, title: event.target.value } : entry)) })} />
               <button type="button" aria-label="Nach oben" className="text-[#909090] hover:text-white" onClick={() => set({ clauses: move(draft.clauses, index, index - 1) })}><ArrowUp size={14} /></button>

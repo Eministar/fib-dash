@@ -33,6 +33,8 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 type ModuleKey = 'ACADEMY' | 'HR' | 'SRU' | 'AIR_SUPPORT' | 'DETECTIVE'
 type FormTestStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED'
@@ -176,8 +178,10 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
   const [createForm, setCreateForm] = useState(EMPTY_CREATE_FORM)
   const [draft, setDraft] = useState<FormTest | null>(null)
   const [draftDirty, setDraftDirty] = useState(false)
+  useUnsavedChanges(draftDirty)
   const [saving, setSaving] = useState(false)
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const { execute } = useApi()
   const { data: tests, loading, refetch } = useFetch<FormTest[]>(`/api/form-tests?module=${module}${showArchived ? '&archived=true' : ''}`)
 
@@ -280,7 +284,7 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
   }
 
   const deleteTest = async () => {
-    if (!selected || !confirm(`Test "${selected.title}" wirklich löschen? Alle Abgaben werden mitgelöscht.`)) return
+    if (!selected || !(await confirm({ title: `Test „${selected.title}“ löschen?`, description: 'Alle Abgaben zu diesem Test werden mitgelöscht.', tone: 'danger' }))) return
     setSaving(true)
     try {
       await execute(`/api/form-tests/${selected.id}`, { method: 'DELETE' })
@@ -301,8 +305,8 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
     addToast({ type: 'success', title: 'Link kopiert' })
   }
 
-  const selectTest = (id: string) => {
-    if (draftDirty && selectedId && selectedId !== id && !confirm('Ungespeicherte Änderungen verwerfen?')) return
+  const selectTest = async (id: string) => {
+    if (draftDirty && selectedId && selectedId !== id && !(await confirm({ title: 'Ungespeicherte Änderungen verwerfen?', confirmLabel: 'Verwerfen', tone: 'danger' }))) return
     setDraftDirty(false)
     setSelectedId(id)
   }
@@ -378,12 +382,12 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
         <aside className="glass-panel-elevated overflow-hidden rounded-[14px] border border-[#373737]/45">
           <div className="flex items-center justify-between border-b border-[#343434]/45 px-3 py-2.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a6a6a6]">Formularablage</p>
-            <span className="text-[10.5px] text-[#686868]">{tests?.length ?? 0}</span>
+            <span className="text-[11px] text-[#8c8c8c]">{tests?.length ?? 0}</span>
           </div>
           <div className="max-h-[680px] overflow-y-auto p-1.5">
             {(tests ?? []).length === 0 ? (
               <div className="px-4 py-12 text-center">
-                <FileQuestion size={24} className="mx-auto mb-2 text-[#808080]" />
+                <FileQuestion size={24} className="mx-auto mb-2 text-[#8c8c8c]" />
                 <p className="text-[12.5px] text-[#a6a6a6]">Noch keine Formulare vorhanden</p>
               </div>
             ) : (
@@ -417,7 +421,7 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
 
         {!draft ? (
           <section className="glass-panel-elevated flex min-h-[520px] flex-col items-center justify-center rounded-[14px] border border-[#373737]/45 px-6 text-center">
-            <FileQuestion size={34} className="mb-3 text-[#808080]" />
+            <FileQuestion size={34} className="mb-3 text-[#8c8c8c]" />
             <p className="text-[14px] font-semibold text-[#e5e5e5]">Kein Formular ausgewählt</p>
             <p className="mt-1 max-w-sm text-[12.5px] leading-5 text-[#a6a6a6]">
               Erstelle einen Test oder eine Umfrage und teile den Link mit eingeloggten Nutzern.
@@ -671,7 +675,7 @@ function QuestionEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#808080]">Fragen</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8c8c8c]">Fragen</p>
         {canEdit && (
           <Button size="sm" variant="secondary" onClick={onAdd}>
             <Plus size={13} />
@@ -682,14 +686,14 @@ function QuestionEditor({
 
       {questions.length === 0 ? (
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-12 text-center">
-          <FileQuestion size={24} className="mx-auto mb-2 text-[#808080]" />
+          <FileQuestion size={24} className="mx-auto mb-2 text-[#8c8c8c]" />
           <p className="text-[12.5px] text-[#a6a6a6]">Noch keine Fragen angelegt</p>
         </div>
       ) : (
         questions.map((question, index) => (
           <div key={question.id ?? index} className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
             <div className="mb-3 flex items-center gap-2">
-              <GripVertical size={14} className="text-[#808080]" />
+              <GripVertical size={14} className="text-[#8c8c8c]" />
               <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
                 {index + 1}
               </span>

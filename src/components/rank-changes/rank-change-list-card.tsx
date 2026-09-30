@@ -80,7 +80,7 @@ function DirectionPill({ direction }: { direction: RankChangeDirection }) {
     const Icon = direction === 'PROMOTION' ? ArrowUpRight : ArrowDownRight
     return (
         <span
-            className="inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide"
+            className="inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
             style={{ borderColor: `${accent}40`, backgroundColor: `${accent}18`, color: accent }}
         >
             <Icon size={11} strokeWidth={2.5} />
@@ -191,13 +191,13 @@ export function RankChangeListCard({
                 onClick={onToggle}
                 className="w-full flex items-center gap-3.5 px-5 py-4 hover:bg-[#212121]/60 transition-colors text-left"
             >
-                <ChevronDown size={14} strokeWidth={2.5} className={cn('text-[#808080] transition-transform duration-200 shrink-0', !expanded && '-rotate-90')} />
+                <ChevronDown size={14} strokeWidth={2.5} className={cn('text-[#8c8c8c] transition-transform duration-200 shrink-0', !expanded && '-rotate-90')} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[14px] font-semibold text-white">{list.name}</span>
                         {promotions > 0 && (
                             <span
-                                className="inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide"
+                                className="inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
                                 style={{ borderColor: '#34d39940', backgroundColor: '#34d39918', color: '#34d399' }}
                             >
                                 <ArrowUpRight size={11} strokeWidth={2.5} />
@@ -206,27 +206,27 @@ export function RankChangeListCard({
                         )}
                         {demotions > 0 && (
                             <span
-                                className="inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide"
+                                className="inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
                                 style={{ borderColor: '#f8717140', backgroundColor: '#f8717118', color: '#f87171' }}
                             >
                                 <ArrowDownRight size={11} strokeWidth={2.5} />
                                 {demotions} D-Rank
                             </span>
                         )}
-                        <span className={cn('inline-flex items-center gap-1 rounded-[5px] px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide', statusTone)}>
+                        <span className={cn('inline-flex items-center gap-1 rounded-[5px] px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide', statusTone)}>
                             <span className={cn('h-1.5 w-1.5 rounded-full', statusDot)} />
                             {statusLabel}
                         </span>
                     </div>
                     <p className="text-[11.5px] text-[#a6a6a6] mt-1">
                         {formatDate(list.createdAt)} · {list.createdBy?.displayName ?? 'Gelöscht'}
-                        {list.description && <span className="text-[#686868]"> · {list.description}</span>}
+                        {list.description && <span className="text-[#8c8c8c]"> · {list.description}</span>}
                     </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                     {total > 0 && (
                         <div className="hidden sm:flex flex-col items-end gap-1">
-                            <div className="flex items-center gap-2 text-[10.5px] text-[#a6a6a6]">
+                            <div className="flex items-center gap-2 text-[11px] text-[#a6a6a6]">
                                 <span><span className="font-semibold text-white">{executed}</span>/{total} durchgeführt</span>
                             </div>
                             <div className="h-1 w-24 rounded-full bg-[#212121] overflow-hidden">
@@ -235,7 +235,7 @@ export function RankChangeListCard({
                         </div>
                     )}
                     {pending > 0 && !isCompleted && (
-                        <span className="text-[10.5px] font-semibold text-[#fbbf24] bg-[#fbbf24]/12 px-2 py-1 rounded-[6px]">
+                        <span className="text-[11px] font-semibold text-[#fbbf24] bg-[#fbbf24]/12 px-2 py-1 rounded-[6px]">
               {pending} offen
             </span>
                     )}
@@ -266,7 +266,7 @@ export function RankChangeListCard({
                                                 </Link>
                                                 <span className="text-[11px] text-[#a6a6a6]">#{displayBadgeNumber(entry.agent.badgeNumber)}</span>
                                                 {entry.newBadgeNumber && (
-                                                    <span className="text-[10.5px] text-[#a6a6a6]">
+                                                    <span className="text-[11px] text-[#a6a6a6]">
                           → <span className="text-[#d4d4d4]">#{displayBadgeNumber(entry.newBadgeNumber)}</span>
                         </span>
                                                 )}
@@ -274,13 +274,13 @@ export function RankChangeListCard({
                                             </div>
                                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                                 <RankPill name={entry.currentRank.name} color={entry.currentRank.color} />
-                                                <ArrowRight size={11} className="text-[#686868]" />
+                                                <ArrowRight size={11} className="text-[#8c8c8c]" />
                                                 <RankPill name={entry.proposedRank.name} color={entry.proposedRank.color} />
                                             </div>
                                             {entry.note && (
                                                 <p className="text-[11px] text-[#c3c3c3] mt-1.5 italic">„{entry.note}“</p>
                                             )}
-                                            <p className="text-[10.5px] text-[#686868] mt-1">
+                                            <p className="text-[11px] text-[#8c8c8c] mt-1">
                                                 Eingereicht von <span className="text-[#909090]">{entry.createdBy?.displayName ?? list.createdBy?.displayName ?? 'Gelöscht'}</span>
                                                 {entry.executed && (
                                                     <>
@@ -299,7 +299,7 @@ export function RankChangeListCard({
                                                 title="Eintrag, Kommentare und Vorschläge öffnen"
                                             >
                                                 Details
-                                                <span className="inline-flex items-center gap-1 rounded-[5px] bg-[#161616]/65 px-1.5 py-0.5 text-[10.5px] tabular-nums text-[#a6a6a6]">
+                                                <span className="inline-flex items-center gap-1 rounded-[5px] bg-[#161616]/65 px-1.5 py-0.5 text-[11px] tabular-nums text-[#a6a6a6]">
                                                     <MessageSquare size={11} /> {entry.commentCount}
                                                 </span>
                                                 <ChevronRight size={13} />
@@ -312,7 +312,7 @@ export function RankChangeListCard({
                                             />
                                             {entry.executed ? (
                                                 <div className="flex items-center gap-2 shrink-0">
-                      <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-[#34d399] bg-[#34d399]/12 px-2 py-1 rounded-[6px]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#34d399] bg-[#34d399]/12 px-2 py-1 rounded-[6px]">
                         ✓ Durchgeführt
                       </span>
                                                     {canExecute && direction === 'PROMOTION' && (
@@ -329,7 +329,7 @@ export function RankChangeListCard({
                                                     {canManage && (
                                                         <button
                                                             onClick={() => onRemove(entry.id)}
-                                                            className="p-1.5 rounded-[6px] hover:bg-[#321218]/60 text-[#686868] hover:text-[#fca5a5] transition-colors"
+                                                            className="p-1.5 rounded-[6px] hover:bg-[#321218]/60 text-[#8c8c8c] hover:text-[#fca5a5] transition-colors"
                                                             title="Entfernen"
                                                         >
                                                             <X size={13} />
@@ -343,7 +343,7 @@ export function RankChangeListCard({
                             })}
                         </div>
                     ) : (
-                        <p className="text-[12px] text-[#686868] italic py-3">
+                        <p className="text-[12px] text-[#8c8c8c] italic py-3">
                             {filtered ? 'Keine Einträge passen zu Suche und Filter' : 'Noch keine Agents in dieser Liste'}
                         </p>
                     )}

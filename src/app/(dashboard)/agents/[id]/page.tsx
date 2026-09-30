@@ -4,7 +4,7 @@ import { useState, useCallback, use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CalendarPlus, Edit, Trash2, UserX, UserCheck, Save, X, Check, TrendingUp, TrendingDown, Plus, StickyNote, Timer, Send, Gavel, ListPlus, ChevronDown, ChevronUp, History, Download, MessageCircle, CircleSlash, Plane } from 'lucide-react'
+import { CalendarPlus, Edit, Trash2, UserX, UserCheck, Save, X, Check, TrendingUp, TrendingDown, Plus, StickyNote, Timer, Send, Gavel, ListPlus, ChevronDown, ChevronUp, History, Download, MessageCircle, CircleSlash, Plane } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DateField } from '@/components/ui/date-field'
@@ -54,6 +54,7 @@ import { Badge } from '@/components/ui/badge'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { CodenameHistory } from '@/components/codenames/codename-history'
 import { AgentRecordsPanel } from '@/components/agents/agent-records-panel'
+import { useTrackRecentItem } from '@/hooks/use-recent-items'
 
 interface Rank { id: string; name: string; sortOrder: number; internalNumber: number | null; color: string }
 interface Unit { id: string; key: string; name: string; color: string; active: boolean }
@@ -332,6 +333,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const canManageContracts = hasPermission(user, 'contracts:manage')
   const canViewContracts = canManageContracts || hasPermission(user, 'contracts:view')
   const { data: agent, loading, refetch, setData: setAgent } = useFetch<AgentDetail>(canViewAgent ? `/api/agents/${id}` : null)
+  useTrackRecentItem(agent ? {
+    href: `/agents/${id}`,
+    title: `${agent.firstName} ${agent.lastName}`,
+    subtitle: `#${displayBadgeNumber(agent.badgeNumber)}`,
+    kind: 'agent',
+  } : null)
 
   const resetInactivity = async () => {
     try {
@@ -855,8 +862,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   }, [canEditTrainings, agent, id, setAgent, setPendingTrainingOverride, addToast])
 
   if (!canViewAgent) return <UnauthorizedContent />
-  if (loading) return <PageLoader />
-  if (!agent) return <div className="text-center py-16 text-[#999]">Agent nicht gefunden</div>
+  if (loading) return <PageLoader withHeader />
+  if (!agent) return <div className="text-center py-16 text-[#909090]">Agent nicht gefunden</div>
 
   const higherRanks = ranks?.filter(r => r.sortOrder < agent.rank?.sortOrder) || []
   const lowerRanks = ranks?.filter(r => r.sortOrder > agent.rank?.sortOrder) || []
@@ -874,14 +881,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div>
       <PageHeader
+        breadcrumbs={[{ label: 'Agents', href: '/agents' }, { label: `${agent.firstName} ${agent.lastName}` }]}
         title={`${agent.onLeave ? '[X] ' : ''}${agent.firstName} ${agent.lastName}`}
         description={`DN: ${displayBadgeNumber(agent.badgeNumber)} · ${agent.rank?.name}${agent.rank?.internalNumber != null ? ` · Rang ${agent.rank.internalNumber}` : ''}`}
         action={
           <div className="flex gap-1.5 flex-wrap">
             <AgentAvatar agent={agent} size="sm" ringColor={agent.rank?.color} className="mr-1" />
-            <Link href="/agents">
-              <Button variant="ghost" size="sm"><ArrowLeft size={15} strokeWidth={1.75} /> Zurück</Button>
-            </Link>
             <Link href={`/agents/${id}/timeline`}>
               <Button variant="secondary" size="sm"><History size={14} strokeWidth={1.75} /> Akte</Button>
             </Link>
@@ -958,7 +963,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                           <p className="mb-2 block text-[12.5px] font-medium text-[#aeaeae]">Units</p>
                           <div className="rounded-[10px] border border-[#343434]/50 bg-[#181818]/30 px-3 py-2.5">
                             <UnitBadges agent={agent} units={units ?? undefined} emptyClassName="text-[12px]" />
-                            <p className="mt-1.5 text-[10px] text-[#6e6e6e]">Nur markierte Unit-Leitungen oder Administratoren dürfen Units ändern.</p>
+                            <p className="mt-1.5 text-[11px] text-[#8c8c8c]">Nur markierte Unit-Leitungen oder Administratoren dürfen Units ändern.</p>
                           </div>
                         </div>
                       )}
@@ -1012,7 +1017,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                       <span className="text-[13.5px] text-[#eee]">{getFlagLabel(agent.flag)}</span>
                     </span>
                   ) : (
-                    <span className="text-[13.5px] text-[#808080]">—</span>
+                    <span className="text-[13.5px] text-[#8c8c8c]">—</span>
                   )}
                 </InfoRow>
                 <InfoRow label="Uprank-Sperre">
@@ -1021,7 +1026,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                       <CircleSlash size={14} strokeWidth={2} /> Aktiv – Beförderungen blockiert
                     </span>
                   ) : (
-                    <span className="text-[13.5px] text-[#808080]">—</span>
+                    <span className="text-[13.5px] text-[#8c8c8c]">—</span>
                   )}
                 </InfoRow>
                 <InfoRow label="Beurlaubung">
@@ -1031,11 +1036,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                         <Plane size={14} strokeWidth={2} /> Beurlaubt{agent.onLeaveSince ? ` seit ${formatDate(agent.onLeaveSince)}` : ''}
                       </span>
                       {agent.onLeaveReason && (
-                        <span className="text-[12px] text-[#808080]">Grund: {agent.onLeaveReason}</span>
+                        <span className="text-[12px] text-[#8c8c8c]">Grund: {agent.onLeaveReason}</span>
                       )}
                     </span>
                   ) : (
-                    <span className="text-[13.5px] text-[#808080]">—</span>
+                    <span className="text-[13.5px] text-[#8c8c8c]">—</span>
                   )}
                 </InfoRow>
                 <InfoRow label="Zuletzt Online" value={formatDateTime(agent.lastOnline)} />
@@ -1145,7 +1150,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 ))
               ) : (
-                <p className="text-[12.5px] text-[#808080]">Noch keine Spielzeit empfangen</p>
+                <p className="text-[12.5px] text-[#8c8c8c]">Noch keine Spielzeit empfangen</p>
               )}
             </div>
           </motion.div>
@@ -1191,7 +1196,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 ))}
               </div>
             ) : (
-              <p className="text-[12.5px] text-[#808080]">Keine Abmeldungen vorhanden</p>
+              <p className="text-[12.5px] text-[#8c8c8c]">Keine Abmeldungen vorhanden</p>
             )}
           </motion.div>
 
@@ -1224,7 +1229,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                   <span className={cn(
                     'text-[13px]',
-                    t.completed ? 'text-[#eee]' : trainingAvailableForAgent(t.training, agent) ? 'text-[#808080]' : 'text-[#555555]'
+                    t.completed ? 'text-[#eee]' : trainingAvailableForAgent(t.training, agent) ? 'text-[#8c8c8c]' : 'text-[#8c8c8c]'
                   )}>{t.training.label}</span>
                 </button>
               ))}
@@ -1246,16 +1251,16 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                         : 'bg-[#212121]'
                     )}>
                       {log.oldRank.sortOrder > log.newRank.sortOrder
-                        ? <TrendingUp size={13} className="text-[#999]" strokeWidth={1.75} />
-                        : <TrendingDown size={13} className="text-[#999]" strokeWidth={1.75} />
+                        ? <TrendingUp size={13} className="text-[#909090]" strokeWidth={1.75} />
+                        : <TrendingDown size={13} className="text-[#909090]" strokeWidth={1.75} />
                       }
                     </div>
                     <div className="flex-1">
                       <p className="text-[13px] font-medium text-[#eee]">
                         {log.oldRank.name} → {log.newRank.name}
                       </p>
-                      <p className="text-[11.5px] text-[#999] mt-0.5">{formatDate(log.createdAt)} · {log.performedBy?.displayName ?? 'Gelöscht'}</p>
-                      {log.note && <p className="text-[11.5px] text-[#666] mt-0.5">{log.note}</p>}
+                      <p className="text-[11.5px] text-[#909090] mt-0.5">{formatDate(log.createdAt)} · {log.performedBy?.displayName ?? 'Gelöscht'}</p>
+                      {log.note && <p className="text-[11.5px] text-[#8c8c8c] mt-0.5">{log.note}</p>}
                     </div>
                   </div>
                 ))}
@@ -1332,7 +1337,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 {canEditAgent ? (
                   <FlagPicker value={agent.flag ?? null} onChange={handleFlagChange} />
                 ) : (
-                  <p className="text-[12.5px] text-[#808080]">Keine Bearbeitungsrechte</p>
+                  <p className="text-[12.5px] text-[#8c8c8c]">Keine Bearbeitungsrechte</p>
                 )}
               </div>
               <div className="silver-line my-3" />
@@ -1340,31 +1345,31 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <div className="space-y-1.5">
                 {canRankChange && agent.status !== 'TERMINATED' && higherRanks.length > 0 && (
                   <button onClick={() => { setNewRankId(''); setNewBadgeNumber(''); setRankChangeNote(''); setPromoteModal(true) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#999] hover:bg-[#212121] transition-colors text-left">
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#909090] hover:bg-[#212121] transition-colors text-left">
                     <TrendingUp size={15} strokeWidth={1.75} /> Befördern
                   </button>
                 )}
                 {canRankChange && agent.status !== 'TERMINATED' && openRankChangeLists.length > 0 && (
                   <button onClick={() => openAddToListModal('PROMOTION')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#999] hover:bg-[#212121] transition-colors text-left">
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#909090] hover:bg-[#212121] transition-colors text-left">
                     <ListPlus size={15} strokeWidth={1.75} /> Zur Up-Rank-Liste
                   </button>
                 )}
                 {canRankChange && agent.status !== 'TERMINATED' && lowerRanks.length > 0 && (
                   <button onClick={() => { setNewRankId(''); setNewBadgeNumber(''); setRankChangeNote(''); setDemoteModal(true) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#999] hover:bg-[#212121] transition-colors text-left">
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#909090] hover:bg-[#212121] transition-colors text-left">
                     <TrendingDown size={15} strokeWidth={1.75} /> Degradieren
                   </button>
                 )}
                 {canRankChange && agent.status !== 'TERMINATED' && openRankChangeLists.length > 0 && (
                   <button onClick={() => openAddToListModal('DEMOTION')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#999] hover:bg-[#212121] transition-colors text-left">
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#909090] hover:bg-[#212121] transition-colors text-left">
                     <ListPlus size={15} strokeWidth={1.75} /> Zur D-Rank-Liste
                   </button>
                 )}
                 {canManageNotes && (
                   <button onClick={() => { setNoteForm({ title: '', content: '' }); setNoteModal(true) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#999] hover:bg-[#212121] transition-colors text-left">
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#909090] hover:bg-[#212121] transition-colors text-left">
                     <StickyNote size={15} strokeWidth={1.75} /> Notiz hinzufügen
                   </button>
                 )}
@@ -1429,7 +1434,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               {canManageNotes && (
                 <button onClick={() => { setNoteForm({ title: '', content: '' }); setNoteModal(true) }}
                   className="p-1 rounded-[6px] hover:bg-[#212121] transition-colors">
-                  <Plus size={14} className="text-[#808080]" />
+                  <Plus size={14} className="text-[#8c8c8c]" />
                 </button>
               )}
             </div>
@@ -1440,13 +1445,13 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         {note.title && <p className="text-[13px] font-medium text-[#eee] mb-1">{note.title}</p>}
-                        <p className="text-[13px] text-[#999] leading-relaxed">{note.content}</p>
+                        <p className="text-[13px] text-[#909090] leading-relaxed">{note.content}</p>
                       </div>
                       {canManageNotes && (
                         <button
                           type="button"
                           onClick={() => handleDeleteNote(note.id)}
-                          className="shrink-0 rounded-[6px] p-1 text-[#808080] transition-colors hover:bg-[#1c1111] hover:text-[#f87171]"
+                          className="shrink-0 rounded-[6px] p-1 text-[#8c8c8c] transition-colors hover:bg-[#1c1111] hover:text-[#f87171]"
                           aria-label="Notiz löschen"
                           title="Notiz löschen"
                         >
@@ -1454,12 +1459,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                         </button>
                       )}
                     </div>
-                    <p className="text-[11px] text-[#808080] mt-2">{formatDate(note.createdAt)} · {note.author?.displayName ?? 'Gelöscht'}</p>
+                    <p className="text-[11px] text-[#8c8c8c] mt-2">{formatDate(note.createdAt)} · {note.author?.displayName ?? 'Gelöscht'}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-[12.5px] text-[#808080]">Keine Notizen vorhanden</p>
+              <p className="text-[12.5px] text-[#8c8c8c]">Keine Notizen vorhanden</p>
             )}
           </motion.div>
 
@@ -1468,7 +1473,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
       {/* Delete modal */}
       <Modal open={deleteModal} onClose={() => setDeleteModal(false)} title="Agent löschen">
-        <p className="text-[13px] text-[#888] mb-5">
+        <p className="text-[13px] text-[#a6a6a6] mb-5">
           Soll <strong className="text-[#eee]">{agent.firstName} {agent.lastName}</strong> unwiderruflich gelöscht werden?
         </p>
         <div className="flex justify-end gap-2">
@@ -1480,7 +1485,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       {/* Terminate modal */}
       <Modal open={terminateModal} onClose={() => setTerminateModal(false)} title="Agent kündigen">
         <div className="space-y-4">
-          <p className="text-[13px] text-[#888]">
+          <p className="text-[13px] text-[#a6a6a6]">
             <strong className="text-[#eee]">{agent.firstName} {agent.lastName}</strong> wird gekündigt.
           </p>
           <Textarea label="Kündigungsgrund" value={terminateReason} onChange={(e) => setTerminateReason(e.target.value)} rows={3} required placeholder="Grund..." />
@@ -1511,7 +1516,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           <div className="rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5">
             <p className="text-[12.5px] font-medium text-[#aeaeae]">{selectedGradeRule.severity}</p>
             <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">{selectedGradeRule.description}</p>
-            <p className="mt-1.5 text-[12px] text-[#808080]">
+            <p className="mt-1.5 text-[12px] text-[#8c8c8c]">
               Typische Folge: {selectedGradeRule.typicalConsequence}
             </p>
           </div>
@@ -1633,7 +1638,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/60 px-3.5 py-3">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#808080]">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#8c8c8c]">
               Entscheidungs-Check
             </p>
             <div className="space-y-1.5">
@@ -1650,7 +1655,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               ))}
             </div>
             {!sanctionChecklistComplete && (
-              <p className="mt-2.5 text-[11.5px] text-[#808080]">
+              <p className="mt-2.5 text-[11.5px] text-[#8c8c8c]">
                 Alle Punkte müssen bestätigt sein, bevor die Sanktion ausgesprochen werden kann.
               </p>
             )}
@@ -1681,7 +1686,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       <Modal open={promoteModal} onClose={() => setPromoteModal(false)} title="Beförderung">
         <div className="space-y-4">
           <div className="px-3 py-2.5 bg-[#212121] rounded-[8px]">
-            <p className="text-[13px] text-[#888]">Aktuell: <strong className="text-[#eee]">{agent.rank?.name}</strong></p>
+            <p className="text-[13px] text-[#a6a6a6]">Aktuell: <strong className="text-[#eee]">{agent.rank?.name}</strong></p>
           </div>
           <Select label="Neuer Rang (höher)" value={newRankId} onChange={(e) => setNewRankId(e.target.value)}
             options={higherRanks.map(r => ({ value: r.id, label: r.name }))} placeholder="Rang wählen..." />
@@ -1698,7 +1703,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       <Modal open={demoteModal} onClose={() => setDemoteModal(false)} title="Degradierung">
         <div className="space-y-4">
           <div className="px-3 py-2.5 bg-[#212121] rounded-[8px]">
-            <p className="text-[13px] text-[#888]">Aktuell: <strong className="text-[#eee]">{agent.rank?.name}</strong></p>
+            <p className="text-[13px] text-[#a6a6a6]">Aktuell: <strong className="text-[#eee]">{agent.rank?.name}</strong></p>
           </div>
           <Select label="Neuer Rang (niedriger)" value={newRankId} onChange={(e) => setNewRankId(e.target.value)}
             options={lowerRanks.map(r => ({ value: r.id, label: r.name }))} placeholder="Rang wählen..." />
@@ -1731,9 +1736,9 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       >
         <div className="space-y-4">
           <div className="px-3 py-2.5 bg-[#212121] rounded-[8px]">
-            <p className="text-[13px] text-[#888]">
+            <p className="text-[13px] text-[#a6a6a6]">
               Agent: <strong className="text-[#eee]">{agent.firstName} {agent.lastName}</strong>
-              <span className="ml-2 text-[#999]">· Aktuell: {agent.rank?.name}</span>
+              <span className="ml-2 text-[#909090]">· Aktuell: {agent.rank?.name}</span>
             </p>
           </div>
           <Select
@@ -1776,7 +1781,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
       <Modal open={leaveModal} onClose={() => setLeaveModal(false)} title="Agent beurlauben">
         <div className="space-y-4">
-          <p className="text-[13px] text-[#888]">
+          <p className="text-[13px] text-[#a6a6a6]">
             <strong className="text-[#eee]">{agent.firstName} {agent.lastName}</strong> wird bis auf Weiteres beurlaubt.
             Die Beurlaubung gilt wie eine Abmeldung, setzt ein [X] vor den Namen und vergibt die Beurlaubungs-Rolle.
           </p>
@@ -1800,7 +1805,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
       <Modal open={absenceModal} onClose={() => setAbsenceModal(false)} title="Abmeldung eintragen">
         <div className="space-y-4">
-          <p className="text-[13px] text-[#888]">
+          <p className="text-[13px] text-[#a6a6a6]">
             Abmeldung für <strong className="text-[#eee]">{agent.firstName} {agent.lastName}</strong>.
           </p>
           <DateField
@@ -2052,7 +2057,7 @@ function ContractSection({
 function InfoRow({ label, value, mono, children }: { label: string; value?: string; mono?: boolean; children?: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11.5px] text-[#999] mb-1">{label}</p>
+      <p className="text-[11.5px] text-[#909090] mb-1">{label}</p>
       {children || <p className={cn('text-[13.5px] text-[#eee]', mono && 'font-mono')}>{value || '—'}</p>}
     </div>
   )
@@ -2063,7 +2068,7 @@ function DutyMetric({ label, value, active }: { label: string; value: string; ac
     <div className="rounded-[9px] border border-[#373737]/50 bg-[#1c1c1c]/65 px-3.5 py-3">
       <div className="flex items-center gap-2">
         <Timer size={13} className={active ? 'text-[#22c55e]' : 'text-[#d4d4d4]'} strokeWidth={1.75} />
-        <p className="text-[11px] font-medium uppercase text-[#808080]">{label}</p>
+        <p className="text-[11px] font-medium uppercase text-[#8c8c8c]">{label}</p>
       </div>
       <p className={cn('mt-2 text-[13px] font-semibold tabular-nums', active ? 'text-[#86efac]' : 'text-[#f4f4f4]')}>{value}</p>
     </div>
@@ -2090,8 +2095,8 @@ function PlaytimeChart({
               />
             </div>
             <div className="text-center">
-              <p className="text-[10.5px] font-medium text-[#a6a6a6]">{day.label}</p>
-              <p className="text-[10px] tabular-nums text-[#d4d4d4]">{day.durationLabel}</p>
+              <p className="text-[11px] font-medium text-[#a6a6a6]">{day.label}</p>
+              <p className="text-[11px] tabular-nums text-[#d4d4d4]">{day.durationLabel}</p>
             </div>
           </div>
         )

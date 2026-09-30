@@ -116,7 +116,7 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <p className="text-center text-[10.5px] text-[#808080] mt-8 tracking-[0.06em] uppercase font-medium">
+        <p className="text-center text-[11px] text-[#8c8c8c] mt-8 tracking-[0.06em] uppercase font-medium">
           Federal Investigation Bureau
         </p>
       </motion.div>

@@ -20,17 +20,20 @@ import { ClipCard, ClipPlayer } from '@/components/investigations/clip-player'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
 import type { BodycamClip } from '@/components/investigations/types'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUrlState } from '@/hooks/use-url-state'
 
 export function BodycamCatalog() {
   const { user } = useAuth()
   const { toastSuccess, toastError } = useInvestigationToast()
+  const confirm = useConfirm()
   const { execute } = useApi()
 
   const { data: access, loading: checkingAccess } = useFetch<{ allowed: boolean; full: boolean }>('/api/investigations/clips/access')
   const canView = access?.allowed === true
   const canManage = hasPermission(user, 'investigations:manage')
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [agentId, setAgentId] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -65,7 +68,7 @@ export function BodycamCatalog() {
   if (!canView) return <UnauthorizedContent />
 
   const handleDelete = async (clip: BodycamClip) => {
-    if (!window.confirm(`Clip "${clip.title}" endgültig löschen? Die Videodatei wird dabei entfernt.`)) return
+    if (!(await confirm({ title: `Clip „${clip.title}“ endgültig löschen?`, description: 'Die Videodatei wird dabei vom Server entfernt.', tone: 'danger' }))) return
 
     try {
       await execute(`/api/investigations/clips/${clip.id}`, { method: 'DELETE' })

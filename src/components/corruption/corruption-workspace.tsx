@@ -21,6 +21,8 @@ import { useAuth } from '@/context/auth-context'
 import { formatDateTime, cn } from '@/lib/utils'
 import { officialNumber } from '@/lib/corruption-validation'
 import { ReportDetail, MergeOfficial, EditOfficial, OfficialHistory } from './report-tools'
+import { useUrlState } from '@/hooks/use-url-state'
+import { matchesAgent } from '@/lib/search-match'
 
 export type Agent = { id: string; firstName: string; lastName: string; badgeNumber: string; status: string }
 export type OfficialSnapshot = { firstName: string; lastName: string; agency: string; badgeNumber: string | null }
@@ -49,7 +51,7 @@ function dateBoundary(value: string, nextDay = false) {
 }
 
 function Pagination({ page, total, loading, onChange }: { page: number; total: number; loading: boolean; onChange: (page: number) => void }) {
-  if (total <= 25) return total > 0 ? <p className="mt-3 text-xs text-[#808080]">{total} Einträge</p> : null
+  if (total <= 25) return total > 0 ? <p className="mt-3 text-xs text-[#8c8c8c]">{total} Einträge</p> : null
   return <div className="mt-4 flex items-center justify-between gap-2 text-xs text-[#909090]">
     <span>{total} Einträge · Seite {page} von {Math.max(1, Math.ceil(total / 25))}</span>
     <div className="flex gap-2"><Button type="button" variant="outline" size="sm" disabled={loading || page <= 1} onClick={() => onChange(page - 1)}>Zurück</Button><Button type="button" variant="outline" size="sm" disabled={loading || page * 25 >= total} onClick={() => onChange(page + 1)}>Weiter</Button></div>
@@ -70,7 +72,7 @@ export function CorruptionWorkspace() {
 
 function Workspace({ officialId, initialTab }: { officialId: string | null; initialTab: 'officials' | 'archive' }) {
   const { user } = useAuth()
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [agency, setAgency] = useState('')
   const [result, setResult] = useState('')
   const [agentId, setAgentId] = useState('')
@@ -164,12 +166,12 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
                 <span className="text-[12.5px] text-[#a6a6a6]">{formatDateTime(check.conductedAt)}</span>
                 <span className="min-w-0">
                   <span className="block truncate text-[13.5px] font-medium text-white">{check.official.firstName} {check.official.lastName}</span>
-                  <span className="block truncate text-[12px] text-[#808080]">{officialNumber(check.official.id)} · {check.official.agency}{check.location ? ` · ${check.location}` : ''}</span>
+                  <span className="block truncate text-[12px] text-[#8c8c8c]">{officialNumber(check.official.id)} · {check.official.agency}{check.location ? ` · ${check.location}` : ''}</span>
                   {check.result === 'FINDINGS' && check.findings && <span className="mt-1 line-clamp-1 block text-[12px] text-amber-100/80">{check.findings}</span>}
                 </span>
                 <span><ResultBadge result={check.result} /></span>
                 <span className="truncate text-[12.5px] text-[#a6a6a6]">{check.agents.map(agent => agent.name).join(', ')}</span>
-                <ChevronRight size={16} className="hidden text-[#6f6f6f] md:block" aria-hidden />
+                <ChevronRight size={16} className="hidden text-[#8c8c8c] md:block" aria-hidden />
               </button>
             </li>)}
           </ul>
@@ -184,14 +186,14 @@ function Workspace({ officialId, initialTab }: { officialId: string | null; init
               <span className="w-[92px] shrink-0 font-mono text-[12px] text-[#909090]">{officialNumber(person.id)}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13.5px] font-medium text-white">{person.firstName} {person.lastName}</span>
-                <span className="block truncate text-[12px] text-[#808080]">{person.agency}{person.badgeNumber ? ` · DN ${person.badgeNumber}` : ''}</span>
+                <span className="block truncate text-[12px] text-[#8c8c8c]">{person.agency}{person.badgeNumber ? ` · DN ${person.badgeNumber}` : ''}</span>
               </span>
               <span className="hidden text-right text-[12px] text-[#909090] sm:block">
                 {person._count?.checks ?? 0} Kontrollen
                 {person.checks?.[0] && <span className="block">zuletzt {formatDateTime(person.checks[0].conductedAt)}</span>}
               </span>
               {person.checks?.[0] && <ResultBadge result={person.checks[0].result} />}
-              <ChevronRight size={16} className="shrink-0 text-[#6f6f6f]" aria-hidden />
+              <ChevronRight size={16} className="shrink-0 text-[#8c8c8c]" aria-hidden />
             </Link>
           </li>)}
         </ul>
@@ -257,7 +259,7 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
   const lookupSearch = mode === 'new' ? `${firstName} ${lastName}`.trim() : search
   const matches = useFetch<List<Official>>(!person || mode === 'new' ? `/api/corruption-checks/officials?search=${encodeURIComponent(lookupSearch)}&page=1` : null)
   const chosenAgents = agentIds.map(id => agents.find(agent => agent.id === id)).filter((agent): agent is Agent => !!agent)
-  const agentMatches = agents.filter(agent => !agentIds.includes(agent.id) && agent.status !== 'TERMINATED' && agentLabel(agent).toLowerCase().includes(agentSearch.trim().toLowerCase())).slice(0, 40)
+  const agentMatches = agents.filter(agent => !agentIds.includes(agent.id) && agent.status !== 'TERMINATED' && matchesAgent(agentSearch, agent)).slice(0, 40)
   const officialSummary = mode === 'existing' ? (person ? `${person.firstName} ${person.lastName} · ${person.agency}` : '—') : `${firstName} ${lastName} · ${agency} (neu)`
 
   const submit = async () => {
@@ -290,7 +292,7 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
             {matches.loading && !matches.data && <p className="p-3 text-[12.5px] text-[#909090]">Suche läuft …</p>}
             {(matches.data?.items ?? []).map(item => <button type="button" key={item.id} onClick={() => setPerson(item)} className="flex w-full items-center gap-3 border-b border-[#262626] px-3 py-2.5 text-left last:border-0 hover:bg-[#232323]">
               <span className="w-[88px] shrink-0 font-mono text-[11.5px] text-[#909090]">{officialNumber(item.id)}</span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-[13px] text-white">{item.firstName} {item.lastName}</span><span className="block truncate text-[12px] text-[#808080]">{item.agency} · {item._count?.checks ?? 0} Kontrollen</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-[13px] text-white">{item.firstName} {item.lastName}</span><span className="block truncate text-[12px] text-[#8c8c8c]">{item.agency} · {item._count?.checks ?? 0} Kontrollen</span></span>
             </button>)}
             {matches.data && !matches.data.items.length && <p className="p-3 text-[12.5px] text-[#909090]">Kein Treffer.</p>}
           </div>
@@ -343,7 +345,7 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
           <p>Agents: {chosenAgents.map(agent => `${agent.firstName} ${agent.lastName}`).join(', ') || '—'}</p>
           <p>Ergebnis: {result === 'FINDINGS' ? 'Mit Befund' : 'Ohne Befund'}</p>
         </div>
-        <p className="text-xs text-[#808080]">Beweise (Fotos, PDFs, Bodycams) hängst du nach dem Speichern im Bericht an.</p>
+        <p className="text-xs text-[#8c8c8c]">Beweise (Fotos, PDFs, Bodycams) hängst du nach dem Speichern im Bericht an.</p>
       </div>,
     },
   ]

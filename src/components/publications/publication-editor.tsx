@@ -25,6 +25,7 @@ import {
   type PublicationTable,
 } from '@/lib/publications'
 import { cn } from '@/lib/utils'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 export interface PublicationRecord {
   id: string
@@ -82,7 +83,7 @@ function TableEditor({ table, onChange }: { table: PublicationTable; onChange: (
                       className="h-8 w-full rounded-[6px] bg-transparent px-2 font-medium text-white outline-none focus:bg-[#262626]"
                     />
                     {table.columns.length > 1 && (
-                      <button type="button" onClick={() => removeColumn(index)} aria-label={`Spalte ${column || index + 1} entfernen`} className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] text-[#808080] hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><X size={13} /></button>
+                      <button type="button" onClick={() => removeColumn(index)} aria-label={`Spalte ${column || index + 1} entfernen`} className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] text-[#8c8c8c] hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><X size={13} /></button>
                     )}
                   </div>
                 </th>
@@ -104,7 +105,7 @@ function TableEditor({ table, onChange }: { table: PublicationTable; onChange: (
                   </td>
                 ))}
                 <td className="p-1">
-                  <button type="button" onClick={() => removeRow(rowIndex)} aria-label={`Zeile ${rowIndex + 1} entfernen`} className="grid h-7 w-7 place-items-center rounded-[6px] text-[#808080] hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><Trash2 size={13} /></button>
+                  <button type="button" onClick={() => removeRow(rowIndex)} aria-label={`Zeile ${rowIndex + 1} entfernen`} className="grid h-7 w-7 place-items-center rounded-[6px] text-[#8c8c8c] hover:bg-[#2c2c2c] hover:text-[#ff6b6b]"><Trash2 size={13} /></button>
                 </td>
               </tr>
             ))}
@@ -191,6 +192,9 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
   const [preview, setPreview] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const previewHtml = useMemo(() => (preview ? renderMarkdown(content) : ''), [preview, content])
+  const snapshot = JSON.stringify({ kind, title, summary, content, table, listed, slug, access, roleIds, pinned })
+  const [savedSnapshot, setSavedSnapshot] = useState(snapshot)
+  useUnsavedChanges(snapshot !== savedSnapshot)
 
   const save = async (nextStatus = status) => {
     try {
@@ -199,6 +203,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
         body: JSON.stringify({ kind, title, summary, content, table: kind === 'TABLE' ? table : null, status: nextStatus, slug: slug.trim(), access, roleIds, listed, pinned }),
       })
       setStatus(nextStatus)
+      setSavedSnapshot(snapshot)
       addToast({ type: 'success', title: nextStatus === 'PUBLISHED' ? 'Veröffentlicht' : 'Gespeichert' })
       if (!existing && saved) router.replace(`/publications/${saved.id}`)
       else router.refresh()
@@ -282,7 +287,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
           {preview
             ? <article className="markdown-document min-h-[200px] rounded-[10px] border border-[#343434] p-4" dangerouslySetInnerHTML={{ __html: previewHtml || '<p>Noch kein Text.</p>' }} />
             : <Textarea value={content} onChange={(event) => setContent(event.target.value)} rows={kind === 'TABLE' ? 5 : 16} maxLength={100_000} placeholder={'# Überschrift\n\nText des Schreibens. **Fett**, Listen mit - und Links sind möglich.'} />}
-          <p className="mt-2 text-[11.5px] text-[#6f6f6f]">Formatierung wie bei den Ordnungen: # Überschrift, **fett**, - Aufzählung.</p>
+          <p className="mt-2 text-[11.5px] text-[#8c8c8c]">Formatierung wie bei den Ordnungen: # Überschrift, **fett**, - Aufzählung.</p>
         </div>
 
         <div className="glass-panel-elevated space-y-4 rounded-[14px] p-5">
@@ -317,7 +322,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
               placeholder="z. B. dienstplan-oktober"
               error={slugInvalid ? '3–80 Zeichen, nur a–z, 0–9 und Bindestriche, nicht mit Bindestrich beginnen oder enden' : undefined}
             />
-            <p className="mt-1.5 text-[11.5px] text-[#808080]">
+            <p className="mt-1.5 text-[11.5px] text-[#8c8c8c]">
               Link: <code className="text-[#d4d4d4]">/aushang/{slug.trim() || (existing ? existing.slug : 'wird-automatisch-erzeugt')}</code>
               {existing && slug.trim() && slug.trim() !== existing.slug && ' · Achtung: Der bisherige Link funktioniert nach dem Speichern nicht mehr.'}
             </p>
@@ -328,7 +333,7 @@ export function PublicationEditor({ existing }: { existing?: PublicationRecord }
           <Select label="Status" value={status} onValueChange={(value) => setStatus(value as PublicationStatus)} options={Object.entries(PUBLICATION_STATUS).map(([value, label]) => ({ value, label }))} />
           <div className="pt-6"><Checkbox checked={listed} onCheckedChange={setListed} label="Auf dem Schwarzen Brett anzeigen" /></div>
           <div className="pt-6"><Checkbox checked={pinned} onCheckedChange={setPinned} label="Oben anheften" /></div>
-          <p className="text-[11.5px] leading-5 text-[#808080] sm:col-span-3">Ohne „Auf dem Schwarzen Brett anzeigen“ ist ein veröffentlichter Aushang nur über seinen Link erreichbar. Geschlossene Aushänge erscheinen auf dem Brett nur für Berechtigte. Entwürfe und Archiviertes sind öffentlich nie sichtbar.</p>
+          <p className="text-[11.5px] leading-5 text-[#8c8c8c] sm:col-span-3">Ohne „Auf dem Schwarzen Brett anzeigen“ ist ein veröffentlichter Aushang nur über seinen Link erreichbar. Geschlossene Aushänge erscheinen auf dem Brett nur für Berechtigte. Entwürfe und Archiviertes sind öffentlich nie sichtbar.</p>
         </div>
 
         {existing && (

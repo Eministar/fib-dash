@@ -167,7 +167,7 @@ export default function ApplicationPortalPage() {
           {!user ? (
             <section className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] lg:items-center">
               <div className="min-w-0">
-                <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">Bewerbung</p>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">Bewerbung</p>
                 <h1 className="max-w-2xl text-[28px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[34px]">
                   Melde dich mit Discord an und reiche deine Bewerbung ein.
                 </h1>
@@ -241,7 +241,7 @@ function ApplicationOpenView({
   return (
     <section className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5 lg:grid-cols-[1fr_340px] lg:items-center">
       <div>
-        <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">{formTitle}</p>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">{formTitle}</p>
         <h1 className="max-w-2xl text-[27px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[32px]">
           Bewerbung öffnen für {user.displayName}
         </h1>
@@ -313,7 +313,7 @@ function ApplicationStatusView({ application, user }: { application: PortalAppli
               <p className="mt-2 text-[14px] leading-6 text-[#e5e5e5]">{application.statusText}</p>
               {application.caseNumber && (
                 <div className="mt-4 rounded-[12px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/10 px-4 py-3">
-                  <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#d4d4d4]/80">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d4d4d4]/80">
                     Dein Aktenzeichen
                   </p>
                   <p className="mt-1 font-mono text-[20px] font-semibold tracking-wide text-[#d4d4d4]">
@@ -341,7 +341,7 @@ function ApplicationStatusView({ application, user }: { application: PortalAppli
           {application.answers.map((answer, index) => (
             <div key={answer.id} className="rounded-[12px] border border-[#343434]/50 bg-[#181818]/55 p-3">
               <div className="mb-1.5 flex items-start gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[10px] font-semibold text-[#d4d4d4]">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
                   {index + 1}
                 </span>
                 <p className="text-[12.5px] font-semibold text-white">{answer.questionTitle}</p>
@@ -378,7 +378,7 @@ function ApplicationForm({
     <section className="mx-auto w-full max-w-3xl">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">{formTitle}</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d4d4d4]/80">{formTitle}</p>
           <h1 className="text-[22px] font-semibold text-white">Fragen beantworten</h1>
           <p className="mt-1 text-[13px] leading-5 text-[#a6a6a6]">Fülle alle Pflichtfragen aus und sende deine Bewerbung ab.</p>
         </div>
@@ -463,7 +463,7 @@ function QuestionInput({ question, value, onChange }: { question: ApplicationQue
         onChange={(event) => onChange(event.target.value)}
         disabled={readOnly}
         className={cn(
-          'h-[38px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]',
+          'h-[38px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]',
           readOnly && 'cursor-not-allowed border-[#343434]/45 bg-[#181818]/70 text-[#a6a6a6]',
         )}
         placeholder={readOnly ? 'Wird automatisch ermittelt' : 'Antwort eingeben'}
@@ -477,7 +477,7 @@ function QuestionInput({ question, value, onChange }: { question: ApplicationQue
         value={typeof value === 'string' ? value : ''}
         onChange={(event) => onChange(event.target.value)}
         rows={5}
-        className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]"
+        className="w-full resize-none rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3 py-2.5 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
         placeholder="Antwort eingeben"
       />
     )

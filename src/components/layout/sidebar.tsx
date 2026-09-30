@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { usePersistentBoolean } from '@/hooks/use-persistent-boolean'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Tooltip } from '@/components/ui/tooltip'
 import { useAuth } from '@/context/auth-context'
 import { hasAnyPermission, hasPermission, type Permission } from '@/lib/permissions'
 import Image from 'next/image'
@@ -21,7 +22,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { unitIconComponent } from '@/components/units/unit-icon'
 import type { NavigationUnit } from '@/lib/unit-navigation'
 
-interface NavItem {
+export interface NavItem {
   name: string
   href: string
   icon: LucideIcon
@@ -34,9 +35,11 @@ interface NavContentProps {
   onNavigate: () => void
   user: { displayName: string; avatarUrl?: string | null; permissions?: string[] | null; groups?: { id: string; name: string }[] } | null
   logout: () => Promise<void>
+  /** Schmale Icon-Leiste: Beschriftungen nur als Tooltip. */
+  compact?: boolean
 }
 
-const mainNav: NavItem[] = [
+export const mainNav: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
   { name: 'Ordnungen', href: '/ordnungen', icon: FileText },
   { name: 'Aushänge', href: '/publications', icon: Megaphone, permission: 'publications:manage' },
@@ -55,7 +58,7 @@ const mainNav: NavItem[] = [
   { name: 'Uploads', href: '/uploads', icon: FolderUp, permission: 'uploads:view' },
 ]
 
-const adminNav: NavItem[] = [
+export const adminNav: NavItem[] = [
   { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
   { name: 'Ränge', href: '/admin/ranks', icon: Shield, permission: 'ranks:manage' },
   { name: 'Ausbildungen', href: '/admin/trainings', icon: GraduationCap, permission: 'trainings:manage' },
@@ -67,7 +70,7 @@ const adminNav: NavItem[] = [
   { name: 'Einstellungen', href: '/admin/settings', icon: Settings, permission: 'settings:manage' },
 ]
 
-const accountNav: NavItem[] = [
+export const accountNav: NavItem[] = [
   { name: 'Mein Konto', href: '/account', icon: KeyRound },
   { name: 'Build-Historie', href: '/releases', icon: History },
 ]
@@ -77,37 +80,43 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-function SavedSection({ name, children }: { name: string; children: ReactNode }) {
+function SavedSection({ name, compact, children }: { name: string; compact?: boolean; children: ReactNode }) {
   const { user } = useAuth()
   const [open, setOpen] = usePersistentBoolean(`fib:nav:${user?.id ?? 'guest'}:${name}`, true)
-  return <section>
+  // In der Icon-Leiste gibt es nichts aufzuklappen – dort trennt nur eine Linie die Gruppen.
+  if (compact) {
+    return <section aria-label={name} className="mt-2 space-y-[2px] border-t border-[#2c2c2c] pt-2 first:mt-0 first:border-t-0 first:pt-0">
+      {children}
+    </section>
+  }
+  return <section className="mt-3 first:mt-0">
     <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
-      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium text-[#a6a6a6] hover:text-white focus-visible:outline focus-visible:outline-2">
-      {name}<ChevronDown size={13} className={open ? '' : '-rotate-90'} />
+      className="flex w-full items-center justify-between rounded-lg px-3 pb-1.5 pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-subtle transition-colors hover:text-accent">
+      {name}
+      <ChevronDown size={13} className={cn('transition-transform duration-200 motion-reduce:transition-none', !open && '-rotate-90')} />
     </button>
-    {open && <div>{children}</div>}
+    {open && <div className="space-y-[2px]">{children}</div>}
   </section>
 }
 
-function SectionDivider() {
-  return <div className="my-3 mx-3 h-px bg-[#343434]" />
-}
-
-function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: string; onNavigate: () => void }) {
+function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem; pathname: string; onNavigate: () => void; compact?: boolean; badge?: number }) {
   const active = isActivePath(pathname, item.href)
   const Icon = item.icon
+  const badgeLabel = badge ? (badge > 99 ? '99+' : String(badge)) : null
 
-  return (
+  const link = (
     <Link
       href={item.href}
       prefetch={false}
       aria-current={active ? 'page' : undefined}
+      aria-label={compact ? `${item.name}${badgeLabel ? ` (${badgeLabel} offen)` : ''}` : undefined}
       onClick={onNavigate}
       className={cn(
-        'group relative flex items-center gap-3 px-3 py-[9px] rounded-lg text-[13.5px] transition-colors duration-150 focus-visible:outline focus-visible:outline-2',
+        'group relative flex items-center rounded-lg text-[13.5px] transition-colors duration-150',
+        compact ? 'mx-auto h-9 w-9 justify-center' : 'gap-3 px-3 py-[9px]',
         active
-          ? 'bg-[#303030] text-white font-semibold'
-          : 'text-[#a6a6a6] hover:bg-[#212121] hover:text-[#f4f4f4]'
+          ? 'bg-[#303030] text-white font-semibold shadow-[inset_0_1px_0_rgba(212,212,212,0.06)]'
+          : 'text-fg-muted hover:bg-[#212121] hover:text-fg'
       )}
     >
       <Icon
@@ -116,18 +125,26 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
         style={!active && item.color ? { color: item.color } : undefined}
         className="shrink-0"
       />
-      <span className="truncate">{item.name}</span>
-      {active && (
-        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#181818]/40" />
-      )}
+      {!compact && <span className="truncate">{item.name}</span>}
+      {badgeLabel && (compact ? (
+        <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-accent ring-2 ring-surface-sunken" aria-hidden />
+      ) : (
+        <span className="ml-auto rounded-full bg-accent/15 px-1.5 py-px font-mono text-[11px] font-semibold tabular-nums text-[#e4e4e4]">
+          {badgeLabel}
+          <span className="sr-only"> offen</span>
+        </span>
+      ))}
     </Link>
   )
+  if (!compact) return link
+  return <Tooltip side="right" content={badgeLabel ? `${item.name} · ${badgeLabel} offen` : item.name}>{link}</Tooltip>
 }
 
-function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
+function NavContent({ pathname, onNavigate, user, logout, compact = false }: NavContentProps) {
   const { data: leadershipAccess } = useFetch<{ allowed: boolean }>(user ? '/api/leadership/groups/access' : null, 120_000)
   const { data: bodycamAccess } = useFetch<{ allowed: boolean }>(user && !hasPermission(user, 'investigations:view') ? '/api/investigations/clips/access' : null, 120_000)
   const { data: navigationUnits } = useFetch<NavigationUnit[]>(user ? '/api/navigation/units' : null, 120_000)
+  const { data: navBadges } = useFetch<Record<string, number>>(user ? '/api/navigation/badges' : null, 60_000)
   const unitNav: NavItem[] = (navigationUnits ?? []).map((unit) => ({
     name: unit.name,
     href: unit.href,
@@ -147,23 +164,29 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {compact ? (
+        <div className="flex shrink-0 justify-center py-3">
+          <Image src="/shield.webp" alt="FIB" width={28} height={28} className="rounded-full" />
+        </div>
+      ) : (
       <div className="px-4 pt-5 pb-4">
         <div className="flex items-center gap-3">
-          <div className="relative h-[52px] w-[52px] rounded-[13px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-[#d4d4d4]/30 flex items-center justify-center overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(212,212,212,0.08)]">
+          <div className="relative h-[52px] w-[52px] rounded-[13px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-accent/30 flex items-center justify-center overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(212,212,212,0.08)]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,212,212,0.12),transparent_70%)]" />
             <Image src="/shield.webp" alt="FIB" width={46} height={46} className="rounded-full relative" priority />
           </div>
           <div className="min-w-0">
             <span className="block text-[15px] font-semibold text-white leading-tight tracking-[-0.01em]">FIB</span>
-            <span className="block text-[10.5px] font-semibold text-[#d4d4d4]/80 tracking-[0.14em] uppercase mt-0.5">Department</span>
+            <span className="block text-[11px] font-semibold text-accent/80 tracking-[0.14em] uppercase mt-0.5">Department</span>
           </div>
         </div>
-        <div className="relative mt-4 h-px bg-gradient-to-r from-transparent via-[#d4d4d4]/25 to-transparent">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-[#d4d4d4] shadow-[0_0_6px_rgba(212,212,212,0.6)]" />
+        <div className="relative mt-4 h-px bg-gradient-to-r from-transparent via-accent/25 to-transparent">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(212,212,212,0.6)]" />
         </div>
       </div>
+      )}
 
-      <nav className="flex-1 space-y-[2px] overflow-y-auto px-2.5 lg:pb-12">
+      <nav aria-label="Hauptnavigation" className={cn('flex-1 overflow-y-auto pb-4', compact ? 'px-1.5' : 'px-2.5')}>
         {[
           { label: 'Arbeitsplatz', paths: ['/dashboard', '/duty-times', '/notes'] },
           { label: 'Personal', paths: ['/agents', '/codenames', '/promotions', '/terminations', '/vertraege'] },
@@ -171,70 +194,94 @@ function NavContent({ pathname, onNavigate, user, logout }: NavContentProps) {
           { label: 'Unterlagen', paths: ['/ordnungen', '/publications', '/uploads'] },
         ].map(group => {
           const items = mainNav.filter(item => group.paths.includes(item.href) && (!item.permission || hasPermission(user, item.permission)))
-          return items.length > 0 && <SavedSection key={group.label} name={group.label}>
-            {items.map(item => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+          return items.length > 0 && <SavedSection key={group.label} name={group.label} compact={compact}>
+            {items.map(item => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} badge={navBadges?.[item.href]} />)}
           </SavedSection>
         })}
-          {!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed && <NavLink item={{ name: 'Bodycams', href: '/investigations/clips', icon: FolderSearch }} pathname={pathname} onNavigate={onNavigate} />}
+        {!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed && <NavLink item={{ name: 'Bodycams', href: '/investigations/clips', icon: FolderSearch }} pathname={pathname} onNavigate={onNavigate} compact={compact} />}
 
         {unitNav.length > 0 && (
-          <>
-            <SectionDivider />
-            <SavedSection name="Units">
-            {unitNav.map((item) => <NavLink key={`${item.href}:${item.name}`} item={item} pathname={pathname} onNavigate={onNavigate} />)}
-            </SavedSection>
-          </>
+          <SavedSection name="Units" compact={compact}>
+            {unitNav.map((item) => <NavLink key={`${item.href}:${item.name}`} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} />)}
+          </SavedSection>
         )}
 
-        {leadershipAccess?.allowed && <>
-          <SectionDivider />
-          <SavedSection name="Leadership">
-          <NavLink item={{ name: 'Ermittlungsgruppen', href: '/leadership/groups', icon: Users }} pathname={pathname} onNavigate={onNavigate} />
+        {leadershipAccess?.allowed && (
+          <SavedSection name="Leadership" compact={compact}>
+            <NavLink item={{ name: 'Ermittlungsgruppen', href: '/leadership/groups', icon: Users }} pathname={pathname} onNavigate={onNavigate} compact={compact} />
           </SavedSection>
-        </>}
+        )}
 
         {showAdmin && (
-          <SavedSection name="Administration">
+          <SavedSection name="Administration" compact={compact}>
             {adminNav
               .filter((item) => !item.permission || hasPermission(user, item.permission))
-              .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+              .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} />)}
           </SavedSection>
         )}
 
-        <SectionDivider />
-        <SavedSection name="Konto">
-        {accountNav.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+        <SavedSection name="Konto" compact={compact}>
+          {accountNav.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} />)}
         </SavedSection>
       </nav>
 
-      <div className="px-2.5 pb-2.5 shrink-0">
-        {user && (
-          <div className="group/user relative flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#1c1c1c]/50 border border-white/[0.04] hover:border-[#d4d4d4]/20 transition-colors">
+      <div className={cn('shrink-0 border-t border-[#2c2c2c] pt-2.5', compact ? 'px-1.5 pb-2' : 'px-2.5 pb-2.5')}>
+        {user && compact && (
+          <div className="flex flex-col items-center gap-1">
             {user.avatarUrl ? (
               <span
-                className="h-7 w-7 shrink-0 rounded-full bg-cover bg-center shadow-[0_1px_3px_rgba(212,212,212,0.25)] ring-1 ring-[#d4d4d4]/25"
+                className="h-7 w-7 rounded-full bg-cover bg-center ring-1 ring-accent/25"
                 style={{ backgroundImage: `url(${user.avatarUrl})` }}
+                role="img"
                 aria-label={user.displayName}
+                title={user.displayName}
               />
             ) : (
-              <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-[#d4d4d4] to-[#989898] flex items-center justify-center text-[10px] font-bold text-[#181818] shadow-[0_1px_3px_rgba(212,212,212,0.25)]">
+              <div title={user.displayName} className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent to-[#989898] text-[11px] font-bold text-surface-sunken">
+                {user.displayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <Tooltip side="right" content="Abmelden">
+              <button
+                type="button"
+                onClick={logout}
+                aria-label="Abmelden"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-accent"
+              >
+                <LogOut size={14} strokeWidth={1.75} />
+              </button>
+            </Tooltip>
+          </div>
+        )}
+        {user && !compact && (
+          <div className="group/user relative flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#1c1c1c]/50 border border-white/[0.04] hover:border-accent/20 transition-colors">
+            {user.avatarUrl ? (
+              <span
+                className="h-7 w-7 shrink-0 rounded-full bg-cover bg-center shadow-[0_1px_3px_rgba(212,212,212,0.25)] ring-1 ring-accent/25"
+                style={{ backgroundImage: `url(${user.avatarUrl})` }}
+                aria-hidden
+              />
+            ) : (
+              <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-accent to-[#989898] flex items-center justify-center text-[11px] font-bold text-surface-sunken shadow-[0_1px_3px_rgba(212,212,212,0.25)]">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[11.5px] font-medium text-white/90 truncate leading-tight">{user.displayName}</p>
-              <p className="text-[9.5px] text-[#808080] truncate leading-tight mt-0.5">
+              <p className="text-[12px] font-medium text-white/90 truncate leading-tight">{user.displayName}</p>
+              <p className="text-[11px] text-[#909090] truncate leading-tight mt-0.5">
                 {user.groups?.[0]?.name ?? 'Mitglied'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={logout}
-              className="p-1.5 rounded-md text-[#909090] hover:text-[#d4d4d4] hover:bg-[#212121] transition-all -mr-0.5"
-              title="Abmelden"
-            >
-              <LogOut size={13} strokeWidth={1.75} />
-            </button>
+            <Tooltip content="Abmelden">
+              <button
+                type="button"
+                onClick={logout}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] hover:text-accent hover:bg-[#212121] transition-colors -mr-1"
+                aria-label="Abmelden"
+              >
+                <LogOut size={14} strokeWidth={1.75} />
+              </button>
+            </Tooltip>
           </div>
         )}
       </div>
@@ -250,13 +297,28 @@ export function Sidebar() {
 
   const closeMobile = () => setMobileOpen(false)
 
+  // Mobiles Menü: Escape schließt, der Inhalt dahinter scrollt nicht mit.
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [mobileOpen])
+
   return (
     <>
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 sidebar-gradient border-b border-[#d4d4d4]/15 backdrop-blur-md">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 sidebar-gradient border-b border-accent/15 backdrop-blur-md">
         <button
           onClick={() => setMobileOpen(true)}
-          className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-[#d4d4d4] hover:bg-[#212121] transition-colors"
+          className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-accent hover:bg-[#212121] transition-colors"
           aria-label="Menü öffnen"
         >
           <Menu size={20} />
@@ -268,14 +330,14 @@ export function Sidebar() {
         <div className="w-9" aria-hidden />
       </div>
 
-      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-[#d4d4d4]/10 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-12' : 'w-[244px]')}>
+      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-accent/10 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-14' : 'w-[244px]')}>
         <button type="button" onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed}
           aria-label={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
           title={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
-          className="flex h-11 shrink-0 items-center justify-center gap-2 border-b border-[#343434] text-[#a6a6a6] hover:bg-[#262626] hover:text-white focus-visible:outline focus-visible:outline-2">
+          className="flex h-11 shrink-0 items-center justify-center gap-2 border-b border-line text-fg-muted hover:bg-[#262626] hover:text-white focus-visible:outline focus-visible:outline-2">
           {collapsed ? <PanelLeftOpen size={18} /> : <><PanelLeftClose size={16} /><span className="text-xs">Navigation minimieren</span></>}
         </button>
-        {!collapsed && <div className="min-h-0 flex-1"><NavContent pathname={pathname} onNavigate={closeMobile} user={user} logout={logout} /></div>}
+        <div className="min-h-0 flex-1"><NavContent pathname={pathname} onNavigate={closeMobile} user={user} logout={logout} compact={collapsed} /></div>
       </aside>
 
       <AnimatePresence>
@@ -286,21 +348,25 @@ export function Sidebar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="lg:hidden fixed inset-0 bg-[#080808]/75 backdrop-blur-sm z-40"
+              aria-hidden
+              className="lg:hidden fixed inset-0 bg-canvas/75 backdrop-blur-sm z-40"
             />
             <motion.aside
-              initial={{ x: -260 }}
+              initial={{ x: '-100%' }}
               animate={{ x: 0 }}
-              exit={{ x: -260 }}
+              exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 w-[244px] sidebar-gradient border-r border-[#d4d4d4]/10 z-50 shadow-2xl"
+              className="lg:hidden fixed left-0 top-0 bottom-0 w-[264px] max-w-[85vw] sidebar-gradient border-r border-accent/10 z-50 shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation"
             >
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Menü schließen"
-                className="absolute top-4 right-3 p-1.5 rounded-md text-[#909090] hover:text-[#d4d4d4]"
+                className="absolute top-4 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-accent"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
               <NavContent pathname={pathname} onNavigate={closeMobile} user={user} logout={logout} />
             </motion.aside>
@@ -308,7 +374,7 @@ export function Sidebar() {
         )}
       </AnimatePresence>
 
-      <div className={cn("hidden lg:block lg:shrink-0 transition-[width] duration-200 motion-reduce:transition-none", collapsed ? "lg:w-12" : "lg:w-[244px]")} />
+      <div className={cn("hidden lg:block lg:shrink-0 transition-[width] duration-200 motion-reduce:transition-none", collapsed ? "lg:w-14" : "lg:w-[244px]")} />
     </>
   )
 }

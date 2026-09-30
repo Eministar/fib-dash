@@ -26,6 +26,7 @@ import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
 import { uploadInChunks } from '@/lib/chunked-upload'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 type ResourceScope = 'GENERAL' | 'TRAINING'
 type ResourceType = 'FILE' | 'LINK'
@@ -102,6 +103,7 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
   const { data, loading, refetch } = useFetch<ResourcesPayload>('/api/academy/resources')
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
   const [creating, setCreating] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -187,7 +189,7 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
   }
 
   const deleteResource = async (resource: AcademyResource) => {
-    if (!confirm(`„${resource.title}“ dauerhaft löschen?`)) return
+    if (!(await confirm({ title: `„${resource.title}“ löschen?`, description: 'Die Ressource wird dauerhaft entfernt.', tone: 'danger' }))) return
     try {
       await execute(`/api/academy/resources/${resource.id}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Ressource gelöscht' })
@@ -394,8 +396,8 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
       {resources.length === 0 && !creating && (
         <div className="rounded-[14px] border border-dashed border-[#404040]/70 px-5 py-16 text-center">
           {mode === 'files'
-            ? <Upload size={27} className="mx-auto mb-3 text-[#808080]" />
-            : <FolderOpen size={27} className="mx-auto mb-3 text-[#808080]" />}
+            ? <Upload size={27} className="mx-auto mb-3 text-[#8c8c8c]" />
+            : <FolderOpen size={27} className="mx-auto mb-3 text-[#8c8c8c]" />}
           <p className="text-[13px] font-medium text-[#aeaeae]">
             {mode === 'files' ? 'Noch keine Academy-Dateien' : 'Noch keine Ausbildungsressourcen'}
           </p>
@@ -439,14 +441,14 @@ function ResourceList({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="truncate text-[13.5px] font-semibold text-[#f4f4f4]">{resource.title}</p>
-                <span className="rounded-full border border-[#404040]/60 px-2 py-0.5 text-[10px] font-medium text-[#a6a6a6]">
+                <span className="rounded-full border border-[#404040]/60 px-2 py-0.5 text-[11px] font-medium text-[#a6a6a6]">
                   {resource.type === 'LINK' ? 'Link' : 'Datei'}
                 </span>
               </div>
               {resource.description && (
                 <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-[#a6a6a6]">{resource.description}</p>
               )}
-              <p className="mt-1.5 text-[10.5px] text-[#686868]">
+              <p className="mt-1.5 text-[11px] text-[#8c8c8c]">
                 {resource.originalFilename && `${resource.originalFilename} · `}
                 {resource.size !== null && `${formatBytes(resource.size)} · `}
                 {formatDateTime(resource.createdAt)}

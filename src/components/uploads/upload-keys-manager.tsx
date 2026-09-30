@@ -113,9 +113,9 @@ export function UploadKeysManager() {
       <div className="mb-5 rounded-xl border border-[#343434] bg-[#141414] p-4 text-sm text-[#a6a6a6]">
         <p className="mb-2 font-semibold text-white">So funktioniert der Upload</p>
         <p>
-          Ein <code className="text-[#dcba48]">POST</code> auf <code className="text-[#dcba48]">/api/files</code> als
-          <code className="text-[#dcba48]"> multipart/form-data</code>, mit dem Schlüssel im Header
-          <code className="text-[#dcba48]"> X-Upload-Key</code>. Pflichtfeld ist nur <code>file</code>; Titel,
+          Ein <code className="text-[#d4d4d4]">POST</code> auf <code className="text-[#d4d4d4]">/api/files</code> als
+          <code className="text-[#d4d4d4]"> multipart/form-data</code>, mit dem Schlüssel im Header
+          <code className="text-[#d4d4d4]"> X-Upload-Key</code>. Pflichtfeld ist nur <code>file</code>; Titel,
           Beschreibung, Kategorie, Tags, Referenz und ein freies <code>metadata</code>-JSON sind optional.
           Die vollständige Beschreibung steht in <code>docs/upload-api.md</code>.
         </p>
@@ -145,7 +145,7 @@ export function UploadKeysManager() {
                   </p>
                   <p className="mt-1 font-mono text-xs text-[#909090]">{key.prefix}</p>
                   {key.description && <p className="mt-2 text-sm text-[#a6a6a6]">{key.description}</p>}
-                  <p className="mt-2 text-xs text-[#7a7a7a]">
+                  <p className="mt-2 text-xs text-[#8c8c8c]">
                     {key._count.uploads} Uploads · {key.usageCount} Aufrufe ·{' '}
                     {key.lastUsedAt ? `zuletzt ${formatDateTime(key.lastUsedAt)}` : 'noch nie benutzt'} · angelegt{' '}
                     {formatDateTime(key.createdAt)}
@@ -205,13 +205,13 @@ export function UploadKeysManager() {
               Jetzt kopieren — nach dem Schließen ist der Klartext nicht mehr abrufbar.
             </p>
             <div className="flex items-center gap-2">
-              <code className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-[#343434] bg-[#0d0d0d] p-3 font-mono text-xs text-[#dcba48]">
+              <code className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-[#343434] bg-[#0d0d0d] p-3 font-mono text-xs text-[#d4d4d4]">
                 {fresh.plaintext}
               </code>
               <CopyButton value={fresh.plaintext} />
             </div>
             <div>
-              <p className="mb-2 text-xs uppercase tracking-wider text-[#7a7a7a]">Direkt einsetzbar</p>
+              <p className="mb-2 text-xs uppercase tracking-wider text-[#8c8c8c]">Direkt einsetzbar</p>
               <pre className="overflow-x-auto rounded-lg border border-[#343434] bg-[#0d0d0d] p-3 text-xs text-[#c4c4c4]">
                 {curlExample(fresh.plaintext)}
               </pre>

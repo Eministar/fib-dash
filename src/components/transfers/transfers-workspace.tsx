@@ -32,6 +32,9 @@ import {
   type TransferSignatureState,
 } from '@/lib/transfer-requests'
 import { cn, formatDateTime } from '@/lib/utils'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUrlState } from '@/hooks/use-url-state'
+import { agentMatchScore, matchesAgent, matchesSearch } from '@/lib/search-match'
 
 interface AgentOption {
   id: string
@@ -79,9 +82,10 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
   const { data: agents } = useFetch<AgentOption[]>('/api/agents')
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('OPEN')
+  const [search, setSearch] = useUrlState('q', '')
+  const [statusFilter, setStatusFilter] = useUrlState<StatusFilter>('status', 'OPEN')
   const [createOpen, setCreateOpen] = useState(false)
   const [agentQuery, setAgentQuery] = useState('')
   const [agentId, setAgentId] = useState('')
@@ -97,21 +101,18 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
           ? OPEN_STATUSES.includes(request.status)
           : request.status === statusFilter
       if (!statusOk) return false
-      if (!query) return true
-      return `${request.requestNumber} ${request.agentName} ${request.badgeNumber ?? ''} ${request.targetAuthority ?? ''}`
-        .toLowerCase()
-        .includes(query)
+      return matchesSearch(query, [request.requestNumber, request.agentName, request.badgeNumber, request.targetAuthority])
     })
   }, [requests, search, statusFilter])
 
   const agentMatches = useMemo(() => {
-    const query = agentQuery.trim().toLowerCase()
     const list = (agents ?? []).filter((agent) => agent.status !== 'TERMINATED')
-    if (!query) return list.slice(0, 8)
+    if (!agentQuery.trim()) return list.slice(0, 8)
     return list
-      .filter((agent) => (
-        `${agent.firstName} ${agent.lastName} ${agent.badgeNumber}`.toLowerCase().includes(query)
-      ))
+      .filter((agent) => matchesAgent(agentQuery, agent))
+      .map((agent, index) => ({ agent, index, score: agentMatchScore(agentQuery, agent) }))
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .map(({ agent }) => agent)
       .slice(0, 8)
   }, [agents, agentQuery])
 
@@ -168,7 +169,7 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
   }
 
   const remove = async (request: TransferRow) => {
-    if (!confirm(`Versetzungsantrag ${request.requestNumber} wirklich löschen?`)) return
+    if (!(await confirm({ title: `Versetzungsantrag ${request.requestNumber} löschen?`, tone: 'danger' }))) return
     try {
       await execute(`/api/transfer-requests/${request.id}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Antrag gelöscht' })
@@ -201,12 +202,12 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#808080]" />
+          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Aktenzeichen, Name oder Behörde suchen"
-            className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]"
+            className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
           />
         </div>
         <div className="flex flex-wrap gap-1">
@@ -230,7 +231,7 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
 
       {filtered.length === 0 ? (
         <section className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 py-14 text-center">
-          <FileSignature size={28} className="mx-auto mb-3 text-[#808080]" />
+          <FileSignature size={28} className="mx-auto mb-3 text-[#8c8c8c]" />
           <p className="text-[14px] font-semibold text-white">Kein Versetzungsantrag vorhanden</p>
           <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
             {canManage ? 'Lege den ersten Antrag über „Antrag erstellen“ an.' : 'Erstellte Anträge erscheinen hier.'}
@@ -277,12 +278,12 @@ export function TransfersWorkspace({ canManage }: { canManage: boolean }) {
             ) : (
               <>
                 <div className="relative">
-                  <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#808080]" />
+                  <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
                   <input
                     value={agentQuery}
                     onChange={(event) => setAgentQuery(event.target.value)}
                     placeholder="Name oder Dienstnummer"
-                    className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]"
+                    className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
                   />
                 </div>
                 <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-[9px] border border-[#343434]/55 bg-[#181818]/45 p-1.5">
@@ -433,12 +434,12 @@ function SignatureBadge({
         signed ? 'border-[#1d4230]/60 bg-[#0d2419]/60' : 'border-[#343434]/45 bg-[#181818]/55',
       )}
     >
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#808080]">{meta.title}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8c8c8c]">{meta.title}</p>
       <p className={cn('mt-1 truncate text-[12.5px]', signed ? 'text-[#9fd9b6]' : 'text-[#909090]')}>
         {signed ? signature?.name : 'Offen'}
       </p>
       {signed && signature?.signedAt && (
-        <p className="mt-0.5 text-[11px] text-[#686868]">{formatDateTime(signature.signedAt)}</p>
+        <p className="mt-0.5 text-[11px] text-[#8c8c8c]">{formatDateTime(signature.signedAt)}</p>
       )}
     </div>
   )

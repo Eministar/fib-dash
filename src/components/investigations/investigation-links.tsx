@@ -94,7 +94,7 @@ export function InvestigationLinks({
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-[14px] font-semibold text-white">Verwandte Akten ({rows.length})</h2>
-          <p className="mt-0.5 text-[11.5px] text-[#6a6a6a]">
+          <p className="mt-0.5 text-[11.5px] text-[#8c8c8c]">
             Verweise auf Ermittlungen mit denselben Personen, Fahrzeugen oder Tatmustern.
           </p>
         </div>
@@ -107,7 +107,7 @@ export function InvestigationLinks({
       </div>
 
       {rows.length === 0 ? (
-        <p className="py-3 text-[12.5px] text-[#6a6a6a]">Keine Querverweise.</p>
+        <p className="py-3 text-[12.5px] text-[#8c8c8c]">Keine Querverweise.</p>
       ) : (
         <ul className="space-y-2">
           {rows.map((row) => (
@@ -117,11 +117,11 @@ export function InvestigationLinks({
                 className="min-w-0 flex-1 rounded-[9px] border border-[#232323] bg-[#111111] p-2.5 transition-colors hover:border-[#404040]"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-[#6a6a6a]" />
+                  <ArrowLeftRight className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
                   <span className="font-mono text-[11.5px] text-[#d4af37]">{row.peer.caseNumber}</span>
                   <StatusBadge status={row.peer.status} />
                   <PriorityBadge priority={row.peer.priority} />
-                  <span className="text-[10.5px] uppercase tracking-[0.1em] text-[#5a5a5a]">
+                  <span className="text-[11px] uppercase tracking-[0.1em] text-[#8c8c8c]">
                     {row.outgoing ? 'verweist auf' : 'verwiesen von'}
                   </span>
                 </div>
@@ -135,7 +135,7 @@ export function InvestigationLinks({
                 <button
                   type="button"
                   onClick={() => void handleRemove(row)}
-                  className="mt-2 shrink-0 text-[#6a6a6a] transition-colors hover:text-[#fca5a5]"
+                  className="mt-2 shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                   aria-label="Querverweis entfernen"
                 >
                   <X className="h-4 w-4" />

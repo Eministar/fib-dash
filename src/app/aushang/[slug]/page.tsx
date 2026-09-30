@@ -68,7 +68,7 @@ export default async function PublicNoticePage({ params }: Props) {
           {publication.title}
         </h1>
         {publication.summary && <p className="mt-2 text-[14px] leading-6 text-[#a6a6a6]">{publication.summary}</p>}
-        <p className="mt-2 text-[12px] text-[#808080]">
+        <p className="mt-2 text-[12px] text-[#8c8c8c]">
           Veröffentlicht am {formatDate(publication.publishedAt ?? publication.createdAt)}
           {publication.updatedAt > (publication.publishedAt ?? publication.createdAt) && ` · aktualisiert am ${formatDate(publication.updatedAt)}`}
         </p>

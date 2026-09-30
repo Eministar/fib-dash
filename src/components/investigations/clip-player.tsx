@@ -64,7 +64,7 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
           <p className="text-[13px] leading-relaxed text-[#c4c4c4]">{clip.description}</p>
         )}
 
-        <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-[#808080]">
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-[#8c8c8c]">
           {clip.recordedAt && (
             <span className="inline-flex items-center gap-1.5">
               <Clock3 className="h-3.5 w-3.5" />
@@ -112,7 +112,7 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#232323] pt-3">
-          <div className="text-[11.5px] text-[#6a6a6a]">
+          <div className="text-[11.5px] text-[#8c8c8c]">
             {showCaseLink && clip.investigation && (
               <Link
                 href={`/investigations/${clip.investigation.id}`}
@@ -175,7 +175,7 @@ export function ClipCard({ clip, onOpen, showCase = false }: ClipCardProps) {
             {clip.investigation.caseNumber}
           </p>
         )}
-        <p className="mt-1 truncate text-[11.5px] text-[#6a6a6a]">
+        <p className="mt-1 truncate text-[11.5px] text-[#8c8c8c]">
           {clip.recordedAt ? formatDateTime(clip.recordedAt) : formatDateTime(clip.createdAt)}
           {clip.recordedByAgent
             ? ` · ${clip.recordedByAgent.firstName} ${clip.recordedByAgent.lastName}`

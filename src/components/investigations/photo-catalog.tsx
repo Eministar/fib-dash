@@ -16,6 +16,7 @@ import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { InvestigationsNavigation } from './investigations-navigation'
 import { ImageLightbox } from '@/components/ui/image-lightbox'
 import { cn } from '@/lib/utils'
+import { useUrlState } from '@/hooks/use-url-state'
 
 export type CatalogPhoto = { id: string; title: string; url: string }
 
@@ -64,7 +65,7 @@ export function PhotoUploadButton({ onUploaded }: { onUploaded: (photo: CatalogP
 }
 
 export function PhotoGrid({ onSelect, selectedIds = [], onUpload }: { onSelect?: (photo: CatalogPhoto) => void; selectedIds?: string[]; onUpload?: (photo: CatalogPhoto) => void }) {
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [page, setPage] = useState(1)
   const [preview, setPreview] = useState<string | null>(null)
   const { data, error, loading } = useFetch<{ items: CatalogPhoto[]; total: number }>(`/api/investigations/photos?search=${encodeURIComponent(search)}&page=${page}`)
@@ -91,7 +92,7 @@ export function PhotoField({ value, onChange, readOnly = false }: { value: strin
   const [open, setOpen] = useState(false)
   return <div className="space-y-2">
     <p className="text-[12.5px] font-medium text-[#aeaeae]">Foto</p>
-    {value ? <Image unoptimized src={value} alt="Aktenfoto" width={400} height={300} className="max-h-56 rounded-lg object-contain" /> : <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 text-sm text-[#808080]"><ImageIcon size={20} />Kein Foto ausgewählt</div>}
+    {value ? <Image unoptimized src={value} alt="Aktenfoto" width={400} height={300} className="max-h-56 rounded-lg object-contain" /> : <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 text-sm text-[#8c8c8c]"><ImageIcon size={20} />Kein Foto ausgewählt</div>}
     {!readOnly && <div className="flex flex-wrap items-center gap-2">
       <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>Aus Bildkatalog wählen</Button>
       <PhotoUploadButton onUploaded={photo => onChange(photo)} />
@@ -113,7 +114,7 @@ export function PhotoPicker({ value, onChange }: { value: CatalogPhoto[]; onChan
 
   return <div className="space-y-3">
     {value.length === 0
-      ? <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 text-sm text-[#808080]"><ImageIcon size={20} />Noch keine Bilder ausgewählt</div>
+      ? <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 text-sm text-[#8c8c8c]"><ImageIcon size={20} />Noch keine Bilder ausgewählt</div>
       : <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{value.map(photo => <div key={photo.id} className="relative overflow-hidden rounded-lg border border-[#343434]">
           <Image unoptimized src={photo.url} alt={photo.title} width={200} height={150} className="aspect-[4/3] w-full object-cover" />
           <button type="button" aria-label={`${photo.title} entfernen`} onClick={() => toggle(photo)} className="absolute right-1 top-1 rounded bg-[#111111]/80 px-1.5 text-xs text-[#fca5a5]">×</button>

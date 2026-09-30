@@ -21,7 +21,7 @@ export async function GET() {
 
   const terminations = await prisma.termination.findMany({
     include: {
-      agent: { select: { id: true, firstName: true, lastName: true, badgeNumber: true, status: true, rankId: true, rank: true } },
+      agent: { select: { id: true, firstName: true, lastName: true, badgeNumber: true, status: true, rankId: true, rank: true, discordId: true, user: { select: { discordId: true } } } },
       terminatedBy: { select: { displayName: true } },
     },
     orderBy: { terminatedAt: 'desc' },

@@ -26,7 +26,7 @@ export function InvestigationHistory({ investigationId }: { investigationId: str
   if (loading) {
     return (
       <SectionCard title="Änderungsverlauf">
-        <p className="py-3 text-[12.5px] text-[#6a6a6a]">Verlauf wird geladen …</p>
+        <p className="py-3 text-[12.5px] text-[#8c8c8c]">Verlauf wird geladen …</p>
       </SectionCard>
     )
   }
@@ -44,12 +44,12 @@ export function InvestigationHistory({ investigationId }: { investigationId: str
           <ol className="space-y-2">
             {entries.map((entry) => (
               <li key={entry.id} className="flex gap-3 rounded-[10px] border border-[#232323] bg-[#111111] p-3">
-                <History className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#6a6a6a]" />
+                <History className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
                 <div className="min-w-0">
                   <p className="text-[12.5px] leading-relaxed text-[#d4d4d4]">
                     {entry.details ?? entry.action}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-[#6a6a6a]">
+                  <p className="mt-0.5 text-[11px] text-[#8c8c8c]">
                     {entry.userName} · {formatDateTime(entry.createdAt)}
                   </p>
                 </div>
@@ -57,7 +57,7 @@ export function InvestigationHistory({ investigationId }: { investigationId: str
             ))}
           </ol>
           {entries.length >= 100 && (
-            <p className="mt-3 text-[11.5px] text-[#6a6a6a]">Nur die letzten 100 Einträge werden gezeigt.</p>
+            <p className="mt-3 text-[11.5px] text-[#8c8c8c]">Nur die letzten 100 Einträge werden gezeigt.</p>
           )}
         </>
       )}

@@ -26,13 +26,13 @@ export function PublicTable({ table }: { table: PublicationTable }) {
     <div>
       {table.rows.length > 8 && (
         <label className="mb-3 flex items-center gap-2 rounded-[10px] border border-[#343434] bg-[#161616] px-3">
-          <Search size={15} className="text-[#808080]" aria-hidden />
+          <Search size={15} className="text-[#8c8c8c]" aria-hidden />
           <span className="sr-only">Tabelle durchsuchen</span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tabelle durchsuchen …"
-            className="h-10 w-full bg-transparent text-[13.5px] text-white outline-none placeholder:text-[#6f6f6f]"
+            className="h-10 w-full bg-transparent text-[13.5px] text-white outline-none placeholder:text-[#8c8c8c]"
           />
         </label>
       )}
@@ -60,7 +60,7 @@ export function PublicTable({ table }: { table: PublicationTable }) {
         </table>
         {rows.length === 0 && <p className="px-3 py-6 text-center text-[13px] text-[#909090]">{search ? 'Keine Treffer.' : 'Die Tabelle ist leer.'}</p>}
       </div>
-      <p className="mt-2 text-[12px] text-[#808080]">{rows.length} von {table.rows.length} Einträgen</p>
+      <p className="mt-2 text-[12px] text-[#8c8c8c]">{rows.length} von {table.rows.length} Einträgen</p>
     </div>
   )
 }

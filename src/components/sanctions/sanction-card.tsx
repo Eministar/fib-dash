@@ -132,7 +132,7 @@ function AgentHeader({ agent }: { agent: SanctionCardAgent }) {
       </span>
       <span className="min-w-0">
         <span className="block truncate text-[13px] font-semibold text-[#f4f4f4]">{name}</span>
-        {meta && <span className="block truncate text-[11px] text-[#808080]">{meta}</span>}
+        {meta && <span className="block truncate text-[11px] text-[#8c8c8c]">{meta}</span>}
       </span>
     </>
   )
@@ -196,17 +196,17 @@ export function SanctionCard({
               <Gavel size={11} className="text-[#f59e0b] shrink-0" strokeWidth={2} />
               <span className="text-[12.5px] font-bold tracking-wide text-[#f4f4f4]">{penalGradeLabel(sanction.penalGrade)}</span>
             </div>
-            <span className={cn('rounded-full border px-2.5 py-[2px] text-[10.5px] font-semibold tracking-wide', sanctionStatusClass(sanction.status))}>
+            <span className={cn('rounded-full border px-2.5 py-[2px] text-[11px] font-semibold tracking-wide', sanctionStatusClass(sanction.status))}>
               {sanctionStatusLabel(sanction.status)}
             </span>
             {sanction.repeatOfSanctionId && (
-              <span className="rounded-full border border-[#7f1d1d]/60 bg-[#2a1212]/60 px-2.5 py-[2px] text-[10.5px] font-semibold text-[#fca5a5]">
+              <span className="rounded-full border border-[#7f1d1d]/60 bg-[#2a1212]/60 px-2.5 py-[2px] text-[11px] font-semibold text-[#fca5a5]">
                 Wiederholungsfall
               </span>
             )}
           </div>
           <div className={cn('flex items-center gap-1.5 rounded-[6px] border px-2.5 py-1', levelBadgeClass(sanction.level))}>
-            <span className="text-[10px] font-semibold tabular-nums opacity-70">{sanction.level}</span>
+            <span className="text-[11px] font-semibold tabular-nums opacity-70">{sanction.level}</span>
             <span className="text-[12px] font-bold">{levelRule?.measure ?? sanctionLevelLabel(sanction.level)}</span>
           </div>
         </div>
@@ -238,14 +238,14 @@ export function SanctionCard({
 
         {/* Footer metadata */}
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-[11px] text-[#808080]">{formatDate(sanction.createdAt)}</span>
-          <span className="text-[10px] text-[#464646]">·</span>
-          <span className="text-[11px] text-[#808080]">{sanction.issuedBy?.displayName ?? 'Gelöscht'}</span>
-          <span className="text-[10px] text-[#464646]">·</span>
-          <span className="text-[11px] text-[#808080]">{sanctionTimingLabel(sanction)}</span>
+          <span className="text-[11px] text-[#8c8c8c]">{formatDate(sanction.createdAt)}</span>
+          <span className="text-[11px] text-[#464646]">·</span>
+          <span className="text-[11px] text-[#8c8c8c]">{sanction.issuedBy?.displayName ?? 'Gelöscht'}</span>
+          <span className="text-[11px] text-[#464646]">·</span>
+          <span className="text-[11px] text-[#8c8c8c]">{sanctionTimingLabel(sanction)}</span>
           {sanction.confirmedBy && (
             <>
-              <span className="text-[10px] text-[#464646]">·</span>
+              <span className="text-[11px] text-[#464646]">·</span>
               <span className="flex items-center gap-1 text-[11px] text-[#86efac]">
                 <BadgeCheck size={11} strokeWidth={2} /> {sanction.confirmedBy.displayName}
               </span>

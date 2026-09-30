@@ -67,7 +67,7 @@ const steps = [
 
 function inputClass(valid?: boolean) {
   return [
-    'h-12 w-full rounded-xl border bg-[#181818]/75 px-4 text-[13px] text-[#f4f4f4] outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-[#666666]',
+    'h-12 w-full rounded-xl border bg-[#181818]/75 px-4 text-[13px] text-[#f4f4f4] outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-[#8c8c8c]',
     valid === true
       ? 'border-[#34d399]/45 shadow-[0_0_0_3px_rgba(52,211,153,0.07)]'
       : 'border-[#363636] focus:border-[#d4d4d4]/55 focus:bg-[#1b1b1b] focus:shadow-[0_0_0_3px_rgba(212,212,212,0.08)]',
@@ -78,7 +78,7 @@ function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: stri
   return (
     <div className="mb-2 flex items-center justify-between gap-3">
       <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#adadad]">{children}</label>
-      {hint && <span className="text-[10.5px] text-[#737373]">{hint}</span>}
+      {hint && <span className="text-[11px] text-[#8c8c8c]">{hint}</span>}
     </div>
   )
 }
@@ -299,7 +299,7 @@ export default function SetupPage() {
           <div className="mb-7 inline-flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#d4d4d4]/25 bg-[#d4d4d4]/[0.08] text-[#c1c1c1] shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
             <Sparkles size={26} strokeWidth={1.7} />
           </div>
-          <p className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.2em] text-[#d4d4d4]">Ersteinrichtung</p>
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[#d4d4d4]">Ersteinrichtung</p>
           <h1 className="max-w-[620px] text-[32px] font-semibold leading-[1.12] tracking-[-0.035em] text-white sm:text-[40px]">
               Willkommen in deinem neuen FIB Dashboard.
           </h1>
@@ -317,7 +317,7 @@ export default function SetupPage() {
                 <div key={String(title)} className="rounded-2xl border border-[#343434]/75 bg-[#191919]/55 p-4">
                   <StepIcon size={17} className="mb-3 text-[#d4d4d4]" />
                   <p className="text-[12.5px] font-semibold text-[#efefef]">{String(title)}</p>
-                  <p className="mt-1 text-[11px] text-[#767676]">{String(description)}</p>
+                  <p className="mt-1 text-[11px] text-[#8c8c8c]">{String(description)}</p>
                 </div>
               )
             })}
@@ -340,7 +340,7 @@ export default function SetupPage() {
           <div>
             <FieldLabel hint="MySQL / MariaDB">Datenbank-URL</FieldLabel>
             <div className="relative">
-              <Database size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#737373]" />
+              <Database size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
               <input
                 value={databaseUrl}
                 onChange={(event) => {
@@ -363,7 +363,7 @@ export default function SetupPage() {
             <PrimaryButton onClick={() => void testDatabase()} busy={busy === 'database'} disabled={!databaseUrl.trim()}>
               Verbindung testen
             </PrimaryButton>
-            <span className="inline-flex items-center gap-1.5 text-[10.5px] text-[#737373]"><LockKeyhole size={12} /> Wird nicht an den Browser zurückgesendet</span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-[#8c8c8c]"><LockKeyhole size={12} /> Wird nicht an den Browser zurückgesendet</span>
           </div>
 
           <div className="mt-5">
@@ -393,7 +393,7 @@ export default function SetupPage() {
             <div className="sm:col-span-2">
               <FieldLabel hint="Developer Portal → Bot">Bot-Token</FieldLabel>
               <div className="relative">
-                <KeyRound size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#737373]" />
+                <KeyRound size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
                 <input
                   type={showBotToken ? 'text' : 'password'}
                   value={botToken}
@@ -411,7 +411,7 @@ export default function SetupPage() {
                 <button
                   type="button"
                   onClick={() => setShowBotToken((visible) => !visible)}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#767676] transition-colors hover:bg-[#2d2d2d] hover:text-white"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c8c8c] transition-colors hover:bg-[#2d2d2d] hover:text-white"
                   aria-label={showBotToken ? 'Token ausblenden' : 'Token anzeigen'}
                 >
                   {showBotToken ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -431,7 +431,7 @@ export default function SetupPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-[14px] font-semibold text-white">{discord.bot.displayName}</p>
-                    <span className="rounded-md bg-[#5865f2]/20 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#a9b1ff]">Bot</span>
+                    <span className="rounded-md bg-[#5865f2]/20 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#a9b1ff]">Bot</span>
                   </div>
                   <p className="mt-1 text-[11px] text-[#72908a]">Verifiziert · {discord.guilds.length} Server gefunden · App {discord.application.id}</p>
                 </div>
@@ -442,7 +442,7 @@ export default function SetupPage() {
             <div className="sm:col-span-2">
               <FieldLabel hint="Developer Portal → OAuth2">Client Secret</FieldLabel>
               <div className="relative">
-                <LockKeyhole size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#737373]" />
+                <LockKeyhole size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
                 <input
                   type={showClientSecret ? 'text' : 'password'}
                   value={clientSecret}
@@ -455,7 +455,7 @@ export default function SetupPage() {
                 <button
                   type="button"
                   onClick={() => setShowClientSecret((visible) => !visible)}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#767676] transition-colors hover:bg-[#2d2d2d] hover:text-white"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[#8c8c8c] transition-colors hover:bg-[#2d2d2d] hover:text-white"
                   aria-label={showClientSecret ? 'Secret ausblenden' : 'Secret anzeigen'}
                 >
                   {showClientSecret ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -487,7 +487,7 @@ export default function SetupPage() {
             <div className="sm:col-span-2">
               <FieldLabel>{busy === 'guild' ? 'Server wird geladen …' : 'Discord-Server'}</FieldLabel>
               <div className="relative">
-                <Server size={15} className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#737373]" />
+                <Server size={15} className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#8c8c8c]" />
                 <select
                   value={guildId}
                   disabled={busy === 'guild'}
@@ -499,7 +499,7 @@ export default function SetupPage() {
                 </select>
                 {busy === 'guild'
                   ? <LoaderCircle size={15} className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-[#d4d4d4]" />
-                  : <ChevronDown size={15} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#767676]" />}
+                  : <ChevronDown size={15} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />}
               </div>
             </div>
 
@@ -519,7 +519,7 @@ export default function SetupPage() {
                       >
                         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: roleColor }} />
                         <span className={`flex-1 truncate text-[12.5px] ${active ? 'font-semibold text-white' : 'text-[#adadad]'}`}>{role.name}</span>
-                        {role.managed && <span className="text-[9px] uppercase tracking-wider text-[#666666]">Bot-Rolle</span>}
+                        {role.managed && <span className="text-[11px] uppercase tracking-wider text-[#8c8c8c]">Bot-Rolle</span>}
                         <span className={`flex h-5 w-5 items-center justify-center rounded-md border ${active ? 'border-[#d4d4d4] bg-[#d4d4d4] text-[#161616]' : 'border-[#454545] text-transparent'}`}>
                           <Check size={12} strokeWidth={3} />
                         </span>
@@ -533,7 +533,7 @@ export default function SetupPage() {
             <div className="sm:col-span-2">
               <FieldLabel hint="Für Discord OAuth">Öffentliche Website-URL</FieldLabel>
               <input value={siteUrl} onChange={(event) => setSiteUrl(event.target.value)} className={inputClass(/^https?:\/\//.test(siteUrl))} placeholder="https://dashboard.example.de" />
-              <p className="mt-2 text-[10.5px] leading-5 text-[#717171]">OAuth Redirect: <span className="font-mono text-[#8d8d8d]">{siteUrl.replace(/\/$/, '') || 'https://…'}/api/auth/discord/callback</span></p>
+              <p className="mt-2 text-[11px] leading-5 text-[#8c8c8c]">OAuth Redirect: <span className="font-mono text-[#8d8d8d]">{siteUrl.replace(/\/$/, '') || 'https://…'}/api/auth/discord/callback</span></p>
             </div>
 
             <div>
@@ -584,7 +584,7 @@ export default function SetupPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[12.5px] font-semibold text-[#f4f4f4]">{item.title}</p>
-                  <p className="mt-0.5 truncate text-[10.5px] text-[#787878]">{item.value}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">{item.value}</p>
                 </div>
                 <CheckCircle2 size={16} className="shrink-0 text-[#34d399]" />
               </div>
@@ -620,7 +620,7 @@ export default function SetupPage() {
               </div>
               <div>
                 <p className="text-[13.5px] font-semibold text-white">FIB</p>
-                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.17em] text-[#d4d4d4]/80">System Setup</p>
+                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.17em] text-[#d4d4d4]/80">System Setup</p>
               </div>
             </div>
 
@@ -646,7 +646,7 @@ export default function SetupPage() {
                 <div className="absolute inset-0 flex items-center justify-center text-[15px] font-semibold text-white lg:text-[19px]">{completed ? '✓' : `${step + 1}/${steps.length}`}</div>
               </div>
               <div className="min-w-0 lg:mt-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#767676]">Fortschritt</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#8c8c8c]">Fortschritt</p>
                 <p className="mt-1 truncate text-[13px] font-semibold text-[#ebebeb]">{completed ? 'Einsatzbereit' : steps[step].label}</p>
               </div>
             </div>
@@ -658,17 +658,17 @@ export default function SetupPage() {
                 const done = index < step || completed
                 return (
                   <div key={item.label} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${current ? 'bg-[#262626]' : ''}`}>
-                    <div className={`flex h-7 w-7 items-center justify-center rounded-lg border ${done ? 'border-[#34d399]/25 bg-[#34d399]/10 text-[#5ee0b0]' : current ? 'border-[#d4d4d4]/30 bg-[#d4d4d4]/10 text-[#c1c1c1]' : 'border-[#373737] text-[#656565]'}`}>
+                    <div className={`flex h-7 w-7 items-center justify-center rounded-lg border ${done ? 'border-[#34d399]/25 bg-[#34d399]/10 text-[#5ee0b0]' : current ? 'border-[#d4d4d4]/30 bg-[#d4d4d4]/10 text-[#c1c1c1]' : 'border-[#373737] text-[#8c8c8c]'}`}>
                       {done ? <Check size={13} strokeWidth={2.7} /> : <Icon size={13} />}
                     </div>
-                    <span className={`text-[11.5px] ${current ? 'font-semibold text-white' : done ? 'text-[#afafaf]' : 'text-[#686868]'}`}>{item.label}</span>
+                    <span className={`text-[11.5px] ${current ? 'font-semibold text-white' : done ? 'text-[#afafaf]' : 'text-[#8c8c8c]'}`}>{item.label}</span>
                   </div>
                 )
               })}
             </div>
 
             <div className="absolute bottom-7 left-8 right-8 hidden rounded-xl border border-[#323232] bg-[#181818]/65 p-3 lg:block">
-              <div className="flex items-center gap-2 text-[10.5px] font-medium text-[#a1a1a1]"><LockKeyhole size={13} className="text-[#d4d4d4]" /> Lokale Server-Konfiguration</div>
+              <div className="flex items-center gap-2 text-[11px] font-medium text-[#a1a1a1]"><LockKeyhole size={13} className="text-[#d4d4d4]" /> Lokale Server-Konfiguration</div>
             </div>
           </aside>
 
@@ -682,18 +682,18 @@ export default function SetupPage() {
                 <div className="relative mb-7 flex h-24 w-24 items-center justify-center rounded-[30px] border border-[#34d399]/25 bg-[#34d399]/[0.08] text-[#5ee0b0] shadow-[0_0_60px_rgba(52,211,153,0.09)]">
                   <CheckCircle2 size={42} strokeWidth={1.6} />
                 </div>
-                <p className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.19em] text-[#5ee0b0]">Einrichtung abgeschlossen</p>
+                <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.19em] text-[#5ee0b0]">Einrichtung abgeschlossen</p>
                 <h1 className="max-w-lg text-[31px] font-semibold leading-tight tracking-[-0.035em] text-white">Das Department Dashboard ist einsatzbereit.</h1>
                 <p className="mt-4 max-w-md text-[13px] leading-6 text-[#979797]">Datenbank, Discord Bot und der erste Admin-Zugang sind eingerichtet. Nach dem Login kannst du Ränge, Ausbildungen und weitere Rollen konfigurieren.</p>
                 <div className="mt-8">
                   <PrimaryButton onClick={() => window.location.assign('/login')}>Zum Discord-Login <ArrowRight size={15} /></PrimaryButton>
                 </div>
-                <p className="mt-5 max-w-sm text-[10.5px] leading-5 text-[#696969]">Bei einem selbst betriebenen Bot-Gateway verbindet sich der Bot spätestens nach dem nächsten Prozess-Neustart dauerhaft.</p>
+                <p className="mt-5 max-w-sm text-[11px] leading-5 text-[#8c8c8c]">Bei einem selbst betriebenen Bot-Gateway verbindet sich der Bot spätestens nach dem nächsten Prozess-Neustart dauerhaft.</p>
               </motion.div>
             ) : (
               <>
                 <div className="mb-5 flex items-center justify-between lg:hidden">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#757575]">{steps[step].short}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#8c8c8c]">{steps[step].short}</p>
                   <div className="flex gap-1.5">{steps.map((item, index) => <span key={item.label} className={`h-1.5 rounded-full transition-all ${index === step ? 'w-6 bg-[#d4d4d4]' : index < step ? 'w-1.5 bg-[#34d399]' : 'w-1.5 bg-[#3f3f3f]'}`} />)}</div>
                 </div>
 

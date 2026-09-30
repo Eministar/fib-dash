@@ -66,7 +66,7 @@ function IconGrid({ value, onChange }: { value: string; onChange: (v: string) =>
 }
 
 const EDITOR_TEXTAREA =
-  'flex-1 min-h-0 min-w-0 w-full rounded-[10px] bg-[#151515] border border-[#373737]/60 p-4 text-[13px] leading-relaxed font-mono text-[#ededed] resize-none focus:outline-none focus:border-[#4d4d4d] placeholder:text-[#565656]'
+  'flex-1 min-h-0 min-w-0 w-full rounded-[10px] bg-[#151515] border border-[#373737]/60 p-4 text-[13px] leading-relaxed font-mono text-[#ededed] resize-none focus:outline-none focus:border-[#4d4d4d] placeholder:text-[#8c8c8c]'
 
 export function OrdnungEditor({
   open,
@@ -115,7 +115,7 @@ export function OrdnungEditor({
                 {/* Kopfzeile */}
                 <header className="flex items-center gap-3 px-5 py-3.5 border-b border-[#373737]/45 shrink-0">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#7b7b7b]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8c8c8c]">
                       {isEditing ? 'Ordnung bearbeiten' : 'Neue Ordnung'}
                     </p>
                     <Dialog.Title className="text-[15px] font-semibold text-[#f4f4f4] truncate">
@@ -204,7 +204,7 @@ export function OrdnungEditor({
                           )
                         })}
                       </div>
-                      <span className="text-[11.5px] text-[#7b7b7b] tabular-nums">
+                      <span className="text-[11.5px] text-[#8c8c8c] tabular-nums">
                         {charCount.toLocaleString('de-DE')} Zeichen
                       </span>
                     </div>

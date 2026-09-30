@@ -1,12 +1,10 @@
 'use client'
 
 import { use } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, History } from 'lucide-react'
+import { History } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageLoader } from '@/components/ui/loading'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
-import { Button } from '@/components/ui/button'
 import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
@@ -46,19 +44,19 @@ export default function AgentTimelinePage({ params }: { params: Promise<{ id: st
   const { data, loading } = useFetch<TimelineResponse>(canView ? `/api/agents/${id}/timeline` : null)
 
   if (!canView) return <UnauthorizedContent />
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
   if (!data) return null
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       <PageHeader
+        breadcrumbs={[
+          { label: 'Agents', href: '/agents' },
+          { label: `${data.agent.firstName} ${data.agent.lastName}`, href: `/agents/${id}` },
+          { label: 'Personalakte' },
+        ]}
         title="Personalakte"
         description={`${data.agent.firstName} ${data.agent.lastName} #${displayBadgeNumber(data.agent.badgeNumber)}`}
-        action={(
-          <Link href={`/agents/${id}`}>
-            <Button variant="secondary" size="sm"><ArrowLeft size={13} /> Zurück</Button>
-          </Link>
-        )}
       />
 
       <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-5">
@@ -72,7 +70,7 @@ export default function AgentTimelinePage({ params }: { params: Promise<{ id: st
                     <h3 className="text-[13.5px] font-semibold text-white">{item.title}</h3>
                     <span className="text-[11.5px] text-[#a6a6a6]">{formatDateTime(item.createdAt)}</span>
                   </div>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#808080]">{item.type}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#8c8c8c]">{item.type}</p>
                   {item.description && <p className="mt-2 text-[12.5px] leading-relaxed text-[#d2d2d2]">{item.description}</p>}
                   {item.meta && Object.keys(item.meta).length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">

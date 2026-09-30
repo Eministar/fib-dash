@@ -15,6 +15,7 @@ import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { AUDIT_LOG_GROUPS, groupForAction, type AuditLogGroupKey } from '@/lib/audit-log-groups'
+import { useUrlState } from '@/hooks/use-url-state'
 
 interface AuditLog {
   id: string
@@ -47,14 +48,14 @@ const groupChipStyles: Record<AuditLogGroupKey | 'other', string> = {
   internalAffairs: 'bg-[#242424] text-[#7dd3fc]',
   legal: 'bg-[#251438] text-[#c4b5fd]',
   system: 'bg-[#232323] text-[#a9a9a9]',
-  other: 'bg-[#212121] text-[#888]',
+  other: 'bg-[#212121] text-[#a6a6a6]',
 }
 
 export default function LogsPage() {
   const { user } = useAuth()
   const canViewLogs = hasPermission(user, 'logs:view')
   const [page, setPage] = useState(0)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [groupFilter, setGroupFilter] = useState('')
   const pageSize = 30
@@ -77,7 +78,7 @@ export default function LogsPage() {
   const { data, loading } = useFetch<LogResponse>(canViewLogs ? `/api/audit-logs?${query.toString()}` : null)
 
   if (!canViewLogs) return <UnauthorizedContent />
-  if (loading && !data) return <PageLoader />
+  if (loading && !data) return <PageLoader withHeader />
 
   const logs = data?.logs || []
   const total = data?.total || 0
@@ -95,14 +96,14 @@ export default function LogsPage() {
         <div className="relative flex-1">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#808080]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]"
             strokeWidth={1.75}
           />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche nach Name, Dienstnummer, Nutzer oder Details..."
-            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#808080]')}
+            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
           />
         </div>
         <Select
@@ -138,7 +139,7 @@ export default function LogsPage() {
                       <span className={cn('inline-flex items-center px-2 py-[3px] rounded-[5px] text-[11px] font-medium', groupChipStyles[group])}>
                         {groupLabel}
                       </span>
-                      <span className="inline-flex items-center px-2 py-[3px] rounded-[5px] text-[11px] font-medium bg-[#212121] text-[#888]">
+                      <span className="inline-flex items-center px-2 py-[3px] rounded-[5px] text-[11px] font-medium bg-[#212121] text-[#a6a6a6]">
                         {label}
                       </span>
                     </div>
@@ -146,21 +147,21 @@ export default function LogsPage() {
                       {log.agent && (
                         <p className="text-[13px] font-medium text-[#eee]">
                           {log.agent.firstName} {log.agent.lastName}
-                          <span className="text-[#bbb] font-normal ml-1">({displayBadgeNumber(log.agent.badgeNumber)})</span>
+                          <span className="text-[#909090] font-normal ml-1">({displayBadgeNumber(log.agent.badgeNumber)})</span>
                         </p>
                       )}
                       {log.details && (
-                        <p className="text-[12.5px] text-[#888] mt-0.5">{auditDetails(log.details)}</p>
+                        <p className="text-[12.5px] text-[#a6a6a6] mt-0.5">{auditDetails(log.details)}</p>
                       )}
                       {log.oldValue && log.newValue && (
-                        <p className="text-[12px] text-[#aaa] mt-0.5">
+                        <p className="text-[12px] text-[#909090] mt-0.5">
                           {log.oldValue} → {log.newValue}
                         </p>
                       )}
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[12px] text-[#999]">{formatDateTime(log.createdAt)}</p>
-                      <p className="text-[11px] text-[#808080]">{log.user?.displayName ?? 'Gelöscht'}</p>
+                      <p className="text-[12px] text-[#909090]">{formatDateTime(log.createdAt)}</p>
+                      <p className="text-[11px] text-[#8c8c8c]">{log.user?.displayName ?? 'Gelöscht'}</p>
                     </div>
                   </motion.div>
                 )
@@ -168,7 +169,7 @@ export default function LogsPage() {
             </div>
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-5 py-3 border-t border-[#343434]">
-                <p className="text-[12px] text-[#999]">Seite {page + 1} von {totalPages}</p>
+                <p className="text-[12px] text-[#909090]">Seite {page + 1} von {totalPages}</p>
                 <div className="flex gap-1.5">
                   <Button variant="secondary" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
                     <ChevronLeft size={13} /> Zurück
@@ -182,8 +183,8 @@ export default function LogsPage() {
           </>
         ) : (
           <div className="text-center py-20">
-            <ScrollText size={28} className="mx-auto mb-3 text-[#333]" strokeWidth={1.5} />
-            <p className="text-[13px] text-[#999]">
+            <ScrollText size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+            <p className="text-[13px] text-[#909090]">
               {hasFilter ? 'Keine Treffer für die aktuelle Suche' : 'Keine Protokolleinträge'}
             </p>
           </div>

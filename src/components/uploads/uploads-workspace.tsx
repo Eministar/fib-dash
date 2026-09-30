@@ -14,6 +14,7 @@ import { formatDateTime, cn } from '@/lib/utils'
 import { formatBytes, previewKind } from '@/lib/file-upload-types'
 import { UploadDetail } from './upload-detail'
 import type { Upload, UploadList } from './upload-types'
+import { useUrlState } from '@/hooks/use-url-state'
 
 function KindIcon({ mimeType }: { mimeType: string }) {
   const kind = previewKind(mimeType)
@@ -82,7 +83,7 @@ function UploadDialog({ onClose, onUploaded }: { onClose: () => void; onUploaded
           onClick={() => inputRef.current?.click()}
           className={cn(
             'cursor-pointer rounded-xl border border-dashed p-8 text-center text-sm',
-            dragging ? 'border-[#dcba48] bg-[#dcba48]/5 text-white' : 'border-[#343434] text-[#909090] hover:border-[#707070]',
+            dragging ? 'border-[#d4d4d4]/70 bg-[#d4d4d4]/5 text-white' : 'border-[#343434] text-[#909090] hover:border-[#707070]',
           )}
         >
           <UploadIcon className="mx-auto mb-2" size={22} />
@@ -125,7 +126,7 @@ function UploadDialog({ onClose, onUploaded }: { onClose: () => void; onUploaded
 }
 
 export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [category, setCategory] = useState('')
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Upload | null>(null)
@@ -218,10 +219,10 @@ export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
                 <span className="min-w-0 flex-1 truncate font-semibold text-white">{upload.title}</span>
               </div>
               {upload.description && <p className="mt-2 line-clamp-2 text-xs text-[#a6a6a6]">{upload.description}</p>}
-              <p className="mt-2 text-xs text-[#7a7a7a]">
+              <p className="mt-2 text-xs text-[#8c8c8c]">
                 {formatDateTime(upload.createdAt)} · {formatBytes(upload.sizeBytes)}
               </p>
-              <p className="mt-1 truncate text-xs text-[#7a7a7a]">
+              <p className="mt-1 truncate text-xs text-[#8c8c8c]">
                 {upload.category ? `${upload.category} · ` : ''}
                 {upload.uploadKey ? upload.uploadKey.name : upload.uploadedBy?.displayName ?? 'Unbekannt'}
                 {upload.externalRef ? ` · ${upload.externalRef}` : ''}
@@ -229,7 +230,7 @@ export function UploadsWorkspace({ canManage }: { canManage: boolean }) {
               {!!upload.tags.length && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {upload.tags.slice(0, 4).map((tag) => (
-                    <span key={tag} className="rounded border border-[#343434] px-1.5 py-0.5 text-[10px] text-[#a6a6a6]">
+                    <span key={tag} className="rounded border border-[#343434] px-1.5 py-0.5 text-[11px] text-[#a6a6a6]">
                       {tag}
                     </span>
                   ))}

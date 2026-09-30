@@ -78,7 +78,7 @@ export function VisitorPortal({ section = 'start', pressId }: { section?: Sectio
               <span className="block text-[14px] font-medium text-white">{item.title}</span>
               <span className="mt-0.5 block text-[12.5px] text-[#909090]">{item.description}</span>
             </span>
-            <ChevronRight size={16} className="shrink-0 text-[#6f6f6f] group-hover:text-white" aria-hidden />
+            <ChevronRight size={16} className="shrink-0 text-[#8c8c8c] group-hover:text-white" aria-hidden />
           </Link>
         </li>)}
       </ul>
@@ -94,7 +94,7 @@ export function VisitorPortal({ section = 'start', pressId }: { section?: Sectio
         {application.loading && !application.data ? <p role="status" className="text-[13px] text-[#a6a6a6]">Bewerbung wird geladen …</p> : application.error ? <PortalError message={application.error} retry={application.refetch} /> : currentApplication ? <div className="glass-panel-elevated space-y-3 rounded-[14px] p-5">
           <div className="flex flex-wrap items-center gap-2"><Badge variant={JOB_APPLICATION_STATUS_META[currentApplication.status].variant}>{JOB_APPLICATION_STATUS_META[currentApplication.status].label}</Badge>{currentApplication.caseNumber && <span className="text-[12px] text-[#a6a6a6]">{currentApplication.caseNumber}</span>}</div>
           <p className="text-[13.5px] leading-6 text-[#e5e5e5]">{currentApplication.statusText}</p>
-          <p className="text-[12px] text-[#808080]">Aktualisiert: {formatDateTime(currentApplication.updatedAt)}</p>
+          <p className="text-[12px] text-[#8c8c8c]">Aktualisiert: {formatDateTime(currentApplication.updatedAt)}</p>
         </div> : <p className="glass-panel-elevated rounded-[14px] p-5 text-[13px] text-[#a6a6a6]">Du hast noch keine Bewerbung eingereicht.</p>}
         <Link href="/bewerbung" className={primaryAction}>{currentApplication ? 'Bewerbung ansehen' : 'Bewerbung beginnen'}</Link>
       </div>}
@@ -105,7 +105,7 @@ export function VisitorPortal({ section = 'start', pressId }: { section?: Sectio
       {!pressId && <PublicPageTitle title="Pressemitteilungen" description="Aktuelle Veröffentlichungen des Federal Investigation Bureau." />}
       {press.loading && !press.data ? <p role="status" className="text-[13px] text-[#a6a6a6]">Mitteilungen werden geladen …</p> : press.error ? <PortalError message={press.error} retry={press.refetch} /> : pressId ? article ? <article>
         <h1 className="text-[24px] font-semibold tracking-tight text-white">{article.title}</h1>
-        <p className="mb-5 mt-2 text-[12px] text-[#808080]">{formatDate(article.publishedAt ?? article.createdAt)}</p>
+        <p className="mb-5 mt-2 text-[12px] text-[#8c8c8c]">{formatDate(article.publishedAt ?? article.createdAt)}</p>
         {article.imageUrl && <Image unoptimized src={article.imageUrl} alt={article.imageAlt ?? article.title} width={900} height={450} className="mb-5 max-h-80 w-full rounded-[14px] object-cover" />}
         {article.summary && <p className="mb-5 text-[14px] leading-6 text-[#c3c3c3]">{article.summary}</p>}
         <div className="markdown-document glass-panel-elevated rounded-[14px] p-5 sm:p-7" dangerouslySetInnerHTML={{ __html: html }} />
@@ -113,7 +113,7 @@ export function VisitorPortal({ section = 'start', pressId }: { section?: Sectio
         ? <ul className="glass-panel-elevated divide-y divide-[#2c2c2c] overflow-hidden rounded-[14px]">
           {press.data.map(item => <li key={item.id}>
             <Link href={`/besucherportal/presse/${item.id}`} className="block px-5 py-4 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2">
-              <p className="text-[12px] text-[#808080]">{formatDate(item.publishedAt ?? item.createdAt)}</p>
+              <p className="text-[12px] text-[#8c8c8c]">{formatDate(item.publishedAt ?? item.createdAt)}</p>
               <h2 className="mt-1 text-[14.5px] font-medium text-white">{item.title}</h2>
               <p className="mt-1.5 line-clamp-2 text-[13px] leading-6 text-[#a6a6a6]">{item.summary || pressReleaseExcerpt(item.content)}</p>
             </Link>

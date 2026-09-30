@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateAction } from 'react'
 import { LIVE_REFRESH_INTERVAL_MS, LIVE_UPDATE_CHANNEL, LIVE_UPDATE_EVENT } from '@/lib/live-updates'
+import { isConnectionError, reportConnection } from '@/lib/connection-status'
 
 /**
  * True, wenn der Nutzer gerade in einem editierbaren Element tippt (Input,
@@ -34,10 +35,12 @@ export function useFetch<T>(url: string | null, refreshInterval = LIVE_REFRESH_I
   const requestIdRef = useRef(0)
   const pendingRef = useRef(false)
   const lastBackgroundRefresh = useRef(0)
+  const hasDataRef = useRef(false)
 
   const fetchData = useCallback(async (options?: { silent?: boolean; force?: boolean }) => {
     if (!url) {
       requestIdRef.current += 1
+      hasDataRef.current = false
       setError(null)
       setLoading(false)
       setData(null)
@@ -53,20 +56,32 @@ export function useFetch<T>(url: string | null, refreshInterval = LIVE_REFRESH_I
 
     if (!options?.silent) {
       setLoading(true)
+      setError(null)
     }
-    setError(null)
+    let status: number | undefined
     try {
       const res = await fetch(url, { cache: 'no-store' })
+      status = res.status
       const json = await res.json()
       if (!res.ok || !json.success) {
         throw new Error(json.error || 'Fehler beim Laden')
       }
+      reportConnection(true)
       if (requestIdRef.current === requestId) {
+        hasDataRef.current = true
+        setError(null)
         setData(json.data)
       }
     } catch (e) {
-      if (requestIdRef.current === requestId) {
-        setError(e instanceof Error ? e.message : 'Unbekannter Fehler')
+      const connectionProblem = isConnectionError(e, status)
+      if (connectionProblem) reportConnection(false)
+      // Ein Aussetzer beim stillen Nachladen darf vorhandene Daten nicht durch
+      // eine Fehlerseite ersetzen – das Verbindungs-Banner zeigt das Problem an.
+      const keepShowingData = options?.silent && hasDataRef.current && connectionProblem
+      if (requestIdRef.current === requestId && !keepShowingData) {
+        setError(connectionProblem
+          ? 'Keine Verbindung zum Server. Bitte prüfe deine Verbindung und versuch es erneut.'
+          : e instanceof Error ? e.message : 'Unbekannter Fehler')
       }
     } finally {
       if (requestIdRef.current === requestId) {

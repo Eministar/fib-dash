@@ -256,7 +256,7 @@ export function ClipUploadDialog({
             <>
               <FileVideo className="h-6 w-6 text-[#a78bfa]" />
               <p className="text-[13px] font-medium text-white">{file.name}</p>
-              <p className="text-[12px] text-[#808080]">{formatBytes(file.size)}</p>
+              <p className="text-[12px] text-[#8c8c8c]">{formatBytes(file.size)}</p>
               {!uploading && (
                 <button
                   type="button"
@@ -273,9 +273,9 @@ export function ClipUploadDialog({
             </>
           ) : (
             <>
-              <UploadCloud className="h-6 w-6 text-[#6a6a6a]" />
+              <UploadCloud className="h-6 w-6 text-[#8c8c8c]" />
               <p className="text-[13px] text-[#d4d4d4]">Clip hierher ziehen oder klicken</p>
-              <p className="text-[11.5px] text-[#6a6a6a]">MP4, WebM, MOV oder MKV</p>
+              <p className="text-[11.5px] text-[#8c8c8c]">MP4, WebM, MOV oder MKV</p>
             </>
           )}
           <input
@@ -295,7 +295,7 @@ export function ClipUploadDialog({
                 style={{ width: `${progress.percent}%` }}
               />
             </div>
-            <p className="mt-1.5 flex flex-wrap gap-x-2 text-[11.5px] text-[#808080]">
+            <p className="mt-1.5 flex flex-wrap gap-x-2 text-[11.5px] text-[#8c8c8c]">
               <span>
                 {progress.percent}% übertragen
                 {progress.percent === 100 ? ' – wird zusammengesetzt…' : ''}

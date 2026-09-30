@@ -18,14 +18,14 @@ function GitHubLogo({ className }: { className?: string }) {
 export function AppFooter() {
   return (
     <footer className="mt-auto px-3 pb-5 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-2 border-t border-[#343434]/65 pt-4 text-[11px] text-[#737373] sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 border-t border-line/65 pt-4 text-[11px] text-fg-subtle sm:flex-row sm:items-center sm:justify-between">
         <p>
           Entwickelt von{' '}
           <a
             href="https://eministar.dev"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-[#b8b8b8] transition-colors hover:text-[#d4d4d4]"
+            className="font-semibold text-[#b8b8b8] transition-colors hover:text-accent"
           >
             Eministar
           </a>
@@ -35,7 +35,7 @@ export function AppFooter() {
           <span>Version {APP_VERSION_LABEL}</span>
           <Link
             href="/releases"
-            className="inline-flex items-center gap-1 font-mono text-[#a6a6a6] transition-colors hover:text-[#c3c3c3]"
+            className="inline-flex items-center gap-1 font-mono text-fg-muted transition-colors hover:text-[#c3c3c3]"
             title="Build-Historie öffnen"
           >
             <History size={11} /> {releaseBuildShort()}
@@ -44,7 +44,7 @@ export function AppFooter() {
             href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 transition-colors hover:text-[#d4d4d4]"
+            className="inline-flex items-center gap-1.5 transition-colors hover:text-accent"
           >
             <GitHubLogo className="h-3 w-3" />
             GitHub

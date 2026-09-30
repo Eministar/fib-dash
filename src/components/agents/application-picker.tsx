@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Check, Search } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { stripApplicationCaseNumber } from '@/lib/application-case-number'
+import { matchesSearch } from '@/lib/search-match'
 
 export interface LinkableApplication {
   id: string
@@ -22,7 +23,7 @@ interface ApplicationPickerProps {
   onChange: (applicationId: string) => void
 }
 
-function searchHaystack(application: LinkableApplication) {
+function searchFields(application: LinkableApplication) {
   return [
     application.caseNumber,
     application.applicantDisplayName,
@@ -30,9 +31,6 @@ function searchHaystack(application: LinkableApplication) {
     application.discordUsername,
     application.discordGlobalName,
   ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
 }
 
 /**
@@ -44,9 +42,7 @@ export function ApplicationPicker({ applications, value, onChange }: Application
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
-    const search = query.trim().toLowerCase()
-    if (!search) return applications
-    return applications.filter((application) => searchHaystack(application).includes(search))
+    return applications.filter((application) => matchesSearch(query, searchFields(application)))
   }, [applications, query])
 
   return (
@@ -54,12 +50,12 @@ export function ApplicationPicker({ applications, value, onChange }: Application
       <p className="mb-1.5 text-[12.5px] font-medium text-[#aeaeae]">Zugehörige Bewerbung</p>
 
       <div className="relative">
-        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#808080]" />
+        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Aktenzeichen, Name oder Discord-ID suchen"
-          className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]"
+          className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
         />
       </div>
 

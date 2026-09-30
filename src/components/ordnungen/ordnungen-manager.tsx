@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/toast'
 import { ORDNUNG_ICON_NAMES, ordnungIcon } from '@/lib/ordnungen-icons'
 import { OrdnungEditor } from '@/components/ordnungen/ordnung-editor'
 import type { OrdnungCategoryDTO, OrdnungenPayload } from '@/lib/ordnungen'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 export interface OrdnungenManagerHandle {
   openEditOrdnung: (id: string) => void
@@ -55,6 +56,7 @@ export const OrdnungenManager = forwardRef<OrdnungenManagerHandle, Props>(functi
 ) {
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
 
   const [ordnungModalOpen, setOrdnungModalOpen] = useState(false)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
@@ -98,7 +100,7 @@ export const OrdnungenManager = forwardRef<OrdnungenManagerHandle, Props>(functi
       }
     },
     async deleteOrdnung(id: string, title: string) {
-      if (!confirm(`„${title}" wirklich löschen?`)) return
+      if (!(await confirm({ title: `„${title}“ löschen?`, tone: 'danger' }))) return
       try {
         await execute(`/api/ordnungen/${id}`, { method: 'DELETE' })
         addToast({ type: 'success', title: 'Ordnung gelöscht' })
@@ -118,7 +120,7 @@ export const OrdnungenManager = forwardRef<OrdnungenManagerHandle, Props>(functi
       setCategoryModalOpen(true)
     },
     async deleteCategory(id: string, label: string) {
-      if (!confirm(`Kategorie „${label}" wirklich löschen?`)) return
+      if (!(await confirm({ title: `Kategorie „${label}“ löschen?`, tone: 'danger' }))) return
       try {
         await execute(`/api/ordnungen/categories/${id}`, { method: 'DELETE' })
         addToast({ type: 'success', title: 'Kategorie gelöscht' })

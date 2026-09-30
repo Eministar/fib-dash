@@ -5,6 +5,7 @@ import { Users, Plus, ShieldCheck, ExternalLink, Pencil, Trash2, X } from 'lucid
 import { useFetch } from '@/hooks/use-fetch'
 import { Button } from '@/components/ui/button'
 import { leadershipGroupSchema, type LeadershipGroupInput } from '@/lib/leadership-groups'
+import { useUrlState } from '@/hooks/use-url-state'
 
 type Member = { id: string; displayName: string }
 type Group = {
@@ -21,7 +22,7 @@ export default function LeadershipGroupsPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
 
   const update = (patch: Partial<LeadershipGroupInput>) => setEditing(old => old ? { ...old, input: { ...old.input, ...patch } } : null)
   const editFamilies = (map: (families: LeadershipGroupInput['families']) => LeadershipGroupInput['families']) =>
@@ -77,7 +78,7 @@ export default function LeadershipGroupsPage() {
     {error && <div role="alert" className="text-red-400">{error} <button className="underline" onClick={() => void refetch()}>Erneut laden</button></div>}
     {loading && !data && <p className="text-neutral-400">Gruppen werden geladen …</p>}
 
-    {editing && data?.manage && <form onSubmit={save} className="space-y-5 rounded-xl border border-white/20 bg-[#111] p-5">
+    {editing && data?.manage && <form onSubmit={save} className="space-y-5 rounded-xl border border-white/20 bg-[#1d1d1d] p-5">
       <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">{editing.id ? 'Gruppe bearbeiten' : 'Neue Ermittlungsgruppe'}</h2><button type="button" aria-label="Bearbeitung schließen" disabled={busy} onClick={() => setEditing(null)}><X size={20} /></button></div>
       <fieldset disabled={busy} className="space-y-5 disabled:opacity-60">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -113,7 +114,7 @@ export default function LeadershipGroupsPage() {
       </fieldset>
     </form>}
 
-    {!error && data && <div className="grid gap-4 lg:grid-cols-2">{data.groups.map(group => <article key={group.id} className="space-y-4 rounded-xl border border-white/10 bg-[#111] p-5">
+    {!error && data && <div className="grid gap-4 lg:grid-cols-2">{data.groups.map(group => <article key={group.id} className="space-y-4 rounded-xl border border-white/10 bg-[#1d1d1d] p-5">
       <div className="flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-white">{group.name}</h2><p className="mt-1 text-xs text-neutral-500">{group.members.length} Mitglieder · {group.families.length} Familien</p></div>
         {data.manage && <div className="flex gap-1">
           <button aria-label={`${group.name} bearbeiten`} className="rounded-lg p-2 hover:bg-white/10" onClick={() => { setEditing({ id: group.id, input: { name: group.name, channelId: group.channelId, version: group.version, memberIds: group.members.map(m => m.id), families: group.families.map(f => ({ name: f.name, leadIds: f.leadIds })) } }); setConfirmDelete(null); setMessage(''); setSearch(''); window.scrollTo({ top: 0, behavior: 'instant' }) }}><Pencil size={16} /></button>

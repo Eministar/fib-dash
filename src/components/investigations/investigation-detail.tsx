@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
-  ArrowLeft,
   CalendarClock,
   ImageIcon,
   MapPin,
@@ -68,6 +67,9 @@ import type {
   InvestigationDetail as InvestigationDetailData,
   Person,
 } from '@/components/investigations/types'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useTrackRecentItem } from '@/hooks/use-recent-items'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 
 function localDateTimeValue(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
@@ -87,6 +89,7 @@ function emptyEntryForm(): EntryForm {
 }
 
 export function InvestigationDetail({ investigationId }: { investigationId: string }) {
+  const confirm = useConfirm()
   const { user } = useAuth()
   const router = useRouter()
   const query = useSearchParams()
@@ -101,6 +104,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
     canView ? `/api/investigations/${investigationId}` : null,
   )
   const { data: agents } = useFetch<AgentLite[]>(canManage ? '/api/agents' : null)
+  useTrackRecentItem(data ? { href: `/investigations/${investigationId}`, title: data.title, subtitle: data.caseNumber, kind: 'investigation' } : null)
   const { data: persons } = useFetch<Person[]>(canManage ? '/api/persons' : null)
 
   const [entryOpen, setEntryOpen] = useState(false)
@@ -230,7 +234,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   }
 
   const handleDeleteEntry = async (entryId: string, title: string) => {
-    if (!window.confirm(`Eintrag "${title}" wirklich löschen? Zugehörige Clips bleiben an der Akte.`)) return
+    if (!(await confirm({ title: `Eintrag „${title}“ löschen?`, description: 'Zugehörige Clips bleiben an der Akte.', tone: 'danger' }))) return
 
     try {
       await execute(`/api/investigations/entries/${entryId}`, { method: 'DELETE' })
@@ -273,7 +277,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   }
 
   const handleDeleteClip = async (clip: BodycamClip) => {
-    if (!window.confirm(`Clip "${clip.title}" endgültig löschen? Die Videodatei wird dabei entfernt.`)) return
+    if (!(await confirm({ title: `Clip „${clip.title}“ endgültig löschen?`, description: 'Die Videodatei wird dabei vom Server entfernt.', tone: 'danger' }))) return
 
     try {
       await execute(`/api/investigations/clips/${clip.id}`, { method: 'DELETE' })
@@ -287,9 +291,13 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
 
   const handleDeleteInvestigation = async () => {
     if (
-      !window.confirm(
-        `Akte ${investigation.caseNumber} mit allen Einträgen und ${investigation.clips.length} Clips endgültig löschen?`,
-      )
+      !(await confirm({
+        title: `Akte ${investigation.caseNumber} endgültig löschen?`,
+        description: `Alle Einträge und ${investigation.clips.length} Clips werden mitgelöscht. Das lässt sich nicht rückgängig machen.`,
+        confirmLabel: 'Akte löschen',
+        tone: 'danger',
+        requireText: investigation.caseNumber,
+      }))
     ) {
       return
     }
@@ -315,13 +323,10 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
 
   return (
     <div className="mx-auto max-w-5xl pb-2">
-      <Link
-        href="/investigations"
-        className="mb-4 inline-flex items-center gap-1.5 text-[12.5px] text-[#a6a6a6] hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Alle Einsatzakten
-      </Link>
+      <Breadcrumbs
+        className="mb-4"
+        items={[{ label: 'Ermittlungen', href: '/investigations' }, { label: investigation.caseNumber }]}
+      />
 
       <div className="mb-5 rounded-[14px] border border-[#2a2a2a] bg-[#141414] p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -357,7 +362,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         <dl className="mt-4 grid gap-x-6 gap-y-2.5 border-t border-[#232323] pt-4 sm:grid-cols-2 lg:grid-cols-4">
           {factRows.map(([label, value]) => (
             <div key={label} className="min-w-0">
-              <dt className="text-[11px] uppercase tracking-wide text-[#6a6a6a]">{label}</dt>
+              <dt className="text-[11px] uppercase tracking-wide text-[#8c8c8c]">{label}</dt>
               <dd className="mt-0.5 truncate text-[12.5px] text-[#d4d4d4]" title={value}>
                 {value}
               </dd>
@@ -391,7 +396,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                       <EntryKindBadge kind={entry.kind} />
                       <h3 className="text-[13.5px] font-semibold text-white">{entry.title}</h3>
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#6a6a6a]">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8c8c8c]">
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarClock className="h-3.5 w-3.5" />
                         {formatDateTime(entry.occurredAt)}
@@ -410,7 +415,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                     <button
                       type="button"
                       onClick={() => handleDeleteEntry(entry.id, entry.title)}
-                      className="shrink-0 text-[#6a6a6a] transition-colors hover:text-[#fca5a5]"
+                      className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                       aria-label="Eintrag löschen"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -474,7 +479,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                         {link.person.firstName} {link.person.lastName}
                       </Link>
                       <RoleBadge role={link.role} />
-                      <span className="font-mono text-[11px] text-[#6a6a6a]">{link.person.personNumber}</span>
+                      <span className="font-mono text-[11px] text-[#8c8c8c]">{link.person.personNumber}</span>
                     </div>
                     {link.note && <p className="mt-0.5 text-[12px] text-[#a6a6a6]">{link.note}</p>}
                   </div>
@@ -484,7 +489,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                       onClick={() =>
                         handleUnlinkPerson(link.id, `${link.person.firstName} ${link.person.lastName}`)
                       }
-                      className="shrink-0 text-[#6a6a6a] transition-colors hover:text-[#fca5a5]"
+                      className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
                       aria-label="Verknüpfung lösen"
                     >
                       <X className="h-4 w-4" />

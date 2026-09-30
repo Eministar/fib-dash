@@ -19,6 +19,9 @@ import {
   applicationAnswerText,
   type JobApplicationStatusValue,
 } from '@/lib/job-applications'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUrlState } from '@/hooks/use-url-state'
+import { matchesSearch } from '@/lib/search-match'
 
 interface ApplicationAnswer {
   id: string
@@ -79,7 +82,7 @@ function matchesStatusFilter(application: ApplicationRow, filter: StatusFilter) 
 }
 
 /** Durchsuchbar über Aktenzeichen, Name und Discord-Kennungen. */
-function applicationHaystack(application: ApplicationRow) {
+function applicationSearchFields(application: ApplicationRow) {
   return [
     application.caseNumber,
     application.applicantDisplayName,
@@ -88,9 +91,6 @@ function applicationHaystack(application: ApplicationRow) {
     application.discordGlobalName,
     application.applicant?.username,
   ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
 }
 
 function discordAvatarUrl(application: Pick<ApplicationRow, 'discordId' | 'discordAvatar'>) {
@@ -106,13 +106,14 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
   )
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [status, setStatus] = useState<JobApplicationStatusValue>('SUBMITTED')
   const [statusText, setStatusText] = useState('')
   const [internalNote, setInternalNote] = useState('')
   const [saving, setSaving] = useState(false)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+  const [search, setSearch] = useUrlState('q', '')
+  const [statusFilter, setStatusFilter] = useUrlState<StatusFilter>('status', 'ALL')
   const [syncing, setSyncing] = useState(false)
   const [syncProgress, setSyncProgress] = useState<{ done: number; remaining: number } | null>(null)
   // Merkt sich die zuletzt in die Editierfelder geladene Bewerbung. Der stille
@@ -122,10 +123,9 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
   const loadedApplicationIdRef = useRef<string | null>(null)
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase()
     return (applications ?? []).filter((application) => (
       matchesStatusFilter(application, statusFilter) &&
-      (!query || applicationHaystack(application).includes(query))
+      matchesSearch(search, applicationSearchFields(application))
     ))
   }, [applications, search, statusFilter])
 
@@ -196,10 +196,10 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
    * nichts mehr offen ist.
    */
   const syncAllNicknames = async (force = false) => {
-    const question = force
-      ? 'Wirklich ALLE Bewerber erneut umbenennen — auch die, die schon dran waren?'
-      : 'Alle Bewerber auf „Aktenzeichen | Name“ umbenennen? Das ändert auch die Discord-Nicknames.'
-    if (!confirm(question)) return
+    const confirmed = await confirm(force
+      ? { title: 'Alle Bewerber erneut umbenennen?', description: 'Auch Bewerber, die schon umbenannt wurden, bekommen ihren Discord-Nickname neu gesetzt.', confirmLabel: 'Alle umbenennen' }
+      : { title: 'Bewerber umbenennen?', description: 'Alle Bewerber erhalten „Aktenzeichen | Name“ – das ändert auch ihre Discord-Nicknames.', confirmLabel: 'Umbenennen' })
+    if (!confirmed) return
 
     setSyncing(true)
     const totals: Record<string, number> = {}
@@ -308,7 +308,7 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
 
       {(applications ?? []).length === 0 ? (
         <section className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 py-14 text-center">
-          <ClipboardList size={28} className="mx-auto mb-3 text-[#808080]" />
+          <ClipboardList size={28} className="mx-auto mb-3 text-[#8c8c8c]" />
           <p className="text-[14px] font-semibold text-white">Noch keine Bewerbungen vorhanden</p>
           <p className="mt-1 text-[12.5px] text-[#a6a6a6]">Neue Abgaben erscheinen automatisch in dieser Liste.</p>
         </section>
@@ -317,7 +317,7 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
           <aside className="overflow-hidden rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 lg:sticky lg:top-4">
             <div className="flex items-center justify-between border-b border-[#343434]/45 px-3 py-2.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a6a6a6]">Bewerbungseingang</p>
-              <span className="text-[10.5px] text-[#686868]">
+              <span className="text-[11px] text-[#8c8c8c]">
                 {filtered.length}
                 {filtered.length !== (applications?.length ?? 0) && ` / ${applications?.length ?? 0}`}
               </span>
@@ -325,12 +325,12 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
 
             <div className="space-y-2 border-b border-[#343434]/45 px-2.5 py-2.5">
               <div className="relative">
-                <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#808080]" />
+                <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Aktenzeichen oder Name suchen"
-                  className="h-[34px] w-full rounded-[8px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#808080] focus:border-[#d4d4d4]"
+                  className="h-[34px] w-full rounded-[8px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
                 />
               </div>
               <div className="flex flex-wrap gap-1">
@@ -387,7 +387,7 @@ export function HrApplications({ canManage }: HrApplicationsProps) {
                   {selected.answers.map((answer, index) => (
                     <div key={answer.id} className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/55 p-3">
                       <div className="mb-2 flex items-start gap-2">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[10px] font-semibold text-[#d4d4d4]">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
                           {index + 1}
                         </span>
                         <p className="text-[13px] font-semibold text-white">{answer.questionTitle}</p>
@@ -560,7 +560,7 @@ function ApplicationDetailHeader({
         </div>
         <div className="flex shrink-0 flex-col items-start gap-2">
           <div className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/55 px-3 py-2">
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#808080]">Review</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8c8c8c]">Review</p>
             <p className="mt-1 text-[12px] text-[#c3c3c3]">
               {application.reviewedBy ? application.reviewedBy.displayName : 'Noch offen'}
             </p>

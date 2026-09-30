@@ -11,6 +11,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { mapCategory, type MapSpot } from '@/lib/map-spots'
 import { CityMap } from '@/components/map/city-map'
 import { SpotEditorDialog, type SpotFormValues } from '@/components/map/spot-editor-dialog'
+import { matchesSearch } from '@/lib/search-match'
 
 /** Was eine Akte von einem Kartenpunkt braucht. Absichtlich weniger als ein
  *  volles `MapSpot`, damit auch Ansichten mit verkürzter Auswahl den Picker
@@ -37,11 +38,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
       ? value.filter((entry) => entry.id !== spot.id)
       : [...value, { id: spot.id, title: spot.title, category: spot.category }])
 
-  const visible = spots.filter((spot) => {
-    const needle = search.trim().toLowerCase()
-    if (!needle) return true
-    return spot.title.toLowerCase().includes(needle) || mapCategory(spot.category).label.toLowerCase().includes(needle)
-  })
+  const visible = spots.filter((spot) => matchesSearch(search, [spot.title, mapCategory(spot.category).label]))
 
   // Fehler zeigt der Editor-Dialog selbst an – deshalb hier bewusst kein catch.
   const createSpot = async (values: SpotFormValues) => {
@@ -58,7 +55,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
   return (
     <div className="space-y-3">
       {value.length === 0 ? (
-        <div className="flex items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 py-5 text-sm text-[#808080]">
+        <div className="flex items-center gap-2 rounded-lg border border-dashed border-[#343434] px-4 py-5 text-sm text-[#8c8c8c]">
           <MapPin size={18} />
           Noch keine Kartenpunkte verknüpft.
         </div>
@@ -74,7 +71,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} />
                 {spot.title}
-                <span className="text-[#6a6a6a]">×</span>
+                <span className="text-[#8c8c8c]">×</span>
               </button>
             </li>
           ))}
@@ -119,12 +116,12 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
                     >
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: category.hex }} />
                       <span className="min-w-0 truncate">{spot.title}</span>
-                      <span className="ml-auto shrink-0 text-[11px] text-[#6a6a6a]">{category.label}</span>
+                      <span className="ml-auto shrink-0 text-[11px] text-[#8c8c8c]">{category.label}</span>
                     </button>
                   </li>
                 )
               })}
-              {visible.length === 0 && <li className="px-1 py-3 text-[12px] text-[#808080]">Keine passenden Punkte.</li>}
+              {visible.length === 0 && <li className="px-1 py-3 text-[12px] text-[#8c8c8c]">Keine passenden Punkte.</li>}
             </ul>
 
             {canCreate && (

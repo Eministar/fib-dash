@@ -34,6 +34,8 @@ import {
 import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { cn, formatDateTime } from '@/lib/utils'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUrlState } from '@/hooks/use-url-state'
 
 interface CaseRow {
   id: string
@@ -83,10 +85,11 @@ const STATUS_FILTERS: { value: '' | LegalCaseStatusValue; label: string }[] = [
 ]
 
 export function LegalCases({ canManage }: { canManage: boolean }) {
+  const confirm = useConfirm()
   const { addToast } = useToast()
   const { execute, loading: batchLoading } = useApi<{ token: string; caseCount: number }>()
   const { data, loading, refetch } = useFetch<CaseRow[]>('/api/legal-cases')
-  const [statusFilter, setStatusFilter] = useState<'' | LegalCaseStatusValue>('')
+  const [statusFilter, setStatusFilter] = useUrlState<'' | LegalCaseStatusValue>('status', '')
   const [createOpen, setCreateOpen] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [batch, setBatch] = useState<{ token: string; caseCount: number } | null>(null)
@@ -99,7 +102,7 @@ export function LegalCases({ canManage }: { canManage: boolean }) {
   const batchUrl = batch ? `${window.location.origin}/klagen/${batch.token}` : ''
 
   const createBatch = async () => {
-    if (!confirm('Für alle gekündigten Mitarbeiter mit offenen Sanktionen werden jetzt Sanktionsklagen erstellt. Fortfahren?')) return
+    if (!(await confirm({ title: 'Sanktionsklagen erstellen?', description: 'Für alle gekündigten Mitarbeiter mit offenen Sanktionen wird jetzt eine Sanktionsklage angelegt.', confirmLabel: 'Klagen erstellen' }))) return
     try {
       const result = await execute('/api/legal-cases/batch', { method: 'POST' })
       if (!result) return
@@ -233,7 +236,7 @@ function CaseCard({ row, onOpen }: { row: CaseRow; onOpen: () => void }) {
             <span className="rounded-[6px] bg-white/[0.04] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#a78bfa]">
               {row.caseNumber}
             </span>
-            <span className="rounded-full border border-[#343434]/60 bg-[#181818]/60 px-2 py-[1px] text-[10.5px] font-semibold text-[#a6a6a6]">
+            <span className="rounded-full border border-[#343434]/60 bg-[#181818]/60 px-2 py-[1px] text-[11px] font-semibold text-[#a6a6a6]">
               {kind.label}
             </span>
           </div>
@@ -243,11 +246,11 @@ function CaseCard({ row, onOpen }: { row: CaseRow; onOpen: () => void }) {
             {row.accusedBadge ? ` · ${displayBadgeNumber(row.accusedBadge)}` : ''}
           </p>
         </div>
-        <span className={cn('shrink-0 rounded-full border px-2.5 py-[2px] text-[10.5px] font-semibold', statusClass(row.status))}>
+        <span className={cn('shrink-0 rounded-full border px-2.5 py-[2px] text-[11px] font-semibold', statusClass(row.status))}>
           {status.label}
         </span>
       </div>
-      <div className="mt-3 flex items-center gap-3 text-[11px] text-[#686868]">
+      <div className="mt-3 flex items-center gap-3 text-[11px] text-[#8c8c8c]">
         <span>{formatDateTime(row.createdAt)}</span>
         {sanctionCount > 0 && (
           <>
@@ -414,7 +417,7 @@ function SanctionCaseForm({ submitting, onCreate, onBack }: { submitting: boolea
                       {penalGradeLabel(sanction.penalGrade)} · {sanctionLevelLabel(sanction.level)}
                     </span>
                     <span className="mt-0.5 block text-[12px] leading-5 text-[#a6a6a6]">{sanction.reason}</span>
-                    <span className="mt-0.5 block text-[11px] text-[#808080]">
+                    <span className="mt-0.5 block text-[11px] text-[#8c8c8c]">
                       {resolveViolation(sanction.violationCode)?.label ?? 'Kein Katalog-Verstoß hinterlegt'} · {formatDateTime(sanction.createdAt)}
                     </span>
                   </span>
@@ -546,6 +549,7 @@ function CustomCaseForm({ submitting, onCreate, onBack }: { submitting: boolean;
 }
 
 function CaseDetailModal({ caseId, canManage, onClose, onChanged }: { caseId: string; canManage: boolean; onClose: () => void; onChanged: () => void }) {
+  const confirm = useConfirm()
   const { execute, loading: busy } = useApi<LegalCaseDocumentData>()
   const { addToast } = useToast()
   const [doc, setDoc] = useState<LegalCaseDocumentData | null>(null)
@@ -613,7 +617,7 @@ function CaseDetailModal({ caseId, canManage, onClose, onChanged }: { caseId: st
   }
 
   const remove = async () => {
-    if (!doc || !confirm(`Klage ${doc.caseNumber} wirklich löschen?`)) return
+    if (!doc || !(await confirm({ title: `Klage ${doc.caseNumber} löschen?`, tone: 'danger' }))) return
     try {
       await execute(`/api/legal-cases/${encodeURIComponent(caseId)}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Klage gelöscht' })
@@ -691,7 +695,7 @@ function CaseDetailModal({ caseId, canManage, onClose, onChanged }: { caseId: st
           )}
 
           {!editing && (
-            <p className="break-all font-mono text-[10.5px] leading-4 text-[#686868]">
+            <p className="break-all font-mono text-[11px] leading-4 text-[#8c8c8c]">
               {window.location.origin}/klage/{doc.token}
             </p>
           )}

@@ -49,7 +49,7 @@ export function FormTestResponses({ testId }: { testId: string }) {
       <div className="mx-auto max-w-5xl">
         <PageHeader title="Abgaben" description="Die Auswertung konnte nicht geladen werden." eyebrow="Auswertung" />
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#808080]" />
+          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
           <p className="text-[13px] text-[#a6a6a6]">{loadError ?? 'Auswertung nicht verfügbar'}</p>
         </div>
       </div>
@@ -82,7 +82,7 @@ export function FormTestResponses({ testId }: { testId: string }) {
 
       {responses.length === 0 ? (
         <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#808080]" />
+          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
           <p className="text-[13px] text-[#a6a6a6]">Noch keine Abgaben vorhanden</p>
         </div>
       ) : (

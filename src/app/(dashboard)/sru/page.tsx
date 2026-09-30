@@ -49,8 +49,9 @@ import { hasPermission } from '@/lib/permissions'
 import { cn, formatDateTime } from '@/lib/utils'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { renderMarkdown } from '@/lib/markdown'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
-const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: PageLoader })
+const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: () => <PageLoader /> })
 
 type Tab = 'documents' | 'tasks' | 'calendar'
 
@@ -171,6 +172,7 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
   const [content, setContent] = useState('')
   const [folderId, setFolderId] = useState('')
   const [documentDirty, setDocumentDirty] = useState(false)
+  useUnsavedChanges(documentDirty)
   const [writerMode, setWriterMode] = useState<'split' | 'preview'>('split')
   const [folderModalOpen, setFolderModalOpen] = useState(false)
   const [docModalOpen, setDocModalOpen] = useState(false)
@@ -392,7 +394,7 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
     })
   }
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   return (
     <div className="space-y-5">
@@ -431,17 +433,17 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
                   <p className="flex-1 truncate text-[12.5px] font-semibold text-[#e5e5e5]">{folder.name}</p>
                   {canManage && (
                     <div className="flex items-center gap-0.5">
-                      <button type="button" onClick={() => openEditFolder(folder)} className="p-1 rounded text-[#686868] hover:text-[#d4d4d4]">
+                      <button type="button" onClick={() => openEditFolder(folder)} className="p-1 rounded text-[#8c8c8c] hover:text-[#d4d4d4]">
                         <Pencil size={11} />
                       </button>
-                      <button type="button" onClick={() => requestDeleteFolder(folder)} className="p-1 rounded text-[#686868] hover:text-red-400">
+                      <button type="button" onClick={() => requestDeleteFolder(folder)} className="p-1 rounded text-[#8c8c8c] hover:text-red-400">
                         <Trash2 size={11} />
                       </button>
                     </div>
                   )}
                 </div>
                 {folder.documents.length === 0 ? (
-                  <p className="px-7 py-1 text-[11px] text-[#686868]">Keine Dokumente</p>
+                  <p className="px-7 py-1 text-[11px] text-[#8c8c8c]">Keine Dokumente</p>
                 ) : (
                   folder.documents.map((document) => (
                     <DocumentButton key={document.id} document={document} color={folder.color} active={selectedId === document.id} onClick={() => setSelectedId(document.id)} />
@@ -451,7 +453,7 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
             ))}
             {allDocuments.length === 0 && (
               <div className="py-12 text-center">
-                <FileText size={24} className="mx-auto mb-2 text-[#808080]" />
+                <FileText size={24} className="mx-auto mb-2 text-[#8c8c8c]" />
                 <p className="text-[12.5px] text-[#a6a6a6]">Keine Dokumente vorhanden</p>
               </div>
             )}
@@ -537,7 +539,7 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
                       setContent(e.target.value)
                     }}
                     readOnly={!canManage}
-                    className="min-h-[560px] resize-none border-r border-[#343434]/45 bg-[#080808]/45 p-5 font-mono text-[13.5px] leading-7 text-[#f4f4f4] outline-none placeholder:text-[#686868]"
+                    className="min-h-[560px] resize-none border-r border-[#343434]/45 bg-[#080808]/45 p-5 font-mono text-[13.5px] leading-7 text-[#f4f4f4] outline-none placeholder:text-[#8c8c8c]"
                     placeholder="Markdown schreiben..."
                   />
                 )}
@@ -551,7 +553,7 @@ function SruDocuments({ canManage }: { canManage: boolean }) {
             </div>
           ) : (
             <div className="flex min-h-[680px] flex-col items-center justify-center text-center">
-              <FileText size={30} className="mb-3 text-[#808080]" />
+              <FileText size={30} className="mb-3 text-[#8c8c8c]" />
               <p className="text-[13px] text-[#a6a6a6]">Dokument auswählen oder neu erstellen</p>
             </div>
           )}
@@ -761,7 +763,7 @@ function SruCalendar({ canManage }: { canManage: boolean }) {
     })
   }
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   return (
     <div className="space-y-5">

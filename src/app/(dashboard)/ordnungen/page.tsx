@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
@@ -10,6 +10,8 @@ import { useAuth } from '@/context/auth-context'
 import { ordnungIcon } from '@/lib/ordnungen-icons'
 import type { OrdnungenPayload } from '@/lib/ordnungen'
 import { OrdnungenManager, type OrdnungenManagerHandle } from '@/components/ordnungen/ordnungen-manager'
+import { useUrlState } from '@/hooks/use-url-state'
+import { matchesSearch } from '@/lib/search-match'
 
 function IconButton({ label, danger, onClick, children }: { label: string; danger?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -30,15 +32,14 @@ export default function OrdnungenPage() {
   const { user } = useAuth()
   const canManage = !!user?.permissions.includes('ordnungen:manage')
   const managerRef = useRef<OrdnungenManagerHandle>(null)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const isLoading = data === undefined
 
   const sections = useMemo(() => {
-    const query = search.trim().toLowerCase()
     return (data?.categories ?? []).map((category) => ({
       category,
       items: (data?.ordnungen ?? []).filter((ordnung) => ordnung.categoryId === category.id && (
-        !query || `${ordnung.title} ${ordnung.description} ${category.label}`.toLowerCase().includes(query)
+        matchesSearch(search, [ordnung.title, ordnung.description, category.label])
       )),
     })).filter((section) => section.items.length > 0 || (canManage && !search.trim()))
   }, [data, search, canManage])
@@ -70,7 +71,7 @@ export default function OrdnungenPage() {
               <div className="mb-2 flex items-center gap-2.5 px-1">
                 <CategoryIcon size={15} strokeWidth={2} style={{ color: category.color }} aria-hidden />
                 <h2 id={`kategorie-${category.id}`} className="text-[13.5px] font-semibold text-[#f4f4f4]">{category.label}</h2>
-                <span className="text-[12px] text-[#808080]">{items.length}</span>
+                <span className="text-[12px] text-[#8c8c8c]">{items.length}</span>
                 {canManage && (
                   <div className="ml-auto flex">
                     <IconButton label="Kategorie bearbeiten" onClick={() => managerRef.current?.openEditCategory(category)}><Pencil size={13} /></IconButton>
@@ -81,7 +82,7 @@ export default function OrdnungenPage() {
               {category.description && <p className="mb-2 px-1 text-[12px] text-[#909090]">{category.description}</p>}
 
               {items.length === 0
-                ? <p className="rounded-[12px] border border-dashed border-[#343434] px-4 py-4 text-[12.5px] text-[#808080]">Noch keine Ordnung in diesem Bereich.</p>
+                ? <p className="rounded-[12px] border border-dashed border-[#343434] px-4 py-4 text-[12.5px] text-[#8c8c8c]">Noch keine Ordnung in diesem Bereich.</p>
                 : (
                   <ul className="divide-y divide-[#2c2c2c] overflow-hidden rounded-[12px] border border-[#343434] bg-[#161616]">
                     {items.map((ordnung) => {
@@ -94,7 +95,7 @@ export default function OrdnungenPage() {
                               <span className="block truncate text-[14px] font-medium text-[#f2f2f2]">{ordnung.title}</span>
                               <span className="mt-0.5 block truncate text-[12.5px] text-[#909090]">{ordnung.description}</span>
                             </span>
-                            <ChevronRight size={16} className="shrink-0 text-[#6f6f6f] group-hover:text-white" aria-hidden />
+                            <ChevronRight size={16} className="shrink-0 text-[#8c8c8c] group-hover:text-white" aria-hidden />
                           </Link>
                           {canManage && (
                             <div className="flex shrink-0">

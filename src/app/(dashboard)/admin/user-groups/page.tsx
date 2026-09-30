@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/toast'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { PERMISSIONS, PERMISSION_LABELS, type Permission } from '@/lib/permissions'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface UserGroup {
   id: string
@@ -30,6 +31,7 @@ export default function UserGroupsPage() {
   const { data: groups, loading, refetch } = useFetch<UserGroup[]>('/api/user-groups')
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editGroup, setEditGroup] = useState<UserGroup | null>(null)
@@ -82,7 +84,7 @@ export default function UserGroupsPage() {
   }
 
   const deleteGroup = async (group: UserGroup) => {
-    if (!confirm(`Benutzergruppe "${group.name}" wirklich löschen?`)) return
+    if (!(await confirm({ title: `Benutzergruppe „${group.name}“ löschen?`, description: 'Mitglieder verlieren alle Rechte, die sie nur über diese Gruppe hatten.', tone: 'danger' }))) return
     try {
       await execute(`/api/user-groups/${group.id}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Benutzergruppe gelöscht' })
@@ -92,7 +94,7 @@ export default function UserGroupsPage() {
     }
   }
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   return (
     <div>
@@ -117,24 +119,24 @@ export default function UserGroupsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13.5px] font-medium text-[#eee]">{group.name}</p>
-                <p className="text-[11.5px] text-[#808080] truncate">
+                <p className="text-[11.5px] text-[#8c8c8c] truncate">
                   {group.description || 'Keine Beschreibung'} · {group.permissions.length} Rechte · {group._count.users} Benutzer
                 </p>
               </div>
               <div className="flex gap-0.5">
                 <button onClick={() => openEdit(group)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                  <Edit size={13} className="text-[#808080]" />
+                  <Edit size={13} className="text-[#8c8c8c]" />
                 </button>
                 <button onClick={() => deleteGroup(group)} className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors">
-                  <Trash2 size={13} className="text-[#808080] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
                 </button>
               </div>
             </motion.div>
           ))}
           {(!groups || groups.length === 0) && (
             <div className="text-center py-16">
-              <Users size={28} className="mx-auto mb-3 text-[#333]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#999]">Keine Benutzergruppen vorhanden</p>
+              <Users size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#909090]">Keine Benutzergruppen vorhanden</p>
             </div>
           )}
         </div>

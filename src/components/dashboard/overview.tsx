@@ -42,6 +42,9 @@ import { useAuth } from '@/context/auth-context'
 import { hasPermission, type Permission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { notifyLiveUpdate } from '@/lib/live-updates'
+import { RecentItemsCard } from '@/components/dashboard/recent-items-card'
+import { LiveNumber } from '@/components/ui/live-number'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface RankSummary {
   name: string
@@ -244,16 +247,6 @@ function ProgressRow({ label, value, detail, color = '#d4d4d4' }: { label: strin
   )
 }
 
-function EmptyState({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
-  return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="h-11 w-11 rounded-full bg-[#d4d4d4]/5 border border-[#d4d4d4]/10 flex items-center justify-center mb-3">
-          <Icon size={18} className="text-[#d4d4d4]/40" strokeWidth={1.5} />
-        </div>
-        <p className="text-[12.5px] text-[#919191]">{text}</p>
-      </div>
-  )
-}
 
 function notificationClass(severity: 'info' | 'warning' | 'error') {
   if (severity === 'error') return 'border-[#7f1d1d]/55 bg-[#2a1212]/55 text-[#fca5a5] hover:border-[#7f1d1d]/80'
@@ -469,12 +462,12 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d4d4d4]/25 bg-[#d4d4d4]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#cfcfcf]">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d4d4d4]/25 bg-[#d4d4d4]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#cfcfcf]">
                   Übersicht
                 </span>
-                  <span className="text-[10.5px] font-medium text-[#909090] uppercase tracking-[0.16em]">{dateLine}</span>
+                  <span className="text-[11px] font-medium text-[#909090] uppercase tracking-[0.16em]">{dateLine}</span>
                   {timeLine && (
-                      <span className="hidden sm:inline-flex items-center gap-1 text-[10.5px] font-mono text-[#909090] uppercase tracking-[0.1em]">
+                      <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-[#909090] uppercase tracking-[0.1em]">
                     · {timeLine} Uhr
                   </span>
                   )}
@@ -514,6 +507,8 @@ export default function DashboardPage() {
           </div>
         </section>
 
+        <RecentItemsCard />
+
         {/* ===== KPI CARDS ===== */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {statCards.filter((card) => hasPermission(user, card.permission)).map((card) => {
@@ -545,12 +540,12 @@ export default function DashboardPage() {
                   >
                     <Icon size={16} strokeWidth={1.85} />
                   </span>
-                      <ArrowUpRight size={13} className="text-[#808080] group-hover:text-[#d4d4d4] transition-colors" strokeWidth={1.85} />
+                      <ArrowUpRight size={13} className="text-[#8c8c8c] group-hover:text-[#d4d4d4] transition-colors" strokeWidth={1.85} />
                     </div>
                     <div className="relative mt-3">
-                      <p className="text-[26px] font-semibold text-white tabular-nums leading-none tracking-tight">{stats[card.key]}</p>
+                      <p className="text-[26px] font-semibold text-white tabular-nums leading-none tracking-tight"><LiveNumber value={stats[card.key]} /></p>
                       <p className="text-[12px] text-[#d0d0d0] mt-2 font-medium leading-tight">{label}</p>
-                      <p className="text-[10.5px] text-[#909090] mt-1 leading-tight">{subLine}</p>
+                      <p className="text-[11px] text-[#909090] mt-1 leading-tight">{subLine}</p>
                     </div>
                   </Link>
                 </div>
@@ -618,7 +613,7 @@ export default function DashboardPage() {
                         </div>
                         <p className="mt-2.5 text-[12.5px] leading-relaxed text-[#d2d2d2]">{absence.reason}</p>
                         <div className="mt-3 flex items-center justify-between gap-2 pt-3 border-t border-white/[0.04]">
-                    <span className="text-[10.5px] text-[#909090] tabular-nums">
+                    <span className="text-[11px] text-[#909090] tabular-nums">
                       {formatDateTime(absence.startsAt)} → {formatDateTime(absence.endsAt)}
                     </span>
                           {canCancel && (
@@ -637,7 +632,7 @@ export default function DashboardPage() {
                 })}
               </div>
           ) : (
-              <EmptyState icon={CalendarDays} text="Aktuell ist niemand abgemeldet" />
+              <EmptyState inline icon={CalendarDays} title="Aktuell ist niemand abgemeldet" />
           )}
         </section>
 
@@ -679,7 +674,7 @@ export default function DashboardPage() {
                   <p className="text-[20px] font-semibold text-white tabular-nums leading-tight mt-0.5">{stats.draftRankChangeLists}</p>
                   <p className="text-[11px] text-[#919191] mt-0.5">Beförderungen & Degradierungen</p>
                 </div>
-                <ArrowRight size={14} className="text-[#808080] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
+                <ArrowRight size={14} className="text-[#8c8c8c] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
               </Link>
             </div>
 
@@ -741,7 +736,7 @@ export default function DashboardPage() {
                         <p className="text-[13px] font-semibold text-white">{action.label}</p>
                         <p className="text-[11.5px] text-[#a6a6a6] truncate">{action.description}</p>
                       </div>
-                      <ArrowRight size={13} className="text-[#808080] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
+                      <ArrowRight size={13} className="text-[#8c8c8c] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
                     </Link>
                 )
               })}
@@ -783,7 +778,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
             ) : (
-                <EmptyState icon={UserCheck} text="Keine abgemeldeten oder inaktiven Agents" />
+                <EmptyState inline icon={UserCheck} title="Keine abgemeldeten oder inaktiven Agents" />
             )}
           </section>
         </div>
@@ -836,11 +831,11 @@ export default function DashboardPage() {
                               {entry.oldValue && entry.newValue && (
                                   <p className="text-[11.5px] text-[#868686] mt-0.5">
                                     <span className="line-through opacity-70">{entry.oldValue}</span>
-                                    <span className="mx-1.5 text-[#808080]">→</span>
+                                    <span className="mx-1.5 text-[#8c8c8c]">→</span>
                                     <span className="text-[#d0d0d0]">{entry.newValue}</span>
                                   </p>
                               )}
-                              <p className="text-[10.5px] text-[#909090] mt-1 tabular-nums">
+                              <p className="text-[11px] text-[#909090] mt-1 tabular-nums">
                                 {entry.user?.displayName ?? 'Gelöscht'} · {formatRelativeTime(entry.createdAt)}
                               </p>
                             </div>
@@ -850,7 +845,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
             ) : (
-                <EmptyState icon={ScrollText} text="Keine Aktivitäten vorhanden" />
+                <EmptyState inline icon={ScrollText} title="Keine Aktivitäten vorhanden" />
             )}
           </section>
 
@@ -870,14 +865,14 @@ export default function DashboardPage() {
                         >
                           <p className="text-[13px] font-semibold text-white">{note.title || 'Notiz'}</p>
                           <p className="text-[12px] text-[#c3c3c3] mt-1 leading-relaxed">{truncateText(note.content, 120)}</p>
-                          <p className="text-[10.5px] text-[#d4d4d4] mt-2 font-medium">
+                          <p className="text-[11px] text-[#d4d4d4] mt-2 font-medium">
                             {note.agent ? `${agentName(note.agent)} · ` : ''}{note.author?.displayName ?? 'Gelöscht'}
                           </p>
                         </Link>
                     ))}
                   </div>
               ) : (
-                  <EmptyState icon={FileText} text="Keine angepinnten Notizen" />
+                  <EmptyState inline icon={FileText} title="Keine angepinnten Notizen" hint="Pinne wichtige Notizen an, damit sie hier erscheinen." action={<Link href="/notes" className="text-[12.5px] font-medium text-[#d4d4d4] hover:text-white">Zu den Notizen</Link>} />
               )}
             </section>
 
@@ -905,7 +900,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
               ) : (
-                  <EmptyState icon={Users} text="Keine Agents vorhanden" />
+                  <EmptyState inline icon={Users} title="Keine Agents vorhanden" />
               )}
             </section>
           </div>

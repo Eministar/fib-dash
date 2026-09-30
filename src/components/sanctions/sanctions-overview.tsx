@@ -14,7 +14,6 @@ import { SanctionCard, type SanctionCardAgent, type SanctionRecord } from '@/com
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
-import { displayBadgeNumber } from '@/lib/badge-number'
 import { hasPermission } from '@/lib/permissions'
 import {
   DECISION_CHECKLIST,
@@ -30,6 +29,8 @@ import {
   violationsForGrade,
 } from '@/lib/sanction-catalog'
 import { cn } from '@/lib/utils'
+import { useUrlState } from '@/hooks/use-url-state'
+import { matchesSearch } from '@/lib/search-match'
 
 /** Serverantwort von `GET /api/sanctions` — Karte plus Agent-Bezug. */
 interface SanctionListItem extends SanctionRecord {
@@ -129,10 +130,10 @@ export default function SanktionenPage() {
   const { execute } = useApi()
   const { addToast } = useToast()
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [gradeFilter, setGradeFilter] = useState('')
   const [levelFilter, setLevelFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ISSUED')
+  const [statusFilter, setStatusFilter] = useUrlState('status', 'ISSUED')
   const [issuerFilter, setIssuerFilter] = useState('')
 
   const [editing, setEditing] = useState<SanctionListItem | null>(null)
@@ -173,18 +174,18 @@ export default function SanktionenPage() {
         if (!needle) return true
 
         const agent = cardAgent(sanction)
-        const haystack = [
-          `${agent.firstName} ${agent.lastName}`,
-          displayBadgeNumber(agent.badgeNumber),
-          agent.badgeNumber ?? '',
-          agent.rankName ?? '',
+        return matchesSearch(needle, [
+          agent.firstName,
+          agent.lastName,
+          agent.badgeNumber,
+          agent.rankName,
           sanction.reason,
-          sanction.penalty ?? '',
-          resolveViolation(sanction.violationCode)?.label ?? '',
+          sanction.penalty,
+          sanction.violationCode,
+          resolveViolation(sanction.violationCode)?.label,
           sanctionLevelLabel(sanction.level),
-          sanction.issuedBy?.displayName ?? '',
-        ].join(' ').toLowerCase()
-        return haystack.includes(needle)
+          sanction.issuedBy?.displayName,
+        ])
       })
       .sort(compareSanctions)
   }, [sanctions, search, statusFilter, gradeFilter, levelFilter, issuerFilter])
@@ -319,12 +320,12 @@ export default function SanktionenPage() {
 
           <div className="mb-5 flex flex-col gap-2 lg:flex-row">
             <div className="relative flex-1">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#808080]" strokeWidth={1.75} />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" strokeWidth={1.75} />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Suche nach Name, Dienstnummer, Rang, Verstoß oder Grund..."
-                className={cn(filterClass, 'w-full pl-9 placeholder:text-[#808080]')}
+                className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
               />
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex">
@@ -336,7 +337,7 @@ export default function SanktionenPage() {
           </div>
 
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[12px] text-[#808080]">
+            <p className="text-[12px] text-[#8c8c8c]">
               {filtered.length} von {sanctions?.length ?? 0} Sanktionen
             </p>
             {(sanctions?.length ?? 0) >= 1000 && (
@@ -370,8 +371,8 @@ export default function SanktionenPage() {
             </div>
           ) : (
             <div className="glass-panel-elevated rounded-[14px] py-20 text-center">
-              <Gavel size={28} className="mx-auto mb-3 text-[#333]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#999]">
+              <Gavel size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#909090]">
                 {sanctions && sanctions.length > 0 ? 'Keine Treffer für die aktuellen Filter' : 'Keine Sanktionen vorhanden'}
               </p>
             </div>
@@ -407,7 +408,7 @@ export default function SanktionenPage() {
                 <p className="mt-1 text-[13px] leading-snug text-[#f4f4f4]">
                   {PENAL_GRADE_RULES[editForm.penalGrade].description}
                 </p>
-                <p className="mt-1.5 text-[12px] text-[#808080]">
+                <p className="mt-1.5 text-[12px] text-[#8c8c8c]">
                   Regelsanktion: {PENAL_GRADE_RULES[editForm.penalGrade].typicalConsequence}
                 </p>
               </div>
@@ -455,7 +456,7 @@ export default function SanktionenPage() {
             />
 
             <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/60 px-3.5 py-3">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#808080]">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#8c8c8c]">
                 Entscheidungs-Check
               </p>
               <div className="space-y-1.5">
@@ -518,7 +519,7 @@ function StatTile({ label, value, tone }: { label: string; value: string; tone: 
 
   return (
     <div className="glass-panel-elevated rounded-[12px] px-4 py-3">
-      <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-[#808080]">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-[#8c8c8c]">{label}</p>
       <p className={cn('mt-1 text-[19px] font-semibold tabular-nums', toneClass)}>{value}</p>
     </div>
   )

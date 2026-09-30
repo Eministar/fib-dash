@@ -150,7 +150,7 @@ export default function UsersPage() {
     }
   }
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   return (
     <div>
@@ -174,27 +174,27 @@ export default function UsersPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[13.5px] font-medium text-[#eee]">{user.displayName}</p>
                   {user.discordOnly && (
-                    <span className="inline-flex items-center gap-1 rounded-[5px] border border-[#404040] bg-[#181818]/70 px-2 py-0.5 text-[10.5px] text-[#a6a6a6]">
+                    <span className="inline-flex items-center gap-1 rounded-[5px] border border-[#404040] bg-[#181818]/70 px-2 py-0.5 text-[11px] text-[#a6a6a6]">
                       <ShieldCheck size={10} /> Discord
                     </span>
                   )}
                 </div>
-                <p className="text-[11.5px] text-[#808080]">
+                <p className="text-[11.5px] text-[#8c8c8c]">
                   @{user.discordUsername || user.username} · {user.groups.length ? user.groups.map((g) => g.name).join(', ') : 'Keine Gruppe'} · {user.permissions.length} direkte Rechte · Letzter Login: {formatDate(user.lastLoginAt)}
                 </p>
               </div>
-              <span className="text-[11.5px] font-medium text-[#888] bg-[#212121] px-2 py-[3px] rounded-[5px]">
+              <span className="text-[11.5px] font-medium text-[#a6a6a6] bg-[#212121] px-2 py-[3px] rounded-[5px]">
                 {user.groups.length ? `${user.groups.length} Gruppen` : 'Keine Gruppe'}
               </span>
               <button onClick={() => openEdit(user)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                <Edit size={13} className="text-[#808080]" />
+                <Edit size={13} className="text-[#8c8c8c]" />
               </button>
             </motion.div>
           ))}
           {(!users || users.length === 0) && (
             <div className="text-center py-16">
-              <UserCog size={28} className="mx-auto mb-3 text-[#333]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#999]">Keine Discord-Benutzer gefunden</p>
+              <UserCog size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#909090]">Keine Discord-Benutzer gefunden</p>
             </div>
           )}
         </div>
@@ -216,7 +216,7 @@ export default function UsersPage() {
           {groupOptions && groupOptions.length > 0 && (
             <div>
               <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Gruppen (manuell zuweisen)</p>
-              <p className="text-[11px] text-[#808080] mb-2">
+              <p className="text-[11px] text-[#8c8c8c] mb-2">
                 Discord-Gruppen werden automatisch über Rollen gesetzt. Hier kannst du Gruppen manuell hinzufügen.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -237,7 +237,7 @@ export default function UsersPage() {
           {unitOptions && unitOptions.filter((u) => u.active).length > 0 && (
             <div>
               <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Units (direkt zuweisen)</p>
-              <p className="text-[11px] text-[#808080] mb-2">
+              <p className="text-[11px] text-[#8c8c8c] mb-2">
                 Zusätzlich zu den Units des verknüpften Agents. Der Benutzer erhält die Rechte dieser Units.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -258,7 +258,7 @@ export default function UsersPage() {
           {relevantDiscordRoles.length > 0 && editUser?.discordId && (
             <div>
               <p className="block text-[12.5px] font-medium text-[#d4d4d4] mb-2">Discord-Rollen vergeben</p>
-              <p className="text-[11px] text-[#808080] mb-2">
+              <p className="text-[11px] text-[#8c8c8c] mb-2">
                 Die ausgewählten Gruppen haben Discord-Rollen. Wähle, welche Rollen der Benutzer in Discord erhalten soll.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -278,7 +278,7 @@ export default function UsersPage() {
           {/* Direct Permissions */}
           <div>
             <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-1">Direkte Leserechte</p>
-            <p className="text-[11px] text-[#808080] mb-2">Zusätzlich zu den Gruppenrechten.</p>
+            <p className="text-[11px] text-[#8c8c8c] mb-2">Zusätzlich zu den Gruppenrechten.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {READ_PERMISSIONS.map((permission) => (
                 <Checkbox

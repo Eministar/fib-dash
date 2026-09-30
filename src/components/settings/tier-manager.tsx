@@ -9,6 +9,8 @@ import { useToast } from '@/components/ui/toast'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { cn } from '@/lib/utils'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 interface TierRole {
   id: string
@@ -42,12 +44,14 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
   const { data, loading, refetch } = useFetch<Tier[]>('/api/discord/tiers')
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
 
   const [tiers, setTiers] = useState<Tier[]>([])
   const [savingId, setSavingId] = useState<string | null>(null)
   // Solange lokale, ungespeicherte Änderungen existieren, darf der Live-Refetch
   // (useFetch aktualisiert `data` im Hintergrund) die Bearbeitung nicht überschreiben.
   const [dirty, setDirty] = useState(false)
+  useUnsavedChanges(dirty)
 
   useEffect(() => {
     if (data && !dirty) setTiers(data)
@@ -110,7 +114,7 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
   }
 
   const deleteTier = async (tier: Tier) => {
-    if (!confirm(`Ebene „${tier.name}" wirklich löschen?`)) return
+    if (!(await confirm({ title: `Ebene „${tier.name}“ löschen?`, tone: 'danger' }))) return
     try {
       await execute(`/api/discord/tiers/${tier.id}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Ebene gelöscht' })
@@ -139,7 +143,7 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
       {loading && tiers.length === 0 ? (
         <p className="text-[12px] text-[#909090]">Lade Ebenen…</p>
       ) : tiers.length === 0 ? (
-        <p className="text-[12px] text-[#808080]">Noch keine Ebenen angelegt.</p>
+        <p className="text-[12px] text-[#8c8c8c]">Noch keine Ebenen angelegt.</p>
       ) : (
         <div className="space-y-3">
           {tiers.map((tier) => (
@@ -178,7 +182,7 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
                         selected
                           ? 'border-[#3b82f6] bg-[#1d4ed8]/25 text-[#dfdfdf]'
                           : lockedByOther
-                            ? 'border-[#252525] bg-transparent text-[#545454] cursor-not-allowed'
+                            ? 'border-[#252525] bg-transparent text-[#8c8c8c] cursor-not-allowed'
                             : 'border-[#343434]/60 bg-transparent text-[#aeaeae] hover:border-[#2a5a8f]',
                       )}
                     >

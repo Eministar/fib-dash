@@ -401,7 +401,7 @@ export default function SettingsPage() {
     })
   }
 
-  if (loading || discordLoading) return <PageLoader />
+  if (loading || discordLoading) return <PageLoader withHeader />
 
   const roleOptions = [
     { value: '', label: 'Keine Rolle' },
@@ -454,7 +454,7 @@ export default function SettingsPage() {
                 </button>
             ))}
             {selected.length === 0 && (
-                <span className="text-[12px] text-[#808080] py-1.5">Keine Rollen ausgewählt</span>
+                <span className="text-[12px] text-[#8c8c8c] py-1.5">Keine Rollen ausgewählt</span>
             )}
           </div>
         </div>
@@ -721,7 +721,7 @@ export default function SettingsPage() {
                     onValueChange={(updateChannelId) => setDiscordForm({ ...discordForm, updateChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Channel für Update-Mitteilungen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -732,7 +732,7 @@ export default function SettingsPage() {
                     onValueChange={(sanctionsChannelId) => setDiscordForm({ ...discordForm, sanctionsChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Channel für neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -743,7 +743,7 @@ export default function SettingsPage() {
                     onValueChange={(investigationsChannelId) => setDiscordForm({ ...discordForm, investigationsChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Meldungen zu Einsatzakten und neuen Bodycam-Clips. Verschlusssachen werden nie gepostet.
                   Leer lassen, um die Meldungen abzuschalten.
                 </p>
@@ -791,7 +791,7 @@ export default function SettingsPage() {
                     onValueChange={(dutyStatusChannelId) => setDiscordForm({ ...discordForm, dutyStatusChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Öffentliches Panel mit allen Agents im Dienst. Im manuellen Modus mit Ein-/Ausstempel-Buttons.
                 </p>
               </div>
@@ -802,7 +802,7 @@ export default function SettingsPage() {
                     onValueChange={(dutyAdminLogChannelId) => setDiscordForm({ ...discordForm, dutyAdminLogChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Optionaler Admin-Channel für Dienstzeit-Hinweise. Leer lassen, um den Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -813,7 +813,7 @@ export default function SettingsPage() {
                     onValueChange={(absenceStatusChannelId) => setDiscordForm({ ...discordForm, absenceStatusChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Öffentliches Panel mit allen aktuell abgemeldeten Agents. Leer lassen, um den Dienstzeiten- oder Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -824,7 +824,7 @@ export default function SettingsPage() {
                     onValueChange={(humanResourcesRoleId) => setDiscordForm({ ...discordForm, humanResourcesRoleId })}
                     options={roleOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Diese Rolle wird in Mitteilungen zu Sanktionen als Human Resources erwähnt.
                 </p>
               </div>
@@ -835,7 +835,7 @@ export default function SettingsPage() {
                     onValueChange={(promotionBlockRoleId) => setDiscordForm({ ...discordForm, promotionBlockRoleId })}
                     options={roleOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Agent mit aktiver Uprank-Sperre erhalten diese Rolle automatisch (und verlieren sie beim Aufheben).
                 </p>
               </div>
@@ -846,7 +846,7 @@ export default function SettingsPage() {
                     onValueChange={(leaveRoleId) => setDiscordForm({ ...discordForm, leaveRoleId })}
                     options={roleOptions}
                 />
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Beurlaubte Agents erhalten diese Rolle automatisch (und verlieren sie beim Aufheben der Beurlaubung).
                 </p>
               </div>
@@ -856,21 +856,21 @@ export default function SettingsPage() {
               <div>
                 <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Dashboard Login-Rollen</p>
                 {renderRolePicker('authLoginRoleIds')}
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Mitglieder mit mindestens einer dieser Rollen dürfen sich anmelden. Rollen, die bei Benutzergruppen hinterlegt sind, zählen ebenfalls als Login-Rollen.
                 </p>
               </div>
               <div>
                 <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Bewerberportal-Rollen</p>
                 {renderRolePicker('applicantRoleIds')}
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Mitglieder mit mindestens einer dieser Rollen dürfen das Bewerberportal öffnen, erhalten dadurch aber keine Dashboard-Rechte.
                 </p>
               </div>
               <div>
                 <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Vertragseinsicht</p>
                 {renderRolePicker('contractAuditorRoleIds')}
-                <p className="text-[11px] text-[#6f6f6f] mt-1.5">
+                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
                   Mitglieder mit mindestens einer dieser Rollen dürfen jeden Arbeitsvertrag über dessen Link einsehen (nur lesend, ohne Dashboard-Rechte). Unterschreiben kann weiterhin nur der Agent selbst.
                 </p>
               </div>
@@ -887,7 +887,7 @@ export default function SettingsPage() {
             <div id="mappings" className="mt-5 space-y-5 scroll-mt-section">
               <div>
                 <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Benutzergruppen zu Discord-Rollen</p>
-                <p className="text-[11px] text-[#6f6f6f] mb-3">
+                <p className="text-[11px] text-[#8c8c8c] mb-3">
                   Beim Login werden alle passenden Benutzergruppen gestapelt. Eine Benutzergruppe passt, sobald ein Mitglied mindestens eine der hinterlegten Rollen hat.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -923,7 +923,7 @@ export default function SettingsPage() {
                                 </button>
                             ))}
                             {selectedRoleIds.length === 0 && (
-                                <span className="text-[12px] text-[#808080] py-1.5">Keine Rollen ausgewählt</span>
+                                <span className="text-[12px] text-[#8c8c8c] py-1.5">Keine Rollen ausgewählt</span>
                             )}
                           </div>
                         </div>
@@ -933,7 +933,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Rechte direkt an Discord-Rollen</p>
-                <p className="text-[11px] text-[#6f6f6f] mb-3">
+                <p className="text-[11px] text-[#8c8c8c] mb-3">
                   Rollen mit hinterlegten Rechten zählen automatisch als Login-Rollen: eine separate Login-Rolle ist dann nicht nötig. Die Rechte gelten zusätzlich zu Gruppen- und Unit-Rechten und werden bei jedem Discord-Login neu übernommen.
                 </p>
                 <div className="max-w-md">
@@ -951,14 +951,14 @@ export default function SettingsPage() {
                 </div>
                 <div className="mt-3 space-y-3">
                   {Object.keys(discordForm.authRolePermissionMap).length === 0 && (
-                      <span className="text-[12px] text-[#808080]">Keine Rolle konfiguriert</span>
+                      <span className="text-[12px] text-[#8c8c8c]">Keine Rolle konfiguriert</span>
                   )}
                   {Object.entries(discordForm.authRolePermissionMap).map(([roleId, permissions]) => (
                       <div key={roleId} className="rounded-[9px] border border-[#343434]/60 bg-[#181818]/40 p-3">
                         <div className="flex items-center justify-between gap-3 mb-2">
                           <div>
                             <p className="text-[13px] text-[#f4f4f4]">{roleName(roleId)}</p>
-                            <p className="text-[11px] text-[#6f6f6f]">
+                            <p className="text-[11px] text-[#8c8c8c]">
                               {permissions.length > 0 ? `${permissions.length} Recht(e)` : 'Noch keine Rechte – die Rolle gewährt dann keinen Zugriff'}
                             </p>
                           </div>
@@ -1018,7 +1018,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Individuelle Unit-Rollen</p>
-                <p className="mb-3 text-[11px] leading-5 text-[#6e6e6e]">
+                <p className="mb-3 text-[11px] leading-5 text-[#8c8c8c]">
                   Für gruppierte Units pflegst du die Rangrolle direkt unter „Units verwalten“. Diese Liste bleibt für eigenständige oder ältere Units verfügbar.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

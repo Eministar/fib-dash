@@ -97,7 +97,7 @@ function LinkRow({ signature }: { signature: AgencySignatureRow }) {
           {signature.partyName}
           {signature.partyRole ? <span className="font-normal text-[#909090]"> · {signature.partyRole}</span> : null}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-[#808080]">
+        <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">
           {state}
           {signature.signedName ? ` · ${signature.signedName}` : ''}
           {signature.declineReason ? ` · ${signature.declineReason}` : ''}
@@ -254,9 +254,9 @@ export function AgencyContracts({
 
       {contracts.length === 0 ? (
         <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 px-4 py-10 text-center">
-          <Building2 size={20} className="mx-auto text-[#6a6a6a]" />
+          <Building2 size={20} className="mx-auto text-[#8c8c8c]" />
           <p className="mt-2 text-[13px] text-[#d4d4d4]">Noch keine Behördenverträge</p>
-          <p className="mt-1 text-[11.5px] text-[#808080]">
+          <p className="mt-1 text-[11.5px] text-[#8c8c8c]">
             Vereinbarungen mit anderen Behörden werden hier aufgesetzt und über je einen Link
             unterschrieben.
           </p>
@@ -377,7 +377,7 @@ export function AgencyContracts({
             {clauses.map((clause, index) => (
               <div key={clause.id} className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11.5px] text-[#808080]">§ {index + 1}</span>
+                  <span className="text-[11.5px] text-[#8c8c8c]">§ {index + 1}</span>
                   <Input
                     value={clause.title}
                     maxLength={200}

@@ -349,14 +349,14 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                           </p>
                           <p className="mt-1 truncate text-[11.5px] text-[#a6a6a6]">{probation.agent.rank.name} · {formatDate(probation.startsAt)} bis {formatDate(probation.endsAt)}</p>
                         </div>
-                        <span className={cn('shrink-0 rounded-full border px-2 py-[3px] text-[10.5px] font-semibold', statusClass(probation.status))}>
+                        <span className={cn('shrink-0 rounded-full border px-2 py-[3px] text-[11px] font-semibold', statusClass(probation.status))}>
                           {PROBATION_STATUS_LABELS[probation.status]}
                         </span>
                       </div>
                       <div className="mt-3 flex items-center gap-2 text-[11.5px]">
                         <span className="inline-flex items-center gap-1 text-[#86efac]"><ThumbsUp size={12} /> {rowStats.positive}</span>
                         <span className="inline-flex items-center gap-1 text-[#fca5a5]"><ThumbsDown size={12} /> {rowStats.negative}</span>
-                        <span className="text-[#808080]">Ratio {rowStats.total > 0 ? `${rowStats.positiveRate}%` : '—'}</span>
+                        <span className="text-[#8c8c8c]">Ratio {rowStats.total > 0 ? `${rowStats.positiveRate}%` : '—'}</span>
                       </div>
                     </button>
                   )
@@ -509,7 +509,7 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                     selectedProbation.entries.map((entry) => (
                       <div key={entry.id} className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/55 px-3 py-3">
                         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                          <span className={cn('inline-flex items-center rounded-full border px-2 py-[3px] text-[10.5px] font-semibold', ratingClass(entry.rating))}>
+                          <span className={cn('inline-flex items-center rounded-full border px-2 py-[3px] text-[11px] font-semibold', ratingClass(entry.rating))}>
                             {PROBATION_ENTRY_RATING_LABELS[entry.rating]}
                           </span>
                           <span className="text-[11px] text-[#909090]">

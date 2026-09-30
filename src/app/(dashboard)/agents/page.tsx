@@ -46,7 +46,9 @@ import { agentUnitKeys } from '@/lib/agent-units'
 import { notifyLiveUpdate } from '@/lib/live-updates'
 import { displayBadgeNumber, formatBadgeNumber } from '@/lib/badge-number'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
+import { matchesAgent } from '@/lib/search-match'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
+import { useUrlState } from '@/hooks/use-url-state'
 
 interface Training {
   id: string
@@ -163,7 +165,7 @@ function DiscordMemberBadge({ agent, compact = false }: { agent: Pick<Agent, 'di
     <span
       className={cn(
         'inline-flex items-center gap-1.5 rounded-[6px] border font-medium whitespace-nowrap',
-        compact ? 'px-1.5 py-[2px] text-[10.5px]' : 'px-2 py-[3px] text-[11.5px]',
+        compact ? 'px-1.5 py-[2px] text-[11px]' : 'px-2 py-[3px] text-[11.5px]',
         className
       )}
       title={hasDiscordId ? `Discord-ID: ${agent.discordId}` : 'Keine Discord-ID am Agent hinterlegt'}
@@ -201,7 +203,7 @@ function FlagButton({
       style={{ backgroundColor: value ? getFlagColor(value) : 'transparent' }}
       onClick={(e) => e.stopPropagation()}
     >
-      {!value && <Flag size={size === 'lg' ? 13 : 10} className="text-[#808080]" strokeWidth={1.75} />}
+      {!value && <Flag size={size === 'lg' ? 13 : 10} className="text-[#8c8c8c]" strokeWidth={1.75} />}
     </button>
   )
 
@@ -296,7 +298,7 @@ function DraggableAgentRow({
         {canDrag ? (
           <button
             type="button"
-            className="inline-flex p-1 rounded-md text-[#808080] hover:text-[#d4d4d4] cursor-grab active:cursor-grabbing"
+            className="inline-flex p-1 rounded-md text-[#8c8c8c] hover:text-[#d4d4d4] cursor-grab active:cursor-grabbing"
             aria-label="Zum Verschieben ziehen"
             {...attributes}
             {...listeners}
@@ -371,7 +373,7 @@ function DraggableAgentRow({
             disabled={!canEdit}
             onChange={(v) => onFlagChange(agent.id, v)}
           />
-          {agent.notes && <StickyNote size={12} className="text-[#808080]" strokeWidth={1.75} />}
+          {agent.notes && <StickyNote size={12} className="text-[#8c8c8c]" strokeWidth={1.75} />}
         </div>
       </td>
     </tr>
@@ -440,7 +442,7 @@ function MobileAgentCard({
           {agentUnitKeys(agent).length > 0 ? (
             <UnitBadges agent={agent} unitsByKey={unitsByKey} maxVisible={3} />
           ) : (
-            <span className="text-[11px] text-[#808080]">—</span>
+            <span className="text-[11px] text-[#8c8c8c]">—</span>
           )}
         </div>
         <span className="inline-flex items-center gap-1.5 justify-self-end whitespace-nowrap pt-[3px]">
@@ -453,7 +455,7 @@ function MobileAgentCard({
             Zuletzt online: {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
           </span>
           <span className="text-[11.5px] text-[#a6a6a6]">{formatDate(agent.hireDate)}</span>
-          {agent.notes && <StickyNote size={11} className="text-[#808080]" strokeWidth={1.75} />}
+          {agent.notes && <StickyNote size={11} className="text-[#8c8c8c]" strokeWidth={1.75} />}
         </div>
       </div>
 
@@ -471,12 +473,12 @@ function MobileAgentCard({
                 disabled={!canEditTrainings}
                 title={!available ? `${t.label} ist erst ab ${t.minRank?.name ?? 'Mindestrang'} vorgesehen` : t.label}
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[10.5px] font-medium border transition-colors',
+                  'inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[11px] font-medium border transition-colors',
                   completed
                     ? 'bg-[#d4d4d4]/15 border-[#d4d4d4]/40 text-[#e6d27a]'
                     : available
                       ? 'bg-[#1d1d1d] border-[#343434]/60 text-[#909090]'
-                      : 'bg-[#080808] border-dashed border-[#808080]/50 text-[#808080]',
+                      : 'bg-[#080808] border-dashed border-[#808080]/50 text-[#8c8c8c]',
                   canEditTrainings ? 'hover:border-[#404040]' : 'cursor-not-allowed opacity-70'
                 )}
               >
@@ -509,8 +511,8 @@ export default function AgentsPage() {
   const { data: ranks } = useFetch<Rank[]>(canView ? '/api/ranks' : null)
   const { data: units } = useFetch<Unit[]>(canView ? '/api/units?active=true' : null)
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
+  const [statusFilter, setStatusFilter] = useUrlState('status', '')
   const [rankFilter, setRankFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
   const [flagFilter, setFlagFilter] = useState('')
@@ -529,18 +531,7 @@ export default function AgentsPage() {
   const filteredAgents = useMemo(() => {
     if (!agents) return []
     return agents.filter((o) => {
-      if (search) {
-        const trimmedSearch = search.trim()
-        const s = trimmedSearch.toLowerCase()
-        const canSearchDiscordId = /^\d{17,22}$/.test(trimmedSearch)
-        if (
-          !o.firstName.toLowerCase().includes(s) &&
-          !o.lastName.toLowerCase().includes(s) &&
-          !o.badgeNumber.toLowerCase().includes(s) &&
-          !(canSearchDiscordId && o.discordId?.toLowerCase().includes(s))
-        )
-          return false
-      }
+      if (search && !matchesAgent(search, o)) return false
       if (statusFilter && o.status !== statusFilter) return false
       if (rankFilter && o.rankId !== rankFilter) return false
       if (unitFilter) {
@@ -738,7 +729,7 @@ export default function AgentsPage() {
   )
 
   if (!canView) return <UnauthorizedContent />
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   const filterClass =
     'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-[#343434]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
@@ -769,14 +760,14 @@ export default function AgentsPage() {
         <div className="relative">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#808080]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]"
             strokeWidth={1.75}
           />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche nach Name, Dienstnummer oder Discord-ID..."
-            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#808080]')}
+            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
           />
         </div>
 
@@ -836,7 +827,7 @@ export default function AgentsPage() {
         <div className="w-full min-w-0 rounded-[12px] overflow-hidden">
           {groupedByRank.length === 0 && (
             <div className="text-center py-24">
-              <Users size={28} className="mx-auto text-[#808080] mb-3" strokeWidth={1.5} />
+              <Users size={28} className="mx-auto text-[#8c8c8c] mb-3" strokeWidth={1.5} />
               <p className="text-[13px] text-[#a6a6a6]">Keine Ränge gefunden</p>
             </div>
           )}
@@ -854,14 +845,14 @@ export default function AgentsPage() {
                     <ChevronDown
                       size={14}
                       strokeWidth={2}
-                      className={cn('text-[#808080] transition-transform duration-200 shrink-0', isCollapsed && '-rotate-90')}
+                      className={cn('text-[#8c8c8c] transition-transform duration-200 shrink-0', isCollapsed && '-rotate-90')}
                     />
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: rank.color }} />
                     <span className="truncate text-[13px] font-semibold text-[#eee]">{rank.name}</span>
                     <RankNumberBadge number={rank.internalNumber} />
-                    <span className="text-[12px] text-[#808080] font-normal shrink-0">{groupAgents.length}</span>
+                    <span className="text-[12px] text-[#8c8c8c] font-normal shrink-0">{groupAgents.length}</span>
                     {rank.badgeMin != null && rank.badgeMax != null && (
-                      <span className="hidden sm:inline text-[10px] text-[#808080] ml-auto font-mono">
+                      <span className="hidden sm:inline text-[11px] text-[#8c8c8c] ml-auto font-mono">
                         DN {formatBadgeNumber(rank.badgeMin, '')}–{formatBadgeNumber(rank.badgeMax, '')}
                       </span>
                     )}
@@ -888,7 +879,7 @@ export default function AgentsPage() {
                                 {allTrainings.map((t) => (
                                   <th
                                     key={t.id}
-                                    className="px-1.5 py-2.5 text-center text-[10.5px] font-medium text-[#909090]"
+                                    className="px-1.5 py-2.5 text-center text-[11px] font-medium text-[#909090]"
                                     title={t.label}
                                   >
                                     <span className="block mx-auto max-w-full whitespace-normal break-words leading-tight">

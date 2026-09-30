@@ -28,6 +28,8 @@ import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { formatDateTime } from '@/lib/utils'
+import { useUrlState } from '@/hooks/use-url-state'
+import { matchesAgent } from '@/lib/search-match'
 
 export interface DawEvidence {
   url: string
@@ -184,8 +186,8 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
   const { data: daws, loading, error, refetch } = useFetch<InternalAffairsDawItem[]>('/api/internal-affairs/daws')
   const { data: agents } = useFetch<AgentSelectOption[]>('/api/internal-affairs/agents')
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [search, setSearch] = useUrlState('q', '')
+  const [statusFilter, setStatusFilter] = useUrlState('status', 'ALL')
   const [categoryFilter, setCategoryFilter] = useState('ALL')
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -216,18 +218,11 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
     return daws.filter((item) => {
       if (statusFilter !== 'ALL' && item.status !== statusFilter) return false
       if (categoryFilter !== 'ALL' && item.category !== categoryFilter) return false
-      if (search.trim()) {
-        const query = search.toLowerCase()
-        const matchTitle = item.title.toLowerCase().includes(query)
-        const matchCase = item.caseNumber?.toLowerCase().includes(query)
-        const matchAllegation = item.allegation?.toLowerCase().includes(query)
-        const matchAgent =
-          item.agent
-            ? `${item.agent.firstName} ${item.agent.lastName} ${item.agent.badgeNumber}`.toLowerCase().includes(query)
-            : `${item.previousFirstName || ''} ${item.previousLastName || ''} ${item.previousBadgeNumber || ''}`.toLowerCase().includes(query)
-        return matchTitle || matchCase || matchAllegation || matchAgent
-      }
-      return true
+      return matchesAgent(
+        search,
+        item.agent ?? { firstName: item.previousFirstName, lastName: item.previousLastName, badgeNumber: item.previousBadgeNumber },
+        [item.title, item.caseNumber, item.allegation],
+      )
     })
   }, [daws, statusFilter, categoryFilter, search])
 
@@ -368,7 +363,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
       {/* Filterleiste */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#343434]/60 bg-[#191919]/60 p-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]" />
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -398,7 +393,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
       {/* Liste der DAWs */}
       {filteredDaws.length === 0 ? (
         <div className="rounded-2xl border border-[#343434]/50 bg-[#161616]/50 p-12 text-center">
-          <ShieldAlert className="mx-auto h-12 w-12 text-[#767676]" />
+          <ShieldAlert className="mx-auto h-12 w-12 text-[#8c8c8c]" />
           <p className="mt-3 text-base font-semibold text-white">Keine Akten gefunden</p>
           <p className="mt-1 text-xs text-[#a6a6a6]">
             {search || statusFilter !== 'ALL' || categoryFilter !== 'ALL'
@@ -440,7 +435,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                     <span className="font-mono text-[11px] font-bold text-[#0ea5e9]">
                       {item.caseNumber || 'DAW-ENTWURF'}
                     </span>
-                    <Badge variant={statusConfig.badgeVariant} className="text-[10px] font-medium">
+                    <Badge variant={statusConfig.badgeVariant} className="text-[11px] font-medium">
                       {statusConfig.label}
                     </Badge>
                   </div>
@@ -450,11 +445,11 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                   </h3>
 
                   <div className="mt-2.5 flex items-center gap-1.5">
-                    <Badge variant={catConfig.badgeVariant} className="text-[10px]">
+                    <Badge variant={catConfig.badgeVariant} className="text-[11px]">
                       {catConfig.label}
                     </Badge>
                     {item.penalGrade && (
-                      <Badge variant="danger" className="text-[10px]">
+                      <Badge variant="danger" className="text-[11px]">
                         {item.penalGrade.replace('_', ' ')}
                       </Badge>
                     )}
@@ -470,7 +465,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                       <p className="truncate text-xs font-semibold text-white">
                         {agentName}
                       </p>
-                      <p className="truncate text-[10.5px] text-[#a6a6a6]">
+                      <p className="truncate text-[11px] text-[#a6a6a6]">
                         {badge} · {rankName}
                       </p>
                     </div>
@@ -479,14 +474,14 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                   {/* Tatvorwurf Zusammenfassung */}
                   {item.allegation && (
                     <div className="mt-3">
-                      <p className="text-[10.5px] font-semibold text-[#a6a6a6]">Tatvorwurf:</p>
+                      <p className="text-[11px] font-semibold text-[#a6a6a6]">Tatvorwurf:</p>
                       <p className="line-clamp-2 text-xs text-[#d4d4d4]">{item.allegation}</p>
                     </div>
                   )}
 
                   {/* Sanktionen / Maßnahmen */}
                   {(item.fineAmount || item.sgRounds || item.suspensionHours || item.sanctionSummary) && (
-                    <div className="mt-2.5 flex flex-wrap gap-1.5 text-[10.5px]">
+                    <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
                       {item.fineAmount ? (
                         <span className="rounded bg-[#292929] px-2 py-0.5 font-medium text-emerald-300">
                           {item.fineAmount.toLocaleString('de-DE')} $
@@ -507,7 +502,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="mt-4 flex items-center justify-between border-t border-[#343434]/40 pt-3 text-[11px] text-[#767676]">
+                <div className="mt-4 flex items-center justify-between border-t border-[#343434]/40 pt-3 text-[11px] text-[#8c8c8c]">
                   <span>{formatDateTime(item.createdAt)}</span>
                   <div className="flex items-center gap-1">
                     <Button
@@ -862,7 +857,7 @@ export function InternalAffairsDawsWorkspace({ canManage }: { canManage: boolean
             )}
 
             {/* Metadaten */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#343434]/40 pt-3 text-[11px] text-[#767676]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#343434]/40 pt-3 text-[11px] text-[#8c8c8c]">
               <div>
                 Erstellt am {formatDateTime(viewingItem.createdAt)} von {viewingItem.createdBy?.displayName || 'Unbekannt'}
               </div>

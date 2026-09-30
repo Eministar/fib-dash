@@ -21,10 +21,10 @@ export function Checkbox({ checked, onCheckedChange, label, disabled, className 
         disabled={disabled}
         className={cn(
           'h-[18px] w-[18px] rounded-[5px] border transition-all duration-150',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
           checked
-            ? 'bg-gradient-to-b from-[#d4d4d4] to-[#b8b8b8] border-[#b8b8b8] text-[#181818] shadow-[0_1px_2px_rgba(212,212,212,0.2)]'
-            : 'border-[#464646] bg-[#181818]/60'
+            ? 'bg-gradient-to-b from-accent to-[#b8b8b8] border-[#b8b8b8] text-surface-sunken shadow-[0_1px_2px_rgba(212,212,212,0.2)]'
+            : 'border-[#464646] bg-surface-sunken/60'
         )}
       >
         <CheckboxPrimitive.Indicator className="flex items-center justify-center">

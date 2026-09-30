@@ -22,6 +22,10 @@ import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
 import { renderMarkdown } from '@/lib/markdown'
 import type { ModuleCalendarKey } from '@/components/modules/module-calendar'
+import { useConfirm } from '@/components/ui/confirm-dialog'
+import { useUrlState } from '@/hooks/use-url-state'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
+import { matchesSearch as textMatches } from '@/lib/search-match'
 
 interface UserLite { id: string; displayName: string }
 interface ModuleDocument {
@@ -83,15 +87,17 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
   const { data, loading, refetch } = useFetch<DocumentsPayload>(`/api/sru/folders?module=${module}`)
   const { execute } = useApi()
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [externalUrl, setExternalUrl] = useState('')
   const [folderId, setFolderId] = useState('')
   const [dirty, setDirty] = useState(false)
+  useUnsavedChanges(dirty)
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [fullscreen, setFullscreen] = useState(false)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useUrlState('q', '')
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set())
   const [folderModalOpen, setFolderModalOpen] = useState(false)
   const [docModalOpen, setDocModalOpen] = useState(false)
@@ -114,11 +120,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
   const charCount = content.length
 
   const matchesSearch = useCallback((doc: ModuleDocument) => {
-    const q = search.trim().toLowerCase()
-    if (!q) return true
-    return doc.title.toLowerCase().includes(q)
-      || doc.content.toLowerCase().includes(q)
-      || (doc.externalUrl ?? '').toLowerCase().includes(q)
+    return textMatches(search, [doc.title, doc.content, doc.externalUrl])
   }, [search])
 
   useEffect(() => {
@@ -278,7 +280,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
   }
 
   const deleteDocument = async () => {
-    if (!selectedDocument || !confirm(`Dokument "${selectedDocument.title}" löschen?`)) return
+    if (!selectedDocument || !(await confirm({ title: `Dokument „${selectedDocument.title}“ löschen?`, tone: 'danger' }))) return
     try {
       await execute(`/api/sru/documents/${selectedDocument.id}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Dokument gelöscht' })
@@ -290,9 +292,9 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
     }
   }
 
-  const selectDocument = (id: string) => {
+  const selectDocument = async (id: string) => {
     if (id === selectedId) return
-    if (dirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return
+    if (dirty && !(await confirm({ title: 'Ungespeicherte Änderungen verwerfen?', confirmLabel: 'Verwerfen', tone: 'danger' }))) return
     setDirty(false)
     setSelectedId(id)
   }
@@ -327,7 +329,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
               }}
               readOnly={!canManage}
               spellCheck
-              className="h-full min-h-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent p-6 font-mono text-[13.5px] leading-[1.75] text-[#f4f4f4] outline-none placeholder:text-[#525252] selection:bg-[#d4d4d4]/30"
+              className="h-full min-h-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent p-6 font-mono text-[13.5px] leading-[1.75] text-[#f4f4f4] outline-none placeholder:text-[#8c8c8c] selection:bg-[#d4d4d4]/30"
               placeholder="Markdown schreiben…&#10;&#10;# Überschrift&#10;**fett** *kursiv*&#10;- Liste"
           />
             </div>
@@ -336,7 +338,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
             <div className="min-h-0 overflow-y-auto bg-gradient-to-b from-[#181818]/40 to-[#0f0f0f]/30 p-6">
               <article
                   className="markdown-document mx-auto max-w-3xl rounded-[14px] border border-[#343434]/55 bg-[#131313]/80 p-7 shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
-                  dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-[#686868] italic">Vorschau erscheint hier...</p>' }}
+                  dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-[#8c8c8c] italic">Vorschau erscheint hier...</p>' }}
               />
             </div>
         )}
@@ -352,7 +354,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[16px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/10 text-[#d4d4d4]">
           <ExternalLink size={25} strokeWidth={1.8} />
         </div>
-        <p className="mt-4 text-[9.5px] font-bold uppercase tracking-[0.18em] text-[#d4d4d4]/80">Externer Dokument-Link</p>
+        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-[#d4d4d4]/80">Externer Dokument-Link</p>
         <h3 className="mt-1.5 text-[18px] font-semibold text-white">{title}</h3>
         <p className="mx-auto mt-2 max-w-md text-[12px] leading-5 text-[#a6a6a6]">
           Dieses Dokument wird direkt im Browser geöffnet. Der Markdown-Editor ist für diesen Eintrag deaktiviert.
@@ -370,7 +372,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
         ) : (
           <p className="mt-5 text-[12px] text-[#fca5a5]">Der Link ist noch nicht gültig. Bitte eine vollständige HTTP- oder HTTPS-Adresse speichern.</p>
         )}
-        {directUrl && <p className="mt-4 break-all font-mono text-[10px] leading-4 text-[#686868]">{directUrl}</p>}
+        {directUrl && <p className="mt-4 break-all font-mono text-[11px] leading-4 text-[#8c8c8c]">{directUrl}</p>}
         {content.trim() && (
           <details className="mt-6 border-t border-[#343434]/60 pt-4 text-left">
             <summary className="cursor-pointer text-[11px] font-semibold text-[#a6a6a6]">Interne Notizen anzeigen</summary>
@@ -449,7 +451,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                   <span>{charCount} Zeichen</span>
                   <span>·</span>
                   <span>Aktualisiert {relativeTime(selectedDocument.updatedAt)}{selectedDocument.updatedBy ? ` von ${selectedDocument.updatedBy.displayName}` : ''}</span>
-                  <span className="ml-auto hidden md:inline text-[#686868]">⌘/Ctrl + S zum Speichern</span>
+                  <span className="ml-auto hidden md:inline text-[#8c8c8c]">⌘/Ctrl + S zum Speichern</span>
                 </div>
               </div>
 
@@ -548,26 +550,26 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                   <div className="flex items-center justify-between">
                     <p className="text-[11px] uppercase tracking-[0.16em] font-semibold text-[#a6a6a6]">Ablage</p>
                     <div className="flex items-center gap-1">
-                      <span className="text-[10.5px] text-[#686868]">{allDocuments.length}</span>
+                      <span className="text-[11px] text-[#8c8c8c]">{allDocuments.length}</span>
                       <button type="button" onClick={refetch} className="p-1 rounded-[6px] text-[#909090] hover:text-[#d4d4d4] hover:bg-[#232323]/70" title="Aktualisieren">
                         <RefreshCw size={12} />
                       </button>
                     </div>
                   </div>
                   <div className="relative">
-                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#686868]" />
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Suchen…"
-                        className="h-8 w-full rounded-[7px] border border-[#343434]/60 bg-[#0f0f0f] pl-7 pr-2 text-[12px] text-[#f4f4f4] placeholder:text-[#686868] outline-none focus:border-[#d4d4d4]/40"
+                        className="h-8 w-full rounded-[7px] border border-[#343434]/60 bg-[#0f0f0f] pl-7 pr-2 text-[12px] text-[#f4f4f4] placeholder:text-[#8c8c8c] outline-none focus:border-[#d4d4d4]/40"
                     />
                   </div>
                 </div>
                 <div className="max-h-[640px] overflow-y-auto p-1.5">
                   {filteredLoose.length > 0 && (
                       <div className="mb-2">
-                        <p className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-[#686868] font-semibold">Ohne Ordner</p>
+                        <p className="px-2 pt-2 pb-1 text-[11px] uppercase tracking-wider text-[#8c8c8c] font-semibold">Ohne Ordner</p>
                         {filteredLoose.map((doc) => (
                             <DocumentButton key={doc.id} document={doc} active={selectedId === doc.id} onClick={() => selectDocument(doc.id)} />
                         ))}
@@ -583,15 +585,15 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                               onClick={() => toggleFolder(folder.id)}
                               className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-[7px] hover:bg-[#232323]/55 transition-colors group"
                           >
-                            <ChevronRight size={11} className={cn('text-[#686868] transition-transform', !collapsed && 'rotate-90')} />
+                            <ChevronRight size={11} className={cn('text-[#8c8c8c] transition-transform', !collapsed && 'rotate-90')} />
                             <Folder size={12} style={{ color: folder.color }} />
                             <span className="flex-1 truncate text-left text-[12px] font-semibold text-[#e5e5e5]">{folder.name}</span>
-                            <span className="text-[10px] text-[#686868]">{folder.documents.length}</span>
+                            <span className="text-[11px] text-[#8c8c8c]">{folder.documents.length}</span>
                           </button>
                           {!collapsed && (
                               <div className="ml-1.5 pl-2 border-l border-[#343434]/40">
                                 {folder.documents.length === 0 ? (
-                                    <p className="px-2 py-1.5 text-[10.5px] text-[#686868] italic">Leer</p>
+                                    <p className="px-2 py-1.5 text-[11px] text-[#8c8c8c] italic">Leer</p>
                                 ) : (
                                     folder.documents.map((doc) => (
                                         <DocumentButton key={doc.id} document={doc} color={folder.color} active={selectedId === doc.id} onClick={() => selectDocument(doc.id)} />
@@ -604,7 +606,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                   })}
                   {allDocuments.length === 0 && (
                       <div className="py-12 text-center px-4">
-                        <FileText size={22} className="mx-auto mb-2 text-[#808080]" />
+                        <FileText size={22} className="mx-auto mb-2 text-[#8c8c8c]" />
                         <p className="text-[12px] text-[#a6a6a6] mb-3">Noch keine Dokumente</p>
                         {canManage && (
                             <Button size="sm" variant="secondary" onClick={() => setDocModalOpen(true)}>
@@ -614,7 +616,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                       </div>
                   )}
                   {allDocuments.length > 0 && search && filteredLoose.length === 0 && filteredFolders.every((f) => f.documents.length === 0) && (
-                      <p className="py-8 text-center text-[11.5px] text-[#686868]">Keine Treffer für {search}</p>
+                      <p className="py-8 text-center text-[11.5px] text-[#8c8c8c]">Keine Treffer für {search}</p>
                   )}
                 </div>
               </aside>
@@ -647,7 +649,7 @@ export function ModuleDocuments({ module, title: pageTitle, description, emptyDo
                 onChange={(e) => setDocForm({ ...docForm, externalUrl: e.target.value })}
                 placeholder="https://drive.google.com/..."
               />
-              <p className="mt-1.5 text-[10.5px] leading-4 text-[#767676]">
+              <p className="mt-1.5 text-[11px] leading-4 text-[#8c8c8c]">
                 Mit einem Link öffnet sich der Eintrag direkt im Browser statt im Markdown-Editor.
               </p>
             </div>

@@ -321,7 +321,7 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
               </div>
             )}
 
-            <div className="pointer-events-none absolute bottom-3 left-1/2 z-30 hidden -translate-x-1/2 rounded-[9px] border border-[#2a2a2a] bg-[#141414]/85 px-3 py-2 text-[11px] text-[#808080] backdrop-blur sm:block">
+            <div className="pointer-events-none absolute bottom-3 left-1/2 z-30 hidden -translate-x-1/2 rounded-[9px] border border-[#2a2a2a] bg-[#141414]/85 px-3 py-2 text-[11px] text-[#8c8c8c] backdrop-blur sm:block">
               Mausrad zoomt auf den Cursor
               <span className="px-1.5 text-[#404040]">·</span>
               Ziehen verschiebt die Karte

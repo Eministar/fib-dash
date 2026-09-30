@@ -23,6 +23,7 @@ import {
   validateAgentIds,
 } from '@/lib/investigations-server'
 import type { Prisma } from '@/generated/prisma'
+import { tokenizedWhere } from '@/lib/search-match'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,20 +58,18 @@ export async function GET(req: NextRequest) {
       filters.push({ persons: { some: { personId } } })
     }
 
-    if (search) {
-      filters.push({
-        OR: [
-          { title: { contains: search } },
-          { caseNumber: { contains: search } },
-          { summary: { contains: search } },
-          { leadAgent: { firstName: { contains: search } } },
-          { leadAgent: { lastName: { contains: search } } },
-          { leadAgent: { badgeNumber: { contains: search } } },
-          { persons: { some: { person: { lastName: { contains: search } } } } },
-          { persons: { some: { person: { alias: { contains: search } } } } },
-        ],
-      })
-    }
+    const searchWhere = tokenizedWhere(search, (token) => [
+      { title: { contains: token } },
+      { caseNumber: { contains: token } },
+      { summary: { contains: token } },
+      { leadAgent: { firstName: { contains: token } } },
+      { leadAgent: { lastName: { contains: token } } },
+      { leadAgent: { badgeNumber: { contains: token } } },
+      { persons: { some: { person: { firstName: { contains: token } } } } },
+      { persons: { some: { person: { lastName: { contains: token } } } } },
+      { persons: { some: { person: { alias: { contains: token } } } } },
+    ])
+    if (searchWhere) filters.push(searchWhere)
 
     const investigations = await prisma.investigation.findMany({
       where: { AND: filters },

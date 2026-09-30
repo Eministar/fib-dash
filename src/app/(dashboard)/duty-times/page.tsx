@@ -145,7 +145,7 @@ export default function DutyTimesPage() {
   }
 
   if (!canView) return <UnauthorizedContent />
-  if (loading) return <PageLoader />
+  if (loading) return <PageLoader withHeader />
 
   if (error || !data) {
     return (
@@ -283,7 +283,7 @@ export default function DutyTimesPage() {
                                   <p className="text-[11px] text-[#868686] font-mono">#{displayBadgeNumber(agent.badgeNumber)} · {agent.rank.name}</p>
                                 </div>
                               </div>
-                              <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold', colors.label)}>
+                              <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', colors.label)}>
                         {colors.icon} {rank}
                       </span>
                             </div>
@@ -412,7 +412,7 @@ export default function DutyTimesPage() {
                       </div>
                       <p className="mt-0.5 text-[11.5px] text-[#868686]">{agent.rank.name}</p>
                       {agent.currentPlayer && (
-                          <p className="mt-1 truncate text-[11px] text-[#6f6f6f]">
+                          <p className="mt-1 truncate text-[11px] text-[#8c8c8c]">
                             {agent.currentPlayer.name}
                             {agent.currentPlayer.identifier ? ` · ${agent.currentPlayer.identifier}` : ''}
                           </p>
@@ -462,7 +462,7 @@ function KpiCard({ icon: Icon, label, value, accent }: { icon: LucideIcon; label
 function Metric({ label, value, strong }: { label: string; value?: string; strong?: boolean }) {
   return (
       <div className="rounded-[8px] bg-[#080808]/60 border border-[#343434]/30 px-3 py-2">
-        <p className="text-[10.5px] font-medium uppercase tracking-wider text-[#808080]">{label}</p>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8c8c8c]">{label}</p>
         <p className={cn('mt-1 truncate text-[12.5px] tabular-nums', strong ? 'font-semibold text-[#d4d4d4]' : 'text-[#d2d2d2]')}>{value || '—'}</p>
       </div>
   )
@@ -471,7 +471,7 @@ function Metric({ label, value, strong }: { label: string; value?: string; stron
 function IdentityMetric({ label, value }: { label: string; value?: string | null }) {
   return (
       <div className="rounded-[8px] bg-[#080808]/60 border border-[#343434]/30 px-3 py-2">
-        <p className="text-[10.5px] font-medium uppercase tracking-wider text-[#808080]">{label}</p>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8c8c8c]">{label}</p>
         <p className="mt-1 truncate font-mono text-[11.5px] text-[#d2d2d2]" title={value || undefined}>{value || '—'}</p>
       </div>
   )
@@ -483,7 +483,7 @@ function StatusPill({ status, compact }: { status: ApiStatus; compact?: boolean 
   return (
       <span className={cn(
           'inline-flex items-center justify-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] whitespace-nowrap',
-          compact && 'px-2 py-0.5 text-[10.5px]',
+          compact && 'px-2 py-0.5 text-[11px]',
           online
               ? 'border-[#22c55e]/30 bg-[#052e1b]/60 text-[#86efac]'
               : error
@@ -516,7 +516,7 @@ function MiniBars({ daily }: { daily: DailyPoint[] }) {
                       title={`${day.label}: ${day.durationLabel}`}
                   />
                 </div>
-                <p className={cn('mt-1 truncate text-center text-[9.5px]', isToday ? 'text-[#d4d4d4] font-semibold' : 'text-[#868686]')}>{day.label}</p>
+                <p className={cn('mt-1 truncate text-center text-[11px]', isToday ? 'text-[#d4d4d4] font-semibold' : 'text-[#868686]')}>{day.label}</p>
               </div>
           )
         })}

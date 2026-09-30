@@ -30,8 +30,8 @@ export function ActionMenu({ items, label = 'Weitere Aktionen' }: { items: Actio
           type="button"
           aria-label={label}
           className={cn(
-            'inline-flex h-9 w-9 items-center justify-center rounded-[9px] border border-[#343434]/70 bg-[#181818]/60',
-            'text-[#a6a6a6] transition-colors hover:border-[#404040] hover:text-white',
+            'inline-flex h-9 w-9 items-center justify-center rounded-[9px] border border-line/70 bg-surface-sunken/60',
+            'text-fg-muted transition-colors hover:border-line-strong hover:text-white',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a78bfa]/35',
           )}
         >
@@ -43,7 +43,7 @@ export function ActionMenu({ items, label = 'Weitere Aktionen' }: { items: Actio
         <DropdownMenu.Content
           align="end"
           sideOffset={6}
-          className="z-50 min-w-[200px] rounded-[11px] border border-[#323232] bg-[#181818] p-1 shadow-[0_8px_28px_rgba(0,0,0,0.35)]"
+          className="z-50 min-w-[200px] rounded-[11px] border border-[#323232] bg-surface-sunken p-1 shadow-[0_8px_28px_rgba(0,0,0,0.35)]"
         >
           {items.map((item) => {
             const Icon = item.icon
@@ -55,7 +55,7 @@ export function ActionMenu({ items, label = 'Weitere Aktionen' }: { items: Actio
                   'flex cursor-pointer items-center gap-2 rounded-[7px] px-2.5 py-2 text-[12.5px] outline-none',
                   item.danger
                     ? 'text-[#fca5a5] data-[highlighted]:bg-[#7f1d1d]/25'
-                    : 'text-[#d4d4d4] data-[highlighted]:bg-[#232323] data-[highlighted]:text-white',
+                    : 'text-accent data-[highlighted]:bg-surface-raised data-[highlighted]:text-white',
                 )}
               >
                 {Icon && <Icon className="h-3.5 w-3.5" />}

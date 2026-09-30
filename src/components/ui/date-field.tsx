@@ -77,16 +77,16 @@ export function DateField({
             data-required={required ? '' : undefined}
             className={cn(
               'flex w-full h-[36px] items-center justify-between gap-2 rounded-[9px] border px-3 text-left text-[13.5px] transition-all duration-150',
-              'bg-[#181818]/60 text-[#f4f4f4] border border-[#343434]/70',
-              'focus:outline-none focus:border-[#d4d4d4] focus:shadow-[0_0_0_3px_rgba(212,212,212,0.08)]',
+              'bg-surface-sunken/60 text-fg border border-line/70',
+              'focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(212,212,212,0.08)]',
               'disabled:cursor-not-allowed disabled:opacity-40',
-              'hover:border-[#404040]',
-              !selected && 'text-[#808080]',
+              'hover:border-line-strong',
+              !selected && 'text-fg-subtle',
               error && 'border-red-500/50'
             )}
           >
             <span className="min-w-0 flex-1 truncate">{display}</span>
-            <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-[#a6a6a6] opacity-90" />
+            <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-fg-muted opacity-90" />
           </button>
         </Popover.Trigger>
         <Popover.Portal>
@@ -95,11 +95,11 @@ export function DateField({
             align="start"
             className={cn(
               'z-[200] w-auto min-w-[280px] rounded-[12px] p-0 outline-none',
-              'glass-panel-elevated border border-[#404040]/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]'
+              'glass-panel-elevated border border-line-strong/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]'
             )}
           >
             <div
-              className="fib-rdp p-2 text-[#f4f4f4] [&_.rdp-weekday]:text-[#909090] [&_.rdp-outside]:text-[#808080] [&_.rdp-today]:text-[#d4d4d4] [&_button.rdp-day_button]:text-[#f4f4f4] [&_button.rdp-day_button:hover]:bg-[#232323]"
+              className="fib-rdp p-2 text-fg [&_.rdp-weekday]:text-[#909090] [&_.rdp-outside]:text-fg-subtle [&_.rdp-today]:text-accent [&_button.rdp-day_button]:text-fg [&_button.rdp-day_button:hover]:bg-surface-raised"
               style={
                 {
                   ['--rdp-accent-color' as string]: '#d4d4d4',
@@ -125,26 +125,26 @@ export function DateField({
                   // ohne z-index liegt der darunterliegende Monats-Block oben drüber und fängt alle Klicks ab
                   nav: 'absolute top-0 left-0 right-0 z-20 flex w-full items-center justify-between px-0.5 pointer-events-auto',
                   button_previous:
-                    'relative z-20 h-7 w-7 inline-flex items-center justify-center rounded-lg text-[#a6a6a6] hover:bg-[#232323] hover:text-[#d4d4d4]',
+                    'relative z-20 h-7 w-7 inline-flex items-center justify-center rounded-lg text-fg-muted hover:bg-surface-raised hover:text-accent',
                   button_next:
-                    'relative z-20 h-7 w-7 inline-flex items-center justify-center rounded-lg text-[#a6a6a6] hover:bg-[#232323] hover:text-[#d4d4d4]',
+                    'relative z-20 h-7 w-7 inline-flex items-center justify-center rounded-lg text-fg-muted hover:bg-surface-raised hover:text-accent',
                   month: 'relative z-0 space-y-2 p-0.5',
                   weekdays: 'flex',
-                  weekday: 'w-9 text-[10px] font-medium uppercase',
+                  weekday: 'w-9 text-[11px] font-medium uppercase',
                   week: 'mt-0.5 flex w-full',
-                  day: 'h-9 w-9 p-0 text-center text-[12px] text-[#f4f4f4]',
+                  day: 'h-9 w-9 p-0 text-center text-[12px] text-fg',
                   day_button:
-                    'h-8 w-8 rounded-lg mx-auto text-[#f4f4f4] hover:bg-[#232323] focus:outline-none focus:ring-2 focus:ring-[#d4d4d4]/30',
+                    'h-8 w-8 rounded-lg mx-auto text-fg hover:bg-surface-raised focus:outline-none focus:ring-2 focus:ring-accent/30',
                   selected:
-                    'bg-gradient-to-b from-[#d4d4d4] to-[#b8b8b8] text-[#181818] font-semibold !opacity-100',
+                    'bg-gradient-to-b from-accent to-[#b8b8b8] text-surface-sunken font-semibold !opacity-100',
                 }}
               />
             </div>
-            <div className="flex items-center justify-between gap-2 border-t border-[#343434]/50 px-2 py-1.5">
+            <div className="flex items-center justify-between gap-2 border-t border-line/50 px-2 py-1.5">
               {allowClear ? (
                 <button
                   type="button"
-                  className="text-[12px] text-[#a6a6a6] hover:text-[#d4d4d4] px-1.5 py-0.5 rounded"
+                  className="text-[12px] text-fg-muted hover:text-accent px-1.5 py-0.5 rounded"
                   onClick={() => {
                     onChange('')
                     setOpen(false)
@@ -158,7 +158,7 @@ export function DateField({
               )}
               <button
                 type="button"
-                className="text-[12px] text-[#d4d4d4] hover:text-white px-1.5 py-0.5 rounded"
+                className="text-[12px] text-accent hover:text-white px-1.5 py-0.5 rounded"
                 onClick={() => applyDate(new Date())}
                 disabled={disabled}
               >
