@@ -246,13 +246,13 @@ export default function NewAgentPage() {
 
             <div className="space-y-5">
               {(applications?.length ?? 0) > 0 && (
-                <div className="rounded-[12px] border border-[#343434]/55 bg-[#181818]/40 p-3.5">
+                <div className="rounded-[12px] border border-[#38383a]/55 bg-[#1c1c1e]/40 p-3.5">
                   <ApplicationPicker
                     applications={applications ?? []}
                     value={form.applicationId}
                     onChange={selectApplication}
                   />
-                  <p className="mt-1.5 text-[11.5px] leading-4 text-[#a6a6a6]">
+                  <p className="mt-1.5 text-[11.5px] leading-4 text-[#98989d]">
                     Nur angenommene Bewerbungen, die noch nicht eingestellt wurden. Name und
                     Discord-ID werden automatisch übernommen.
                   </p>
@@ -262,7 +262,7 @@ export default function NewAgentPage() {
               {canAssignUnits ? (
                 <UnitMultiSelect value={form.units} units={units ?? undefined} onChange={(value) => update('units', value)} />
               ) : (
-                <div className="rounded-[10px] border border-[#343434]/50 bg-[#181818]/30 px-3 py-3 text-[11px] leading-5 text-[#858585]">
+                <div className="rounded-[10px] border border-[#38383a]/50 bg-[#1c1c1e]/30 px-3 py-3 text-[11px] leading-5 text-[#858585]">
                   Unit-Zuweisungen können nur markierte Unit-Leitungen ihrer eigenen Gruppe oder globale Administratoren vornehmen.
                 </div>
               )}

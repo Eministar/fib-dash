@@ -38,17 +38,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const busy = Boolean(loading) || pending
 
     const variants = {
-      primary: 'bg-gradient-to-b from-[#d4d4d4] to-[#b8b8b8] text-[#181818] hover:from-[#e8e8e8] hover:to-[#c8c8c8] shadow-[0_1px_3px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]',
-      secondary: 'bg-[#232323] text-[#f4f4f4] hover:bg-[#333333] shadow-[0_1px_2px_rgba(0,0,0,0.12)]',
-      danger: 'bg-gradient-to-b from-[#2a1620] to-[#231218] text-[#fca5a5] hover:from-[#341b27] hover:to-[#2a1620] shadow-[0_1px_2px_rgba(0,0,0,0.12)]',
-      ghost: 'text-[#aeaeae] hover:text-white hover:bg-[#232323]/70',
-      outline: 'border border-[#404040] text-[#f4f4f4] hover:bg-[#232323]/50 shadow-[0_1px_2px_rgba(0,0,0,0.08)]',
+      // Flach wie macOS: eine Farbe, kein Verlauf, kein Glanz.
+      primary: 'bg-[#0a84ff] text-white hover:bg-[#1a8cff] active:bg-[#0070e0]',
+      secondary: 'bg-[#3a3a3c] text-[#f5f5f7] hover:bg-[#48484a] active:bg-[#2c2c2e]',
+      danger: 'bg-[#ff453a]/15 text-[#ff6961] hover:bg-[#ff453a]/25 active:bg-[#ff453a]/30',
+      ghost: 'text-[#98989d] hover:text-[#f5f5f7] hover:bg-[#2c2c2e] active:bg-[#3a3a3c]',
+      outline: 'border border-[#48484a] text-[#f5f5f7] hover:bg-[#2c2c2e] active:bg-[#3a3a3c]',
     }
 
     const sizes = {
-      sm: 'h-[32px] px-3 text-[12.5px] rounded-[8px] gap-1.5',
-      md: 'h-[36px] px-4 text-[13px] rounded-[9px] gap-2',
-      lg: 'h-[40px] px-5 text-[13.5px] rounded-[10px] gap-2',
+      sm: 'h-[30px] px-3 text-[12.5px] rounded-[7px] gap-1.5',
+      md: 'h-[34px] px-4 text-[13px] rounded-[8px] gap-2',
+      lg: 'h-[40px] px-5 text-[14px] rounded-[10px] gap-2',
     }
 
     return (
@@ -59,10 +60,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         data-variant={variant}
         onClick={handleClick}
         className={cn(
-          'inline-flex items-center justify-center font-medium transition-all duration-150',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]',
-          'disabled:opacity-35 disabled:pointer-events-none',
-          'active:scale-[0.98]',
+          'inline-flex items-center justify-center font-medium transition-colors duration-100',
+          'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#0a84ff]/50',
+          'disabled:opacity-40 disabled:pointer-events-none',
           variants[variant],
           sizes[size],
           className

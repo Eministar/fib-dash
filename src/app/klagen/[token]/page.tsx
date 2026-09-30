@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertTriangle, ArrowRight, Gavel, Printer, Scale } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PdCloudLoader } from '@/components/ui/loading'
+import { DocumentSkeleton } from '@/components/ui/loading'
 import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
 import { formatDateTime } from '@/lib/utils'
 
@@ -77,10 +77,7 @@ export default function LegalCaseBatchPage() {
   if (state.kind === 'loading') {
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-3 py-24 text-[#a6a6a6]">
-          <PdCloudLoader />
-          <p className="text-[13px]">Sammelklage wird geladen…</p>
-        </div>
+        <DocumentSkeleton />
       </Shell>
     )
   }
@@ -105,7 +102,7 @@ export default function LegalCaseBatchPage() {
             Federal Investigation Bureau · Legal Affairs Division
           </p>
           <h1 className="mt-1 text-[22px] font-semibold text-white">{batch.title}</h1>
-          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
+          <p className="mt-1 text-[12.5px] text-[#98989d]">
             {batch.caseCount} Klage{batch.caseCount === 1 ? '' : 'n'} · erstellt am {formatDateTime(batch.createdAt)}
           </p>
         </div>
@@ -116,16 +113,16 @@ export default function LegalCaseBatchPage() {
       </div>
 
       {batch.cases.length === 0 ? (
-        <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 px-6 py-16 text-center">
+        <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 px-6 py-16 text-center">
           <Scale size={28} className="mx-auto mb-3 text-[#8b5cf6]" />
-          <p className="text-[13px] text-[#a6a6a6]">Diese Sammelklage enthält keine Klageschriften.</p>
+          <p className="text-[13px] text-[#98989d]">Diese Sammelklage enthält keine Klageschriften.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {batch.cases.map((legalCase, index) => (
             <div
               key={legalCase.id}
-              className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4"
+              className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -133,14 +130,14 @@ export default function LegalCaseBatchPage() {
                     <span className="font-mono text-[11px] font-semibold text-[#a78bfa]">
                       {legalCase.caseNumber}
                     </span>
-                    <span className="rounded-full border border-[#343434]/60 bg-[#181818]/60 px-2 py-[1px] text-[11px] font-semibold text-[#a6a6a6]">
+                    <span className="rounded-full border border-[#38383a]/60 bg-[#1c1c1e]/60 px-2 py-[1px] text-[11px] font-semibold text-[#98989d]">
                       {index + 1}. Klage
                     </span>
                   </div>
                   <p className="mt-1.5 text-[15px] font-semibold text-white">
                     {legalCase.accusedName ?? 'Ohne Beklagten'}
                   </p>
-                  <p className="text-[12px] text-[#a6a6a6]">
+                  <p className="text-[12px] text-[#98989d]">
                     {[legalCase.accusedBadge ? `DN ${legalCase.accusedBadge}` : null, legalCase.accusedRank].filter(Boolean).join(' · ') || '—'}
                   </p>
                 </div>
@@ -152,15 +149,15 @@ export default function LegalCaseBatchPage() {
               </div>
 
               {legalCase.sanctions.length > 0 && (
-                <div className="mt-3 space-y-1.5 border-t border-[#343434]/50 pt-3">
+                <div className="mt-3 space-y-1.5 border-t border-[#38383a]/50 pt-3">
                   {legalCase.sanctions.map((sanction) => (
-                    <div key={sanction.sanctionId} className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-[#a6a6a6]">
+                    <div key={sanction.sanctionId} className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-[#98989d]">
                       <span className="font-semibold text-[#c4b5fd]">{penalGradeLabel(sanction.penalGrade)}</span>
                       <span>{sanctionLevelLabel(sanction.level)}</span>
                       {resolveViolation(sanction.violationCode) && (
                         <span className="text-[#d4d4d4]">{resolveViolation(sanction.violationCode)!.label}</span>
                       )}
-                      <span className="text-[#8c8c8c]">· {sanction.reason}</span>
+                      <span className="text-[#8e8e93]">· {sanction.reason}</span>
                     </div>
                   ))}
                 </div>
@@ -175,7 +172,7 @@ export default function LegalCaseBatchPage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[#080808] px-3 py-8 sm:px-6 lg:py-12">
+    <main className="min-h-screen bg-[#000000] px-3 py-8 sm:px-6 lg:py-12">
       <div className="mx-auto w-full max-w-[840px]">{children}</div>
     </main>
   )
@@ -191,12 +188,12 @@ function Notice({
   children?: React.ReactNode
 }) {
   return (
-    <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-8 text-center">
+    <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-8 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/12 text-[#d4d4d4]">
         <AlertTriangle size={26} />
       </div>
       <h1 className="text-[19px] font-semibold text-white">{title}</h1>
-      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#a6a6a6]">{description}</p>
+      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#98989d]">{description}</p>
       {children && <div className="mt-5 flex justify-center">{children}</div>}
     </section>
   )

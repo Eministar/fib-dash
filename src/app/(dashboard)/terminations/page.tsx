@@ -137,7 +137,7 @@ export default function TerminationsPage() {
   if (loading) return <PageLoader withHeader />
 
   const filterClass =
-    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-[#343434]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
+    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1c1c1e] text-[#c7c7cc] border border-[#38383a]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
 
   return (
     <div>
@@ -156,14 +156,14 @@ export default function TerminationsPage() {
         <div className="relative flex-1">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8e8e93]"
             strokeWidth={1.75}
           />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche nach Name, Dienstnummer, Rang oder Grund..."
-            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
+            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8e8e93]')}
           />
         </div>
         <Select
@@ -182,7 +182,7 @@ export default function TerminationsPage() {
 
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
         {filteredTerminations.length > 0 ? (
-          <div className="divide-y divide-[#343434]">
+          <div className="divide-y divide-[#38383a]">
             {filteredTerminations.map((t, i) => {
               const { first: fn, last: ln } = terminationAgentNames(t)
               const displayName = [fn, ln].filter(Boolean).join(' ') || '—'
@@ -195,26 +195,26 @@ export default function TerminationsPage() {
                 transition={{ delay: i * 0.03 }}
                 className="flex items-start gap-4 px-5 py-4"
               >
-                <div className="h-9 w-9 rounded-[9px] bg-[#212121] flex items-center justify-center shrink-0 mt-0.5">
-                  <UserX size={16} className="text-[#909090]" strokeWidth={1.75} />
+                <div className="h-9 w-9 rounded-[9px] bg-[#2c2c2e] flex items-center justify-center shrink-0 mt-0.5">
+                  <UserX size={16} className="text-[#8e8e93]" strokeWidth={1.75} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     <p className="text-[13px] font-medium text-[#eee]">
                       {displayName}
                     </p>
-                    <span className="text-[11px] text-[#8c8c8c] font-mono">DN: {badgeDn}</span>
+                    <span className="text-[11px] text-[#8e8e93] font-mono">DN: {badgeDn}</span>
                     {!t.agent && (
-                      <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#2e2e2e] text-[#a6a6a6] border border-[#404040]">
+                      <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#3a3a3c] text-[#98989d] border border-[#48484a]">
                         Profil gelöscht
                       </span>
                     )}
                   </div>
-                  <p className="text-[12px] text-[#909090] mb-1">
-                    Ehem. Rang: <span className="text-[#909090] font-medium">{t.previousRank || t.agent?.rank?.name || '—'}</span>
+                  <p className="text-[12px] text-[#8e8e93] mb-1">
+                    Ehem. Rang: <span className="text-[#8e8e93] font-medium">{t.previousRank || t.agent?.rank?.name || '—'}</span>
                   </p>
-                  <p className="text-[13px] text-[#909090]">{t.reason}</p>
-                  <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                  <p className="text-[13px] text-[#8e8e93]">{t.reason}</p>
+                  <p className="text-[11px] text-[#8e8e93] mt-1.5">
                     {formatDate(t.terminatedAt)} · von {t.terminatedBy?.displayName ?? 'Gelöscht'}
                   </p>
                 </div>
@@ -228,7 +228,7 @@ export default function TerminationsPage() {
                   ) : t.agent ? (
                     <span className="text-[11.5px] text-[#34d399] font-medium">Wiedereingestellt</span>
                   ) : (
-                    <span className="text-[11px] text-[#8c8c8c]" title="Datensatz ohne Agent-Profil">—</span>
+                    <span className="text-[11px] text-[#8e8e93]" title="Datensatz ohne Agent-Profil">—</span>
                   )}
                 </div>
                 )}
@@ -237,8 +237,8 @@ export default function TerminationsPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <UserX size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
-            <p className="text-[13px] text-[#909090]">
+            <UserX size={28} className="mx-auto mb-3 text-[#f5f5f7]" strokeWidth={1.5} />
+            <p className="text-[13px] text-[#8e8e93]">
               {terminations && terminations.length > 0 ? 'Keine Treffer für die aktuelle Suche' : 'Keine Kündigungen'}
             </p>
           </div>
@@ -255,8 +255,8 @@ export default function TerminationsPage() {
             placeholder="Agent wählen..."
           />
           {selectedAgent && (
-            <div className="px-3 py-2.5 bg-[#212121] rounded-[8px]">
-              <p className="text-[13px] text-[#a6a6a6]">
+            <div className="px-3 py-2.5 bg-[#2c2c2e] rounded-[8px]">
+              <p className="text-[13px] text-[#98989d]">
                 <span className="font-medium text-[#eee]">{selectedAgent.firstName} {selectedAgent.lastName}</span> · {selectedAgent.rank.name} · DN {displayBadgeNumber(selectedAgent.badgeNumber)}
               </p>
             </div>
@@ -277,7 +277,7 @@ export default function TerminationsPage() {
       </Modal>
 
       <Modal open={!!rehireId} onClose={() => setRehireId(null)} title="Agent wiedereinstellen">
-        <p className="text-[13px] text-[#a6a6a6] mb-5">
+        <p className="text-[13px] text-[#98989d] mb-5">
           Möchten Sie diesen Agent wirklich wiedereinstellen? Der Status wird auf &quot;Aktiv&quot; gesetzt.
           Ist die alte Dienstnummer inzwischen vergeben, wird automatisch die nächste freie Nummer zugewiesen.
         </p>

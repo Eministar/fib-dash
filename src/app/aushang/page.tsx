@@ -27,25 +27,25 @@ export default async function PublicNoticeBoardPage() {
     <PublicShell active="aushang">
       <PublicPageTitle title="Schwarzes Brett" description="Öffentliche Schreiben, Bekanntmachungen und Listen des Federal Investigation Bureau." />
       {items.length === 0
-        ? <p className="glass-panel-elevated rounded-[14px] px-5 py-10 text-center text-[13px] text-[#909090]">Derzeit ist nichts ausgehängt.</p>
+        ? <p className="glass-panel-elevated rounded-[14px] px-5 py-10 text-center text-[13px] text-[#8e8e93]">Derzeit ist nichts ausgehängt.</p>
         : (
-          <ul className="glass-panel-elevated divide-y divide-[#2c2c2c] overflow-hidden rounded-[14px]">
+          <ul className="glass-panel-elevated divide-y divide-[#3a3a3c] overflow-hidden rounded-[14px]">
             {items.map((item) => {
               const Icon = item.kind === 'TABLE' ? Table2 : FileText
               return (
                 <li key={item.slug}>
-                  <Link href={`/aushang/${item.slug}`} className="group flex items-center gap-4 px-5 py-4 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2">
-                    <Icon size={18} className="shrink-0 text-[#a6a6a6]" aria-hidden />
+                  <Link href={`/aushang/${item.slug}`} className="group flex items-center gap-4 px-5 py-4 hover:bg-[#2c2c2e] focus-visible:outline focus-visible:outline-2">
+                    <Icon size={18} className="shrink-0 text-[#98989d]" aria-hidden />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2 text-[14px] font-medium text-white">
                         {item.pinned && <Pin size={13} className="shrink-0 text-[#d4d4d4]" aria-label="Angeheftet" />}
-                        {item.access === 'ROLES' && <Lock size={13} className="shrink-0 text-[#a6a6a6]" aria-label="Nur für freigegebene Rollen" />}
+                        {item.access === 'ROLES' && <Lock size={13} className="shrink-0 text-[#98989d]" aria-label="Nur für freigegebene Rollen" />}
                         <span className="truncate">{item.title}</span>
                       </span>
-                      {item.summary && <span className="mt-0.5 block truncate text-[12.5px] text-[#909090]">{item.summary}</span>}
+                      {item.summary && <span className="mt-0.5 block truncate text-[12.5px] text-[#8e8e93]">{item.summary}</span>}
                     </span>
-                    <span className="hidden shrink-0 text-[12px] text-[#8c8c8c] sm:block">{formatDate(item.publishedAt ?? item.updatedAt)}</span>
-                    <ChevronRight size={16} className="shrink-0 text-[#8c8c8c] group-hover:text-white" aria-hidden />
+                    <span className="hidden shrink-0 text-[12px] text-[#8e8e93] sm:block">{formatDate(item.publishedAt ?? item.updatedAt)}</span>
+                    <ChevronRight size={16} className="shrink-0 text-[#8e8e93] group-hover:text-white" aria-hidden />
                   </Link>
                 </li>
               )

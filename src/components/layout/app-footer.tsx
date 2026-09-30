@@ -18,7 +18,7 @@ function GitHubLogo({ className }: { className?: string }) {
 export function AppFooter() {
   return (
     <footer className="mt-auto px-3 pb-5 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-2 border-t border-[#343434]/65 pt-4 text-[11px] text-[#8c8c8c] sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 border-t border-[#38383a]/65 pt-4 text-[11px] text-[#8e8e93] sm:flex-row sm:items-center sm:justify-between">
         <p>
           Entwickelt von{' '}
           <a
@@ -35,7 +35,7 @@ export function AppFooter() {
           <span>Version {APP_VERSION_LABEL}</span>
           <Link
             href="/releases"
-            className="inline-flex items-center gap-1 font-mono text-[#a6a6a6] transition-colors hover:text-[#c3c3c3]"
+            className="inline-flex items-center gap-1 font-mono text-[#98989d] transition-colors hover:text-[#c7c7cc]"
             title="Build-Historie öffnen"
           >
             <History size={11} /> {releaseBuildShort()}

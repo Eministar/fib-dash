@@ -12,6 +12,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { formatDateTime } from '@/lib/utils'
 import type { UploadKeyRow } from './upload-types'
+import { ListSkeleton } from '@/components/ui/loading'
 
 /** Beispielaufruf mit echtem Host — direkt kopierbar. */
 function curlExample(key: string) {
@@ -95,7 +96,7 @@ export function UploadKeysManager() {
 
   return (
     <div className="mx-auto max-w-4xl pb-6">
-      <Link href="/uploads" className="mb-3 inline-flex items-center gap-1 text-xs text-[#a6a6a6] hover:text-white">
+      <Link href="/uploads" className="mb-3 inline-flex items-center gap-1 text-xs text-[#98989d] hover:text-white">
         <ArrowLeft size={13} />
         Zurück zu den Uploads
       </Link>
@@ -110,7 +111,7 @@ export function UploadKeysManager() {
         }
       />
 
-      <div className="mb-5 rounded-xl border border-[#343434] bg-[#141414] p-4 text-sm text-[#a6a6a6]">
+      <div className="mb-5 rounded-xl border border-[#38383a] bg-[#161617] p-4 text-sm text-[#98989d]">
         <p className="mb-2 font-semibold text-white">So funktioniert der Upload</p>
         <p>
           Ein <code className="text-[#d4d4d4]">POST</code> auf <code className="text-[#d4d4d4]">/api/files</code> als
@@ -119,7 +120,7 @@ export function UploadKeysManager() {
           Beschreibung, Kategorie, Tags, Referenz und ein freies <code>metadata</code>-JSON sind optional.
           Die vollständige Beschreibung steht in <code>docs/upload-api.md</code>.
         </p>
-        <pre className="mt-3 overflow-x-auto rounded-lg border border-[#343434] bg-[#0d0d0d] p-3 text-xs text-[#c4c4c4]">
+        <pre className="mt-3 overflow-x-auto rounded-lg border border-[#38383a] bg-[#000000] p-3 text-xs text-[#c7c7cc]">
           {curlExample('fibup_DEIN_SCHLÜSSEL')}
         </pre>
       </div>
@@ -127,25 +128,25 @@ export function UploadKeysManager() {
       {list.error && <p role="alert" className="mb-4 text-sm text-red-300">{list.error}</p>}
 
       {list.loading && !keys.length ? (
-        <p className="py-8 text-sm text-[#909090]">Schlüssel werden geladen …</p>
+        <ListSkeleton />
       ) : !keys.length ? (
-        <div className="rounded-xl border border-dashed border-[#343434] p-8 text-center text-sm text-[#909090]">
+        <div className="rounded-xl border border-dashed border-[#38383a] p-8 text-center text-sm text-[#8e8e93]">
           <KeyRound className="mx-auto mb-3" size={25} />
           Noch kein Upload-Schlüssel angelegt.
         </div>
       ) : (
         <div className="space-y-3">
           {keys.map((key) => (
-            <div key={key.id} className="rounded-xl border border-[#343434] bg-[#141414] p-4">
+            <div key={key.id} className="rounded-xl border border-[#38383a] bg-[#161617] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-white">
                     {key.name}
                     {key.revokedAt && <span className="ml-2 text-xs text-red-300">widerrufen</span>}
                   </p>
-                  <p className="mt-1 font-mono text-xs text-[#909090]">{key.prefix}</p>
-                  {key.description && <p className="mt-2 text-sm text-[#a6a6a6]">{key.description}</p>}
-                  <p className="mt-2 text-xs text-[#8c8c8c]">
+                  <p className="mt-1 font-mono text-xs text-[#8e8e93]">{key.prefix}</p>
+                  {key.description && <p className="mt-2 text-sm text-[#98989d]">{key.description}</p>}
+                  <p className="mt-2 text-xs text-[#8e8e93]">
                     {key._count.uploads} Uploads · {key.usageCount} Aufrufe ·{' '}
                     {key.lastUsedAt ? `zuletzt ${formatDateTime(key.lastUsedAt)}` : 'noch nie benutzt'} · angelegt{' '}
                     {formatDateTime(key.createdAt)}
@@ -182,7 +183,7 @@ export function UploadKeysManager() {
               value={defaultCategory}
               onChange={(e) => setDefaultCategory(e.target.value)}
             />
-            <p className="text-xs text-[#909090]">
+            <p className="text-xs text-[#8e8e93]">
               Der Schlüssel wird nur einmal im Klartext angezeigt. Danach existiert nur noch sein Hash.
             </p>
             {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
@@ -205,14 +206,14 @@ export function UploadKeysManager() {
               Jetzt kopieren — nach dem Schließen ist der Klartext nicht mehr abrufbar.
             </p>
             <div className="flex items-center gap-2">
-              <code className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-[#343434] bg-[#0d0d0d] p-3 font-mono text-xs text-[#d4d4d4]">
+              <code className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-[#38383a] bg-[#000000] p-3 font-mono text-xs text-[#d4d4d4]">
                 {fresh.plaintext}
               </code>
               <CopyButton value={fresh.plaintext} />
             </div>
             <div>
-              <p className="mb-2 text-xs uppercase tracking-wider text-[#8c8c8c]">Direkt einsetzbar</p>
-              <pre className="overflow-x-auto rounded-lg border border-[#343434] bg-[#0d0d0d] p-3 text-xs text-[#c4c4c4]">
+              <p className="mb-2 text-xs uppercase tracking-wider text-[#8e8e93]">Direkt einsetzbar</p>
+              <pre className="overflow-x-auto rounded-lg border border-[#38383a] bg-[#000000] p-3 text-xs text-[#c7c7cc]">
                 {curlExample(fresh.plaintext)}
               </pre>
               <div className="mt-2 flex justify-end">

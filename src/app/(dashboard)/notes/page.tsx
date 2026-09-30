@@ -146,8 +146,8 @@ export default function NotesPage() {
             className={cn(
               'px-3.5 py-[7px] rounded-[8px] text-[13px] font-medium transition-colors duration-100',
               filter === f
-                ? 'bg-[#d4d4d4] text-[#1d1d1d]'
-                : 'text-[#a6a6a6] hover:text-[#eee] hover:bg-[#212121]'
+                ? 'bg-[#d4d4d4] text-[#1c1c1e]'
+                : 'text-[#98989d] hover:text-[#eee] hover:bg-[#2c2c2e]'
             )}
           >
             {f === 'all' ? 'Alle' : f === 'global' ? 'Global' : 'Mitarbeiter'}
@@ -172,12 +172,12 @@ export default function NotesPage() {
                 <div className="flex items-center gap-2">
                   {note.pinned && <Pin size={12} className="text-[#fbbf24]" />}
                   {note.agent ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-[#a6a6a6] bg-[#212121] px-2 py-0.5 rounded-[5px]">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[#98989d] bg-[#2c2c2e] px-2 py-0.5 rounded-[5px]">
                       <User size={9} />
                       {note.agent.firstName} {note.agent.lastName}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-[#a6a6a6] bg-[#212121] px-2 py-0.5 rounded-[5px]">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[#98989d] bg-[#2c2c2e] px-2 py-0.5 rounded-[5px]">
                       <Globe size={9} />
                       Global
                     </span>
@@ -185,14 +185,14 @@ export default function NotesPage() {
                 </div>
                 {canManageNotes && (
                 <div className="flex gap-0.5">
-                  <Tooltip content={note.pinned ? 'Notiz lösen' : 'Notiz anpinnen'}><button type="button" onClick={() => handleTogglePin(note)} aria-label={note.pinned ? 'Notiz lösen' : 'Notiz anpinnen'} aria-pressed={note.pinned} className="flex h-8 w-8 items-center justify-center rounded-[7px] hover:bg-[#212121] transition-colors">
-                    <Pin size={13} className={cn(note.pinned ? 'text-[#fbbf24]' : 'text-[#8c8c8c]')} />
+                  <Tooltip content={note.pinned ? 'Notiz lösen' : 'Notiz anpinnen'}><button type="button" onClick={() => handleTogglePin(note)} aria-label={note.pinned ? 'Notiz lösen' : 'Notiz anpinnen'} aria-pressed={note.pinned} className="flex h-8 w-8 items-center justify-center rounded-[7px] hover:bg-[#2c2c2e] transition-colors">
+                    <Pin size={13} className={cn(note.pinned ? 'text-[#fbbf24]' : 'text-[#8e8e93]')} />
                   </button></Tooltip>
-                  <Tooltip content="Notiz bearbeiten"><button type="button" onClick={() => startEdit(note)} aria-label="Notiz bearbeiten" className="flex h-8 w-8 items-center justify-center rounded-[7px] hover:bg-[#212121] transition-colors">
-                    <Edit size={13} className="text-[#8c8c8c]" />
+                  <Tooltip content="Notiz bearbeiten"><button type="button" onClick={() => startEdit(note)} aria-label="Notiz bearbeiten" className="flex h-8 w-8 items-center justify-center rounded-[7px] hover:bg-[#2c2c2e] transition-colors">
+                    <Edit size={13} className="text-[#8e8e93]" />
                   </button></Tooltip>
                   <Tooltip content="Notiz löschen"><button type="button" onClick={() => handleDelete(note)} aria-label="Notiz löschen" className="flex h-8 w-8 items-center justify-center rounded-[7px] hover:bg-[#1c1111] transition-colors">
-                    <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
+                    <Trash2 size={13} className="text-[#8e8e93] hover:text-[#f87171]" />
                   </button></Tooltip>
                 </div>
                 )}
@@ -200,8 +200,8 @@ export default function NotesPage() {
               {note.title && (
                 <h4 className="text-[13.5px] font-semibold text-[#eee] mb-1">{note.title}</h4>
               )}
-              <p className="text-[13px] text-[#909090] whitespace-pre-wrap leading-relaxed">{note.content}</p>
-              <p className="text-[11px] text-[#8c8c8c] mt-3">
+              <p className="text-[13px] text-[#8e8e93] whitespace-pre-wrap leading-relaxed">{note.content}</p>
+              <p className="text-[11px] text-[#8e8e93] mt-3">
                 {note.author?.displayName ?? 'Gelöscht'} · {formatDateTime(note.createdAt)}
               </p>
             </motion.div>
@@ -209,8 +209,8 @@ export default function NotesPage() {
         </div>
       ) : (
         <div className="text-center py-20">
-          <StickyNote size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
-          <p className="text-[13px] text-[#909090]">Keine Notizen vorhanden</p>
+          <StickyNote size={28} className="mx-auto mb-3 text-[#f5f5f7]" strokeWidth={1.5} />
+          <p className="text-[13px] text-[#8e8e93]">Keine Notizen vorhanden</p>
         </div>
       )}
 
@@ -220,7 +220,7 @@ export default function NotesPage() {
           <Textarea label="Inhalt" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={4} required />
           <label className="flex items-center gap-2.5 cursor-pointer">
             <input type="checkbox" checked={form.pinned} onChange={(e) => setForm({ ...form, pinned: e.target.checked })} className="rounded accent-[#d4d4d4]" />
-            <span className="text-[13px] text-[#909090]">Notiz anpinnen</span>
+            <span className="text-[13px] text-[#8e8e93]">Notiz anpinnen</span>
           </label>
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="secondary" size="sm" onClick={() => setCreateModal(false)}>Abbrechen</Button>
@@ -235,7 +235,7 @@ export default function NotesPage() {
           <Textarea label="Inhalt" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={4} />
           <label className="flex items-center gap-2.5 cursor-pointer">
             <input type="checkbox" checked={form.pinned} onChange={(e) => setForm({ ...form, pinned: e.target.checked })} className="rounded accent-[#d4d4d4]" />
-            <span className="text-[13px] text-[#909090]">Notiz anpinnen</span>
+            <span className="text-[13px] text-[#8e8e93]">Notiz anpinnen</span>
           </label>
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="secondary" size="sm" onClick={() => setEditNote(null)}>Abbrechen</Button>

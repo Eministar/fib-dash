@@ -19,15 +19,15 @@ export function MapNeedle({
         pending ? '-translate-y-0.5' : ''
       }`}
     >
-      <span className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-[#f4f4f4]" />
+      <span className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-[#f5f5f7]" />
       <span
-        className="absolute left-1/2 top-0 grid h-6 w-6 -translate-x-1/2 place-items-center rounded-full border-2 border-[#f4f4f4] text-[13px] leading-none shadow-[0_1px_0_rgba(8,8,8,0.6)]"
+        className="absolute left-1/2 top-0 grid h-6 w-6 -translate-x-1/2 place-items-center rounded-full border-2 border-[#f5f5f7] text-[13px] leading-none shadow-[0_1px_0_rgba(8,8,8,0.6)]"
         style={{ backgroundColor: color }}
       >
         {icon ? (
           <span className="translate-y-px">{icon}</span>
         ) : (
-          <span className="h-1.5 w-1.5 rounded-full bg-[#111111]/70" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#161617]/70" />
         )}
       </span>
     </span>

@@ -9,7 +9,7 @@ export default function UploadKeysPage() {
   const { user, loading } = useAuth()
   if (loading) return <PageLoader />
   if (!hasAnyPermission(user, ['uploads:manage'])) {
-    return <p className="p-8 text-sm text-[#909090]">Upload-Schlüssel darf nur verwalten, wer „uploads:manage“ besitzt.</p>
+    return <p className="p-8 text-sm text-[#8e8e93]">Upload-Schlüssel darf nur verwalten, wer „uploads:manage“ besitzt.</p>
   }
   return <UploadKeysManager />
 }

@@ -135,16 +135,16 @@ export default function SanktionskatalogPage() {
             className="glass-panel-elevated rounded-[12px] px-4 py-3"
           >
             <p className="text-[11px] font-semibold tabular-nums tracking-[0.14em] text-[#f59e0b]">{item.step}</p>
-            <p className="mt-1 text-[13.5px] font-semibold text-[#f4f4f4]">{item.title}</p>
-            <p className="mt-0.5 text-[12px] text-[#8c8c8c]">{item.detail}</p>
+            <p className="mt-1 text-[13.5px] font-semibold text-[#f5f5f7]">{item.title}</p>
+            <p className="mt-0.5 text-[12px] text-[#8e8e93]">{item.detail}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Geltung */}
-      <div className="mb-5 rounded-[12px] border border-[#343434]/60 bg-[#181818]/50 px-4 py-3.5">
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8c8c8c]">Gültigkeit & Grundsatz</p>
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#a6a6a6]">
+      <div className="mb-5 rounded-[12px] border border-[#38383a]/60 bg-[#1c1c1e]/50 px-4 py-3.5">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8e8e93]">Gültigkeit & Grundsatz</p>
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#98989d]">
           Dieser Katalog dient als interner Orientierungs- und Entscheidungsrahmen. Maßgeblich bleiben die jeweils
           geltenden Dienstvorschriften. Sanktionen sind stets nach dem Grundsatz der Verhältnismäßigkeit zu wählen.
         </p>
@@ -156,7 +156,7 @@ export default function SanktionskatalogPage() {
           <a
             key={section.id}
             href={`#${section.id}`}
-            className="flex items-center gap-1.5 rounded-[8px] border border-[#343434]/50 bg-[#1d1d1d] px-2.5 py-1.5 text-[12px] text-[#c3c3c3] transition-colors hover:border-[#d4d4d4]/40 hover:text-[#f4f4f4]"
+            className="flex items-center gap-1.5 rounded-[8px] border border-[#38383a]/50 bg-[#1c1c1e] px-2.5 py-1.5 text-[12px] text-[#c7c7cc] transition-colors hover:border-[#d4d4d4]/40 hover:text-[#f5f5f7]"
           >
             <section.icon size={12} strokeWidth={1.8} />
             {section.label}
@@ -170,7 +170,7 @@ export default function SanktionskatalogPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-[#343434]/60">
+              <tr className="border-b border-[#38383a]/60">
                 <Th>PG</Th>
                 <Th>Schwere</Th>
                 <Th>Kurzbeschreibung</Th>
@@ -181,7 +181,7 @@ export default function SanktionskatalogPage() {
               {data.grades.map((grade) => {
                 const tone = toneFor(grade.grade)
                 return (
-                  <tr key={grade.grade} className="border-b border-[#262626]/70 last:border-0">
+                  <tr key={grade.grade} className="border-b border-[#2c2c2e]/70 last:border-0">
                     <td className="py-2.5 pr-3">
                       <span className={cn('inline-flex h-6 w-6 items-center justify-center rounded-[7px] border text-[12px] font-bold tabular-nums', tone.border, tone.bg, tone.text)}>
                         {grade.grade}
@@ -206,18 +206,18 @@ export default function SanktionskatalogPage() {
               key={level.level}
               className={cn(
                 'flex flex-col gap-2 rounded-[10px] border px-3.5 py-3 sm:flex-row sm:items-start sm:gap-4',
-                level.terminates ? 'border-[#dc2626]/25 bg-[#dc2626]/[0.05]' : 'border-[#343434]/60 bg-[#181818]/50',
+                level.terminates ? 'border-[#dc2626]/25 bg-[#dc2626]/[0.05]' : 'border-[#38383a]/60 bg-[#1c1c1e]/50',
               )}
             >
               <span className="shrink-0 text-[13px] font-bold tabular-nums text-[#f59e0b]">{level.level}</span>
               <div className="min-w-0 flex-1">
-                <p className="text-[13.5px] font-semibold text-[#f4f4f4]">{level.measure}</p>
-                <p className="mt-0.5 text-[12.5px] leading-relaxed text-[#a6a6a6]">{level.application}</p>
+                <p className="text-[13.5px] font-semibold text-[#f5f5f7]">{level.measure}</p>
+                <p className="mt-0.5 text-[12.5px] leading-relaxed text-[#98989d]">{level.application}</p>
               </div>
               <div className="shrink-0 sm:text-right">
-                <p className="text-[11.5px] text-[#8c8c8c]">{level.authorityLabel ?? '—'}</p>
+                <p className="text-[11.5px] text-[#8e8e93]">{level.authorityLabel ?? '—'}</p>
                 {level.minRankName && (
-                  <p className="mt-0.5 text-[11px] text-[#8c8c8c]">ab {level.minRankName}</p>
+                  <p className="mt-0.5 text-[11px] text-[#8e8e93]">ab {level.minRankName}</p>
                 )}
                 {level.allowedForActor !== null && (
                   <span
@@ -225,7 +225,7 @@ export default function SanktionskatalogPage() {
                       'mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-[2px] text-[11px] font-medium',
                       level.allowedForActor
                         ? 'border-[#166534]/60 bg-[#052e1a]/60 text-[#86efac]'
-                        : 'border-[#404040]/70 bg-[#141414]/70 text-[#a3a3a3]',
+                        : 'border-[#48484a]/70 bg-[#161617]/70 text-[#98989d]',
                     )}
                   >
                     {level.allowedForActor ? <CheckCircle2 size={10} strokeWidth={2.2} /> : null}
@@ -258,7 +258,7 @@ export default function SanktionskatalogPage() {
                   'rounded-[8px] border px-3 py-1.5 text-[12px] font-medium transition-colors',
                   active
                     ? cn(tone.border, tone.bg, tone.text)
-                    : 'border-[#343434]/50 bg-[#1d1d1d] text-[#a6a6a6] hover:text-[#f4f4f4]',
+                    : 'border-[#38383a]/50 bg-[#1c1c1e] text-[#98989d] hover:text-[#f5f5f7]',
                 )}
               >
                 PG {grade.grade} · {grade.severity}
@@ -279,12 +279,12 @@ export default function SanktionskatalogPage() {
               <h4 className={cn('text-[14px] font-bold', toneFor(selectedGrade.grade).text)}>
                 Penal Grade {selectedGrade.grade} · {selectedGrade.severity}
               </h4>
-              <span className="text-[12px] text-[#a6a6a6]">{selectedGrade.description}</span>
+              <span className="text-[12px] text-[#98989d]">{selectedGrade.description}</span>
             </div>
 
             <ul className="grid gap-1.5 sm:grid-cols-2">
               {selectedGrade.violations.map((violation) => (
-                <li key={violation.code} className="flex items-start gap-2 text-[12.5px] leading-snug text-[#c3c3c3]">
+                <li key={violation.code} className="flex items-start gap-2 text-[12.5px] leading-snug text-[#c7c7cc]">
                   <span className={cn('mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full', toneFor(selectedGrade.grade).accent)} />
                   {violation.label}
                 </li>
@@ -293,16 +293,16 @@ export default function SanktionskatalogPage() {
 
             <div className="mt-4 grid gap-2 border-t border-white/[0.06] pt-3 sm:grid-cols-2">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8c8c8c]">Regelsanktion</p>
-                <p className="mt-0.5 text-[13px] font-semibold text-[#f4f4f4]">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8e8e93]">Regelsanktion</p>
+                <p className="mt-0.5 text-[13px] font-semibold text-[#f5f5f7]">
                   {selectedGrade.regularLevels
                     .map((level) => data.levels.find((item) => item.level === level)?.measure ?? level)
                     .join(' / ')}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8c8c8c]">Bei Wiederholung</p>
-                <p className="mt-0.5 text-[13px] font-semibold text-[#f4f4f4]">{selectedGrade.repeatConsequence}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8e8e93]">Bei Wiederholung</p>
+                <p className="mt-0.5 text-[13px] font-semibold text-[#f5f5f7]">{selectedGrade.repeatConsequence}</p>
               </div>
             </div>
           </motion.div>
@@ -314,12 +314,12 @@ export default function SanktionskatalogPage() {
         intro="Wiederholtes Fehlverhalten wird grundsätzlich strenger bewertet. Entscheidend sind Gleichartigkeit, zeitlicher Abstand, Vorsatz und die bisherigen Disziplinarmaßnahmen.">
         <div className="mb-4 space-y-2">
           {data.repeatRules.map((rule) => (
-            <div key={rule.occurrence} className="flex items-center gap-3 rounded-[10px] border border-[#343434]/60 bg-[#181818]/50 px-3.5 py-2.5">
+            <div key={rule.occurrence} className="flex items-center gap-3 rounded-[10px] border border-[#38383a]/60 bg-[#1c1c1e]/50 px-3.5 py-2.5">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f59e0b]/15 text-[11.5px] font-bold tabular-nums text-[#fcd34d]">
                 {rule.occurrence}
               </span>
-              <p className="text-[12.5px] text-[#c3c3c3]">
-                <span className="font-semibold text-[#f4f4f4]">
+              <p className="text-[12.5px] text-[#c7c7cc]">
+                <span className="font-semibold text-[#f5f5f7]">
                   {rule.occurrence === 1 ? 'Erstverstoß' : `${rule.occurrence}. gleichartiger Verstoß`}
                 </span>
                 {' — '}{rule.principle}
@@ -340,7 +340,7 @@ export default function SanktionskatalogPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-[#343434]/60">
+              <tr className="border-b border-[#38383a]/60">
                 <Th>Stelle</Th>
                 <Th>Befugnis</Th>
                 <Th>Mindestrang</Th>
@@ -348,8 +348,8 @@ export default function SanktionskatalogPage() {
             </thead>
             <tbody>
               {data.levels.map((level) => (
-                <tr key={level.level} className="border-b border-[#262626]/70 last:border-0">
-                  <Td className="font-medium text-[#f4f4f4]">{level.authorityLabel ?? '—'}</Td>
+                <tr key={level.level} className="border-b border-[#2c2c2e]/70 last:border-0">
+                  <Td className="font-medium text-[#f5f5f7]">{level.authorityLabel ?? '—'}</Td>
                   <Td>{level.level} · {level.measure}</Td>
                   <Td>{level.minRankName ?? `Rangstufe ${level.minRankSortOrder ?? '—'}`}</Td>
                 </tr>
@@ -363,12 +363,12 @@ export default function SanktionskatalogPage() {
       <Section id="procedure" number="06" title="Disziplinarverfahren" icon={ListChecks}>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {data.procedure.map((step) => (
-            <div key={step.step} className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/50 px-3.5 py-3">
+            <div key={step.step} className="rounded-[10px] border border-[#38383a]/60 bg-[#1c1c1e]/50 px-3.5 py-3">
               <p className="text-[11px] font-semibold tabular-nums tracking-[0.14em] text-[#f59e0b]">
                 {String(step.step).padStart(2, '0')}
               </p>
-              <p className="mt-1 text-[13px] font-semibold text-[#f4f4f4]">{step.title}</p>
-              <p className="mt-0.5 text-[12px] text-[#8c8c8c]">{step.detail}</p>
+              <p className="mt-1 text-[13px] font-semibold text-[#f5f5f7]">{step.title}</p>
+              <p className="mt-0.5 text-[12px] text-[#8e8e93]">{step.detail}</p>
             </div>
           ))}
         </div>
@@ -384,9 +384,9 @@ export default function SanktionskatalogPage() {
         intro="Vor jeder Sanktion kurz prüfen. Im Ausstell-Dialog müssen alle Punkte bestätigt sein.">
         <ul className="grid gap-1.5 sm:grid-cols-2">
           {data.checklist.map((item) => (
-            <li key={item.key} className="flex items-start gap-2.5 rounded-[9px] border border-[#343434]/50 bg-[#181818]/40 px-3 py-2">
-              <CheckCircle2 size={13} strokeWidth={1.9} className="mt-[2px] shrink-0 text-[#8c8c8c]" />
-              <span className="text-[12.5px] leading-snug text-[#c3c3c3]">{item.label}</span>
+            <li key={item.key} className="flex items-start gap-2.5 rounded-[9px] border border-[#38383a]/50 bg-[#1c1c1e]/40 px-3 py-2">
+              <CheckCircle2 size={13} strokeWidth={1.9} className="mt-[2px] shrink-0 text-[#8e8e93]" />
+              <span className="text-[12.5px] leading-snug text-[#c7c7cc]">{item.label}</span>
             </li>
           ))}
         </ul>
@@ -397,11 +397,11 @@ export default function SanktionskatalogPage() {
         <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-[#fcd34d]">
           <Quote size={12} strokeWidth={2} /> Merksatz
         </p>
-        <p className="text-[14px] font-medium leading-relaxed text-[#f4f4f4]">{data.principle}</p>
+        <p className="text-[14px] font-medium leading-relaxed text-[#f5f5f7]">{data.principle}</p>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
-        <p className="text-[11.5px] text-[#8c8c8c]">
+        <p className="text-[11.5px] text-[#8e8e93]">
           {data.version} · Nur für den internen Dienstgebrauch
         </p>
         <Button variant="secondary" size="sm" onClick={() => window.print()}>
@@ -436,15 +436,15 @@ function Section({
       className="glass-panel-elevated mb-4 scroll-mt-6 rounded-[14px] p-5"
     >
       <div className="mb-3.5 flex items-center gap-2.5">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#212121]">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#2c2c2e]">
           <Icon size={14} strokeWidth={1.8} className="text-[#f59e0b]" />
         </span>
         <div>
-          <p className="text-[11px] font-semibold tracking-[0.16em] text-[#8c8c8c]">{number}</p>
-          <h3 className="text-[14px] font-semibold text-[#f4f4f4]">{title}</h3>
+          <p className="text-[11px] font-semibold tracking-[0.16em] text-[#8e8e93]">{number}</p>
+          <h3 className="text-[14px] font-semibold text-[#f5f5f7]">{title}</h3>
         </div>
       </div>
-      {intro && <p className="mb-4 text-[12.5px] leading-relaxed text-[#a6a6a6]">{intro}</p>}
+      {intro && <p className="mb-4 text-[12.5px] leading-relaxed text-[#98989d]">{intro}</p>}
       {children}
     </motion.section>
   )
@@ -460,7 +460,7 @@ function CircumstanceBox({ title, items, tone }: { title: string; items: string[
       <p className={cn('mb-2 text-[11px] font-medium uppercase tracking-[0.12em]', cls.text)}>{title}</p>
       <ul className="space-y-1">
         {items.map((item) => (
-          <li key={item} className="flex items-start gap-2 text-[12.5px] leading-snug text-[#c3c3c3]">
+          <li key={item} className="flex items-start gap-2 text-[12.5px] leading-snug text-[#c7c7cc]">
             <span className={cn('mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full', cls.dot)} />
             {item}
           </li>
@@ -472,12 +472,12 @@ function CircumstanceBox({ title, items, tone }: { title: string; items: string[
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="pb-2 pr-3 text-[11px] font-medium uppercase tracking-[0.12em] text-[#8c8c8c]">
+    <th className="pb-2 pr-3 text-[11px] font-medium uppercase tracking-[0.12em] text-[#8e8e93]">
       {children}
     </th>
   )
 }
 
 function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={cn('py-2.5 pr-3 text-[12.5px] leading-snug text-[#a6a6a6]', className)}>{children}</td>
+  return <td className={cn('py-2.5 pr-3 text-[12.5px] leading-snug text-[#98989d]', className)}>{children}</td>
 }

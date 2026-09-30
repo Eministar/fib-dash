@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { AlertTriangle, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PdCloudLoader } from '@/components/ui/loading'
+import { DocumentSkeleton } from '@/components/ui/loading'
 import { LegalCaseDocument, type LegalCaseDocumentData } from '@/components/legal-affairs/legal-case-document'
 
 type LoadState =
@@ -46,10 +46,7 @@ export default function LegalCaseSharePage() {
   if (state.kind === 'loading') {
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-3 py-24 text-[#a6a6a6]">
-          <PdCloudLoader />
-          <p className="text-[13px]">Klageschrift wird geladen…</p>
-        </div>
+        <DocumentSkeleton />
       </Shell>
     )
   }
@@ -77,7 +74,7 @@ export default function LegalCaseSharePage() {
             Federal Investigation Bureau
           </p>
           <h1 className="mt-1 text-[20px] font-semibold text-white">{document.title}</h1>
-          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
+          <p className="mt-1 text-[12.5px] text-[#98989d]">
             Aktenzeichen {document.caseNumber} · {document.status === 'FILED' ? 'Eingereicht' : document.status === 'CLOSED' ? 'Geschlossen' : 'Entwurf'}
           </p>
         </div>
@@ -94,7 +91,7 @@ export default function LegalCaseSharePage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[#080808] px-3 py-8 sm:px-6 lg:py-12">
+    <main className="min-h-screen bg-[#000000] px-3 py-8 sm:px-6 lg:py-12">
       <div className="mx-auto w-full max-w-[880px]">{children}</div>
     </main>
   )
@@ -110,12 +107,12 @@ function Notice({
   children?: React.ReactNode
 }) {
   return (
-    <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-8 text-center">
+    <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-8 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/12 text-[#d4d4d4]">
         <AlertTriangle size={26} />
       </div>
       <h1 className="text-[19px] font-semibold text-white">{title}</h1>
-      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#a6a6a6]">{description}</p>
+      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#98989d]">{description}</p>
       {children && <div className="mt-5 flex justify-center">{children}</div>}
     </section>
   )

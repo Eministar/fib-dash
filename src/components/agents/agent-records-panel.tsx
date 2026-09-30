@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/toast'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { cn, formatDateTime } from '@/lib/utils'
+import { ListSkeleton } from '@/components/ui/loading'
 
 type RecordKind = 'POSITIVE' | 'NEGATIVE'
 
@@ -96,8 +97,8 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
             <ThumbsDown size={11} strokeWidth={2} /> {data?.negative ?? 0}
           </span>
           {manage && (
-            <button onClick={() => openModal('POSITIVE')} className="ml-1 p-1 rounded-[6px] hover:bg-[#212121] transition-colors" aria-label="Eintrag hinzufügen" title="Eintrag hinzufügen">
-              <Plus size={14} className="text-[#8c8c8c]" />
+            <button onClick={() => openModal('POSITIVE')} className="ml-1 p-1 rounded-[6px] hover:bg-[#2c2c2e] transition-colors" aria-label="Eintrag hinzufügen" title="Eintrag hinzufügen">
+              <Plus size={14} className="text-[#8e8e93]" />
             </button>
           )}
         </div>
@@ -109,15 +110,15 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
             const meta = KIND_META[entry.kind]
             const Icon = meta.icon
             return (
-              <div key={entry.id} className={cn('bg-[#212121] rounded-[8px] border-l-2 p-3', meta.border)}>
+              <div key={entry.id} className={cn('bg-[#2c2c2e] rounded-[8px] border-l-2 p-3', meta.border)}>
                 <div className="flex items-start gap-2.5">
                   <span className={cn('mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px]', meta.tile, meta.text)}>
                     <Icon size={12} strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-medium text-[#eee]">{entry.title}</p>
-                    {entry.content && <p className="mt-0.5 text-[12.5px] leading-relaxed text-[#909090]">{entry.content}</p>}
-                    <p className="mt-1.5 flex items-center gap-1 text-[11px] text-[#8c8c8c]">
+                    {entry.content && <p className="mt-0.5 text-[12.5px] leading-relaxed text-[#8e8e93]">{entry.content}</p>}
+                    <p className="mt-1.5 flex items-center gap-1 text-[11px] text-[#8e8e93]">
                       {entry.source !== 'manual' && <Bot size={11} strokeWidth={1.85} />}
                       {formatDateTime(entry.createdAt)} · {entry.author ?? 'Gelöscht'}
                     </p>
@@ -127,7 +128,7 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
                       type="button"
                       onClick={() => remove(entry)}
                       disabled={loading}
-                      className="shrink-0 rounded-[6px] p-1 text-[#8c8c8c] transition-colors hover:bg-[#1c1111] hover:text-[#f87171]"
+                      className="shrink-0 rounded-[6px] p-1 text-[#8e8e93] transition-colors hover:bg-[#1c1111] hover:text-[#f87171]"
                       aria-label="Eintrag löschen"
                       title="Eintrag löschen"
                     >
@@ -140,7 +141,7 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
           })}
         </div>
       ) : (
-        <p className="text-[12.5px] text-[#8c8c8c]">{data ? 'Keine Einträge vorhanden' : 'Lädt …'}</p>
+        data ? <p className="text-[12.5px] text-[#8e8e93]">Keine Einträge vorhanden</p> : <ListSkeleton rows={3} compact />
       )}
 
       {manage && (
@@ -158,7 +159,7 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
                     onClick={() => setForm({ ...form, kind })}
                     className={cn(
                       'flex items-center justify-center gap-2 rounded-[10px] border px-3 py-2.5 text-[13px] font-medium transition-colors',
-                      active ? cn(meta.tile, meta.text, 'border-current') : 'border-[#343434] text-[#909090] hover:bg-[#212121]',
+                      active ? cn(meta.tile, meta.text, 'border-current') : 'border-[#38383a] text-[#8e8e93] hover:bg-[#2c2c2e]',
                     )}
                     aria-pressed={active}
                   >

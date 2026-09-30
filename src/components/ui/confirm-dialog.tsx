@@ -87,7 +87,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               <div className="min-w-0">
                 <h2 className="text-[15px] font-semibold leading-snug text-white">{pending.title}</h2>
                 {pending.description && (
-                  <div className="mt-1.5 text-[13px] leading-relaxed text-[#a6a6a6]">{pending.description}</div>
+                  <div className="mt-1.5 text-[13px] leading-relaxed text-[#98989d]">{pending.description}</div>
                 )}
               </div>
             </div>

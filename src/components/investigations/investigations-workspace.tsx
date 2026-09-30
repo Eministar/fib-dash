@@ -12,7 +12,7 @@ import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { PageLoader } from '@/components/ui/loading'
+import { ListSkeleton } from '@/components/ui/loading'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -174,12 +174,12 @@ export function InvestigationsWorkspace() {
       invalid: !form.affiliation ? 'Bitte wähle, ob der Vorfall zu einer bestehenden Dauerakte gehört.' : form.affiliation === 'yes' && !form.dossierId ? 'Bitte die zugehörige Dauerakte auswählen.' : undefined,
       content: <div className="space-y-4">
         <h2 className="text-base font-semibold">Gehört der Vorfall zu einer Fraktion, Familie oder einem bekannten Anwesen?</h2>
-        <p className="text-sm leading-6 text-[#a6a6a6]">Die Einsatzakte dokumentiert diesen konkreten Vorfall. Eine Dauerakte sammelt alle zugehörigen Einsätze, Personen und Fahrzeuge über längere Zeit.</p>
+        <p className="text-sm leading-6 text-[#98989d]">Die Einsatzakte dokumentiert diesen konkreten Vorfall. Eine Dauerakte sammelt alle zugehörigen Einsätze, Personen und Fahrzeuge über längere Zeit.</p>
         <div className="grid gap-2 sm:grid-cols-2">{[
           { id: 'yes' as const, label: 'Ja, einer Dauerakte zuordnen' },
           { id: 'no' as const, label: 'Nein oder noch unbekannt' },
         ].map(option => <button type="button" key={option.id} aria-pressed={form.affiliation === option.id}
-          className={`rounded-lg border p-3 text-left text-sm ${form.affiliation === option.id ? 'border-[#a6a6a6] bg-[#303030]' : 'border-[#343434]'}`}
+          className={`rounded-lg border p-3 text-left text-sm ${form.affiliation === option.id ? 'border-[#98989d] bg-[#3a3a3c]' : 'border-[#38383a]'}`}
           onClick={() => setForm(previous => ({ ...previous, affiliation: option.id }))}>{option.label}</button>)}</div>
         {form.affiliation === 'yes' && <>
           <Input label="Fraktion oder Dauerakte suchen" value={dossierSearch} onChange={event => setDossierSearch(event.target.value)} placeholder="Name der Fraktion, Familie oder des Anwesens" />
@@ -243,13 +243,13 @@ export function InvestigationsWorkspace() {
             onChange={(assigneeIds) => setForm((prev) => ({ ...prev, assigneeIds }))}
             description="Zugewiesene Ermittler sehen die Akte auch dann, wenn sie als Verschlusssache geführt wird."
           />
-          <div className="rounded-[10px] border border-[#2a2a2a] bg-[#141414] p-3.5">
+          <div className="rounded-[10px] border border-[#3a3a3c] bg-[#161617] p-3.5">
             <Checkbox
               checked={form.classified}
               onCheckedChange={(checked) => setForm((prev) => ({ ...prev, classified: checked }))}
               label="Als Verschlusssache führen"
             />
-            <p className="mt-2 text-[12px] leading-relaxed text-[#a6a6a6]">
+            <p className="mt-2 text-[12px] leading-relaxed text-[#98989d]">
               {form.classified
                 ? 'Voreingestellt. Nur Ersteller, Fallführung, zugewiesene Ermittler und Berechtigte sehen die Akte samt Clips.'
                 : 'Abgewählt: die Akte ist für alle Ermittler mit Akteneinsicht sichtbar.'}
@@ -264,7 +264,7 @@ export function InvestigationsWorkspace() {
       optional: true,
       content: (
         <div className="space-y-3">
-          <p className="text-[12.5px] text-[#a6a6a6]">
+          <p className="text-[12.5px] text-[#98989d]">
             Fand der Einsatz an einer bekannten Route, einem Sammler oder einem Anwesen statt? Verknüpfe die Punkte hier.
           </p>
           <SpotPickerField
@@ -281,7 +281,7 @@ export function InvestigationsWorkspace() {
       optional: true,
       content: (
         <div className="space-y-3">
-          <p className="text-[12.5px] text-[#a6a6a6]">
+          <p className="text-[12.5px] text-[#98989d]">
             Bilder landen im Bildkatalog und lassen sich danach auch an Personen- und Anwesenakten verwenden.
           </p>
           <PhotoPicker value={form.photos} onChange={(photos) => setForm((prev) => ({ ...prev, photos }))} />
@@ -303,8 +303,8 @@ export function InvestigationsWorkspace() {
             ['Kartenpunkte', form.mapSpots.length ? form.mapSpots.map((spot) => spot.title).join(', ') : 'Keine'],
             ['Bilder', form.photos.length ? `${form.photos.length} ausgewählt` : 'Keine'],
           ] as [string, string][]).map(([label, value]) => (
-            <div key={label} className="flex flex-wrap gap-x-3 border-b border-[#1e1e1e] pb-2">
-              <dt className="w-36 shrink-0 text-[#8c8c8c]">{label}</dt>
+            <div key={label} className="flex flex-wrap gap-x-3 border-b border-[#1c1c1e] pb-2">
+              <dt className="w-36 shrink-0 text-[#8e8e93]">{label}</dt>
               <dd className="min-w-0 text-[#d4d4d4]">{value}</dd>
             </div>
           ))}
@@ -333,8 +333,8 @@ export function InvestigationsWorkspace() {
 
       {chooseType && <Modal open onClose={() => setChooseType(false)} title="Was möchtest du dokumentieren?" size="lg">
         <div className="space-y-3">
-          <button type="button" onClick={() => { setChooseType(false); setCreateOpen(true) }} className="block w-full rounded-lg border border-[#404040] p-4 text-left hover:bg-[#262626]"><span className="block font-medium">Einen konkreten Einsatz oder Vorfall</span><span className="mt-1 block text-sm text-[#a6a6a6]">Einsatzakte mit Ablauf, Beteiligten und Beweisen anlegen.</span></button>
-          <Link href="/investigations/dossiers?new=1" className="block rounded-lg border border-[#404040] p-4 hover:bg-[#262626]"><span className="block font-medium">Informationen langfristig sammeln</span><span className="mt-1 block text-sm text-[#a6a6a6]">Dauerakte für eine Fraktion, Familie, ein Anwesen oder Thema anlegen.</span></Link>
+          <button type="button" onClick={() => { setChooseType(false); setCreateOpen(true) }} className="block w-full rounded-lg border border-[#48484a] p-4 text-left hover:bg-[#2c2c2e]"><span className="block font-medium">Einen konkreten Einsatz oder Vorfall</span><span className="mt-1 block text-sm text-[#98989d]">Einsatzakte mit Ablauf, Beteiligten und Beweisen anlegen.</span></button>
+          <Link href="/investigations/dossiers?new=1" className="block rounded-lg border border-[#48484a] p-4 hover:bg-[#2c2c2e]"><span className="block font-medium">Informationen langfristig sammeln</span><span className="mt-1 block text-sm text-[#98989d]">Dauerakte für eine Fraktion, Familie, ein Anwesen oder Thema anlegen.</span></Link>
         </div>
       </Modal>}
 
@@ -350,7 +350,7 @@ export function InvestigationsWorkspace() {
       </FilterBar>
 
       {loading && !data ? (
-        <PageLoader />
+        <ListSkeleton rows={6} />
       ) : investigations.length === 0 ? (
         <EmptyState
           icon={FolderOpen}
@@ -383,8 +383,8 @@ export function InvestigationsWorkspace() {
               key={investigation.id}
               href={`/investigations/${investigation.id}`}
               className={cn(
-                'block rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-4 transition-colors',
-                'hover:border-[#404040] hover:bg-[#181818]',
+                'block rounded-[12px] border border-[#3a3a3c] bg-[#161617] p-4 transition-colors',
+                'hover:border-[#48484a] hover:bg-[#1c1c1e]',
               )}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -397,13 +397,13 @@ export function InvestigationsWorkspace() {
                   </div>
                   <h2 className="mt-1.5 truncate text-[15px] font-semibold text-white">{investigation.title}</h2>
                   {investigation.summary && (
-                    <p className="mt-1 line-clamp-2 max-w-2xl text-[12.5px] leading-relaxed text-[#a6a6a6]">
+                    <p className="mt-1 line-clamp-2 max-w-2xl text-[12.5px] leading-relaxed text-[#98989d]">
                       {investigation.summary}
                     </p>
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-4 text-[12px] text-[#8c8c8c]">
+                <div className="flex shrink-0 items-center gap-4 text-[12px] text-[#8e8e93]">
                   <span className="inline-flex items-center gap-1.5" title="Einträge">
                     <FolderOpen className="h-3.5 w-3.5" />
                     {investigation._count.entries}
@@ -419,7 +419,7 @@ export function InvestigationsWorkspace() {
                 </div>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8c8c8c]">
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8e8e93]">
                 <span>
                   Fallführung:{' '}
                   {investigation.leadAgent

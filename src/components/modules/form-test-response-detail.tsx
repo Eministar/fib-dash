@@ -98,9 +98,9 @@ export function FormTestResponseDetail({ testId, responseId }: { testId: string;
     return (
       <div className="mx-auto max-w-3xl">
         <PageHeader title="Abgabe" description="Die Abgabe konnte nicht geladen werden." eyebrow="Auswertung" />
-        <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
-          <p className="text-[13px] text-[#a6a6a6]">{loadError ?? 'Abgabe nicht verfügbar'}</p>
+        <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 py-14 text-center">
+          <Clipboard size={26} className="mx-auto mb-2 text-[#8e8e93]" />
+          <p className="text-[13px] text-[#98989d]">{loadError ?? 'Abgabe nicht verfügbar'}</p>
           <Link href={listHref} className="mt-4 inline-block">
             <Button variant="secondary" size="sm">
               <ArrowLeft size={13} />
@@ -134,10 +134,10 @@ export function FormTestResponseDetail({ testId, responseId }: { testId: string;
         <Badge variant={response.reviewedAt ? 'success' : 'warning'}>
           {response.reviewedAt ? `Bewertet von ${response.reviewedBy?.displayName ?? 'Unbekannt'}` : 'Offen'}
         </Badge>
-        <span className="text-[12px] text-[#a6a6a6]">Abgegeben {formatDateTime(response.submittedAt)}</span>
+        <span className="text-[12px] text-[#98989d]">Abgegeben {formatDateTime(response.submittedAt)}</span>
       </div>
 
-      <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
+      <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-4">
         <div className="space-y-3">
           {response.answers.map((answer, index) => {
             const correct = correctValues(answer.question)
@@ -145,9 +145,9 @@ export function FormTestResponseDetail({ testId, responseId }: { testId: string;
             const showCorrect = test.kind === 'TEST' && correct.length > 0
             const isCorrect = showCorrect && correct.length === chosen.length && correct.every((value) => chosen.includes(value))
             return (
-              <div key={answer.id} className="rounded-[12px] border border-[#343434]/45 bg-[#181818]/45 p-3">
+              <div key={answer.id} className="rounded-[12px] border border-[#38383a]/45 bg-[#1c1c1e]/45 p-3">
                 <div className="mb-2 flex items-start gap-2">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] bg-[#2c2c2e] text-[11px] font-semibold text-[#d4d4d4]">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -159,14 +159,14 @@ export function FormTestResponseDetail({ testId, responseId }: { testId: string;
                   )}
                 </div>
                 {showCorrect && (
-                  <p className="pl-7 text-[11.5px] text-[#a6a6a6]">Richtig: {correct.join(', ')}</p>
+                  <p className="pl-7 text-[11.5px] text-[#98989d]">Richtig: {correct.join(', ')}</p>
                 )}
               </div>
             )
           })}
         </div>
 
-        <div className="mt-5 rounded-[12px] border border-[#343434]/45 bg-[#0f0f0f]/50 p-4">
+        <div className="mt-5 rounded-[12px] border border-[#38383a]/45 bg-[#0f0f0f]/50 p-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[160px_1fr]">
             <Input
               label={`Punkte${response.maxScore > 0 ? ` von ${response.maxScore}` : ''}`}

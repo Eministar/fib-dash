@@ -97,7 +97,7 @@ function statusClass(status: ProbationStatusValue) {
   if (status === 'PASSED') return 'border-[#166534]/60 bg-[#052e1a]/60 text-[#86efac]'
   if (status === 'FAILED') return 'border-[#7f1d1d]/60 bg-[#2a1212]/60 text-[#fca5a5]'
   if (status === 'EXTENDED') return 'border-[#b45309]/60 bg-[#1d1608]/70 text-[#fbbf24]'
-  return 'border-[#404040]/70 bg-[#181818]/70 text-[#93c5fd]'
+  return 'border-[#48484a]/70 bg-[#1c1c1e]/70 text-[#93c5fd]'
 }
 
 function ratingClass(rating: ProbationEntryRatingValue) {
@@ -307,7 +307,7 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                 'flex min-h-[54px] items-center justify-between gap-3 rounded-[10px] border px-3 py-2 text-left transition-colors',
                 active
                   ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
-                  : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                  : 'border-[#38383a]/60 bg-[#1c1c1e]/55 text-[#98989d] hover:border-[#48484a] hover:text-white',
               )}
             >
               <span className="min-w-0 text-[12.5px] font-semibold leading-snug">{PROBATION_TYPE_LABELS[type]}</span>
@@ -318,10 +318,10 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45">
-          <div className="border-b border-[#343434]/70 px-4 py-3">
-            <p className="text-[13px] font-semibold text-[#f4f4f4]">{PROBATION_TYPE_LABELS[activeType]}</p>
-            <p className="mt-0.5 text-[11.5px] text-[#909090]">{visibleProbations.length} Einträge</p>
+        <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45">
+          <div className="border-b border-[#38383a]/70 px-4 py-3">
+            <p className="text-[13px] font-semibold text-[#f5f5f7]">{PROBATION_TYPE_LABELS[activeType]}</p>
+            <p className="mt-0.5 text-[11.5px] text-[#8e8e93]">{visibleProbations.length} Einträge</p>
           </div>
           <div className="max-h-[620px] overflow-y-auto p-2">
             {visibleProbations.length > 0 ? (
@@ -338,7 +338,7 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                         'w-full rounded-[10px] border px-3 py-3 text-left transition-colors',
                         selected
                           ? 'border-[#d4d4d4]/45 bg-[#1d1608]/55'
-                          : 'border-transparent bg-[#181818]/55 hover:border-[#404040]/70 hover:bg-[#212121]/60',
+                          : 'border-transparent bg-[#1c1c1e]/55 hover:border-[#48484a]/70 hover:bg-[#2c2c2e]/60',
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -347,7 +347,7 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                             {probation.agent.firstName} {probation.agent.lastName}
                             <span className="ml-1 font-mono text-[#d4d4d4]">#{displayBadgeNumber(probation.agent.badgeNumber)}</span>
                           </p>
-                          <p className="mt-1 truncate text-[11.5px] text-[#a6a6a6]">{probation.agent.rank.name} · {formatDate(probation.startsAt)} bis {formatDate(probation.endsAt)}</p>
+                          <p className="mt-1 truncate text-[11.5px] text-[#98989d]">{probation.agent.rank.name} · {formatDate(probation.startsAt)} bis {formatDate(probation.endsAt)}</p>
                         </div>
                         <span className={cn('shrink-0 rounded-full border px-2 py-[3px] text-[11px] font-semibold', statusClass(probation.status))}>
                           {PROBATION_STATUS_LABELS[probation.status]}
@@ -356,7 +356,7 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                       <div className="mt-3 flex items-center gap-2 text-[11.5px]">
                         <span className="inline-flex items-center gap-1 text-[#86efac]"><ThumbsUp size={12} /> {rowStats.positive}</span>
                         <span className="inline-flex items-center gap-1 text-[#fca5a5]"><ThumbsDown size={12} /> {rowStats.negative}</span>
-                        <span className="text-[#8c8c8c]">Ratio {rowStats.total > 0 ? `${rowStats.positiveRate}%` : '—'}</span>
+                        <span className="text-[#8e8e93]">Ratio {rowStats.total > 0 ? `${rowStats.positiveRate}%` : '—'}</span>
                       </div>
                     </button>
                   )
@@ -365,13 +365,13 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
             ) : (
               <div className="py-20 text-center">
                 <ClipboardCheck size={28} className="mx-auto mb-3 text-[#d4d4d4]/35" />
-                <p className="text-[13px] text-[#a6a6a6]">Keine Probezeiten in dieser Liste</p>
+                <p className="text-[13px] text-[#98989d]">Keine Probezeiten in dieser Liste</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
+        <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-4">
           {selectedProbation ? (
             <div className="space-y-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -380,7 +380,7 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                     {selectedProbation.agent.firstName} {selectedProbation.agent.lastName}
                     <span className="ml-1 font-mono text-[#d4d4d4]">#{displayBadgeNumber(selectedProbation.agent.badgeNumber)}</span>
                   </Link>
-                  <p className="mt-1 text-[12px] text-[#a6a6a6]">
+                  <p className="mt-1 text-[12px] text-[#98989d]">
                     {PROBATION_TYPE_LABELS[selectedProbation.type]} · {formatDate(selectedProbation.startsAt)} bis {formatDate(selectedProbation.endsAt)}
                   </p>
                 </div>
@@ -396,9 +396,9 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
               )}
 
               {canManage && (
-                <div className="rounded-[12px] border border-[#343434]/60 bg-[#181818]/35 p-3">
+                <div className="rounded-[12px] border border-[#38383a]/60 bg-[#1c1c1e]/35 p-3">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-[13px] font-semibold text-[#f4f4f4]">Verwaltung</p>
+                    <p className="text-[13px] font-semibold text-[#f5f5f7]">Verwaltung</p>
                     <Button variant="danger" size="sm" onClick={() => setDeleteModal(selectedProbation)}>
                       <Trash2 size={13} /> Löschen
                     </Button>
@@ -441,8 +441,8 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                     <p className="text-[11px] text-[#fca5a5]">Negativ</p>
                     <p className="mt-1 text-[18px] font-semibold text-white">{stats.negative}</p>
                   </div>
-                  <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/55 px-3 py-2.5">
-                    <p className="text-[11px] text-[#a6a6a6]">Ratio</p>
+                  <div className="rounded-[10px] border border-[#38383a]/70 bg-[#1c1c1e]/55 px-3 py-2.5">
+                    <p className="text-[11px] text-[#98989d]">Ratio</p>
                     <p className="mt-1 text-[18px] font-semibold text-white">{stats.total > 0 ? `${stats.positiveRate}%` : '—'}</p>
                   </div>
                 </div>
@@ -450,8 +450,8 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
 
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <p className="text-[13px] font-semibold text-[#f4f4f4]">Checkliste</p>
-                  <span className="text-[12px] text-[#a6a6a6]">{completedChecklist}/{checklist.length} erledigt</span>
+                  <p className="text-[13px] font-semibold text-[#f5f5f7]">Checkliste</p>
+                  <span className="text-[12px] text-[#98989d]">{completedChecklist}/{checklist.length} erledigt</span>
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {checklist.map((item) => (
@@ -460,9 +460,9 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                       type="button"
                       disabled={!canManage || selectedProbation.status !== 'ACTIVE'}
                       onClick={() => toggleChecklist(selectedProbation, item.id)}
-                      className="flex min-h-[38px] w-full items-center gap-2 rounded-[8px] border border-[#343434]/55 bg-[#181818]/65 px-3 py-2 text-left text-[12.5px] text-[#d2d2d2] disabled:cursor-default"
+                      className="flex min-h-[38px] w-full items-center gap-2 rounded-[8px] border border-[#38383a]/55 bg-[#1c1c1e]/65 px-3 py-2 text-left text-[12.5px] text-[#d2d2d2] disabled:cursor-default"
                     >
-                      {item.completed ? <CheckCircle2 size={15} className="shrink-0 text-[#86efac]" /> : <XCircle size={15} className="shrink-0 text-[#909090]" />}
+                      {item.completed ? <CheckCircle2 size={15} className="shrink-0 text-[#86efac]" /> : <XCircle size={15} className="shrink-0 text-[#8e8e93]" />}
                       <span>{item.label}</span>
                     </button>
                   ))}
@@ -470,10 +470,10 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
               </div>
 
               {canManage && (
-                <div className="rounded-[12px] border border-[#343434]/60 bg-[#181818]/35 p-3">
+                <div className="rounded-[12px] border border-[#38383a]/60 bg-[#1c1c1e]/35 p-3">
                   <div className="mb-3 flex items-center gap-2">
                     <MessageSquarePlus size={14} className="text-[#d4d4d4]" />
-                    <p className="text-[13px] font-semibold text-[#f4f4f4]">Eintrag hinzufügen</p>
+                    <p className="text-[13px] font-semibold text-[#f5f5f7]">Eintrag hinzufügen</p>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_minmax(0,1fr)]">
                     <Select
@@ -502,17 +502,17 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
 
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <p className="text-[13px] font-semibold text-[#f4f4f4]">Historie</p>
+                  <p className="text-[13px] font-semibold text-[#f5f5f7]">Historie</p>
                 </div>
                 <div className="space-y-2">
                   {(selectedProbation.entries ?? []).length > 0 ? (
                     selectedProbation.entries.map((entry) => (
-                      <div key={entry.id} className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/55 px-3 py-3">
+                      <div key={entry.id} className="rounded-[10px] border border-[#38383a]/60 bg-[#1c1c1e]/55 px-3 py-3">
                         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                           <span className={cn('inline-flex items-center rounded-full border px-2 py-[3px] text-[11px] font-semibold', ratingClass(entry.rating))}>
                             {PROBATION_ENTRY_RATING_LABELS[entry.rating]}
                           </span>
-                          <span className="text-[11px] text-[#909090]">
+                          <span className="text-[11px] text-[#8e8e93]">
                             {formatDateTime(entry.createdAt)} · {entry.createdBy?.displayName ?? 'Gelöscht'}
                           </span>
                         </div>
@@ -520,14 +520,14 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
                       </div>
                     ))
                   ) : (
-                    <p className="rounded-[10px] border border-dashed border-[#343434]/65 bg-[#181818]/35 px-3 py-4 text-center text-[12.5px] text-[#909090]">
+                    <p className="rounded-[10px] border border-dashed border-[#38383a]/65 bg-[#1c1c1e]/35 px-3 py-4 text-center text-[12.5px] text-[#8e8e93]">
                       Noch keine Einträge vorhanden
                     </p>
                   )}
                 </div>
                 {selectedProbation.resultNote && (
-                  <div className="mt-3 rounded-[10px] border border-[#404040]/60 bg-[#181818]/45 px-3 py-3">
-                    <p className="text-[11.5px] text-[#a6a6a6]">Ergebnisnotiz</p>
+                  <div className="mt-3 rounded-[10px] border border-[#48484a]/60 bg-[#1c1c1e]/45 px-3 py-3">
+                    <p className="text-[11.5px] text-[#98989d]">Ergebnisnotiz</p>
                     <p className="mt-1 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#d2d2d2]">{selectedProbation.resultNote}</p>
                   </div>
                 )}
@@ -536,7 +536,7 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
           ) : (
             <div className="py-28 text-center">
               <ClipboardCheck size={28} className="mx-auto mb-3 text-[#d4d4d4]/35" />
-              <p className="text-[13px] text-[#a6a6a6]">Keine Probezeit ausgewählt</p>
+              <p className="text-[13px] text-[#98989d]">Keine Probezeit ausgewählt</p>
             </div>
           )}
         </div>
@@ -583,12 +583,12 @@ export function ProbationsWorkspace({ embedded = false }: ProbationsWorkspacePro
             Diese Probezeit inklusive Historie wird dauerhaft gelöscht.
           </p>
           {deleteModal && (
-            <div className="rounded-[10px] border border-[#343434]/60 bg-[#181818]/55 px-3 py-3">
+            <div className="rounded-[10px] border border-[#38383a]/60 bg-[#1c1c1e]/55 px-3 py-3">
               <p className="text-[13px] font-semibold text-white">
                 {deleteModal.agent.firstName} {deleteModal.agent.lastName}
                 <span className="ml-1 font-mono text-[#d4d4d4]">#{displayBadgeNumber(deleteModal.agent.badgeNumber)}</span>
               </p>
-              <p className="mt-1 text-[12px] text-[#a6a6a6]">
+              <p className="mt-1 text-[12px] text-[#98989d]">
                 {PROBATION_TYPE_LABELS[deleteModal.type]} · {formatDate(deleteModal.startsAt)} bis {formatDate(deleteModal.endsAt)}
               </p>
             </div>

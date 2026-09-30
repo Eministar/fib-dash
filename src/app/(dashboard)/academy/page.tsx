@@ -68,7 +68,7 @@ export default function AcademyPage() {
                 'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors',
                 active
                   ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
-                  : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                  : 'border-[#38383a]/60 bg-[#1c1c1e]/55 text-[#98989d] hover:border-[#48484a] hover:text-white',
               )}
             >
               <Icon size={14} strokeWidth={2} />

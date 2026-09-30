@@ -138,38 +138,38 @@ export default function TrainingsPage() {
       />
 
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
-        <div className="divide-y divide-[#343434]">
+        <div className="divide-y divide-[#38383a]">
           {trainings?.map((t, i) => (
             <motion.div
               key={t.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: i * 0.02 }}
-              className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#212121] transition-colors"
+              className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#2c2c2e] transition-colors"
             >
-              <span className="text-[12px] text-[#909090] font-mono w-6 text-right">{t.sortOrder}</span>
+              <span className="text-[12px] text-[#8e8e93] font-mono w-6 text-right">{t.sortOrder}</span>
               <div className="flex-1">
                 <span className="text-[13.5px] font-medium text-[#eee]">{t.label}</span>
-                <span className="text-[11px] text-[#8c8c8c] ml-2 font-mono">({t.key})</span>
-                <span className="text-[11px] text-[#909090] ml-2">ab {t.minRank?.name ?? 'allen Rängen'}</span>
+                <span className="text-[11px] text-[#8e8e93] ml-2 font-mono">({t.key})</span>
+                <span className="text-[11px] text-[#8e8e93] ml-2">ab {t.minRank?.name ?? 'allen Rängen'}</span>
                 {roleName(discordData?.config.trainingRoleMap[t.id]) && (
-                  <span className="text-[11px] text-[#909090] ml-2">Discord: {roleName(discordData?.config.trainingRoleMap[t.id])}</span>
+                  <span className="text-[11px] text-[#8e8e93] ml-2">Discord: {roleName(discordData?.config.trainingRoleMap[t.id])}</span>
                 )}
               </div>
               <div className="flex gap-0.5">
-                <button onClick={() => openEdit(t)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                  <Edit size={13} className="text-[#8c8c8c]" />
+                <button onClick={() => openEdit(t)} className="p-1.5 rounded-[6px] hover:bg-[#2c2c2e] transition-colors">
+                  <Edit size={13} className="text-[#8e8e93]" />
                 </button>
                 <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors">
-                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-[#8e8e93] hover:text-[#f87171]" />
                 </button>
               </div>
             </motion.div>
           ))}
           {(!trainings || trainings.length === 0) && (
             <div className="text-center py-16">
-              <GraduationCap size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#909090]">Keine Ausbildungsarten vorhanden</p>
+              <GraduationCap size={28} className="mx-auto mb-3 text-[#f5f5f7]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#8e8e93]">Keine Ausbildungsarten vorhanden</p>
             </div>
           )}
         </div>

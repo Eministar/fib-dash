@@ -47,19 +47,19 @@ export function ApplicationPicker({ applications, value, onChange }: Application
 
   return (
     <div>
-      <p className="mb-1.5 text-[12.5px] font-medium text-[#aeaeae]">Zugehörige Bewerbung</p>
+      <p className="mb-1.5 text-[12.5px] font-medium text-[#98989d]">Zugehörige Bewerbung</p>
 
       <div className="relative">
-        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]" />
+        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Aktenzeichen, Name oder Discord-ID suchen"
-          className="h-[36px] w-full rounded-[9px] border border-[#343434]/70 bg-[#181818] pl-8 pr-3 text-[13.5px] text-[#f4f4f4] outline-none transition-colors placeholder:text-[#8c8c8c] focus:border-[#d4d4d4]"
+          className="h-[36px] w-full rounded-[9px] border border-[#38383a]/70 bg-[#1c1c1e] pl-8 pr-3 text-[13.5px] text-[#f5f5f7] outline-none transition-colors placeholder:text-[#8e8e93] focus:border-[#d4d4d4]"
         />
       </div>
 
-      <div className="mt-2 max-h-[212px] space-y-1 overflow-y-auto rounded-[9px] border border-[#343434]/55 bg-[#181818]/45 p-1.5">
+      <div className="mt-2 max-h-[212px] space-y-1 overflow-y-auto rounded-[9px] border border-[#38383a]/55 bg-[#1c1c1e]/45 p-1.5">
         <PickerRow
           label="Keine Bewerbung verknüpfen"
           selected={value === ''}
@@ -82,7 +82,7 @@ export function ApplicationPicker({ applications, value, onChange }: Application
         })}
 
         {filtered.length === 0 && (
-          <p className="px-2 py-3 text-center text-[12px] text-[#909090]">
+          <p className="px-2 py-3 text-center text-[12px] text-[#8e8e93]">
             Keine passende Bewerbung gefunden.
           </p>
         )}
@@ -110,7 +110,7 @@ function PickerRow({
         'flex w-full items-center gap-2 rounded-[8px] border px-2.5 py-2 text-left transition-colors',
         selected
           ? 'border-[#d4d4d4]/40 bg-[#d4d4d4]/12'
-          : 'border-transparent hover:bg-[#232323]/60',
+          : 'border-transparent hover:bg-[#2c2c2e]/60',
       )}
     >
       <span className="flex h-4 w-4 shrink-0 items-center justify-center text-[#d4d4d4]">
@@ -118,7 +118,7 @@ function PickerRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-semibold text-white">{label}</span>
-        {meta && <span className="mt-0.5 block truncate text-[11px] text-[#909090]">{meta}</span>}
+        {meta && <span className="mt-0.5 block truncate text-[11px] text-[#8e8e93]">{meta}</span>}
       </span>
     </button>
   )

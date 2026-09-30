@@ -8,7 +8,7 @@ import { Video } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Input } from '@/components/ui/input'
-import { PageLoader } from '@/components/ui/loading'
+import { PageLoader, ListSkeleton } from '@/components/ui/loading'
 import { Select } from '@/components/ui/select'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SearchInput } from '@/components/ui/filter-bar'
@@ -109,7 +109,7 @@ export function BodycamCatalog() {
 
       {error && <p role="alert" className="mb-4 text-sm text-red-300">{error}</p>}
       {loading && !data ? (
-        <PageLoader />
+        <ListSkeleton rows={6} />
       ) : clips.length === 0 ? (
         <EmptyState
           icon={Video}

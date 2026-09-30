@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { CheckCircle2, Printer, ShieldX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PdCloudLoader } from '@/components/ui/loading'
+import { DocumentSkeleton } from '@/components/ui/loading'
 import { AgreementDocument, type AgreementDocumentData } from '@/components/agreements/agreement-document'
 
 interface LinkPayload {
@@ -60,13 +60,13 @@ export default function AgreementSigningPage() {
     }
   }
 
-  if (state.kind === 'loading') return <div className="flex min-h-screen items-center justify-center"><PdCloudLoader /></div>
+  if (state.kind === 'loading') return <DocumentSkeleton />
   if (state.kind === 'error') {
     return (
       <main className="mx-auto max-w-xl px-5 py-20 text-center">
-        <ShieldX className="mx-auto text-[#8c8c8c]" size={28} />
+        <ShieldX className="mx-auto text-[#8e8e93]" size={28} />
         <h1 className="mt-3 text-xl font-semibold text-white">Link ungültig</h1>
-        <p className="mt-2 text-sm text-[#a6a6a6]">{state.message}</p>
+        <p className="mt-2 text-sm text-[#98989d]">{state.message}</p>
       </main>
     )
   }
@@ -84,7 +84,7 @@ export default function AgreementSigningPage() {
   return (
     <main className="mx-auto max-w-4xl space-y-5 px-4 py-8 sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <p className="text-sm text-[#a6a6a6]">
+        <p className="text-sm text-[#98989d]">
           Du unterschreibst für: <span className="font-semibold text-white">{party.name}</span>
           {party.role ? ` · ${party.role}` : ''}
         </p>
@@ -94,15 +94,15 @@ export default function AgreementSigningPage() {
       </div>
 
       {notice && (
-        <p className="flex items-center gap-2 rounded-[10px] border border-[#343434] bg-[#181818] px-4 py-3 text-sm text-[#d4d4d4] print:hidden">
-          <CheckCircle2 size={16} className="text-[#a6a6a6]" /> {notice}
+        <p className="flex items-center gap-2 rounded-[10px] border border-[#38383a] bg-[#1c1c1e] px-4 py-3 text-sm text-[#d4d4d4] print:hidden">
+          <CheckCircle2 size={16} className="text-[#98989d]" /> {notice}
         </p>
       )}
 
       <AgreementDocument document={agreement} />
 
       {canSign && (
-        <section className="space-y-4 rounded-[14px] border border-[#343434] bg-[#141414] p-5 print:hidden">
+        <section className="space-y-4 rounded-[14px] border border-[#38383a] bg-[#161617] p-5 print:hidden">
           <label className="block text-sm text-[#d4d4d4]">
             Vollständiger Name
             <input
@@ -110,7 +110,7 @@ export default function AgreementSigningPage() {
               onChange={(event) => setName(event.target.value)}
               maxLength={200}
               placeholder="Vor- und Nachname"
-              className="mt-1.5 h-10 w-full rounded-[8px] border border-[#343434] bg-[#181818] px-3 text-white"
+              className="mt-1.5 h-10 w-full rounded-[8px] border border-[#38383a] bg-[#1c1c1e] px-3 text-white"
             />
           </label>
           <label className="flex items-center gap-2 text-sm text-[#d4d4d4]">
@@ -133,7 +133,7 @@ export default function AgreementSigningPage() {
                 maxLength={1000}
                 rows={3}
                 placeholder="Grund (optional)"
-                className="w-full rounded-[8px] border border-[#343434] bg-[#181818] px-3 py-2 text-white"
+                className="w-full rounded-[8px] border border-[#38383a] bg-[#1c1c1e] px-3 py-2 text-white"
               />
               <Button variant="danger" loading={busy} onClick={() => submit({ action: 'decline', reason })}>Vertrag ablehnen</Button>
             </div>

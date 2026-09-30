@@ -82,12 +82,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.2 }}
                 role={toast.type === 'error' ? 'alert' : 'status'}
-                className="glass-panel-elevated relative overflow-hidden rounded-[12px] flex w-full items-start gap-2.5 px-4 py-3 sm:w-[340px]"
+                className="relative overflow-hidden rounded-[12px] border border-[#48484a]/50 bg-[#2c2c2e] shadow-[0_12px_32px_rgba(0,0,0,0.45)] flex w-full items-start gap-2.5 px-4 py-3 sm:w-[340px]"
               >
                 <Icon size={16} className={`mt-0.5 shrink-0 ${typeColors[toast.type]}`} strokeWidth={1.75} />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-white">{toast.title}</p>
-                  {toast.message && <p className="text-[11.5px] text-[#a6a6a6] mt-0.5 leading-relaxed break-words">{toast.message}</p>}
+                  {toast.message && <p className="text-[11.5px] text-[#98989d] mt-0.5 leading-relaxed break-words">{toast.message}</p>}
                 </div>
                 {toast.action && (
                   <button
@@ -96,7 +96,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                       toast.action?.onClick()
                       removeToast(toast.id)
                     }}
-                    className="-my-1 shrink-0 self-center rounded-[7px] border border-[#404040] px-2.5 py-1 text-[12px] font-semibold text-[#f4f4f4] transition-colors hover:border-[#5a5a5a] hover:bg-[#2a2a2a]"
+                    className="-my-1 shrink-0 self-center rounded-[7px] border border-[#48484a] px-2.5 py-1 text-[12px] font-semibold text-[#f5f5f7] transition-colors hover:border-[#5a5a5a] hover:bg-[#3a3a3c]"
                   >
                     {toast.action.label}
                   </button>
@@ -105,7 +105,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   type="button"
                   onClick={() => removeToast(toast.id)}
                   aria-label="Meldung schließen"
-                  className="-mr-1.5 -mt-0.5 shrink-0 rounded-[6px] p-1 text-[#909090] transition-colors hover:bg-[#232323]/70 hover:text-[#d4d4d4]"
+                  className="-mr-1.5 -mt-0.5 shrink-0 rounded-[6px] p-1 text-[#8e8e93] transition-colors hover:bg-[#2c2c2e]/70 hover:text-[#d4d4d4]"
                 >
                   <X size={13} />
                 </button>

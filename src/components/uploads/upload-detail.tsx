@@ -20,7 +20,7 @@ import type { Upload } from './upload-types'
  */
 function Viewer({ upload }: { upload: Upload }) {
   const kind = previewKind(upload.mimeType)
-  const frame = 'h-[70vh] w-full rounded-lg border border-[#343434] bg-[#0d0d0d]'
+  const frame = 'h-[70vh] w-full rounded-lg border border-[#38383a] bg-[#000000]'
 
   if (kind === 'html') return <iframe title={upload.title} src={upload.viewUrl} sandbox="" className={frame} />
   if (kind === 'text') return <iframe title={upload.title} src={upload.viewUrl} sandbox="" className={frame} />
@@ -28,12 +28,12 @@ function Viewer({ upload }: { upload: Upload }) {
   if (kind === 'image')
     return (
       // eslint-disable-next-line @next/next/no-img-element -- Die Datei liegt hinter einer Auth-Route, nicht im Bild-Optimizer.
-      <img src={upload.viewUrl} alt={upload.title} className="max-h-[70vh] w-full rounded-lg border border-[#343434] object-contain" />
+      <img src={upload.viewUrl} alt={upload.title} className="max-h-[70vh] w-full rounded-lg border border-[#38383a] object-contain" />
     )
   if (kind === 'video') return <video src={upload.viewUrl} controls className={frame} />
 
   return (
-    <div className="rounded-lg border border-dashed border-[#343434] p-8 text-center text-sm text-[#909090]">
+    <div className="rounded-lg border border-dashed border-[#38383a] p-8 text-center text-sm text-[#8e8e93]">
       Für diesen Dateityp gibt es keine Vorschau — bitte herunterladen.
     </div>
   )
@@ -42,7 +42,7 @@ function Viewer({ upload }: { upload: Upload }) {
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-wider text-[#8c8c8c]">{label}</p>
+      <p className="text-[11px] uppercase tracking-wider text-[#8e8e93]">{label}</p>
       <div className="mt-0.5 text-sm text-[#e4e4e4]">{children}</div>
     </div>
   )
@@ -114,7 +114,7 @@ export function UploadDetail({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Meta label="Datei">
             {upload.originalName}
-            <span className="text-[#909090]"> · {formatBytes(upload.sizeBytes)} · {upload.mimeType}</span>
+            <span className="text-[#8e8e93]"> · {formatBytes(upload.sizeBytes)} · {upload.mimeType}</span>
           </Meta>
           <Meta label="Hochgeladen">{formatDateTime(upload.createdAt)}</Meta>
           <Meta label="Herkunft">
@@ -137,15 +137,15 @@ export function UploadDetail({
           )}
         </div>
 
-        {upload.description && !editing && <p className="whitespace-pre-wrap text-sm text-[#c4c4c4]">{upload.description}</p>}
+        {upload.description && !editing && <p className="whitespace-pre-wrap text-sm text-[#c7c7cc]">{upload.description}</p>}
 
         {!!metadataEntries.length && (
-          <div className="rounded-lg border border-[#343434] p-3">
-            <p className="mb-2 text-[11px] uppercase tracking-wider text-[#8c8c8c]">Zusatzfelder</p>
+          <div className="rounded-lg border border-[#38383a] p-3">
+            <p className="mb-2 text-[11px] uppercase tracking-wider text-[#8e8e93]">Zusatzfelder</p>
             <dl className="grid gap-1 text-xs sm:grid-cols-2">
               {metadataEntries.map(([key, value]) => (
                 <div key={key} className="flex gap-2">
-                  <dt className="text-[#909090]">{key}:</dt>
+                  <dt className="text-[#8e8e93]">{key}:</dt>
                   <dd className="min-w-0 break-all text-[#d4d4d4]">{typeof value === 'string' ? value : JSON.stringify(value)}</dd>
                 </div>
               ))}
@@ -154,7 +154,7 @@ export function UploadDetail({
         )}
 
         {editing && (
-          <div className="space-y-3 rounded-lg border border-[#343434] p-4">
+          <div className="space-y-3 rounded-lg border border-[#38383a] p-4">
             <Input label="Titel" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
             <Textarea label="Beschreibung" rows={4} maxLength={10000} value={description} onChange={(e) => setDescription(e.target.value)} />
             <div className="grid gap-3 sm:grid-cols-2">

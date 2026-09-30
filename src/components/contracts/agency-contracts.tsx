@@ -91,13 +91,13 @@ function LinkRow({ signature }: { signature: AgencySignatureRow }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-[#343434]/60 bg-[#181818]/55 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-[#38383a]/60 bg-[#1c1c1e]/55 px-3 py-2">
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12.5px] font-semibold text-white">
           {signature.partyName}
-          {signature.partyRole ? <span className="font-normal text-[#909090]"> · {signature.partyRole}</span> : null}
+          {signature.partyRole ? <span className="font-normal text-[#8e8e93]"> · {signature.partyRole}</span> : null}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">
+        <p className="mt-0.5 truncate text-[11px] text-[#8e8e93]">
           {state}
           {signature.signedName ? ` · ${signature.signedName}` : ''}
           {signature.declineReason ? ` · ${signature.declineReason}` : ''}
@@ -107,7 +107,7 @@ function LinkRow({ signature }: { signature: AgencySignatureRow }) {
         readOnly
         value={url}
         onFocus={(event) => event.target.select()}
-        className="h-8 min-w-0 flex-1 rounded-[8px] border border-[#343434] bg-[#141414] px-2 text-[11.5px] text-[#a6a6a6]"
+        className="h-8 min-w-0 flex-1 rounded-[8px] border border-[#38383a] bg-[#161617] px-2 text-[11.5px] text-[#98989d]"
       />
       <Button size="sm" variant="outline" onClick={copy}>
         {copied ? <Check size={13} /> : <Copy size={13} />}
@@ -253,10 +253,10 @@ export function AgencyContracts({
       )}
 
       {contracts.length === 0 ? (
-        <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 px-4 py-10 text-center">
-          <Building2 size={20} className="mx-auto text-[#8c8c8c]" />
+        <div className="rounded-[14px] border border-[#38383a]/45 bg-[#1c1c1e]/70 px-4 py-10 text-center">
+          <Building2 size={20} className="mx-auto text-[#8e8e93]" />
           <p className="mt-2 text-[13px] text-[#d4d4d4]">Noch keine Behördenverträge</p>
-          <p className="mt-1 text-[11.5px] text-[#8c8c8c]">
+          <p className="mt-1 text-[11.5px] text-[#8e8e93]">
             Vereinbarungen mit anderen Behörden werden hier aufgesetzt und über je einen Link
             unterschrieben.
           </p>
@@ -267,12 +267,12 @@ export function AgencyContracts({
           return (
             <div
               key={contract.id}
-              className="space-y-2 rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 p-4"
+              className="space-y-2 rounded-[14px] border border-[#38383a]/45 bg-[#1c1c1e]/70 p-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-[13.5px] font-semibold text-white">{contract.title}</p>
-                  <p className="mt-0.5 truncate text-[11.5px] text-[#909090]">
+                  <p className="mt-0.5 truncate text-[11.5px] text-[#8e8e93]">
                     mit {contract.counterpartyName || '—'}
                     {contract.counterpartyRole ? ` · ${contract.counterpartyRole}` : ''}
                   </p>
@@ -280,7 +280,7 @@ export function AgencyContracts({
                 <span
                   className={cn(
                     'inline-flex h-6 items-center rounded-full border px-2 text-[11px] font-semibold',
-                    'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6]',
+                    'border-[#38383a]/60 bg-[#1c1c1e]/55 text-[#98989d]',
                   )}
                 >
                   {meta.label}
@@ -375,9 +375,9 @@ export function AgencyContracts({
           <div className="space-y-2">
             <p className="text-[12.5px] font-semibold text-[#d4d4d4]">Regelungen</p>
             {clauses.map((clause, index) => (
-              <div key={clause.id} className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
+              <div key={clause.id} className="space-y-2 rounded-[10px] border border-[#38383a]/60 p-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11.5px] text-[#8c8c8c]">§ {index + 1}</span>
+                  <span className="text-[11.5px] text-[#8e8e93]">§ {index + 1}</span>
                   <Input
                     value={clause.title}
                     maxLength={200}
@@ -392,7 +392,7 @@ export function AgencyContracts({
                     <button
                       type="button"
                       onClick={() => setClauses((list) => list.filter((_, i) => i !== index))}
-                      className="text-[#909090] hover:text-red-300"
+                      className="text-[#8e8e93] hover:text-red-300"
                       aria-label={`Regelung ${index + 1} entfernen`}
                     >
                       <Trash2 size={14} />
@@ -425,7 +425,7 @@ export function AgencyContracts({
             placeholder="Text unterhalb der Regelungen"
           />
 
-          <div className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
+          <div className="space-y-2 rounded-[10px] border border-[#38383a]/60 p-3">
             <Checkbox
               checked={form.saveAsTemplate}
               onCheckedChange={(checked) => setForm((f) => ({ ...f, saveAsTemplate: checked === true }))}

@@ -48,9 +48,9 @@ export function FormTestResponses({ testId }: { testId: string }) {
     return (
       <div className="mx-auto max-w-5xl">
         <PageHeader title="Abgaben" description="Die Auswertung konnte nicht geladen werden." eyebrow="Auswertung" />
-        <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
-          <p className="text-[13px] text-[#a6a6a6]">{loadError ?? 'Auswertung nicht verfügbar'}</p>
+        <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 py-14 text-center">
+          <Clipboard size={26} className="mx-auto mb-2 text-[#8e8e93]" />
+          <p className="text-[13px] text-[#98989d]">{loadError ?? 'Auswertung nicht verfügbar'}</p>
         </div>
       </div>
     )
@@ -81,9 +81,9 @@ export function FormTestResponses({ testId }: { testId: string }) {
       </div>
 
       {responses.length === 0 ? (
-        <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-14 text-center">
-          <Clipboard size={26} className="mx-auto mb-2 text-[#8c8c8c]" />
-          <p className="text-[13px] text-[#a6a6a6]">Noch keine Abgaben vorhanden</p>
+        <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 py-14 text-center">
+          <Clipboard size={26} className="mx-auto mb-2 text-[#8e8e93]" />
+          <p className="text-[13px] text-[#98989d]">Noch keine Abgaben vorhanden</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -95,22 +95,22 @@ export function FormTestResponses({ testId }: { testId: string }) {
 
           <QuestionAnalytics questions={data.test.questions} responses={responses} />
 
-          <section className="glass-panel-elevated overflow-hidden rounded-[14px] border border-[#373737]/45">
-            <div className="border-b border-[#343434]/45 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a6a6a6]">Abgaben</p>
+          <section className="glass-panel-elevated overflow-hidden rounded-[14px] border border-[#38383a]/45">
+            <div className="border-b border-[#38383a]/45 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#98989d]">Abgaben</p>
             </div>
-            <div className="divide-y divide-[#343434]/35">
+            <div className="divide-y divide-[#38383a]/35">
               {responses.map((response) => (
                 <Link
                   key={response.id}
                   href={`/form-tests/manage/${testId}/responses/${response.id}`}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#232323]/55"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#2c2c2e]/55"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13.5px] font-semibold text-white">
                       {response.respondent?.displayName ?? response.respondentName}
                     </p>
-                    <p className="mt-0.5 text-[11.5px] text-[#909090]">Abgegeben {formatDateTime(response.submittedAt)}</p>
+                    <p className="mt-0.5 text-[11.5px] text-[#8e8e93]">Abgegeben {formatDateTime(response.submittedAt)}</p>
                   </div>
                   <Badge variant={response.reviewedAt ? 'success' : 'default'}>{responseScore(response)}</Badge>
                   <Badge variant={response.reviewedAt ? 'success' : 'warning'}>

@@ -27,10 +27,10 @@ export function EmptyState({
   const content = (
     <>
       <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-[#d4d4d4]/10 bg-[#d4d4d4]/5">
-        <Icon className="h-[18px] w-[18px] text-[#8a8a8a]" strokeWidth={1.6} />
+        <Icon className="h-[18px] w-[18px] text-[#8e8e93]" strokeWidth={1.6} />
       </span>
-      <p className="mt-3 text-[13.5px] text-[#c4c4c4]">{title}</p>
-      {hint && <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-relaxed text-[#909090]">{hint}</p>}
+      <p className="mt-3 text-[13.5px] text-[#c7c7cc]">{title}</p>
+      {hint && <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-relaxed text-[#8e8e93]">{hint}</p>}
       {action && <div className="mt-4 flex flex-wrap justify-center gap-2">{action}</div>}
     </>
   )

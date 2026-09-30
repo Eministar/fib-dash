@@ -379,16 +379,16 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[310px_1fr]">
-        <aside className="glass-panel-elevated overflow-hidden rounded-[14px] border border-[#373737]/45">
-          <div className="flex items-center justify-between border-b border-[#343434]/45 px-3 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a6a6a6]">Formularablage</p>
-            <span className="text-[11px] text-[#8c8c8c]">{tests?.length ?? 0}</span>
+        <aside className="glass-panel-elevated overflow-hidden rounded-[14px] border border-[#38383a]/45">
+          <div className="flex items-center justify-between border-b border-[#38383a]/45 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#98989d]">Formularablage</p>
+            <span className="text-[11px] text-[#8e8e93]">{tests?.length ?? 0}</span>
           </div>
           <div className="max-h-[680px] overflow-y-auto p-1.5">
             {(tests ?? []).length === 0 ? (
               <div className="px-4 py-12 text-center">
-                <FileQuestion size={24} className="mx-auto mb-2 text-[#8c8c8c]" />
-                <p className="text-[12.5px] text-[#a6a6a6]">Noch keine Formulare vorhanden</p>
+                <FileQuestion size={24} className="mx-auto mb-2 text-[#8e8e93]" />
+                <p className="text-[12.5px] text-[#98989d]">Noch keine Formulare vorhanden</p>
               </div>
             ) : (
               tests?.map((test) => (
@@ -400,14 +400,14 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
                     'w-full rounded-[9px] border px-3 py-2.5 text-left transition-colors',
                     selected?.id === test.id
                       ? 'border-[#d4d4d4]/30 bg-[#d4d4d4]/12'
-                      : 'border-transparent hover:bg-[#232323]/60',
+                      : 'border-transparent hover:bg-[#2c2c2e]/60',
                   )}
                 >
                   <div className="flex items-start gap-2">
                     <span className="mt-0.5 shrink-0 text-[#d4d4d4]">{KIND_META[test.kind].icon}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-semibold text-white">{test.title}</p>
-                      <p className="mt-0.5 text-[11px] text-[#909090]">
+                      <p className="mt-0.5 text-[11px] text-[#8e8e93]">
                         {KIND_META[test.kind].label} · {test._count.questions} Fragen · {test._count.responses} Abgaben
                       </p>
                     </div>
@@ -420,34 +420,34 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
         </aside>
 
         {!draft ? (
-          <section className="glass-panel-elevated flex min-h-[520px] flex-col items-center justify-center rounded-[14px] border border-[#373737]/45 px-6 text-center">
-            <FileQuestion size={34} className="mb-3 text-[#8c8c8c]" />
+          <section className="glass-panel-elevated flex min-h-[520px] flex-col items-center justify-center rounded-[14px] border border-[#38383a]/45 px-6 text-center">
+            <FileQuestion size={34} className="mb-3 text-[#8e8e93]" />
             <p className="text-[14px] font-semibold text-[#e5e5e5]">Kein Formular ausgewählt</p>
-            <p className="mt-1 max-w-sm text-[12.5px] leading-5 text-[#a6a6a6]">
+            <p className="mt-1 max-w-sm text-[12.5px] leading-5 text-[#98989d]">
               Erstelle einen Test oder eine Umfrage und teile den Link mit eingeloggten Nutzern.
             </p>
           </section>
         ) : (
           <section className="space-y-4">
-            <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
+            <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-4">
               <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={KIND_META[draft.kind].variant}>{KIND_META[draft.kind].label}</Badge>
                   <Badge variant={STATUS_META[draft.status].variant}>{STATUS_META[draft.status].label}</Badge>
                   {draft.kind === 'TEST' && draft.timeLimitMinutes && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[#404040]/60 bg-[#232323]/70 px-2 py-0.5 text-[11px] text-[#aeaeae]">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[#48484a]/60 bg-[#2c2c2e]/70 px-2 py-0.5 text-[11px] text-[#98989d]">
                       <Clock size={11} />
                       {draft.timeLimitMinutes} Min.
                     </span>
                   )}
                   {draft.kind === 'SURVEY' && draft.anonymousResponses && (
-                    <span className="rounded-full border border-[#404040]/60 bg-[#232323]/70 px-2 py-0.5 text-[11px] text-[#aeaeae]">
+                    <span className="rounded-full border border-[#48484a]/60 bg-[#2c2c2e]/70 px-2 py-0.5 text-[11px] text-[#98989d]">
                       Anonym
                     </span>
                   )}
-                  <span className="text-[11.5px] text-[#909090]">Aktualisiert {formatDateTime(draft.updatedAt)}</span>
+                  <span className="text-[11.5px] text-[#8e8e93]">Aktualisiert {formatDateTime(draft.updatedAt)}</span>
                   {selected && selected._count.responses > 0 && (
-                    <span className="rounded-full border border-[#404040]/60 bg-[#232323]/70 px-2 py-0.5 text-[11px] text-[#aeaeae]">
+                    <span className="rounded-full border border-[#48484a]/60 bg-[#2c2c2e]/70 px-2 py-0.5 text-[11px] text-[#98989d]">
                       Fragen gesperrt nach {selected._count.responses} Abgabe(n)
                     </span>
                   )}
@@ -541,7 +541,7 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
                     placeholder="Ohne Zeitlimit"
                   />
                 ) : (
-                  <div className="flex items-center rounded-[10px] border border-[#343434]/55 bg-[#181818]/45 px-3 py-2.5">
+                  <div className="flex items-center rounded-[10px] border border-[#38383a]/55 bg-[#1c1c1e]/45 px-3 py-2.5">
                     <Checkbox
                       checked={draft.anonymousResponses}
                       onCheckedChange={(checked) => patchDraft({ anonymousResponses: checked })}
@@ -550,7 +550,7 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
                     />
                   </div>
                 )}
-                <div className="flex items-center rounded-[10px] border border-[#343434]/55 bg-[#181818]/45 px-3 py-2.5 text-[12px] leading-5 text-[#a6a6a6]">
+                <div className="flex items-center rounded-[10px] border border-[#38383a]/55 bg-[#1c1c1e]/45 px-3 py-2.5 text-[12px] leading-5 text-[#98989d]">
                   {draft.kind === 'TEST'
                     ? 'Bei Tests werden Kopieren, Drucken, Tabwechsel und andere Dashboard-Seiten während der aktiven Sitzung blockiert oder protokolliert.'
                     : 'Umfragen haben keine Zeitlimits und keine Test-Einschränkungen. Anonyme Umfragen zeigen in der Auswertung keinen Accountnamen.'}
@@ -617,7 +617,7 @@ export function FormTests({ module, title, description, canManage }: FormTestsPr
               placeholder="Ohne Zeitlimit"
             />
           ) : (
-            <div className="rounded-[10px] border border-[#343434]/55 bg-[#181818]/45 px-3 py-2.5">
+            <div className="rounded-[10px] border border-[#38383a]/55 bg-[#1c1c1e]/45 px-3 py-2.5">
               <Checkbox
                 checked={createForm.anonymousResponses}
                 onCheckedChange={(checked) => setCreateForm({ ...createForm, anonymousResponses: checked })}
@@ -649,7 +649,7 @@ function StatCard({ label, value, icon }: { label: string; value: number; icon: 
       <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#d4d4d4]/15 text-[#d4d4d4]">{icon}</div>
       <div>
         <p className="text-[20px] font-semibold leading-tight text-white tabular-nums">{value}</p>
-        <p className="mt-0.5 text-[11px] text-[#a6a6a6]">{label}</p>
+        <p className="mt-0.5 text-[11px] text-[#98989d]">{label}</p>
       </div>
     </div>
   )
@@ -675,7 +675,7 @@ function QuestionEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8c8c8c]">Fragen</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8e8e93]">Fragen</p>
         {canEdit && (
           <Button size="sm" variant="secondary" onClick={onAdd}>
             <Plus size={13} />
@@ -685,26 +685,26 @@ function QuestionEditor({
       </div>
 
       {questions.length === 0 ? (
-        <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 py-12 text-center">
-          <FileQuestion size={24} className="mx-auto mb-2 text-[#8c8c8c]" />
-          <p className="text-[12.5px] text-[#a6a6a6]">Noch keine Fragen angelegt</p>
+        <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 py-12 text-center">
+          <FileQuestion size={24} className="mx-auto mb-2 text-[#8e8e93]" />
+          <p className="text-[12.5px] text-[#98989d]">Noch keine Fragen angelegt</p>
         </div>
       ) : (
         questions.map((question, index) => (
-          <div key={question.id ?? index} className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
+          <div key={question.id ?? index} className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-4">
             <div className="mb-3 flex items-center gap-2">
-              <GripVertical size={14} className="text-[#8c8c8c]" />
-              <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[#232323] text-[11px] font-semibold text-[#d4d4d4]">
+              <GripVertical size={14} className="text-[#8e8e93]" />
+              <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[#2c2c2e] text-[11px] font-semibold text-[#d4d4d4]">
                 {index + 1}
               </span>
               <div className="ml-auto flex items-center gap-1">
-                <button type="button" disabled={!canEdit || index === 0} onClick={() => onMove(index, -1)} className="rounded-[7px] p-1.5 text-[#909090] hover:bg-[#232323] hover:text-[#d4d4d4] disabled:opacity-30">
+                <button type="button" disabled={!canEdit || index === 0} onClick={() => onMove(index, -1)} className="rounded-[7px] p-1.5 text-[#8e8e93] hover:bg-[#2c2c2e] hover:text-[#d4d4d4] disabled:opacity-30">
                   <MoveUp size={13} />
                 </button>
-                <button type="button" disabled={!canEdit || index === questions.length - 1} onClick={() => onMove(index, 1)} className="rounded-[7px] p-1.5 text-[#909090] hover:bg-[#232323] hover:text-[#d4d4d4] disabled:opacity-30">
+                <button type="button" disabled={!canEdit || index === questions.length - 1} onClick={() => onMove(index, 1)} className="rounded-[7px] p-1.5 text-[#8e8e93] hover:bg-[#2c2c2e] hover:text-[#d4d4d4] disabled:opacity-30">
                   <MoveDown size={13} />
                 </button>
-                <button type="button" disabled={!canEdit} onClick={() => onRemove(index)} className="rounded-[7px] p-1.5 text-[#909090] hover:bg-[#321218]/40 hover:text-red-400 disabled:opacity-30">
+                <button type="button" disabled={!canEdit} onClick={() => onRemove(index)} className="rounded-[7px] p-1.5 text-[#8e8e93] hover:bg-[#321218]/40 hover:text-red-400 disabled:opacity-30">
                   <Trash2 size={13} />
                 </button>
               </div>
@@ -805,9 +805,9 @@ function ChoiceOptions({
   }
 
   return (
-    <div className="mt-4 rounded-[12px] border border-[#343434]/45 bg-[#181818]/50 p-3">
+    <div className="mt-4 rounded-[12px] border border-[#38383a]/45 bg-[#1c1c1e]/50 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[12px] font-semibold text-[#aeaeae]">Antwortoptionen</p>
+        <p className="text-[12px] font-semibold text-[#98989d]">Antwortoptionen</p>
         <Button
           size="sm"
           variant="ghost"
@@ -830,7 +830,7 @@ function ChoiceOptions({
                   'flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] border text-[11px] font-semibold transition-colors',
                   correct.includes(choice)
                     ? 'border-[#34d399]/50 bg-[#123026] text-[#86efac]'
-                    : 'border-[#404040]/70 bg-[#181818] text-[#909090] hover:text-[#d4d4d4]',
+                    : 'border-[#48484a]/70 bg-[#1c1c1e] text-[#8e8e93] hover:text-[#d4d4d4]',
                 )}
                 title="Als richtige Antwort markieren"
               >
@@ -850,7 +850,7 @@ function ChoiceOptions({
                 const nextChoices = choices.filter((_, choiceIndex) => choiceIndex !== index)
                 onChange({ choices: nextChoices, correct: showCorrect ? correct.filter((item) => nextChoices.includes(item)) : [] })
               }}
-              className="rounded-[8px] p-2 text-[#909090] hover:bg-[#321218]/40 hover:text-red-400 disabled:opacity-30"
+              className="rounded-[8px] p-2 text-[#8e8e93] hover:bg-[#321218]/40 hover:text-red-400 disabled:opacity-30"
             >
               <Trash2 size={13} />
             </button>
@@ -864,7 +864,7 @@ function ChoiceOptions({
 function ScaleOptions({ question, disabled, onChange }: { question: FormQuestion; disabled: boolean; onChange: (options: QuestionOptions) => void }) {
   const options = question.options ?? { min: 1, max: 5, minLabel: '', maxLabel: '' }
   return (
-    <div className="mt-4 grid grid-cols-1 gap-3 rounded-[12px] border border-[#343434]/45 bg-[#181818]/50 p-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-4 grid grid-cols-1 gap-3 rounded-[12px] border border-[#38383a]/45 bg-[#1c1c1e]/50 p-3 sm:grid-cols-2 lg:grid-cols-4">
       <Input label="Minimum" type="number" value={options.min ?? 1} disabled={disabled} onChange={(event) => onChange({ ...options, min: Number(event.target.value) })} />
       <Input label="Maximum" type="number" value={options.max ?? 5} disabled={disabled} onChange={(event) => onChange({ ...options, max: Number(event.target.value) })} />
       <Input label="Label Minimum" value={options.minLabel ?? ''} disabled={disabled} onChange={(event) => onChange({ ...options, minLabel: event.target.value })} />

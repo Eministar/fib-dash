@@ -35,11 +35,11 @@ export function UnitMultiSelect({ label = 'Units', value, units, onChange }: Uni
 
   return (
     <div>
-      <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">{label}</p>
-      <div className="space-y-3 rounded-[10px] border border-[#343434]/60 bg-[#181818]/35 p-3">
+      <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">{label}</p>
+      <div className="space-y-3 rounded-[10px] border border-[#38383a]/60 bg-[#1c1c1e]/35 p-3">
         {groupedUnits.map(([groupName, groupUnits]) => (
           <div key={groupName}>
-            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.11em] text-[#8c8c8c]">{groupName}</p>
+            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.11em] text-[#8e8e93]">{groupName}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {groupUnits.map((unit) => (
                 <Checkbox
@@ -53,7 +53,7 @@ export function UnitMultiSelect({ label = 'Units', value, units, onChange }: Uni
           </div>
         ))}
         {(!units || units.length === 0) && (
-          <p className="text-[12.5px] text-[#8c8c8c]">Keine aktiven Units vorhanden</p>
+          <p className="text-[12.5px] text-[#8e8e93]">Keine aktiven Units vorhanden</p>
         )}
       </div>
     </div>

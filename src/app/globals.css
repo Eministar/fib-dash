@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, Roboto, sans-serif;
 }
 
 html {
@@ -37,8 +37,8 @@ body {
    Ein ruhiger Lichtschimmer statt Pulsieren: wirkt nach Fortschritt, nicht nach Alarm. */
 .skeleton {
   background:
-    linear-gradient(90deg, transparent 0%, rgba(212,212,212,0.05) 50%, transparent 100%) no-repeat,
-    rgba(212,212,212,0.06);
+    linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%) no-repeat,
+    #2c2c2e;
   background-size: 200% 100%, 100% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
 }
@@ -135,7 +135,7 @@ body {
 
 /* ─── Selection ─── */
 ::selection {
-  background: rgba(212,212,212, 0.28);
+  background: rgba(10,132,255, 0.35);
 }
 
 /* ─── Form elements ─── */
@@ -161,39 +161,27 @@ select option:hover {
 }
 
 /* ─── Glass surfaces ─── */
+/* ─── Flächen (macOS-/iOS-Dark: flach, ohne Glas und Glanz) ─── */
 .glass-panel {
-  background: rgba(29,29,29, 0.72);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  border: 1px solid rgba(212,212,212, 0.1);
-  box-shadow:
-          0 1px 2px rgba(0, 0, 0, 0.12),
-          0 4px 16px rgba(0, 0, 0, 0.08),
-          inset 0 1px 0 rgba(212,212,212, 0.04);
+  background: #1c1c1e;
+  border: 1px solid rgba(84,84,88, 0.28);
 }
 
 .glass-panel-elevated {
-  background: rgba(29,29,29, 0.82);
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  border: 1px solid rgba(212,212,212, 0.13);
-  box-shadow:
-          0 1px 3px rgba(0, 0, 0, 0.18),
-          0 8px 32px rgba(0, 0, 0, 0.12),
-          inset 0 1px 0 rgba(212,212,212, 0.06);
+  background: #1c1c1e;
+  border: 1px solid rgba(84,84,88, 0.36);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
 /* ─── Background pattern ─── */
 .bg-pattern {
-  background-image:
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212,212,212, 0.05), transparent),
-          radial-gradient(ellipse 60% 40% at 80% 100%, rgba(212,212,212, 0.02), transparent);
+  background-image: none;
 }
 
 /* ─── Silver accent line ─── */
 .silver-line {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212,212,212, 0.25), transparent);
+  background: rgba(84,84,88, 0.4);
 }
 
 /* ─── Loading ─── */
@@ -313,34 +301,22 @@ select option:hover {
 
 /* ─── Sidebar gradient ─── */
 .sidebar-gradient {
-  background: linear-gradient(180deg, #1b1b1b 0%, #181818 40%, #131313 100%);
+  background: #161617;
 }
 
 /* ─── Icon tile ─── */
 .icon-tile {
-  background: linear-gradient(135deg, #d4d4d4, #b8b8b8);
-  color: #181818;
-  box-shadow:
-          0 1px 3px rgba(0, 0, 0, 0.2),
-          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background: #0a84ff;
+  color: #ffffff;
 }
 
 /* ─── KPI / Stat card ─── */
 .stat-card {
   position: relative;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 16px 18px;
-  background:
-          linear-gradient(135deg, rgba(212,212,212,0.06), rgba(29,29,29,0) 55%),
-          rgba(26,26,26, 0.72);
-  border: 1px solid rgba(212,212,212,0.10);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.18), inset 0 1px 0 rgba(212,212,212,0.05);
+  background: #1c1c1e;
   overflow: hidden;
-}
-.stat-card::before {
-  content: "";
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(60% 80% at 100% 0%, rgba(212,212,212,0.10), transparent 60%);
 }
 .stat-card .stat-value {
   font-size: 24px; font-weight: 650; color: #fff;
@@ -351,11 +327,10 @@ select option:hover {
   margin-top: 4px;
 }
 .stat-card .stat-icon {
-  width: 36px; height: 36px; border-radius: 10px;
+  width: 32px; height: 32px; border-radius: 8px;
   display: inline-flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, rgba(212,212,212,0.16), rgba(212,212,212,0.04));
-  color: #d4d4d4;
-  border: 1px solid rgba(212,212,212,0.18);
+  background: #0a84ff;
+  color: #ffffff;
 }
 
 /* ─── Avatar (initials) ─── */

@@ -16,6 +16,7 @@ import { officialNumber } from '@/lib/corruption-validation'
 import { uploadInChunks, formatRate, formatRemaining, type UploadProgress } from '@/lib/chunked-upload'
 import { formatDateTime } from '@/lib/utils'
 import type { Agent, Check, Official, OfficialRevision, OfficialSnapshot } from './corruption-workspace'
+import { ListSkeleton } from '@/components/ui/loading'
 
 type Snapshot = { conductedAt: string; result: string; findings: string; location: string | null; notes: string | null; agents: { name: string; badgeNumber: string }[] }
 type Evidence = { id: string; title: string; mimeType: string | null; clipId: string | null; uploadedByName: string; createdAt: string }
@@ -34,7 +35,7 @@ export function MergeOfficial({ source }: { source: Official }) {
   const { data, error } = useFetch<{ items: Official[] }>(open ? `/api/corruption-checks/officials?search=${encodeURIComponent(search)}` : null)
   return <><Button variant="outline" size="sm" onClick={() => setOpen(true)}>Doppelte Akte zusammenführen</Button>
     <Modal open={open} onClose={loading ? () => {} : () => setOpen(false)} title="Beamtenakten zusammenführen" size="lg"><div className="space-y-4">
-      <p className="text-sm text-[#c4c4c4]">Alle Kontrollen von <strong>{personLabel(source)}</strong> in die folgende Zielakte übernehmen. Deren Stammdaten bleiben bestehen; die bisherige Nummer verweist anschließend auf die Zielakte.</p>
+      <p className="text-sm text-[#c7c7cc]">Alle Kontrollen von <strong>{personLabel(source)}</strong> in die folgende Zielakte übernehmen. Deren Stammdaten bleiben bestehen; die bisherige Nummer verweist anschließend auf die Zielakte.</p>
       <Input label="Zielakte suchen" value={search} onChange={e => setSearch(e.target.value)} maxLength={200} placeholder="Nummer oder Name" />
       <Select label="Zielakte" value={target ? String(target.id) : ''} onValueChange={id => setTarget(data?.items.find(p => String(p.id) === id) ?? null)} options={[{ value: '', label: 'Zielakte wählen' }, ...[...new Map([...(data?.items ?? []), ...(target ? [target] : [])].filter(p => p.id !== source.id).map(p => [p.id, p])).values()].map(p => ({ value: String(p.id), label: personLabel(p) }))]} />
       <Textarea label="Begründung" value={reason} onChange={e => setReason(e.target.value)} maxLength={1000} placeholder="Warum handelt es sich um dieselbe Person?" />
@@ -50,14 +51,14 @@ const snapshotLine = (data: OfficialSnapshot) => `${data.firstName} ${data.lastN
 /** Vorher/Nachher der Stammdaten, im selben Stil wie die Berichtshistorie. */
 export function OfficialHistory({ revisions }: { revisions: OfficialRevision[] }) {
   if (!revisions.length) return null
-  return <section className="mt-4 space-y-2 border-t border-[#343434] pt-4">
+  return <section className="mt-4 space-y-2 border-t border-[#38383a] pt-4">
     <h3 className="text-sm font-semibold text-white">Änderungen an den Stammdaten</h3>
-    {revisions.map(revision => <details key={revision.id} className="rounded-lg border border-[#343434] p-3">
-      <summary className="cursor-pointer text-sm text-[#c4c4c4]">Version {revision.version} · {revision.actorName} · {formatDateTime(revision.createdAt)}</summary>
-      <p className="my-3 whitespace-pre-wrap break-words text-sm text-[#c4c4c4]">{revision.reason}</p>
+    {revisions.map(revision => <details key={revision.id} className="rounded-lg border border-[#38383a] p-3">
+      <summary className="cursor-pointer text-sm text-[#c7c7cc]">Version {revision.version} · {revision.actorName} · {formatDateTime(revision.createdAt)}</summary>
+      <p className="my-3 whitespace-pre-wrap break-words text-sm text-[#c7c7cc]">{revision.reason}</p>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div><h4 className="mb-1 text-xs font-semibold text-white">Vorher</h4><p className="text-sm text-[#c4c4c4]">{snapshotLine(revision.before)}</p></div>
-        <div><h4 className="mb-1 text-xs font-semibold text-white">Nachher</h4><p className="text-sm text-[#c4c4c4]">{snapshotLine(revision.after)}</p></div>
+        <div><h4 className="mb-1 text-xs font-semibold text-white">Vorher</h4><p className="text-sm text-[#c7c7cc]">{snapshotLine(revision.before)}</p></div>
+        <div><h4 className="mb-1 text-xs font-semibold text-white">Nachher</h4><p className="text-sm text-[#c7c7cc]">{snapshotLine(revision.after)}</p></div>
       </div>
     </details>)}
   </section>
@@ -101,13 +102,13 @@ export function EditOfficial({ official, onSaved }: { official: Official; onSave
   return <><Button variant="outline" size="sm" disabled={!official.version} onClick={start}>Stammdaten bearbeiten</Button>
     <Modal open={open} onClose={loading ? () => {} : () => setOpen(false)} title="Beamtenakte bearbeiten" size="lg">
       <form className="space-y-4" onSubmit={submit}>
-        <p className="text-sm text-[#c4c4c4]">{officialNumber(official.id)} · Die Nummer bleibt bestehen; die Korrektur gilt rückwirkend für alle Kontrollen dieser Akte.</p>
+        <p className="text-sm text-[#c7c7cc]">{officialNumber(official.id)} · Die Nummer bleibt bestehen; die Korrektur gilt rückwirkend für alle Kontrollen dieser Akte.</p>
         <Input label="Vorname" required maxLength={100} value={firstName} onChange={e => setFirstName(e.target.value)} />
         <Input label="Nachname" required maxLength={100} value={lastName} onChange={e => setLastName(e.target.value)} />
         <Input label="Behörde" required maxLength={150} value={agency} onChange={e => setAgency(e.target.value)} />
         <Input label="Dienstnummer" maxLength={100} value={badgeNumber} onChange={e => setBadgeNumber(e.target.value)} placeholder="Optional" />
         <Textarea label="Begründung der Korrektur" required minLength={3} maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} placeholder="Warum werden die Stammdaten geändert?" />
-        <p className="text-xs text-[#909090]">Die bisherige Fassung bleibt mit Bearbeiter, Zeitpunkt und Begründung in der Historie erhalten.</p>
+        <p className="text-xs text-[#8e8e93]">Die bisherige Fassung bleibt mit Bearbeiter, Zeitpunkt und Begründung in der Historie erhalten.</p>
         {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
         <Button type="submit" loading={loading} disabled={!firstName.trim() || !lastName.trim() || !agency.trim() || reason.trim().length < 3}>Korrektur speichern</Button>
       </form>
@@ -116,7 +117,7 @@ export function EditOfficial({ official, onSaved }: { official: Official; onSave
 }
 
 function SnapshotView({ data }: { data: Snapshot }) {
-  return <div className="space-y-2 text-sm text-[#c4c4c4]"><p>{formatDateTime(data.conductedAt)} · {data.result === 'CLEAR' ? 'Ohne Befund' : 'Mit Befund'}</p><p>{data.location || 'Kein Ort'}</p><p className="whitespace-pre-wrap break-words">{data.findings}</p>{data.notes && <p className="whitespace-pre-wrap break-words">{data.notes}</p>}<p className="text-xs text-[#909090]">{data.agents.map(a => `${a.name} (${displayBadgeNumber(a.badgeNumber)})`).join(', ')}</p></div>
+  return <div className="space-y-2 text-sm text-[#c7c7cc]"><p>{formatDateTime(data.conductedAt)} · {data.result === 'CLEAR' ? 'Ohne Befund' : 'Mit Befund'}</p><p>{data.location || 'Kein Ort'}</p><p className="whitespace-pre-wrap break-words">{data.findings}</p>{data.notes && <p className="whitespace-pre-wrap break-words">{data.notes}</p>}<p className="text-xs text-[#8e8e93]">{data.agents.map(a => `${a.name} (${displayBadgeNumber(a.badgeNumber)})`).join(', ')}</p></div>
 }
 
 export function ReportDetail({ id, agents, onClose, onChanged }: { id: string; agents: Agent[]; onClose: () => void; onChanged: () => void }) {
@@ -124,12 +125,12 @@ export function ReportDetail({ id, agents, onClose, onChanged }: { id: string; a
   const [editing, setEditing] = useState(false)
   return <Modal open onClose={onClose} title="Kontrollbericht" size="xl">
     {error && <p role="alert" className="text-red-300">{error}</p>}
-    {!data ? <p className="text-sm text-[#909090]">Bericht wird geladen …</p> : <div className="space-y-6">
-      <div><h3 className="font-semibold text-white">{personLabel(data.official)}</h3><p className="mt-1 text-xs text-[#909090]">Version {data.version} · Erfasst von {data.createdBy?.displayName ?? 'Gelöschtem Benutzer'} am {formatDateTime(data.createdAt)}</p></div>
+    {!data ? <ListSkeleton compact /> : <div className="space-y-6">
+      <div><h3 className="font-semibold text-white">{personLabel(data.official)}</h3><p className="mt-1 text-xs text-[#8e8e93]">Version {data.version} · Erfasst von {data.createdBy?.displayName ?? 'Gelöschtem Benutzer'} am {formatDateTime(data.createdAt)}</p></div>
       <SnapshotView data={data} />
       <Button variant="outline" onClick={() => setEditing(true)}>Bericht korrigieren</Button>
       <EvidencePanel report={data} onChanged={refetch} />
-      <section className="space-y-3 border-t border-[#343434] pt-4"><h3 className="font-semibold text-white">Änderungshistorie</h3>{!data.revisions.length && <p className="text-sm text-[#909090]">Noch keine Korrekturen.</p>}{data.revisions.map(revision => <details key={revision.id} className="rounded-lg border border-[#343434] p-3"><summary className="cursor-pointer text-sm text-[#c4c4c4]">Version {revision.version} · {revision.actorName} · {formatDateTime(revision.createdAt)}</summary><p className="my-3 whitespace-pre-wrap text-sm text-[#c4c4c4]">{revision.reason}</p><div className="grid gap-4 sm:grid-cols-2"><div><h4 className="mb-2 text-xs font-semibold text-white">Vorher</h4><SnapshotView data={revision.before} /></div><div><h4 className="mb-2 text-xs font-semibold text-white">Nachher</h4><SnapshotView data={revision.after} /></div></div></details>)}</section>
+      <section className="space-y-3 border-t border-[#38383a] pt-4"><h3 className="font-semibold text-white">Änderungshistorie</h3>{!data.revisions.length && <p className="text-sm text-[#8e8e93]">Noch keine Korrekturen.</p>}{data.revisions.map(revision => <details key={revision.id} className="rounded-lg border border-[#38383a] p-3"><summary className="cursor-pointer text-sm text-[#c7c7cc]">Version {revision.version} · {revision.actorName} · {formatDateTime(revision.createdAt)}</summary><p className="my-3 whitespace-pre-wrap text-sm text-[#c7c7cc]">{revision.reason}</p><div className="grid gap-4 sm:grid-cols-2"><div><h4 className="mb-2 text-xs font-semibold text-white">Vorher</h4><SnapshotView data={revision.before} /></div><div><h4 className="mb-2 text-xs font-semibold text-white">Nachher</h4><SnapshotView data={revision.after} /></div></div></details>)}</section>
       {editing && <CorrectionForm report={data} agents={agents} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); void refetch(); onChanged() }} />}
     </div>}
   </Modal>
@@ -148,14 +149,14 @@ function CorrectionForm({ report, agents, onClose, onSaved }: { report: Report; 
   return <Modal open onClose={loading ? () => {} : onClose} title="Bericht korrigieren" size="xl"><form className="space-y-4" onSubmit={async e => { e.preventDefault(); if (loading) return; try { await execute(`/api/corruption-checks/${report.id}`, { method: 'PATCH', body: JSON.stringify({ version: report.version, reason, conductedAt: new Date(when).toISOString(), agentIds: ids, result, findings, location, notes }) }); onSaved() } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Korrektur fehlgeschlagen') } }}>
     <Input label="Datum und Uhrzeit (lokal)" type="datetime-local" required value={when} onChange={e => setWhen(e.target.value)} />
     <Input label="Ort" maxLength={200} value={location} onChange={e => setLocation(e.target.value)} />
-    <fieldset className="max-h-40 space-y-2 overflow-auto rounded-lg border border-[#343434] p-3"><legend className="text-sm text-[#a6a6a6]">Durchführende Agents</legend>{agents.map(a => <label key={a.id} className="flex items-center gap-2 text-sm text-[#c4c4c4]"><input type="checkbox" checked={ids.includes(a.id)} onChange={e => setIds(e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))} />{a.firstName} {a.lastName} ({displayBadgeNumber(a.badgeNumber)})</label>)}</fieldset>
+    <fieldset className="max-h-40 space-y-2 overflow-auto rounded-lg border border-[#38383a] p-3"><legend className="text-sm text-[#98989d]">Durchführende Agents</legend>{agents.map(a => <label key={a.id} className="flex items-center gap-2 text-sm text-[#c7c7cc]"><input type="checkbox" checked={ids.includes(a.id)} onChange={e => setIds(e.target.checked ? [...ids, a.id] : ids.filter(id => id !== a.id))} />{a.firstName} {a.lastName} ({displayBadgeNumber(a.badgeNumber)})</label>)}</fieldset>
     <Select label="Ergebnis" value={result} onValueChange={value => setResult(value as 'CLEAR' | 'FINDINGS')} options={[{ value: 'CLEAR', label: 'Ohne Befund' }, { value: 'FINDINGS', label: 'Mit Befund' }]} />
     <Textarea label="Befund" required={result === 'FINDINGS'} maxLength={30000} rows={4} value={findings} onChange={e => setFindings(e.target.value)} />
     <Textarea label="Weitere Informationen" maxLength={30000} rows={3} value={notes} onChange={e => setNotes(e.target.value)} />
     <Textarea label="Begründung der Korrektur" required minLength={3} maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} />
-    <p className="text-xs text-[#909090]">Die bisherige Fassung bleibt mit Bearbeiter, Zeitpunkt und Begründung in der Historie erhalten.</p>
+    <p className="text-xs text-[#8e8e93]">Die bisherige Fassung bleibt mit Bearbeiter, Zeitpunkt und Begründung in der Historie erhalten.</p>
     {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
-    {report.agents.some(a => !a.agentId) && <p className="text-xs text-[#909090]">Historische Angaben zu inzwischen gelöschten Agents bleiben erhalten.</p>}
+    {report.agents.some(a => !a.agentId) && <p className="text-xs text-[#8e8e93]">Historische Angaben zu inzwischen gelöschten Agents bleiben erhalten.</p>}
     <Button type="submit" loading={loading} disabled={!ids.length && !report.agents.some(a => !a.agentId)}>Korrektur speichern</Button>
   </form></Modal>
 }
@@ -175,9 +176,9 @@ function EvidencePanel({ report, onChanged }: { report: Report; onChanged: () =>
   const clips = useFetch<{ id: string; title: string }[]>(chooseClip && access.data?.allowed ? `/api/investigations/clips?search=${encodeURIComponent(search)}` : null)
   const { execute, loading } = useApi()
   const fileUrl = (e: Evidence) => `/api/corruption-checks/evidence/${e.id}/file`
-  return <section className="space-y-3 border-t border-[#343434] pt-4"><h3 className="font-semibold text-white">Beweise</h3>
-    {!report.evidence.length && <p className="text-sm text-[#909090]">Noch keine Beweise angehängt.</p>}
-    {report.evidence.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#343434] p-3"><div><p className="text-sm text-[#c4c4c4]">{item.title}</p><p className="text-xs text-[#909090]">{item.uploadedByName} · {formatDateTime(item.createdAt)}</p></div>{item.mimeType === 'application/pdf' ? <a href={fileUrl(item)} className="text-xs text-[#c4b5fd] underline">PDF herunterladen</a> : <Button size="sm" variant="outline" onClick={() => setPreview(item)}>Ansehen</Button>}</div>)}
+  return <section className="space-y-3 border-t border-[#38383a] pt-4"><h3 className="font-semibold text-white">Beweise</h3>
+    {!report.evidence.length && <p className="text-sm text-[#8e8e93]">Noch keine Beweise angehängt.</p>}
+    {report.evidence.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#38383a] p-3"><div><p className="text-sm text-[#c7c7cc]">{item.title}</p><p className="text-xs text-[#8e8e93]">{item.uploadedByName} · {formatDateTime(item.createdAt)}</p></div>{item.mimeType === 'application/pdf' ? <a href={fileUrl(item)} className="text-xs text-[#c4b5fd] underline">PDF herunterladen</a> : <Button size="sm" variant="outline" onClick={() => setPreview(item)}>Ansehen</Button>}</div>)}
     <Input key={fileKey} label="Foto, PDF oder Bodycam-Datei (max. 500 MB)" type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/webm,video/quicktime" onChange={e => { const next = e.target.files?.[0] ?? null; setFile(next); setTitle(next?.name.slice(0,200) ?? '') }} />
     {file && <><Input label="Bezeichnung" value={title} maxLength={200} onChange={e => setTitle(e.target.value)} /><Button loading={uploading} disabled={!title.trim()} onClick={async () => {
       if (file.size > 500 * 1024 * 1024) { setMessage('Datei zu groß (max. 500 MB)'); return }
@@ -189,10 +190,10 @@ function EvidencePanel({ report, onChanged }: { report: Report; onChanged: () =>
         if (!response.ok || !json.success) throw new Error(json.error || 'Upload fehlgeschlagen')
         setFile(null); setFileKey(key => key + 1); await onChanged(); setMessage('Beweis gespeichert.')
       } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Upload fehlgeschlagen') } finally { setUploading(false); setProgress(null) }
-    }}>Beweis hochladen</Button>{progress && <div><div className="h-1.5 w-full overflow-hidden rounded-full bg-[#232323]"><div className="h-full rounded-full bg-[#a78bfa] transition-[width] duration-200" style={{ width: `${progress.percent}%` }} /></div><p className="mt-1 flex flex-wrap gap-x-2 text-xs text-[#909090]"><span>{progress.percent}% übertragen{progress.percent === 100 ? ' – wird zusammengesetzt…' : ''}</span>{formatRate(progress.bytesPerSecond) && <span>· {formatRate(progress.bytesPerSecond)}</span>}{formatRemaining(progress.secondsRemaining) && <span>· {formatRemaining(progress.secondsRemaining)}</span>}</p>{progress.resumed && <p className="mt-1 text-xs text-[#c4b5fd]">Angefangene Übertragung gefunden – wird fortgesetzt.</p>}</div>}</>}
+    }}>Beweis hochladen</Button>{progress && <div><div className="h-1.5 w-full overflow-hidden rounded-full bg-[#2c2c2e]"><div className="h-full rounded-full bg-[#a78bfa] transition-[width] duration-200" style={{ width: `${progress.percent}%` }} /></div><p className="mt-1 flex flex-wrap gap-x-2 text-xs text-[#8e8e93]"><span>{progress.percent}% übertragen{progress.percent === 100 ? ' – wird zusammengesetzt…' : ''}</span>{formatRate(progress.bytesPerSecond) && <span>· {formatRate(progress.bytesPerSecond)}</span>}{formatRemaining(progress.secondsRemaining) && <span>· {formatRemaining(progress.secondsRemaining)}</span>}</p>{progress.resumed && <p className="mt-1 text-xs text-[#c4b5fd]">Angefangene Übertragung gefunden – wird fortgesetzt.</p>}</div>}</>}
     {access.data?.allowed && <Button variant="outline" size="sm" onClick={() => setChooseClip(!chooseClip)}>Bodycam aus Katalog verknüpfen</Button>}
-    {chooseClip && <div className="space-y-3"><Input label="Bodycam suchen" value={search} onChange={e => setSearch(e.target.value)} /><Select label="Bodycam" value={clipId} onValueChange={setClipId} options={[{ value: '', label: 'Clip wählen' }, ...(clips.data ?? []).map(c => ({ value: c.id, label: c.title }))]} />{clips.error && <p className="text-sm text-red-300">{clips.error}</p>}<p className="text-xs text-[#909090]">Die ursprünglichen Bodycam-Zugriffsrechte gelten auch für diese Verknüpfung.</p><Button size="sm" loading={loading} disabled={!clipId} onClick={async () => { try { await execute(`/api/corruption-checks/${report.id}/evidence`, { method: 'POST', body: JSON.stringify({ clipId }) }); setChooseClip(false); setClipId(''); await onChanged() } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Verknüpfen fehlgeschlagen') } }}>Clip verknüpfen</Button></div>}
-    {message && <p role="status" className="text-sm text-[#c4c4c4]">{message}</p>}
-    {preview && <Modal open onClose={() => setPreview(null)} title={preview.title} size="xl">{preview.mimeType?.startsWith('image/') ? <Image unoptimized src={fileUrl(preview)} width={1200} height={900} alt={preview.title} className="max-h-[65vh] w-full object-contain" /> : <><video controls className="max-h-[60vh] w-full" src={fileUrl(preview)} onError={() => setMessage('Video nicht verfügbar oder keine Bodycam-Berechtigung.')} /><p className="mt-2 text-xs text-[#909090]">Bei verknüpften Clips ist die Bodycam-Berechtigung erforderlich.</p></>}</Modal>}
+    {chooseClip && <div className="space-y-3"><Input label="Bodycam suchen" value={search} onChange={e => setSearch(e.target.value)} /><Select label="Bodycam" value={clipId} onValueChange={setClipId} options={[{ value: '', label: 'Clip wählen' }, ...(clips.data ?? []).map(c => ({ value: c.id, label: c.title }))]} />{clips.error && <p className="text-sm text-red-300">{clips.error}</p>}<p className="text-xs text-[#8e8e93]">Die ursprünglichen Bodycam-Zugriffsrechte gelten auch für diese Verknüpfung.</p><Button size="sm" loading={loading} disabled={!clipId} onClick={async () => { try { await execute(`/api/corruption-checks/${report.id}/evidence`, { method: 'POST', body: JSON.stringify({ clipId }) }); setChooseClip(false); setClipId(''); await onChanged() } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Verknüpfen fehlgeschlagen') } }}>Clip verknüpfen</Button></div>}
+    {message && <p role="status" className="text-sm text-[#c7c7cc]">{message}</p>}
+    {preview && <Modal open onClose={() => setPreview(null)} title={preview.title} size="xl">{preview.mimeType?.startsWith('image/') ? <Image unoptimized src={fileUrl(preview)} width={1200} height={900} alt={preview.title} className="max-h-[65vh] w-full object-contain" /> : <><video controls className="max-h-[60vh] w-full" src={fileUrl(preview)} onError={() => setMessage('Video nicht verfügbar oder keine Bodycam-Berechtigung.')} /><p className="mt-2 text-xs text-[#8e8e93]">Bei verknüpften Clips ist die Bodycam-Berechtigung erforderlich.</p></>}</Modal>}
   </section>
 }

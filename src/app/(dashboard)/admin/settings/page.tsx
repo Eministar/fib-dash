@@ -446,15 +446,15 @@ export default function SettingsPage() {
                     key={roleId}
                     type="button"
                     onClick={() => removeRole(field, roleId)}
-                    className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#404040] bg-[#181818]/70 px-2.5 py-1.5 text-[12px] text-[#f4f4f4] hover:border-[#d4d4d4]/50"
+                    className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#48484a] bg-[#1c1c1e]/70 px-2.5 py-1.5 text-[12px] text-[#f5f5f7] hover:border-[#d4d4d4]/50"
                     title="Rolle entfernen"
                 >
                   {roleName(roleId)}
-                  <span className="text-[#909090]">×</span>
+                  <span className="text-[#8e8e93]">×</span>
                 </button>
             ))}
             {selected.length === 0 && (
-                <span className="text-[12px] text-[#8c8c8c] py-1.5">Keine Rollen ausgewählt</span>
+                <span className="text-[12px] text-[#8e8e93] py-1.5">Keine Rollen ausgewählt</span>
             )}
           </div>
         </div>
@@ -477,7 +477,7 @@ export default function SettingsPage() {
         <PageHeader title="Einstellungen" description="Systemweite Konfiguration für Organisation und Discord-Bot" />
 
         {/* Section nav */}
-        <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-5 backdrop-blur-md bg-[#080808]/85 border-b border-[#343434]/40">
+        <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-5 backdrop-blur-md bg-[#000000]/85 border-b border-[#38383a]/40">
           <div className="flex items-center gap-1.5 overflow-x-auto max-w-4xl">
             {[
               { id: 'general', label: 'Allgemein', icon: Building2 },
@@ -491,7 +491,7 @@ export default function SettingsPage() {
                 <a
                     key={item.id}
                     href={`#${item.id}`}
-                    className="inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12px] font-medium text-[#aeaeae] hover:text-white hover:bg-[#232323] transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12px] font-medium text-[#98989d] hover:text-white hover:bg-[#2c2c2e] transition-colors whitespace-nowrap"
                 >
                   <item.icon size={13} /> {item.label}
                 </a>
@@ -517,9 +517,9 @@ export default function SettingsPage() {
                   ))}
                 </div>
                 {diag?.interactionEndpointUrl && (
-                    <div className="mt-3 rounded-[10px] border border-[#303030] bg-[#151515] px-3 py-2 text-[11.5px] text-[#aeaeae] flex items-center gap-2">
+                    <div className="mt-3 rounded-[10px] border border-[#3a3a3c] bg-[#161617] px-3 py-2 text-[11.5px] text-[#98989d] flex items-center gap-2">
                       <Link2 size={13} className="text-[#d4d4d4] shrink-0" />
-                      <span className="truncate">Interactions Endpoint: <code className="text-[#f4f4f4]">{diag.interactionEndpointUrl}</code></span>
+                      <span className="truncate">Interactions Endpoint: <code className="text-[#f5f5f7]">{diag.interactionEndpointUrl}</code></span>
                     </div>
                 )}
               </div>
@@ -562,7 +562,7 @@ export default function SettingsPage() {
                   onCheckedChange={setAllowDuplicateBadgeNumbers}
                   label="Temporär doppelte Dienstnummern erlauben"
                 />
-                <p className="mt-2 text-[11.5px] leading-5 text-[#cacaca]">
+                <p className="mt-2 text-[11.5px] leading-5 text-[#c7c7cc]">
                   Nur als Übergang nutzen, um Agents sauber in Ränge zu sortieren. Gesperrte Dienstnummern bleiben weiterhin blockiert.
                 </p>
                 <Button
@@ -581,7 +581,7 @@ export default function SettingsPage() {
             <h3 className="text-[13.5px] font-semibold text-[#eee] mb-1 flex items-center gap-2">
               <Clock size={15} className="text-[#d4d4d4]" /> Dienstzeit-Erfassung
             </h3>
-            <p className="text-[11.5px] text-[#909090] mb-4">
+            <p className="text-[11.5px] text-[#8e8e93] mb-4">
               Falls die Dienstzeiten-API ausfällt, auf manuelles Einstempeln umschalten. Beim Umschalten werden offene Sitzungen beendet, eine Ankündigung ohne Ping in den Dienstzeiten-Channel gestellt und das Panel neu gesetzt.
             </p>
             <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Dienstzeit-Erfassung">
@@ -598,10 +598,10 @@ export default function SettingsPage() {
                     aria-checked={active}
                     disabled={dutyModeSaving || !dutyModeData || active}
                     onClick={() => changeDutyMode(option.mode)}
-                    className={cn('rounded-[10px] border p-3 text-left transition-colors disabled:cursor-default', active ? 'border-[#a6a6a6] bg-[#262626]' : 'border-[#343434] hover:bg-[#1f1f1f]')}
+                    className={cn('rounded-[10px] border p-3 text-left transition-colors disabled:cursor-default', active ? 'border-[#98989d] bg-[#2c2c2e]' : 'border-[#38383a] hover:bg-[#1c1c1e]')}
                   >
                     <span className="block text-[13px] font-medium text-white">{option.title}{active ? ' · aktiv' : ''}</span>
-                    <span className="mt-1 block text-[11.5px] leading-relaxed text-[#909090]">{option.text}</span>
+                    <span className="mt-1 block text-[11.5px] leading-relaxed text-[#8e8e93]">{option.text}</span>
                   </button>
                 )
               })}
@@ -614,7 +614,7 @@ export default function SettingsPage() {
                 <h3 className="text-[13.5px] font-semibold text-[#eee] flex items-center gap-2">
                   <MessagesSquare size={15} className="text-[#d4d4d4]" /> Discord Integration
                 </h3>
-                <p className="text-[11.5px] text-[#909090] mt-1">
+                <p className="text-[11.5px] text-[#8e8e93] mt-1">
                   Bot-Token wird über die Umgebung gesetzt. Rollen, Channel und Command-Rechte werden hier gepflegt.
                 </p>
               </div>
@@ -631,55 +631,55 @@ export default function SettingsPage() {
             </div>
 
             {(fullSyncProgress || fullSyncResult) && (
-              <div className="mb-4 rounded-[10px] border border-[#303030] bg-[#151515] px-3 py-3">
+              <div className="mb-4 rounded-[10px] border border-[#3a3a3c] bg-[#161617] px-3 py-3">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-[12.5px] font-semibold text-[#f4f4f4]">
+                    <p className="truncate text-[12.5px] font-semibold text-[#f5f5f7]">
                       {fullSyncProgress?.message ?? fullSyncResult?.message ?? 'Full-Sync'}
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] text-[#909090]">
+                    <p className="mt-0.5 truncate text-[11px] text-[#8e8e93]">
                       {fullSyncProgress?.current ? `Aktuell: ${fullSyncProgress.current}` : 'Kein Agent aktiv'}
                     </p>
                   </div>
-                  <div className="flex shrink-0 flex-wrap gap-2 text-[11px] text-[#aeaeae]">
+                  <div className="flex shrink-0 flex-wrap gap-2 text-[11px] text-[#98989d]">
                     <span>{fullSyncProgress?.processed ?? fullSyncResult?.total ?? 0}/{fullSyncProgress?.total ?? fullSyncResult?.total ?? 0}</span>
                     <span>{syncPercent}%</span>
                     <span>Rest: {formatSeconds(fullSyncProgress?.etaSeconds ?? null)}</span>
                   </div>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#232323]">
+                <div className="h-2 overflow-hidden rounded-full bg-[#2c2c2e]">
                   <div
                     className="h-full rounded-full bg-[#d4d4d4] transition-[width] duration-200"
                     style={{ width: `${fullSyncResult ? 100 : syncPercent}%` }}
                   />
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-[#aeaeae] sm:grid-cols-4">
-                  <span>Synchronisiert: <b className="text-[#f4f4f4]">{fullSyncProgress?.synced ?? fullSyncResult?.synced ?? 0}</b></span>
-                  <span>Übersprungen: <b className="text-[#f4f4f4]">{fullSyncProgress?.skipped ?? fullSyncResult?.skipped ?? 0}</b></span>
-                  <span>Fehler: <b className={cn((fullSyncProgress?.failed ?? fullSyncResult?.failed ?? 0) > 0 ? 'text-[#fca5a5]' : 'text-[#f4f4f4]')}>{fullSyncProgress?.failed ?? fullSyncResult?.failed ?? 0}</b></span>
-                  <span>Laufzeit: <b className="text-[#f4f4f4]">{formatSeconds(fullSyncProgress?.elapsedSeconds ?? null)}</b></span>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-[#98989d] sm:grid-cols-4">
+                  <span>Synchronisiert: <b className="text-[#f5f5f7]">{fullSyncProgress?.synced ?? fullSyncResult?.synced ?? 0}</b></span>
+                  <span>Übersprungen: <b className="text-[#f5f5f7]">{fullSyncProgress?.skipped ?? fullSyncResult?.skipped ?? 0}</b></span>
+                  <span>Fehler: <b className={cn((fullSyncProgress?.failed ?? fullSyncResult?.failed ?? 0) > 0 ? 'text-[#fca5a5]' : 'text-[#f5f5f7]')}>{fullSyncProgress?.failed ?? fullSyncResult?.failed ?? 0}</b></span>
+                  <span>Laufzeit: <b className="text-[#f5f5f7]">{formatSeconds(fullSyncProgress?.elapsedSeconds ?? null)}</b></span>
                 </div>
               </div>
             )}
 
             {!discordData?.botConfigured && (
-                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#cacaca]">
+                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#c7c7cc]">
                   DISCORD_BOT_TOKEN ist nicht gesetzt. Die Oberfläche kann gespeichert werden, Discord-Rollen und Channel werden aber erst mit Bot-Token geladen.
                 </div>
             )}
             {discordData && !discordData.diagnostics.guildConfigured && (
-                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#cacaca]">
+                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#c7c7cc]">
                   Guild-ID fehlt. Setze sie hier oder über DISCORD_GUILD_ID, sonst können Rollen und Commands nicht geladen werden.
                 </div>
             )}
             {discordData && !discordData.diagnostics.publicKeyConfigured && (
-                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#cacaca]">
+                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#c7c7cc]">
                   DISCORD_PUBLIC_KEY fehlt. Discord-Buttons und Modals werden ohne diesen Public Key von der App abgelehnt.
                 </div>
             )}
             {discordData?.diagnostics.interactionEndpointUrl && (
-                <div className="mb-4 rounded-[10px] border border-[#303030] bg-[#151515] px-3 py-2 text-[12px] text-[#aeaeae]">
-                  Interactions Endpoint URL in Discord: <code className="text-[#f4f4f4]">{discordData.diagnostics.interactionEndpointUrl}</code>
+                <div className="mb-4 rounded-[10px] border border-[#3a3a3c] bg-[#161617] px-3 py-2 text-[12px] text-[#98989d]">
+                  Interactions Endpoint URL in Discord: <code className="text-[#f5f5f7]">{discordData.diagnostics.interactionEndpointUrl}</code>
                 </div>
             )}
             {discordData?.diagnostics.rolesError && (
@@ -721,7 +721,7 @@ export default function SettingsPage() {
                     onValueChange={(updateChannelId) => setDiscordForm({ ...discordForm, updateChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Channel für Update-Mitteilungen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -732,7 +732,7 @@ export default function SettingsPage() {
                     onValueChange={(sanctionsChannelId) => setDiscordForm({ ...discordForm, sanctionsChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Channel für neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -743,7 +743,7 @@ export default function SettingsPage() {
                     onValueChange={(investigationsChannelId) => setDiscordForm({ ...discordForm, investigationsChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Meldungen zu Einsatzakten und neuen Bodycam-Clips. Verschlusssachen werden nie gepostet.
                   Leer lassen, um die Meldungen abzuschalten.
                 </p>
@@ -755,7 +755,7 @@ export default function SettingsPage() {
                     onValueChange={(hirePingChannelId) => setDiscordForm({ ...discordForm, hirePingChannelId })}
                     options={channelOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#909090]">Bei einem neu angelegten Agent wird er selbst einmal kurz erwähnt; die Nachricht wird nach etwa einer Sekunde wieder gelöscht. Ohne hinterlegte Discord-ID des Agents passiert nichts. Leer bedeutet deaktiviert.</p>
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Bei einem neu angelegten Agent wird er selbst einmal kurz erwähnt; die Nachricht wird nach etwa einer Sekunde wieder gelöscht. Ohne hinterlegte Discord-ID des Agents passiert nichts. Leer bedeutet deaktiviert.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select
@@ -764,7 +764,7 @@ export default function SettingsPage() {
                     onValueChange={(bodycamViewerRoleId) => setDiscordForm({ ...discordForm, bodycamViewerRoleId })}
                     options={roleOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#909090]">Gewährt angemeldeten Rollenmitgliedern Lesezugriff auf den gesamten Bodycam-Katalog — auch auf Clips aus Verschlusssachen. Die Akten selbst bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.</p>
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Gewährt angemeldeten Rollenmitgliedern Lesezugriff auf den gesamten Bodycam-Katalog — auch auf Clips aus Verschlusssachen. Die Akten selbst bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select
@@ -773,7 +773,7 @@ export default function SettingsPage() {
                     onValueChange={(photoCatalogChannelId) => setDiscordForm({ ...discordForm, photoCatalogChannelId })}
                     options={channelOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#909090]">Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot benötigt Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Leer lassen zum Abschalten; eine Umgebungsvariable hat Vorrang.</p>
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot benötigt Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Leer lassen zum Abschalten; eine Umgebungsvariable hat Vorrang.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select
@@ -782,7 +782,7 @@ export default function SettingsPage() {
                     onValueChange={(codenameBoardChannelId) => setDiscordForm({ ...discordForm, codenameBoardChannelId })}
                     options={channelOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#909090]">Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.</p>
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select
@@ -791,7 +791,7 @@ export default function SettingsPage() {
                     onValueChange={(dutyStatusChannelId) => setDiscordForm({ ...discordForm, dutyStatusChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Öffentliches Panel mit allen Agents im Dienst. Im manuellen Modus mit Ein-/Ausstempel-Buttons.
                 </p>
               </div>
@@ -802,7 +802,7 @@ export default function SettingsPage() {
                     onValueChange={(dutyAdminLogChannelId) => setDiscordForm({ ...discordForm, dutyAdminLogChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Optionaler Admin-Channel für Dienstzeit-Hinweise. Leer lassen, um den Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -813,7 +813,7 @@ export default function SettingsPage() {
                     onValueChange={(absenceStatusChannelId) => setDiscordForm({ ...discordForm, absenceStatusChannelId })}
                     options={channelOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Öffentliches Panel mit allen aktuell abgemeldeten Agents. Leer lassen, um den Dienstzeiten- oder Ankündigungs-Channel zu nutzen.
                 </p>
               </div>
@@ -824,7 +824,7 @@ export default function SettingsPage() {
                     onValueChange={(humanResourcesRoleId) => setDiscordForm({ ...discordForm, humanResourcesRoleId })}
                     options={roleOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Diese Rolle wird in Mitteilungen zu Sanktionen als Human Resources erwähnt.
                 </p>
               </div>
@@ -835,7 +835,7 @@ export default function SettingsPage() {
                     onValueChange={(promotionBlockRoleId) => setDiscordForm({ ...discordForm, promotionBlockRoleId })}
                     options={roleOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Agent mit aktiver Uprank-Sperre erhalten diese Rolle automatisch (und verlieren sie beim Aufheben).
                 </p>
               </div>
@@ -846,7 +846,7 @@ export default function SettingsPage() {
                     onValueChange={(leaveRoleId) => setDiscordForm({ ...discordForm, leaveRoleId })}
                     options={roleOptions}
                 />
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Beurlaubte Agents erhalten diese Rolle automatisch (und verlieren sie beim Aufheben der Beurlaubung).
                 </p>
               </div>
@@ -854,40 +854,40 @@ export default function SettingsPage() {
 
             <div id="roles" className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5 scroll-mt-section">
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Dashboard Login-Rollen</p>
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Dashboard Login-Rollen</p>
                 {renderRolePicker('authLoginRoleIds')}
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Mitglieder mit mindestens einer dieser Rollen dürfen sich anmelden. Rollen, die bei Benutzergruppen hinterlegt sind, zählen ebenfalls als Login-Rollen.
                 </p>
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Bewerberportal-Rollen</p>
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Bewerberportal-Rollen</p>
                 {renderRolePicker('applicantRoleIds')}
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Mitglieder mit mindestens einer dieser Rollen dürfen das Bewerberportal öffnen, erhalten dadurch aber keine Dashboard-Rechte.
                 </p>
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Vertragseinsicht</p>
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Vertragseinsicht</p>
                 {renderRolePicker('contractAuditorRoleIds')}
-                <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Mitglieder mit mindestens einer dieser Rollen dürfen jeden Arbeitsvertrag über dessen Link einsehen (nur lesend, ohne Dashboard-Rechte). Unterschreiben kann weiterhin nur der Agent selbst.
                 </p>
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Feste Mitarbeiterrollen</p>
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Feste Mitarbeiterrollen</p>
                 {renderRolePicker('employeeRoleIds')}
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Rollen, die Discord-Commands ausführen dürfen</p>
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Rollen, die Discord-Commands ausführen dürfen</p>
                 {renderRolePicker('commandRoleIds')}
               </div>
             </div>
 
             <div id="mappings" className="mt-5 space-y-5 scroll-mt-section">
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Benutzergruppen zu Discord-Rollen</p>
-                <p className="text-[11px] text-[#8c8c8c] mb-3">
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Benutzergruppen zu Discord-Rollen</p>
+                <p className="text-[11px] text-[#8e8e93] mb-3">
                   Beim Login werden alle passenden Benutzergruppen gestapelt. Eine Benutzergruppe passt, sobald ein Mitglied mindestens eine der hinterlegten Rollen hat.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -915,15 +915,15 @@ export default function SettingsPage() {
                                     key={roleId}
                                     type="button"
                                     onClick={() => removeAuthGroupRole(group.id, roleId)}
-                                    className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#404040] bg-[#181818]/70 px-2.5 py-1.5 text-[12px] text-[#f4f4f4] hover:border-[#d4d4d4]/50"
+                                    className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#48484a] bg-[#1c1c1e]/70 px-2.5 py-1.5 text-[12px] text-[#f5f5f7] hover:border-[#d4d4d4]/50"
                                     title="Rolle entfernen"
                                 >
                                   {roleName(roleId)}
-                                  <span className="text-[#909090]">×</span>
+                                  <span className="text-[#8e8e93]">×</span>
                                 </button>
                             ))}
                             {selectedRoleIds.length === 0 && (
-                                <span className="text-[12px] text-[#8c8c8c] py-1.5">Keine Rollen ausgewählt</span>
+                                <span className="text-[12px] text-[#8e8e93] py-1.5">Keine Rollen ausgewählt</span>
                             )}
                           </div>
                         </div>
@@ -932,8 +932,8 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Rechte direkt an Discord-Rollen</p>
-                <p className="text-[11px] text-[#8c8c8c] mb-3">
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Rechte direkt an Discord-Rollen</p>
+                <p className="text-[11px] text-[#8e8e93] mb-3">
                   Rollen mit hinterlegten Rechten zählen automatisch als Login-Rollen: eine separate Login-Rolle ist dann nicht nötig. Die Rechte gelten zusätzlich zu Gruppen- und Unit-Rechten und werden bei jedem Discord-Login neu übernommen.
                 </p>
                 <div className="max-w-md">
@@ -951,21 +951,21 @@ export default function SettingsPage() {
                 </div>
                 <div className="mt-3 space-y-3">
                   {Object.keys(discordForm.authRolePermissionMap).length === 0 && (
-                      <span className="text-[12px] text-[#8c8c8c]">Keine Rolle konfiguriert</span>
+                      <span className="text-[12px] text-[#8e8e93]">Keine Rolle konfiguriert</span>
                   )}
                   {Object.entries(discordForm.authRolePermissionMap).map(([roleId, permissions]) => (
-                      <div key={roleId} className="rounded-[9px] border border-[#343434]/60 bg-[#181818]/40 p-3">
+                      <div key={roleId} className="rounded-[9px] border border-[#38383a]/60 bg-[#1c1c1e]/40 p-3">
                         <div className="flex items-center justify-between gap-3 mb-2">
                           <div>
-                            <p className="text-[13px] text-[#f4f4f4]">{roleName(roleId)}</p>
-                            <p className="text-[11px] text-[#8c8c8c]">
+                            <p className="text-[13px] text-[#f5f5f7]">{roleName(roleId)}</p>
+                            <p className="text-[11px] text-[#8e8e93]">
                               {permissions.length > 0 ? `${permissions.length} Recht(e)` : 'Noch keine Rechte – die Rolle gewährt dann keinen Zugriff'}
                             </p>
                           </div>
                           <button
                               type="button"
                               onClick={() => removeRolePermissionRole(roleId)}
-                              className="rounded-[7px] border border-[#404040] bg-[#181818]/70 px-2.5 py-1.5 text-[12px] text-[#f4f4f4] hover:border-[#d4d4d4]/50"
+                              className="rounded-[7px] border border-[#48484a] bg-[#1c1c1e]/70 px-2.5 py-1.5 text-[12px] text-[#f5f5f7] hover:border-[#d4d4d4]/50"
                               title="Rolle entfernen"
                           >
                             Entfernen
@@ -978,7 +978,7 @@ export default function SettingsPage() {
                                   checked={permissions.includes(permission)}
                                   onCheckedChange={(checked) => toggleRolePermission(roleId, permission, checked)}
                                   label={PERMISSION_LABELS[permission]}
-                                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                                  className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-3 py-2"
                               />
                           ))}
                         </div>
@@ -987,7 +987,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Rangrollen</p>
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Rangrollen</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {discordData?.ranks.map((rank) => (
                       <Select
@@ -1002,7 +1002,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Ausbildungsrollen</p>
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Ausbildungsrollen</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {discordData?.trainings.map((training) => (
                       <Select
@@ -1017,8 +1017,8 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Individuelle Unit-Rollen</p>
-                <p className="mb-3 text-[11px] leading-5 text-[#8c8c8c]">
+                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Individuelle Unit-Rollen</p>
+                <p className="mb-3 text-[11px] leading-5 text-[#8e8e93]">
                   Für gruppierte Units pflegst du die Rangrolle direkt unter „Units verwalten“. Diese Liste bleibt für eigenständige oder ältere Units verfügbar.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1034,7 +1034,7 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
-              <div className="border-t border-[#343434]/40 pt-5">
+              <div className="border-t border-[#38383a]/40 pt-5">
                 <TierManager roles={discordData?.roles ?? []} ranks={discordData?.ranks ?? []} />
               </div>
             </div>
@@ -1043,9 +1043,9 @@ export default function SettingsPage() {
         </div>
 
         {/* Sticky save bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#080808]/85 border-t border-[#343434]/50 px-4 sm:px-6 py-3">
+        <div className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#000000]/85 border-t border-[#38383a]/50 px-4 sm:px-6 py-3">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-            <p className="text-[12px] text-[#868686] truncate">
+            <p className="text-[12px] text-[#8e8e93] truncate">
               Discord-Konfiguration · Änderungen werden erst nach Speichern aktiv
             </p>
             <Button size="sm" onClick={saveDiscordConfig}><Save size={13} /> Discord speichern</Button>

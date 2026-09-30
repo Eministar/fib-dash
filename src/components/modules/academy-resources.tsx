@@ -232,13 +232,13 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
       />
 
       {creating && (
-        <section className="rounded-[14px] border border-[#404040]/75 bg-[#181818] p-4 sm:p-5">
+        <section className="rounded-[14px] border border-[#48484a]/75 bg-[#1c1c1e] p-4 sm:p-5">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-[14px] font-semibold text-[#f4f4f4]">
+              <h2 className="text-[14px] font-semibold text-[#f5f5f7]">
                 {mode === 'files' ? 'Neue Datei' : 'Neue Ausbildungsressource'}
               </h2>
-              <p className="mt-1 text-[12px] text-[#909090]">
+              <p className="mt-1 text-[12px] text-[#8e8e93]">
                 {mode === 'files'
                   ? 'Die Datei wird in der allgemeinen Academy-Ablage gespeichert.'
                   : 'Ordne die Ressource einer Ausbildung oder einer eigenen Kategorie zu.'}
@@ -247,7 +247,7 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
             <button
               type="button"
               onClick={resetForm}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-[#909090] hover:bg-[#232323] hover:text-[#f4f4f4]"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-[#8e8e93] hover:bg-[#2c2c2e] hover:text-[#f5f5f7]"
               aria-label="Formular schließen"
             >
               <X size={15} />
@@ -303,15 +303,15 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
 
             {(mode === 'files' || form.type === 'FILE') ? (
               <div>
-                <label className="mb-1.5 block text-[12px] font-medium text-[#aeaeae]">Datei</label>
+                <label className="mb-1.5 block text-[12px] font-medium text-[#98989d]">Datei</label>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   className={cn(
                     'flex h-[42px] w-full items-center gap-2 rounded-[8px] border px-3 text-left text-[12.5px] transition-colors',
                     file
-                      ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/8 text-[#f4f4f4]'
-                      : 'border-[#343434] bg-[#080808] text-[#909090] hover:border-[#404040]',
+                      ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/8 text-[#f5f5f7]'
+                      : 'border-[#38383a] bg-[#000000] text-[#8e8e93] hover:border-[#48484a]',
                   )}
                 >
                   <Upload size={14} className={file ? 'text-[#d4d4d4]' : ''} />
@@ -377,14 +377,14 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
       ) : (
         <div className="space-y-4">
           {groupedResources.map((group) => (
-            <section key={group.label} className="overflow-hidden rounded-[14px] border border-[#343434]/70 bg-[#161616]">
-              <div className="flex items-center gap-3 border-b border-[#343434]/60 px-4 py-3">
+            <section key={group.label} className="overflow-hidden rounded-[14px] border border-[#38383a]/70 bg-[#161617]">
+              <div className="flex items-center gap-3 border-b border-[#38383a]/60 px-4 py-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#d4d4d4]/12 text-[#d4d4d4]">
                   <FolderOpen size={15} />
                 </span>
                 <div>
-                  <h2 className="text-[13.5px] font-semibold text-[#f4f4f4]">{group.label}</h2>
-                  <p className="text-[11px] text-[#909090]">{group.resources.length} Ressource(n)</p>
+                  <h2 className="text-[13.5px] font-semibold text-[#f5f5f7]">{group.label}</h2>
+                  <p className="text-[11px] text-[#8e8e93]">{group.resources.length} Ressource(n)</p>
                 </div>
               </div>
               <ResourceList resources={group.resources} canManage={canManage} onDelete={deleteResource} nested />
@@ -394,18 +394,18 @@ export function AcademyResources({ mode, canManage }: AcademyResourcesProps) {
       )}
 
       {resources.length === 0 && !creating && (
-        <div className="rounded-[14px] border border-dashed border-[#404040]/70 px-5 py-16 text-center">
+        <div className="rounded-[14px] border border-dashed border-[#48484a]/70 px-5 py-16 text-center">
           {mode === 'files'
-            ? <Upload size={27} className="mx-auto mb-3 text-[#8c8c8c]" />
-            : <FolderOpen size={27} className="mx-auto mb-3 text-[#8c8c8c]" />}
-          <p className="text-[13px] font-medium text-[#aeaeae]">
+            ? <Upload size={27} className="mx-auto mb-3 text-[#8e8e93]" />
+            : <FolderOpen size={27} className="mx-auto mb-3 text-[#8e8e93]" />}
+          <p className="text-[13px] font-medium text-[#98989d]">
             {mode === 'files' ? 'Noch keine Academy-Dateien' : 'Noch keine Ausbildungsressourcen'}
           </p>
           {canManage && (
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="mt-2 text-[12px] font-medium text-[#d4d4d4] hover:text-[#cacaca]"
+              className="mt-2 text-[12px] font-medium text-[#d4d4d4] hover:text-[#c7c7cc]"
             >
               Jetzt {mode === 'files' ? 'eine Datei hochladen' : 'eine Ressource erstellen'}
             </button>
@@ -430,25 +430,25 @@ function ResourceList({
   if (resources.length === 0) return null
 
   return (
-    <div className={cn('divide-y divide-[#343434]/60', !nested && 'overflow-hidden rounded-[14px] border border-[#343434]/70 bg-[#161616]')}>
+    <div className={cn('divide-y divide-[#38383a]/60', !nested && 'overflow-hidden rounded-[14px] border border-[#38383a]/70 bg-[#161617]')}>
       {resources.map((resource) => {
         const Icon = resourceIcon(resource)
         return (
-          <div key={resource.id} className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-[#1e1e1e]">
-            <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border border-[#404040]/60 bg-[#080808] text-[#d4d4d4]">
+          <div key={resource.id} className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-[#1c1c1e]">
+            <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border border-[#48484a]/60 bg-[#000000] text-[#d4d4d4]">
               <Icon size={16} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="truncate text-[13.5px] font-semibold text-[#f4f4f4]">{resource.title}</p>
-                <span className="rounded-full border border-[#404040]/60 px-2 py-0.5 text-[11px] font-medium text-[#a6a6a6]">
+                <p className="truncate text-[13.5px] font-semibold text-[#f5f5f7]">{resource.title}</p>
+                <span className="rounded-full border border-[#48484a]/60 px-2 py-0.5 text-[11px] font-medium text-[#98989d]">
                   {resource.type === 'LINK' ? 'Link' : 'Datei'}
                 </span>
               </div>
               {resource.description && (
-                <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-[#a6a6a6]">{resource.description}</p>
+                <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-[#98989d]">{resource.description}</p>
               )}
-              <p className="mt-1.5 text-[11px] text-[#8c8c8c]">
+              <p className="mt-1.5 text-[11px] text-[#8e8e93]">
                 {resource.originalFilename && `${resource.originalFilename} · `}
                 {resource.size !== null && `${formatBytes(resource.size)} · `}
                 {formatDateTime(resource.createdAt)}
@@ -461,7 +461,7 @@ function ResourceList({
                   href={resource.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[11.5px] font-medium text-[#aeaeae] hover:bg-[#232323] hover:text-[#d4d4d4]"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-[11.5px] font-medium text-[#98989d] hover:bg-[#2c2c2e] hover:text-[#d4d4d4]"
                 >
                   <ExternalLink size={13} />
                   Öffnen
@@ -471,7 +471,7 @@ function ResourceList({
                 <button
                   type="button"
                   onClick={() => onDelete(resource)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-[#909090] hover:bg-[#2a1212] hover:text-[#fca5a5]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-[#8e8e93] hover:bg-[#2a1212] hover:text-[#fca5a5]"
                   aria-label={`${resource.title} löschen`}
                 >
                   <Trash2 size={13} />

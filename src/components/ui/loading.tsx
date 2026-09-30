@@ -16,21 +16,89 @@ export function Spinner({ className, size = 'md' }: { className?: string; size?:
   )
 }
 
-/** Vollbild-Loader für den App-Start (Sitzung prüfen, Weiterleitungen). */
+export function SkeletonBlock({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={cn('skeleton rounded-[8px]', className)} style={style} />
+}
+
+/**
+ * App-Start (Sitzung prüfen, Weiterleitungen): ein Skelett der ganzen
+ * Oberfläche statt eines Ladekreisels – die App „steht“ sofort da.
+ */
 export function AppLoader() {
   return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-5 text-[#909090]">
-        <PdCloudLoader />
-        <div className="flex flex-col items-center gap-1.5">
-          <p className="text-[11px] font-semibold tracking-[0.18em] text-[#a6a6a6] uppercase">Lädt</p>
-          <p className="text-[11px] text-[#8c8c8c]">Einen Moment bitte…</p>
+      <div className="flex min-h-screen bg-[#000000]" role="status" aria-busy="true" aria-label="Dashboard wird geladen">
+        <div className="hidden w-[244px] shrink-0 border-r border-[#38383a]/70 bg-[#161617] px-3 pt-4 lg:block">
+          <div className="mb-5 flex items-center gap-3 px-1">
+            <SkeletonBlock className="h-10 w-10 rounded-full" />
+            <div className="space-y-1.5">
+              <SkeletonBlock className="h-3.5 w-16" />
+              <SkeletonBlock className="h-3 w-24" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {Array.from({ length: 11 }, (_, i) => (
+                <div key={i} className="flex items-center gap-2.5 px-2 py-[5px]">
+                  <SkeletonBlock className="h-[26px] w-[26px] rounded-[7px]" />
+                  <SkeletonBlock className="h-3.5" style={{ width: `${55 + ((i * 17) % 35)}%` }} />
+                </div>
+            ))}
+          </div>
         </div>
+        <div className="min-w-0 flex-1 px-3 pt-16 sm:px-6 lg:px-8 lg:pt-6">
+          <PageLoader withHeader />
+        </div>
+        <span className="sr-only">Lädt…</span>
       </div>
   )
 }
 
-function SkeletonBlock({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={cn('skeleton rounded-[8px]', className)} style={style} />
+/** Platzhalter für ein Dokument (Vertrag, Klage, Versetzungsantrag …). */
+export function DocumentSkeleton() {
+  return (
+      <div role="status" aria-busy="true" aria-label="Dokument wird geladen" className="mx-auto w-full max-w-[820px] px-4 py-10">
+        <div className="rounded-[14px] bg-[#1c1c1e] p-8 sm:p-12">
+          <div className="flex items-center gap-4">
+            <SkeletonBlock className="h-14 w-14 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <SkeletonBlock className="h-4 w-48" />
+              <SkeletonBlock className="h-3 w-32" />
+            </div>
+          </div>
+          <SkeletonBlock className="mx-auto mt-10 h-6 w-2/3" />
+          <div className="mt-8 space-y-3">
+            {Array.from({ length: 10 }, (_, i) => (
+                <SkeletonBlock key={i} className="h-3.5" style={{ width: `${100 - ((i * 13) % 30)}%` }} />
+            ))}
+          </div>
+          <div className="mt-12 grid grid-cols-2 gap-8">
+            <SkeletonBlock className="h-10" />
+            <SkeletonBlock className="h-10" />
+          </div>
+        </div>
+        <span className="sr-only">Lädt…</span>
+      </div>
+  )
+}
+
+/**
+ * Zeilen-Platzhalter für Listen innerhalb einer Karte – ersetzt Texte wie
+ * „… werden geladen“. `compact` für schmale Spalten und Auswahllisten.
+ */
+export function ListSkeleton({ rows = 4, compact = false }: { rows?: number; compact?: boolean }) {
+  return (
+      <div role="status" aria-busy="true" aria-label="Wird geladen" className={cn('space-y-3', compact ? 'py-2' : 'py-4')}>
+        {Array.from({ length: rows }, (_, i) => (
+            <div key={i} className="flex items-center gap-3" style={{ opacity: 1 - i * 0.15 }}>
+              {!compact && <SkeletonBlock className="h-8 w-8 shrink-0 rounded-[8px]" />}
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <SkeletonBlock className="h-3.5" style={{ width: `${70 - (i % 3) * 15}%` }} />
+                {!compact && <SkeletonBlock className="h-3" style={{ width: `${40 - (i % 2) * 12}%` }} />}
+              </div>
+            </div>
+        ))}
+        <span className="sr-only">Lädt…</span>
+      </div>
+  )
 }
 
 /**
@@ -47,14 +115,14 @@ export function PageLoader({ withHeader = false }: { withHeader?: boolean }) {
             <div className="mb-7">
               <SkeletonBlock className="h-7 w-56" />
               <SkeletonBlock className="mt-3 h-4 w-80 max-w-full" />
-              <div className="mt-5 h-px w-full bg-[#343434]" />
+              <div className="mt-5 h-px w-full bg-[#38383a]" />
             </div>
         )}
         <div className="mb-5 flex flex-wrap gap-3">
           <SkeletonBlock className="h-9 min-w-[240px] flex-1 rounded-[9px]" />
           <SkeletonBlock className="h-9 w-32 rounded-[9px]" />
         </div>
-        <div className="rounded-[16px] border border-[#323232]/55 bg-[#1b1b1b]/70 p-5">
+        <div className="rounded-[12px] bg-[#1c1c1e] p-5">
           <div className="space-y-4">
             {Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className="flex items-center gap-3" style={{ opacity: 1 - i * 0.12 }}>

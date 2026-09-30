@@ -46,7 +46,7 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
   return (
     <Modal open={Boolean(clip)} onClose={onClose} title={clip.title} size="xl">
       <div className="space-y-4">
-        <div className="overflow-hidden rounded-[10px] border border-[#2a2a2a] bg-black">
+        <div className="overflow-hidden rounded-[10px] border border-[#3a3a3c] bg-black">
           {/* `key` erzwingt ein frisches Element pro Clip – sonst behält der
               Player die Quelle des zuvor geöffneten Clips. */}
           <video
@@ -61,10 +61,10 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
         </div>
 
         {clip.description && (
-          <p className="text-[13px] leading-relaxed text-[#c4c4c4]">{clip.description}</p>
+          <p className="text-[13px] leading-relaxed text-[#c7c7cc]">{clip.description}</p>
         )}
 
-        <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-[#8c8c8c]">
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-[#8e8e93]">
           {clip.recordedAt && (
             <span className="inline-flex items-center gap-1.5">
               <Clock3 className="h-3.5 w-3.5" />
@@ -111,8 +111,8 @@ export function ClipPlayer({ clip, onClose, onDelete, showCaseLink = false }: Cl
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#232323] pt-3">
-          <div className="text-[11.5px] text-[#8c8c8c]">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#2c2c2e] pt-3">
+          <div className="text-[11.5px] text-[#8e8e93]">
             {showCaseLink && clip.investigation && (
               <Link
                 href={`/investigations/${clip.investigation.id}`}
@@ -149,7 +149,7 @@ export function ClipCard({ clip, onOpen, showCase = false }: ClipCardProps) {
     <button
       type="button"
       onClick={() => onOpen(clip)}
-      className="group flex w-full flex-col overflow-hidden rounded-[12px] border border-[#2a2a2a] bg-[#141414] text-left transition-colors hover:border-[#404040] hover:bg-[#181818]"
+      className="group flex w-full flex-col overflow-hidden rounded-[12px] border border-[#3a3a3c] bg-[#161617] text-left transition-colors hover:border-[#48484a] hover:bg-[#1c1c1e]"
     >
       <div className="relative aspect-video w-full bg-black">
         {/* Kein eigenes Vorschaubild: der Browser zieht sich das erste Frame
@@ -175,7 +175,7 @@ export function ClipCard({ clip, onOpen, showCase = false }: ClipCardProps) {
             {clip.investigation.caseNumber}
           </p>
         )}
-        <p className="mt-1 truncate text-[11.5px] text-[#8c8c8c]">
+        <p className="mt-1 truncate text-[11.5px] text-[#8e8e93]">
           {clip.recordedAt ? formatDateTime(clip.recordedAt) : formatDateTime(clip.createdAt)}
           {clip.recordedByAgent
             ? ` · ${clip.recordedByAgent.firstName} ${clip.recordedByAgent.lastName}`

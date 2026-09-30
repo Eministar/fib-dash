@@ -153,7 +153,7 @@ export default function DutyTimesPage() {
           <PageHeader title="Dienstzeiten" description="Live-Übersicht der aktiven Police-Spielzeit" />
           <div className="glass-panel-elevated rounded-[14px] p-8 text-center">
             <AlertTriangle size={26} className="mx-auto text-[#f87171] mb-3" />
-            <p className="text-[13px] text-[#aeaeae] mb-4">{error || 'Dienstzeiten konnten nicht geladen werden'}</p>
+            <p className="text-[13px] text-[#98989d] mb-4">{error || 'Dienstzeiten konnten nicht geladen werden'}</p>
             <Button size="sm" onClick={refetch}><RefreshCw size={13} /> Erneut laden</Button>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function DutyTimesPage() {
               <p className="text-[13.5px] font-semibold text-white truncate">
                 {data.activeCount > 0 ? `${data.activeCount} ${data.activeCount === 1 ? 'Agent' : 'Agents'} aktuell im Dienst` : 'Aktuell niemand im Dienst'}
               </p>
-              <p className="text-[11.5px] text-[#868686] mt-0.5">
+              <p className="text-[11.5px] text-[#8e8e93] mt-0.5">
                 Sync {formatRelativeTime(data.sync.checkedAt)} · Woche seit {formatDateTime(data.weekStart)}
               </p>
             </div>
@@ -205,7 +205,7 @@ export default function DutyTimesPage() {
         </div>
 
         {!data.sync.configured && (
-            <div className="rounded-[12px] border border-[#3d2d12] bg-[#1d1608]/80 px-4 py-3 text-[12.5px] text-[#cacaca]">
+            <div className="rounded-[12px] border border-[#3d2d12] bg-[#1d1608]/80 px-4 py-3 text-[12.5px] text-[#c7c7cc]">
               Player-Online API ist nicht konfiguriert. Historische Spielzeit bleibt sichtbar, Live-Status wird erst mit Server-Env <code>PLAYER_ONLINE_API_SECRET</code> synchronisiert.
             </div>
         )}
@@ -224,7 +224,7 @@ export default function DutyTimesPage() {
         )}
 
         {data.sync.configured && data.sync.onlineCount === 0 && data.sync.errorCount === 0 && (
-            <div className="rounded-[12px] border border-[#454545] bg-[#1c1c1c]/70 px-4 py-3 text-[12px] text-[#aeaeae]">
+            <div className="rounded-[12px] border border-[#454545] bg-[#1c1c1e]/70 px-4 py-3 text-[12px] text-[#98989d]">
               Die API antwortet, meldet aber keinen aktiven Police-Spieler: {data.sync.statusCounts.offline} offline, {data.sync.statusCounts['ignored-job']} mit anderem Job und {data.sync.statusCounts['not-linked']} ohne Discord-Verknüpfung.
             </div>
         )}
@@ -250,7 +250,7 @@ export default function DutyTimesPage() {
                   <Trophy size={16} className="text-[#d4d4d4]" />
                   <h3 className="text-[13.5px] font-semibold text-[#fafafa]">Top-Spielzeit diese Woche</h3>
                 </div>
-                <span className="text-[11.5px] text-[#868686]">Sync {formatRelativeTime(data.sync.checkedAt)}</span>
+                <span className="text-[11.5px] text-[#8e8e93]">Sync {formatRelativeTime(data.sync.checkedAt)}</span>
               </div>
 
               {podium.length >= 1 && (
@@ -259,16 +259,16 @@ export default function DutyTimesPage() {
                       // visual order: 2nd, 1st, 3rd
                       const rank = agent === podium[0] ? 1 : agent === podium[1] ? 2 : 3
                       const colors = rank === 1
-                          ? { ring: 'ring-[#d4d4d4]/40', text: 'text-[#d4d4d4]', label: 'bg-[#d4d4d4] text-[#181818]', icon: <Crown size={14} /> }
+                          ? { ring: 'ring-[#d4d4d4]/40', text: 'text-[#d4d4d4]', label: 'bg-[#d4d4d4] text-[#1c1c1e]', icon: <Crown size={14} /> }
                           : rank === 2
-                              ? { ring: 'ring-[#c7c7c7]/30', text: 'text-[#c7c7c7]', label: 'bg-[#c7c7c7] text-[#181818]', icon: null }
-                              : { ring: 'ring-[#b08968]/30', text: 'text-[#b08968]', label: 'bg-[#b08968] text-[#181818]', icon: null }
+                              ? { ring: 'ring-[#c7c7c7]/30', text: 'text-[#c7c7c7]', label: 'bg-[#c7c7c7] text-[#1c1c1e]', icon: null }
+                              : { ring: 'ring-[#b08968]/30', text: 'text-[#b08968]', label: 'bg-[#b08968] text-[#1c1c1e]', icon: null }
                       return (
                           <Link
                               key={agent.id}
                               href={`/agents/${agent.id}`}
                               className={cn(
-                                  'rounded-[12px] border border-[#373737]/55 bg-[#1c1c1c]/75 p-4 ring-1 transition-transform hover:-translate-y-0.5',
+                                  'rounded-[12px] border border-[#38383a]/55 bg-[#1c1c1e]/75 p-4 ring-1 transition-transform hover:-translate-y-0.5',
                                   colors.ring,
                                   rank === 1 && 'md:order-2 md:scale-[1.03]',
                                   rank === 2 && 'md:order-1',
@@ -280,7 +280,7 @@ export default function DutyTimesPage() {
                                 <AgentAvatar agent={agent} />
                                 <div className="min-w-0">
                                   <p className="truncate text-[13px] font-semibold text-white">{agentName(agent)}</p>
-                                  <p className="text-[11px] text-[#868686] font-mono">#{displayBadgeNumber(agent.badgeNumber)} · {agent.rank.name}</p>
+                                  <p className="text-[11px] text-[#8e8e93] font-mono">#{displayBadgeNumber(agent.badgeNumber)} · {agent.rank.name}</p>
                                 </div>
                               </div>
                               <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', colors.label)}>
@@ -288,7 +288,7 @@ export default function DutyTimesPage() {
                       </span>
                             </div>
                             <p className={cn('mt-3 text-[20px] font-semibold tabular-nums', colors.text)}>{formatDuration(agent.weekDurationMs)}</p>
-                            <p className="text-[11px] text-[#868686]">{agent.sessionCount} Sessions</p>
+                            <p className="text-[11px] text-[#8e8e93]">{agent.sessionCount} Sessions</p>
                           </Link>
                       )
                     })}
@@ -298,7 +298,7 @@ export default function DutyTimesPage() {
               {data.topRows.length > 3 && (
                   <div className="space-y-2">
                     {data.topRows.slice(3).map((agent) => (
-                        <Link key={agent.id} href={`/agents/${agent.id}`} className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-3 rounded-[10px] border border-[#373737]/40 bg-[#1c1c1c]/55 px-3 py-2.5 transition-colors hover:border-[#d4d4d4]/25">
+                        <Link key={agent.id} href={`/agents/${agent.id}`} className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-3 rounded-[10px] border border-[#38383a]/40 bg-[#1c1c1e]/55 px-3 py-2.5 transition-colors hover:border-[#d4d4d4]/25">
                           <div className="min-w-0">
                             <div className="flex items-center justify-between gap-3">
                               <p className="truncate text-[12.5px] font-medium text-white">
@@ -306,9 +306,9 @@ export default function DutyTimesPage() {
                               </p>
                               <span className="shrink-0 text-[12px] font-semibold tabular-nums text-[#d4d4d4]">{formatDuration(agent.weekDurationMs)}</span>
                             </div>
-                            <div className="mt-2 h-[6px] overflow-hidden rounded-full bg-[#080808]/80">
+                            <div className="mt-2 h-[6px] overflow-hidden rounded-full bg-[#000000]/80">
                               <div
-                                  className="h-full rounded-full bg-gradient-to-r from-[#d4d4d4] to-[#38bdf8]"
+                                  className="h-full rounded-full bg-[#0a84ff]"
                                   style={{ width: `${Math.max(4, (agent.weekDurationMs / topMax) * 100)}%` }}
                               />
                             </div>
@@ -327,7 +327,7 @@ export default function DutyTimesPage() {
               <span className="live-pulse" />
               <h3 className="text-[13.5px] font-semibold text-[#fafafa]">Aktuell im Dienst</h3>
             </div>
-            <span className="text-[11.5px] text-[#868686]">Online · Script verbunden · Job police</span>
+            <span className="text-[11.5px] text-[#8e8e93]">Online · Script verbunden · Job police</span>
           </div>
 
           {data.activeRows.length > 0 ? (
@@ -338,7 +338,7 @@ export default function DutyTimesPage() {
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.25, delay: index * 0.03 }}
-                        className="rounded-[12px] border border-[#22c55e]/15 bg-gradient-to-br from-[#1c1c1c]/85 to-[#052e1b]/40 p-4 hover:border-[#22c55e]/30 transition-colors"
+                        className="rounded-[12px] border border-[#22c55e]/15 bg-[#1c1c1e]/85 p-4 hover:border-[#22c55e]/30 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <AgentAvatar agent={agent} />
@@ -350,7 +350,7 @@ export default function DutyTimesPage() {
                             </Link>
                             <StatusPill status={agent.apiStatus} />
                           </div>
-                          <p className="text-[11.5px] text-[#aeaeae] mt-0.5">{agent.rank.name}</p>
+                          <p className="text-[11.5px] text-[#98989d] mt-0.5">{agent.rank.name}</p>
                         </div>
                         {data.mode === 'manual' && canManage && (
                             <Button
@@ -376,7 +376,7 @@ export default function DutyTimesPage() {
                         <IdentityMetric label="Steam-ID" value={agent.currentPlayer?.steamId} />
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#868686]">
+                      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#8e8e93]">
                         <span>Woche: <strong className="text-[#d4d4d4] tabular-nums">{formatDuration(agent.weekDurationMs)}</strong></span>
                         <span>Gesamt: <strong className="text-[#38bdf8] tabular-nums">{formatDuration(agent.totalDurationMs)}</strong></span>
                         <span>Sessions: <strong className="text-[#d2d2d2] tabular-nums">{agent.sessionCount}</strong></span>
@@ -393,12 +393,12 @@ export default function DutyTimesPage() {
         <section className="glass-panel-elevated rounded-[14px] p-5">
           <div className="flex items-center justify-between gap-3 mb-1">
             <h3 className="text-[13.5px] font-semibold text-[#fafafa]">Wochenübersicht pro Spieler</h3>
-            <span className="text-[11.5px] text-[#868686]">{data.rows.length} Agents</span>
+            <span className="text-[11.5px] text-[#8e8e93]">{data.rows.length} Agents</span>
           </div>
-          <p className="text-[12px] text-[#868686] mb-4">
+          <p className="text-[12px] text-[#8e8e93] mb-4">
             Alle nicht gekündigten Agents mit Live-Status, IDs und Spielzeitstatistik.
           </p>
-          <div className="divide-y divide-[#343434]/40">
+          <div className="divide-y divide-[#38383a]/40">
             {data.rows.map((agent) => (
                 <div key={agent.id} className="grid grid-cols-1 gap-3 py-3 first:pt-0 last:pb-0 xl:grid-cols-[minmax(0,1fr)_260px_420px] xl:items-center">
                   <div className="min-w-0 flex items-start gap-3">
@@ -410,15 +410,15 @@ export default function DutyTimesPage() {
                         </Link>
                         <StatusPill status={agent.apiStatus} compact />
                       </div>
-                      <p className="mt-0.5 text-[11.5px] text-[#868686]">{agent.rank.name}</p>
+                      <p className="mt-0.5 text-[11.5px] text-[#8e8e93]">{agent.rank.name}</p>
                       {agent.currentPlayer && (
-                          <p className="mt-1 truncate text-[11px] text-[#8c8c8c]">
+                          <p className="mt-1 truncate text-[11px] text-[#8e8e93]">
                             {agent.currentPlayer.name}
                             {agent.currentPlayer.identifier ? ` · ${agent.currentPlayer.identifier}` : ''}
                           </p>
                       )}
                       {agent.apiStatus !== 'online' && agent.lastSeenAt && (
-                          <p className="mt-1 text-[11px] text-[#868686]">
+                          <p className="mt-1 text-[11px] text-[#8e8e93]">
                             Zuletzt: <span className="text-[#d2d2d2]">{formatRelativeTime(agent.lastSeenAt)}</span>
                           </p>
                       )}
@@ -461,8 +461,8 @@ function KpiCard({ icon: Icon, label, value, accent }: { icon: LucideIcon; label
 
 function Metric({ label, value, strong }: { label: string; value?: string; strong?: boolean }) {
   return (
-      <div className="rounded-[8px] bg-[#080808]/60 border border-[#343434]/30 px-3 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8c8c8c]">{label}</p>
+      <div className="rounded-[8px] bg-[#000000]/60 border border-[#38383a]/30 px-3 py-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e8e93]">{label}</p>
         <p className={cn('mt-1 truncate text-[12.5px] tabular-nums', strong ? 'font-semibold text-[#d4d4d4]' : 'text-[#d2d2d2]')}>{value || '—'}</p>
       </div>
   )
@@ -470,8 +470,8 @@ function Metric({ label, value, strong }: { label: string; value?: string; stron
 
 function IdentityMetric({ label, value }: { label: string; value?: string | null }) {
   return (
-      <div className="rounded-[8px] bg-[#080808]/60 border border-[#343434]/30 px-3 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8c8c8c]">{label}</p>
+      <div className="rounded-[8px] bg-[#000000]/60 border border-[#38383a]/30 px-3 py-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e8e93]">{label}</p>
         <p className="mt-1 truncate font-mono text-[11.5px] text-[#d2d2d2]" title={value || undefined}>{value || '—'}</p>
       </div>
   )
@@ -488,7 +488,7 @@ function StatusPill({ status, compact }: { status: ApiStatus; compact?: boolean 
               ? 'border-[#22c55e]/30 bg-[#052e1b]/60 text-[#86efac]'
               : error
                   ? 'border-[#ef4444]/25 bg-[#2a1111]/60 text-[#fca5a5]'
-                  : 'border-[#404040]/60 bg-[#181818]/60 text-[#a6a6a6]',
+                  : 'border-[#48484a]/60 bg-[#1c1c1e]/60 text-[#98989d]',
       )}>
       {online ? <span className="live-pulse" /> : <span className={cn('h-1.5 w-1.5 rounded-full', error ? 'bg-[#ef4444]' : 'bg-[#808080]')} />}
         {statusLabel(status)}
@@ -504,19 +504,19 @@ function MiniBars({ daily }: { daily: DailyPoint[] }) {
           const isToday = new Date(day.date).toDateString() === new Date().toDateString()
           return (
               <div key={`${day.date}-${day.label}`} className="min-w-0 group">
-                <div className="flex h-[38px] items-end rounded-[6px] bg-[#080808]/60 border border-[#343434]/30 px-1 transition-colors group-hover:border-[#d4d4d4]/30">
+                <div className="flex h-[38px] items-end rounded-[6px] bg-[#000000]/60 border border-[#38383a]/30 px-1 transition-colors group-hover:border-[#d4d4d4]/30">
                   <div
                       className={cn(
                           'w-full rounded-t-[4px] transition-all',
                           isToday
-                              ? 'bg-gradient-to-t from-[#d4d4d4] to-[#fde68a]'
-                              : 'bg-gradient-to-t from-[#1d4ed8] to-[#38bdf8]',
+                              ? 'bg-[#ff9f0a]'
+                              : 'bg-[#0a84ff]',
                       )}
                       style={{ height: Math.max(4, Math.round((day.durationMs / max) * 32)) }}
                       title={`${day.label}: ${day.durationLabel}`}
                   />
                 </div>
-                <p className={cn('mt-1 truncate text-center text-[11px]', isToday ? 'text-[#d4d4d4] font-semibold' : 'text-[#868686]')}>{day.label}</p>
+                <p className={cn('mt-1 truncate text-center text-[11px]', isToday ? 'text-[#d4d4d4] font-semibold' : 'text-[#8e8e93]')}>{day.label}</p>
               </div>
           )
         })}
@@ -526,9 +526,9 @@ function MiniBars({ daily }: { daily: DailyPoint[] }) {
 
 function EmptyState({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   return (
-      <div className="rounded-[12px] border border-dashed border-[#373737]/55 bg-[#1c1c1c]/35 px-4 py-12 text-center">
+      <div className="rounded-[12px] border border-dashed border-[#38383a]/55 bg-[#1c1c1e]/35 px-4 py-12 text-center">
         <Icon size={28} className="mx-auto text-[#d4d4d4]/40 mb-3" />
-        <p className="text-[13px] text-[#a6a6a6]">{text}</p>
+        <p className="text-[13px] text-[#98989d]">{text}</p>
       </div>
   )
 }

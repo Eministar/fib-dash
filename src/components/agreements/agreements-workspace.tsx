@@ -105,12 +105,12 @@ function LinkRow({ agreementId, party, canManage, canRegenerate, onChanged }: { 
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-[#343434]/60 bg-[#181818]/55 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-[#38383a]/60 bg-[#1c1c1e]/55 px-3 py-2">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-semibold text-white">{party.name}{party.role ? <span className="font-normal text-[#909090]"> · {party.role}</span> : null}</p>
-        <p className="mt-0.5 truncate text-[11px] text-[#8c8c8c]">{state}</p>
+        <p className="truncate text-[12.5px] font-semibold text-white">{party.name}{party.role ? <span className="font-normal text-[#8e8e93]"> · {party.role}</span> : null}</p>
+        <p className="mt-0.5 truncate text-[11px] text-[#8e8e93]">{state}</p>
       </div>
-      <input readOnly value={url} onFocus={(event) => event.target.select()} className="h-8 min-w-0 flex-1 rounded-[8px] border border-[#343434] bg-[#141414] px-2 text-[11.5px] text-[#a6a6a6]" />
+      <input readOnly value={url} onFocus={(event) => event.target.select()} className="h-8 min-w-0 flex-1 rounded-[8px] border border-[#38383a] bg-[#161617] px-2 text-[11.5px] text-[#98989d]" />
       <Button size="sm" variant="outline" onClick={copy}>{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? 'Kopiert' : 'Link'}</Button>
       {canManage && canRegenerate && !party.signedAt && !party.declinedAt && (
         <Button size="sm" variant="ghost" loading={loading} onClick={regenerate} aria-label="Link neu erzeugen"><RefreshCw size={13} /></Button>
@@ -207,7 +207,7 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
       <div className="flex flex-wrap items-center gap-2">
         {(['agreements', 'templates'] as const).map((entry) => (
           <button key={entry} type="button" onClick={() => setTab(entry)}
-            className={cn('inline-flex h-9 items-center rounded-[9px] border px-3 text-[12.5px] font-semibold', tab === entry ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]' : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:text-white')}>
+            className={cn('inline-flex h-9 items-center rounded-[9px] border px-3 text-[12.5px] font-semibold', tab === entry ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]' : 'border-[#38383a]/60 bg-[#1c1c1e]/55 text-[#98989d] hover:text-white')}>
             {entry === 'agreements' ? 'Verträge' : 'Vorlagen'}
           </button>
         ))}
@@ -225,8 +225,8 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
             <Select options={[{ value: '', label: 'Alle Status' }, ...AGREEMENT_STATUSES.map((value) => ({ value, label: AGREEMENT_STATUS_META[value].label }))]} value={status} onValueChange={setStatus} />
           </div>
           {loading && !rows ? <PageLoader /> : !rows?.length ? (
-            <div className="rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/70 px-4 py-10 text-center">
-              <FileSignature size={20} className="mx-auto text-[#8c8c8c]" />
+            <div className="rounded-[14px] border border-[#38383a]/45 bg-[#1c1c1e]/70 px-4 py-10 text-center">
+              <FileSignature size={20} className="mx-auto text-[#8e8e93]" />
               <p className="mt-2 text-[13px] text-[#d4d4d4]">Keine Verträge gefunden</p>
             </div>
           ) : (
@@ -234,13 +234,13 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
               {rows.map((row) => {
                 const signedCount = row.parties.filter((party) => party.signedAt).length
                 return (
-                  <button key={row.id} type="button" onClick={() => setSelectedId(row.id)} className="rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-3.5 text-left hover:border-[#404040]">
+                  <button key={row.id} type="button" onClick={() => setSelectedId(row.id)} className="rounded-[12px] border border-[#3a3a3c] bg-[#161617] p-3.5 text-left hover:border-[#48484a]">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-[14px] font-semibold text-white">{row.title}</p>
                       <Badge variant={AGREEMENT_STATUS_META[row.status].variant}>{AGREEMENT_STATUS_META[row.status].label}</Badge>
                     </div>
-                    <p className="mt-1 truncate text-[12px] text-[#a6a6a6]">{row.parties.map((party) => party.name).join(' · ')}</p>
-                    <p className="mt-1 text-[11.5px] text-[#8c8c8c]">{signedCount} von {row.parties.length} unterschrieben · {formatDateTime(row.updatedAt)}</p>
+                    <p className="mt-1 truncate text-[12px] text-[#98989d]">{row.parties.map((party) => party.name).join(' · ')}</p>
+                    <p className="mt-1 text-[11.5px] text-[#8e8e93]">{signedCount} von {row.parties.length} unterschrieben · {formatDateTime(row.updatedAt)}</p>
                   </button>
                 )
               })}
@@ -250,9 +250,9 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
       ) : (
         <div className="grid gap-2.5 sm:grid-cols-2">
           {(templates ?? []).map((template) => (
-            <div key={template.id} className="rounded-[12px] border border-[#2a2a2a] bg-[#141414] p-3.5">
+            <div key={template.id} className="rounded-[12px] border border-[#3a3a3c] bg-[#161617] p-3.5">
               <p className="text-[14px] font-semibold text-white">{template.name}</p>
-              <p className="mt-1 text-[12px] text-[#8c8c8c]">{readContractClauses(template.clauses).length} Regelungen · Briefkopf {template.letterhead === 'FIB' ? 'FIB' : 'neutral'}</p>
+              <p className="mt-1 text-[12px] text-[#8e8e93]">{readContractClauses(template.clauses).length} Regelungen · Briefkopf {template.letterhead === 'FIB' ? 'FIB' : 'neutral'}</p>
               {canManage && (
                 <div className="mt-3 flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => setEditor({ kind: 'template', id: template.id, draft: templateDraft(template) })}>Bearbeiten</Button>
@@ -261,7 +261,7 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
               )}
             </div>
           ))}
-          {!templates?.length && <p className="text-[13px] text-[#8c8c8c]">Noch keine Vorlagen.</p>}
+          {!templates?.length && <p className="text-[13px] text-[#8e8e93]">Noch keine Vorlagen.</p>}
         </div>
       )}
 
@@ -278,7 +278,7 @@ export function AgreementsWorkspace({ canManage }: { canManage: boolean }) {
               </div>
             )}
             {detail.status === 'DRAFT' ? (
-              <p className="text-[12px] text-[#a6a6a6]">Die Links funktionieren erst nach dem Freigeben.</p>
+              <p className="text-[12px] text-[#98989d]">Die Links funktionieren erst nach dem Freigeben.</p>
             ) : (
               <p className="text-[11px] text-[#c08a5a]">Wer einen Link besitzt, kann für diese Partei unterschreiben. Nur an die vorgesehene Stelle weitergeben.</p>
             )}

@@ -122,7 +122,7 @@ export function SpotEditorDialog({
         />
 
         <fieldset>
-          <legend className="mb-1.5 block text-[12.5px] font-medium text-[#aeaeae]">Kategorie</legend>
+          <legend className="mb-1.5 block text-[12.5px] font-medium text-[#98989d]">Kategorie</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {MAP_CATEGORIES.map((category) => (
               <button
@@ -133,7 +133,7 @@ export function SpotEditorDialog({
                 className={`flex h-9 items-center gap-2 rounded-[9px] border px-2.5 text-left text-[12px] font-medium transition-colors ${
                   form.category === category.id
                     ? 'border-[#a78bfa]/40 bg-[#a78bfa]/10 text-[#c4b5fd]'
-                    : 'border-[#2a2a2a] bg-[#111111] text-[#a6a6a6] hover:border-[#404040] hover:text-white'
+                    : 'border-[#3a3a3c] bg-[#161617] text-[#98989d] hover:border-[#48484a] hover:text-white'
                 }`}
               >
                 <span

@@ -59,23 +59,23 @@ export default function AgentTimelinePage({ params }: { params: Promise<{ id: st
         description={`${data.agent.firstName} ${data.agent.lastName} #${displayBadgeNumber(data.agent.badgeNumber)}`}
       />
 
-      <div className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-5">
+      <div className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-5">
         {data.items.length > 0 ? (
-          <div className="relative space-y-4 before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-px before:bg-[#373737]">
+          <div className="relative space-y-4 before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-px before:bg-[#38383a]">
             {data.items.map((item) => (
               <div key={item.id} className="relative flex gap-4">
-                <span className={cn('relative z-10 mt-1 h-[18px] w-[18px] shrink-0 rounded-full border-2 border-[#080808]', typeClass(item.type))} />
-                <div className="min-w-0 flex-1 rounded-[10px] border border-[#343434]/55 bg-[#181818]/65 px-4 py-3">
+                <span className={cn('relative z-10 mt-1 h-[18px] w-[18px] shrink-0 rounded-full border-2 border-[#000000]', typeClass(item.type))} />
+                <div className="min-w-0 flex-1 rounded-[10px] border border-[#38383a]/55 bg-[#1c1c1e]/65 px-4 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h3 className="text-[13.5px] font-semibold text-white">{item.title}</h3>
-                    <span className="text-[11.5px] text-[#a6a6a6]">{formatDateTime(item.createdAt)}</span>
+                    <span className="text-[11.5px] text-[#98989d]">{formatDateTime(item.createdAt)}</span>
                   </div>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#8c8c8c]">{item.type}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-[#8e8e93]">{item.type}</p>
                   {item.description && <p className="mt-2 text-[12.5px] leading-relaxed text-[#d2d2d2]">{item.description}</p>}
                   {item.meta && Object.keys(item.meta).length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {Object.entries(item.meta).filter(([, value]) => value !== null && value !== undefined && value !== '').slice(0, 4).map(([key, value]) => (
-                        <span key={key} className="rounded-[6px] border border-[#404040]/60 bg-[#080808]/60 px-2 py-1 text-[11px] text-[#a6a6a6]">
+                        <span key={key} className="rounded-[6px] border border-[#48484a]/60 bg-[#000000]/60 px-2 py-1 text-[11px] text-[#98989d]">
                           {key}: {String(value)}
                         </span>
                       ))}
@@ -88,7 +88,7 @@ export default function AgentTimelinePage({ params }: { params: Promise<{ id: st
         ) : (
           <div className="py-14 text-center">
             <History size={28} className="mx-auto mb-3 text-[#d4d4d4]/35" />
-            <p className="text-[13px] text-[#a6a6a6]">Noch keine Akteneinträge vorhanden</p>
+            <p className="text-[13px] text-[#98989d]">Noch keine Akteneinträge vorhanden</p>
           </div>
         )}
       </div>

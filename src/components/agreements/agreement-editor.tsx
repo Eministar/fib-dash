@@ -115,7 +115,7 @@ export function AgreementEditor({
               <Input label="Vertreten durch / Funktion" value={party.role} maxLength={200} placeholder="optional"
                 onChange={(event) => set({ parties: draft.parties.map((entry, i) => (i === index ? { ...entry, role: event.target.value } : entry)) })} />
               {draft.parties.length > 1 && (
-                <button type="button" aria-label={`Partei ${index + 1} entfernen`} className="mb-2 text-[#909090] hover:text-red-300"
+                <button type="button" aria-label={`Partei ${index + 1} entfernen`} className="mb-2 text-[#8e8e93] hover:text-red-300"
                   onClick={() => set({ parties: draft.parties.filter((_, i) => i !== index) })}>
                   <Trash2 size={14} />
                 </button>
@@ -133,15 +133,15 @@ export function AgreementEditor({
       <div className="space-y-2">
         <p className="text-[12.5px] font-semibold text-[#d4d4d4]">Regelungen</p>
         {draft.clauses.map((clause, index) => (
-          <div key={clause.key} className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
+          <div key={clause.key} className="space-y-2 rounded-[10px] border border-[#38383a]/60 p-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11.5px] text-[#8c8c8c]">§ {index + 1}</span>
+              <span className="text-[11.5px] text-[#8e8e93]">§ {index + 1}</span>
               <Input value={clause.title} maxLength={200} placeholder="Überschrift"
                 onChange={(event) => set({ clauses: draft.clauses.map((entry, i) => (i === index ? { ...entry, title: event.target.value } : entry)) })} />
-              <button type="button" aria-label="Nach oben" className="text-[#909090] hover:text-white" onClick={() => set({ clauses: move(draft.clauses, index, index - 1) })}><ArrowUp size={14} /></button>
-              <button type="button" aria-label="Nach unten" className="text-[#909090] hover:text-white" onClick={() => set({ clauses: move(draft.clauses, index, index + 1) })}><ArrowDown size={14} /></button>
+              <button type="button" aria-label="Nach oben" className="text-[#8e8e93] hover:text-white" onClick={() => set({ clauses: move(draft.clauses, index, index - 1) })}><ArrowUp size={14} /></button>
+              <button type="button" aria-label="Nach unten" className="text-[#8e8e93] hover:text-white" onClick={() => set({ clauses: move(draft.clauses, index, index + 1) })}><ArrowDown size={14} /></button>
               {draft.clauses.length > 1 && (
-                <button type="button" aria-label={`Regelung ${index + 1} entfernen`} className="text-[#909090] hover:text-red-300" onClick={() => set({ clauses: draft.clauses.filter((_, i) => i !== index) })}><Trash2 size={14} /></button>
+                <button type="button" aria-label={`Regelung ${index + 1} entfernen`} className="text-[#8e8e93] hover:text-red-300" onClick={() => set({ clauses: draft.clauses.filter((_, i) => i !== index) })}><Trash2 size={14} /></button>
               )}
             </div>
             <Textarea rows={3} value={clause.body} placeholder="Inhalt der Regelung"
@@ -156,7 +156,7 @@ export function AgreementEditor({
       <Textarea label="Abschluss" rows={3} value={draft.closing} placeholder="Text unterhalb der Regelungen" onChange={(event) => set({ closing: event.target.value })} />
 
       {mode === 'agreement' && (
-        <div className="space-y-2 rounded-[10px] border border-[#343434]/60 p-3">
+        <div className="space-y-2 rounded-[10px] border border-[#38383a]/60 p-3">
           <Checkbox checked={saveAsTemplate} onCheckedChange={setSaveAsTemplate} label="Aufbau zusätzlich als Vorlage sichern" />
           {saveAsTemplate && <Input label="Name der Vorlage" value={templateName} maxLength={120} placeholder="Ohne Angabe: Vertragstitel" onChange={(event) => setTemplateName(event.target.value)} />}
         </div>

@@ -40,39 +40,39 @@ interface NavContentProps {
 }
 
 export const mainNav: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view' },
-  { name: 'Ordnungen', href: '/ordnungen', icon: FileText },
-  { name: 'Aushänge', href: '/publications', icon: Megaphone, permission: 'publications:manage' },
-  { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view' },
-  { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view' },
-  { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
-  { name: 'Rangänderungen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
-  { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:view', color: '#0a84ff' },
+  { name: 'Ordnungen', href: '/ordnungen', icon: FileText, color: '#8e8e93' },
+  { name: 'Aushänge', href: '/publications', icon: Megaphone, permission: 'publications:manage', color: '#ff9f0a' },
+  { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view', color: '#30d158' },
+  { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view', color: '#0a84ff' },
+  { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view', color: '#636366' },
+  { name: 'Rangänderungen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view', color: '#5e5ce6' },
+  { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view', color: '#ff453a' },
   // Ohne `permission`: Sanktionen und Katalog sind für jeden eingeloggten Agent einsehbar.
-  { name: 'Sanktionen', href: '/sanktionen', icon: Gavel },
-  { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield },
-  { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
-  { name: 'Karte', href: '/map', icon: Map, permission: 'map:view' },
-  { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
-  { name: 'Vereinbarungen', href: '/vertraege', icon: FileSignature, permission: 'agreements:view' },
-  { name: 'Uploads', href: '/uploads', icon: FolderUp, permission: 'uploads:view' },
+  { name: 'Sanktionen', href: '/sanktionen', icon: Gavel, color: '#ff375f' },
+  { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield, color: '#bf5af2' },
+  { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view', color: '#30b0c7' },
+  { name: 'Karte', href: '/map', icon: Map, permission: 'map:view', color: '#34c759' },
+  { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view', color: '#ff9f0a' },
+  { name: 'Vereinbarungen', href: '/vertraege', icon: FileSignature, permission: 'agreements:view', color: '#ac8e68' },
+  { name: 'Uploads', href: '/uploads', icon: FolderUp, permission: 'uploads:view', color: '#64d2ff' },
 ]
 
 export const adminNav: NavItem[] = [
-  { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
-  { name: 'Ränge', href: '/admin/ranks', icon: Shield, permission: 'ranks:manage' },
-  { name: 'Ausbildungen', href: '/admin/trainings', icon: GraduationCap, permission: 'trainings:manage' },
-  { name: 'Units verwalten', href: '/admin/units', icon: Briefcase, permission: 'units:manage' },
-  { name: 'Benutzer', href: '/admin/users', icon: UserCog, permission: 'users:manage' },
-  { name: 'Benutzergruppen', href: '/admin/user-groups', icon: Users, permission: 'groups:manage' },
-  { name: 'API-Tokens', href: '/admin/api-tokens', icon: KeyRound, permission: 'groups:manage' },
-  { name: 'Exporte', href: '/exports', icon: Download, permission: 'exports:view' },
-  { name: 'Einstellungen', href: '/admin/settings', icon: Settings, permission: 'settings:manage' },
+  { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view', color: '#8e8e93' },
+  { name: 'Ränge', href: '/admin/ranks', icon: Shield, permission: 'ranks:manage', color: '#8e8e93' },
+  { name: 'Ausbildungen', href: '/admin/trainings', icon: GraduationCap, permission: 'trainings:manage', color: '#8e8e93' },
+  { name: 'Units verwalten', href: '/admin/units', icon: Briefcase, permission: 'units:manage', color: '#8e8e93' },
+  { name: 'Benutzer', href: '/admin/users', icon: UserCog, permission: 'users:manage', color: '#8e8e93' },
+  { name: 'Benutzergruppen', href: '/admin/user-groups', icon: Users, permission: 'groups:manage', color: '#8e8e93' },
+  { name: 'API-Tokens', href: '/admin/api-tokens', icon: KeyRound, permission: 'groups:manage', color: '#8e8e93' },
+  { name: 'Exporte', href: '/exports', icon: Download, permission: 'exports:view', color: '#8e8e93' },
+  { name: 'Einstellungen', href: '/admin/settings', icon: Settings, permission: 'settings:manage', color: '#8e8e93' },
 ]
 
 export const accountNav: NavItem[] = [
-  { name: 'Mein Konto', href: '/account', icon: KeyRound },
-  { name: 'Build-Historie', href: '/releases', icon: History },
+  { name: 'Mein Konto', href: '/account', icon: KeyRound, color: '#0a84ff' },
+  { name: 'Build-Historie', href: '/releases', icon: History, color: '#636366' },
 ]
 
 function isActivePath(pathname: string, href: string) {
@@ -85,13 +85,13 @@ function SavedSection({ name, compact, children }: { name: string; compact?: boo
   const [open, setOpen] = usePersistentBoolean(`fib:nav:${user?.id ?? 'guest'}:${name}`, true)
   // In der Icon-Leiste gibt es nichts aufzuklappen – dort trennt nur eine Linie die Gruppen.
   if (compact) {
-    return <section aria-label={name} className="mt-2 space-y-[2px] border-t border-[#2c2c2c] pt-2 first:mt-0 first:border-t-0 first:pt-0">
+    return <section aria-label={name} className="mt-2 space-y-[2px] border-t border-[#3a3a3c] pt-2 first:mt-0 first:border-t-0 first:pt-0">
       {children}
     </section>
   }
   return <section className="mt-3 first:mt-0">
     <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
-      className="flex w-full items-center justify-between rounded-lg px-3 pb-1.5 pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8c8c8c] transition-colors hover:text-[#d4d4d4]">
+      className="flex w-full items-center justify-between rounded-[6px] px-2 pb-1 pt-2 text-[11.5px] font-semibold text-[#8e8e93] transition-colors hover:text-[#c7c7cc]">
       {name}
       <ChevronDown size={13} className={cn('transition-transform duration-200 motion-reduce:transition-none', !open && '-rotate-90')} />
     </button>
@@ -104,6 +104,17 @@ function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem
   const Icon = item.icon
   const badgeLabel = badge ? (badge > 99 ? '99+' : String(badge)) : null
 
+  // macOS-Einstellungen: farbige, flache Icon-Kachel; die aktive Zeile in Systemblau.
+  const tile = (
+    <span
+      className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] text-white"
+      style={{ backgroundColor: item.color ?? '#8e8e93' }}
+      aria-hidden
+    >
+      <Icon size={15} strokeWidth={2} />
+    </span>
+  )
+
   const link = (
     <Link
       href={item.href}
@@ -112,24 +123,22 @@ function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem
       aria-label={compact ? `${item.name}${badgeLabel ? ` (${badgeLabel} offen)` : ''}` : undefined}
       onClick={onNavigate}
       className={cn(
-        'group relative flex items-center rounded-lg text-[13.5px] transition-colors duration-150',
-        compact ? 'mx-auto h-9 w-9 justify-center' : 'gap-3 px-3 py-[9px]',
+        'group relative flex items-center rounded-[8px] text-[13.5px] transition-colors duration-100',
+        compact ? 'mx-auto h-10 w-10 justify-center' : 'gap-2.5 px-2 py-[5px]',
         active
-          ? 'bg-[#303030] text-white font-semibold shadow-[inset_0_1px_0_rgba(212,212,212,0.06)]'
-          : 'text-[#a6a6a6] hover:bg-[#212121] hover:text-[#f4f4f4]'
+          ? compact ? 'bg-[#3a3a3c]' : 'bg-[#0a84ff] text-white font-medium'
+          : 'text-[#e5e5ea] hover:bg-[#2c2c2e]'
       )}
     >
-      <Icon
-        size={18}
-        strokeWidth={active ? 2.25 : 1.75}
-        style={!active && item.color ? { color: item.color } : undefined}
-        className="shrink-0"
-      />
+      {tile}
       {!compact && <span className="truncate">{item.name}</span>}
       {badgeLabel && (compact ? (
-        <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-[#d4d4d4] ring-2 ring-[#181818]" aria-hidden />
+        <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-[#ff453a] ring-2 ring-[#161617]" aria-hidden />
       ) : (
-        <span className="ml-auto rounded-full bg-[#d4d4d4]/15 px-1.5 py-px font-mono text-[11px] font-semibold tabular-nums text-[#e4e4e4]">
+        <span className={cn(
+          'ml-auto min-w-[20px] rounded-full px-1.5 py-px text-center text-[11px] font-semibold tabular-nums',
+          active ? 'bg-white/25 text-white' : 'bg-[#ff453a] text-white',
+        )}>
           {badgeLabel}
           <span className="sr-only"> offen</span>
         </span>
@@ -169,19 +178,13 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
           <Image src="/shield.webp" alt="FIB" width={28} height={28} className="rounded-full" />
         </div>
       ) : (
-      <div className="px-4 pt-5 pb-4">
+      <div className="px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
-          <div className="relative h-[52px] w-[52px] rounded-[13px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-[#d4d4d4]/30 flex items-center justify-center overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(212,212,212,0.08)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,212,212,0.12),transparent_70%)]" />
-            <Image src="/shield.webp" alt="FIB" width={46} height={46} className="rounded-full relative" priority />
-          </div>
+          <Image src="/shield.webp" alt="FIB" width={40} height={40} className="rounded-full" priority />
           <div className="min-w-0">
             <span className="block text-[15px] font-semibold text-white leading-tight tracking-[-0.01em]">FIB</span>
-            <span className="block text-[11px] font-semibold text-[#d4d4d4]/80 tracking-[0.14em] uppercase mt-0.5">Department</span>
+            <span className="block text-[12px] text-[#8e8e93] mt-0.5">Department</span>
           </div>
-        </div>
-        <div className="relative mt-4 h-px bg-gradient-to-r from-transparent via-[#d4d4d4]/25 to-transparent">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-[#d4d4d4] shadow-[0_0_6px_rgba(212,212,212,0.6)]" />
         </div>
       </div>
       )}
@@ -225,7 +228,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
         </SavedSection>
       </nav>
 
-      <div className={cn('shrink-0 border-t border-[#2c2c2c] pt-2.5', compact ? 'px-1.5 pb-2' : 'px-2.5 pb-2.5')}>
+      <div className={cn('shrink-0 border-t border-[#3a3a3c] pt-2.5', compact ? 'px-1.5 pb-2' : 'px-2.5 pb-2.5')}>
         {user && compact && (
           <div className="flex flex-col items-center gap-1">
             {user.avatarUrl ? (
@@ -237,7 +240,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
                 title={user.displayName}
               />
             ) : (
-              <div title={user.displayName} className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#d4d4d4] to-[#989898] text-[11px] font-bold text-[#181818]">
+              <div title={user.displayName} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#636366] text-[11px] font-semibold text-white">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
             )}
@@ -246,7 +249,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
                 type="button"
                 onClick={logout}
                 aria-label="Abmelden"
-                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-[#d4d4d4]"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#8e8e93] transition-colors hover:bg-[#2c2c2e] hover:text-[#d4d4d4]"
               >
                 <LogOut size={14} strokeWidth={1.75} />
               </button>
@@ -254,7 +257,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
           </div>
         )}
         {user && !compact && (
-          <div className="group/user relative flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#1c1c1c]/50 border border-white/[0.04] hover:border-[#d4d4d4]/20 transition-colors">
+          <div className="group/user relative flex items-center gap-2 rounded-[8px] px-2 py-1.5 transition-colors hover:bg-[#2c2c2e]">
             {user.avatarUrl ? (
               <span
                 className="h-7 w-7 shrink-0 rounded-full bg-cover bg-center shadow-[0_1px_3px_rgba(212,212,212,0.25)] ring-1 ring-[#d4d4d4]/25"
@@ -262,13 +265,13 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
                 aria-hidden
               />
             ) : (
-              <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-[#d4d4d4] to-[#989898] flex items-center justify-center text-[11px] font-bold text-[#181818] shadow-[0_1px_3px_rgba(212,212,212,0.25)]">
+              <div className="h-7 w-7 shrink-0 rounded-full bg-[#636366] flex items-center justify-center text-[11px] font-semibold text-white">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
             )}
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-medium text-white/90 truncate leading-tight">{user.displayName}</p>
-              <p className="text-[11px] text-[#909090] truncate leading-tight mt-0.5">
+              <p className="text-[11px] text-[#8e8e93] truncate leading-tight mt-0.5">
                 {user.groups?.[0]?.name ?? 'Mitglied'}
               </p>
             </div>
@@ -276,7 +279,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
               <button
                 type="button"
                 onClick={logout}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-[#909090] hover:text-[#d4d4d4] hover:bg-[#212121] transition-colors -mr-1"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[#8e8e93] hover:text-[#d4d4d4] hover:bg-[#2c2c2e] transition-colors -mr-1"
                 aria-label="Abmelden"
               >
                 <LogOut size={14} strokeWidth={1.75} />
@@ -315,10 +318,10 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 sidebar-gradient border-b border-[#d4d4d4]/15 backdrop-blur-md">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-3 border-b border-[#38383a] bg-[#161617]/85 backdrop-blur-xl">
         <button
           onClick={() => setMobileOpen(true)}
-          className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-[#d4d4d4] hover:bg-[#212121] transition-colors"
+          className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-[#d4d4d4] hover:bg-[#2c2c2e] transition-colors"
           aria-label="Menü öffnen"
         >
           <Menu size={20} />
@@ -330,11 +333,11 @@ export function Sidebar() {
         <div className="w-9" aria-hidden />
       </div>
 
-      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-[#d4d4d4]/10 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-14' : 'w-[244px]')}>
+      <aside className={cn('hidden lg:flex lg:flex-col sidebar-gradient border-r border-[#38383a]/70 fixed left-0 top-0 bottom-0 z-30 transition-[width] duration-200 motion-reduce:transition-none', collapsed ? 'w-14' : 'w-[244px]')}>
         <button type="button" onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed}
           aria-label={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
           title={collapsed ? 'Navigation ausklappen' : 'Navigation minimieren'}
-          className="flex h-11 shrink-0 items-center justify-center gap-2 border-b border-[#343434] text-[#a6a6a6] hover:bg-[#262626] hover:text-white focus-visible:outline focus-visible:outline-2">
+          className="flex h-11 shrink-0 items-center justify-center gap-2 border-b border-[#38383a] text-[#98989d] hover:bg-[#2c2c2e] hover:text-white focus-visible:outline focus-visible:outline-2">
           {collapsed ? <PanelLeftOpen size={18} /> : <><PanelLeftClose size={16} /><span className="text-xs">Navigation minimieren</span></>}
         </button>
         <div className="min-h-0 flex-1"><NavContent pathname={pathname} onNavigate={closeMobile} user={user} logout={logout} compact={collapsed} /></div>
@@ -349,14 +352,14 @@ export function Sidebar() {
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
               aria-hidden
-              className="lg:hidden fixed inset-0 bg-[#080808]/75 backdrop-blur-sm z-40"
+              className="lg:hidden fixed inset-0 bg-[#000000]/75 backdrop-blur-sm z-40"
             />
             <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 w-[264px] max-w-[85vw] sidebar-gradient border-r border-[#d4d4d4]/10 z-50 shadow-2xl"
+              className="lg:hidden fixed left-0 top-0 bottom-0 w-[264px] max-w-[85vw] sidebar-gradient border-r border-[#38383a]/70 z-50 shadow-2xl"
               role="dialog"
               aria-modal="true"
               aria-label="Navigation"
@@ -364,7 +367,7 @@ export function Sidebar() {
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Menü schließen"
-                className="absolute top-4 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-[#909090] transition-colors hover:bg-[#212121] hover:text-[#d4d4d4]"
+                className="absolute top-4 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-[#8e8e93] transition-colors hover:bg-[#2c2c2e] hover:text-[#d4d4d4]"
               >
                 <X size={18} />
               </button>

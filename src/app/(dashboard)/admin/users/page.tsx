@@ -62,7 +62,7 @@ function UserAvatar({ user }: { user: User }) {
   }
 
   return (
-    <div className="h-9 w-9 rounded-full bg-[#232323] flex items-center justify-center text-[12px] font-semibold text-[#d4d4d4]">
+    <div className="h-9 w-9 rounded-full bg-[#2c2c2e] flex items-center justify-center text-[12px] font-semibold text-[#d4d4d4]">
       {user.displayName.charAt(0).toUpperCase()}
     </div>
   )
@@ -160,41 +160,41 @@ export default function UsersPage() {
       />
 
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
-        <div className="divide-y divide-[#343434]">
+        <div className="divide-y divide-[#38383a]">
           {users?.map((user, index) => (
             <motion.div
               key={user.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.02 }}
-              className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#212121] transition-colors"
+              className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#2c2c2e] transition-colors"
             >
               <UserAvatar user={user} />
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[13.5px] font-medium text-[#eee]">{user.displayName}</p>
                   {user.discordOnly && (
-                    <span className="inline-flex items-center gap-1 rounded-[5px] border border-[#404040] bg-[#181818]/70 px-2 py-0.5 text-[11px] text-[#a6a6a6]">
+                    <span className="inline-flex items-center gap-1 rounded-[5px] border border-[#48484a] bg-[#1c1c1e]/70 px-2 py-0.5 text-[11px] text-[#98989d]">
                       <ShieldCheck size={10} /> Discord
                     </span>
                   )}
                 </div>
-                <p className="text-[11.5px] text-[#8c8c8c]">
+                <p className="text-[11.5px] text-[#8e8e93]">
                   @{user.discordUsername || user.username} · {user.groups.length ? user.groups.map((g) => g.name).join(', ') : 'Keine Gruppe'} · {user.permissions.length} direkte Rechte · Letzter Login: {formatDate(user.lastLoginAt)}
                 </p>
               </div>
-              <span className="text-[11.5px] font-medium text-[#a6a6a6] bg-[#212121] px-2 py-[3px] rounded-[5px]">
+              <span className="text-[11.5px] font-medium text-[#98989d] bg-[#2c2c2e] px-2 py-[3px] rounded-[5px]">
                 {user.groups.length ? `${user.groups.length} Gruppen` : 'Keine Gruppe'}
               </span>
-              <button onClick={() => openEdit(user)} className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors">
-                <Edit size={13} className="text-[#8c8c8c]" />
+              <button onClick={() => openEdit(user)} className="p-1.5 rounded-[6px] hover:bg-[#2c2c2e] transition-colors">
+                <Edit size={13} className="text-[#8e8e93]" />
               </button>
             </motion.div>
           ))}
           {(!users || users.length === 0) && (
             <div className="text-center py-16">
-              <UserCog size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#909090]">Keine Discord-Benutzer gefunden</p>
+              <UserCog size={28} className="mx-auto mb-3 text-[#f5f5f7]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#8e8e93]">Keine Discord-Benutzer gefunden</p>
             </div>
           )}
         </div>
@@ -203,11 +203,11 @@ export default function UsersPage() {
       <Modal open={!!editUser} onClose={() => setEditUser(null)} title="Benutzer bearbeiten" size="lg">
         <div className="space-y-5">
           {editUser && (
-            <div className="flex items-center gap-3 rounded-[12px] border border-[#343434]/55 bg-[#181818]/45 p-3">
+            <div className="flex items-center gap-3 rounded-[12px] border border-[#38383a]/55 bg-[#1c1c1e]/45 p-3">
               <UserAvatar user={editUser} />
               <div className="min-w-0">
                 <p className="truncate text-[13.5px] font-semibold text-white">{editUser.displayName}</p>
-                <p className="truncate text-[11.5px] text-[#909090]">@{editUser.discordUsername || editUser.username}</p>
+                <p className="truncate text-[11.5px] text-[#8e8e93]">@{editUser.discordUsername || editUser.username}</p>
               </div>
             </div>
           )}
@@ -215,8 +215,8 @@ export default function UsersPage() {
           {/* Group Assignment */}
           {groupOptions && groupOptions.length > 0 && (
             <div>
-              <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Gruppen (manuell zuweisen)</p>
-              <p className="text-[11px] text-[#8c8c8c] mb-2">
+              <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Gruppen (manuell zuweisen)</p>
+              <p className="text-[11px] text-[#8e8e93] mb-2">
                 Discord-Gruppen werden automatisch über Rollen gesetzt. Hier kannst du Gruppen manuell hinzufügen.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -226,7 +226,7 @@ export default function UsersPage() {
                     checked={selectedGroupIds.includes(group.id)}
                     onCheckedChange={(checked) => toggleGroup(group.id, checked)}
                     label={group.name}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                    className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-3 py-2"
                   />
                 ))}
               </div>
@@ -236,8 +236,8 @@ export default function UsersPage() {
           {/* Direct Unit Assignment */}
           {unitOptions && unitOptions.filter((u) => u.active).length > 0 && (
             <div>
-              <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Units (direkt zuweisen)</p>
-              <p className="text-[11px] text-[#8c8c8c] mb-2">
+              <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Units (direkt zuweisen)</p>
+              <p className="text-[11px] text-[#8e8e93] mb-2">
                 Zusätzlich zu den Units des verknüpften Agents. Der Benutzer erhält die Rechte dieser Units.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -247,7 +247,7 @@ export default function UsersPage() {
                     checked={selectedUnitIds.includes(unit.id)}
                     onCheckedChange={(checked) => toggleUnit(unit.id, checked)}
                     label={unit.group ? `${unit.group.name} · ${unit.name}` : unit.name}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                    className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-3 py-2"
                   />
                 ))}
               </div>
@@ -258,7 +258,7 @@ export default function UsersPage() {
           {relevantDiscordRoles.length > 0 && editUser?.discordId && (
             <div>
               <p className="block text-[12.5px] font-medium text-[#d4d4d4] mb-2">Discord-Rollen vergeben</p>
-              <p className="text-[11px] text-[#8c8c8c] mb-2">
+              <p className="text-[11px] text-[#8e8e93] mb-2">
                 Die ausgewählten Gruppen haben Discord-Rollen. Wähle, welche Rollen der Benutzer in Discord erhalten soll.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -268,7 +268,7 @@ export default function UsersPage() {
                     checked={selectedDiscordRoleIds.includes(role.id)}
                     onCheckedChange={(checked) => toggleDiscordRole(role.id, checked)}
                     label={role.name}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#d4d4d4]/20 px-3 py-2"
+                    className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#d4d4d4]/20 px-3 py-2"
                   />
                 ))}
               </div>
@@ -277,8 +277,8 @@ export default function UsersPage() {
 
           {/* Direct Permissions */}
           <div>
-            <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-1">Direkte Leserechte</p>
-            <p className="text-[11px] text-[#8c8c8c] mb-2">Zusätzlich zu den Gruppenrechten.</p>
+            <p className="block text-[12.5px] font-medium text-[#98989d] mb-1">Direkte Leserechte</p>
+            <p className="text-[11px] text-[#8e8e93] mb-2">Zusätzlich zu den Gruppenrechten.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {READ_PERMISSIONS.map((permission) => (
                 <Checkbox
@@ -286,13 +286,13 @@ export default function UsersPage() {
                   checked={permissions.includes(permission)}
                   onCheckedChange={(checked) => togglePermission(permission, checked)}
                   label={PERMISSION_LABELS[permission]}
-                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                  className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-3 py-2"
                 />
               ))}
             </div>
           </div>
           <div>
-            <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Direkte Verwaltungsrechte</p>
+            <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Direkte Verwaltungsrechte</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {MANAGE_PERMISSIONS.map((permission) => (
                 <Checkbox
@@ -300,7 +300,7 @@ export default function UsersPage() {
                   checked={permissions.includes(permission)}
                   onCheckedChange={(checked) => togglePermission(permission, checked)}
                   label={PERMISSION_LABELS[permission]}
-                  className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2"
+                  className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-3 py-2"
                 />
               ))}
             </div>

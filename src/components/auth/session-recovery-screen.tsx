@@ -15,9 +15,9 @@ export function SessionRecoveryScreen({ message, onRetry, onClearCache }: Sessio
   const router = useRouter()
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#080808] px-4 bg-pattern">
+    <div className="min-h-screen flex items-center justify-center bg-[#000000] px-4 bg-pattern">
       <div className="w-full max-w-[420px] glass-panel-elevated rounded-[18px] p-6 text-center">
-        <div className="mx-auto mb-5 flex h-[88px] w-[88px] items-center justify-center rounded-[20px] bg-gradient-to-br from-[#1e1e1e] to-[#161616] border border-[#d4d4d4]/30 shadow-[0_4px_20px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(212,212,212,0.08)]">
+        <div className="mx-auto mb-5 flex h-[88px] w-[88px] items-center justify-center rounded-[20px] bg-[#1c1c1e] border border-[#d4d4d4]/30 shadow-[0_4px_20px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(212,212,212,0.08)]">
           <Image src="/shield.webp" alt="FIB" width={72} height={72} className="rounded-full" priority />
         </div>
 
@@ -27,7 +27,7 @@ export function SessionRecoveryScreen({ message, onRetry, onClearCache }: Sessio
         </div>
 
         <h1 className="text-[20px] font-semibold text-white">Anmeldung konnte nicht geprüft werden</h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-[#aeaeae]">
+        <p className="mt-2 text-[13px] leading-relaxed text-[#98989d]">
           Der Server hat nicht wie erwartet geantwortet. Meist hilft es, kurz zu warten und neu zu laden.{message ? ` (${message})` : ''}
         </p>
 
@@ -45,7 +45,7 @@ export function SessionRecoveryScreen({ message, onRetry, onClearCache }: Sessio
           </Button>
         </div>
 
-        <p className="mt-5 text-[11px] text-[#8c8c8c]">
+        <p className="mt-5 text-[11px] text-[#8e8e93]">
           Cache löschen entfernt lokale Browserdaten dieser App und meldet dich ab.
         </p>
       </div>

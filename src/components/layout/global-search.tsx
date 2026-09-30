@@ -180,19 +180,19 @@ export function GlobalSearch() {
         onClick={() => setOpen(true)}
         aria-keyshortcuts="Control+K"
         className={cn(
-          'inline-flex h-9 items-center gap-2 rounded-[9px] border border-[#343434]/70 bg-[#181818]/60 px-3',
-          'text-[12.5px] text-[#909090] transition-colors hover:border-[#404040] hover:text-[#c4c4c4]',
+          'inline-flex h-9 items-center gap-2 rounded-[9px] border border-[#38383a]/70 bg-[#1c1c1e]/60 px-3',
+          'text-[12.5px] text-[#8e8e93] transition-colors hover:border-[#48484a] hover:text-[#c7c7cc]',
         )}
       >
         <Search className="h-3.5 w-3.5" />
         Suchen
-        <kbd className="ml-1 hidden rounded border border-[#343434] px-1 font-mono text-[11px] text-[#909090] lg:inline">Strg K</kbd>
+        <kbd className="ml-1 hidden rounded border border-[#38383a] px-1 font-mono text-[11px] text-[#8e8e93] lg:inline">Strg K</kbd>
       </button>
 
       <Modal open={open} onClose={close} size="xl" ariaTitle="Suche und Befehle" className="sm:top-[12vh] sm:translate-y-0">
         <div className="-mx-1 -mt-1">
           <div className="relative pr-8">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8c8c8c]" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8e8e93]" />
             <input
               autoFocus
               value={term}
@@ -208,8 +208,8 @@ export function GlobalSearch() {
               aria-controls="palette-results"
               aria-activedescendant={items[activeIndex] ? `palette-${activeIndex}` : undefined}
               className={cn(
-                'h-[42px] w-full rounded-[10px] border border-[#343434]/70 bg-[#181818]/60 pl-9 pr-3',
-                'text-[14px] text-[#f4f4f4] placeholder:text-[#8c8c8c]',
+                'h-[42px] w-full rounded-[10px] border border-[#38383a]/70 bg-[#1c1c1e]/60 pl-9 pr-3',
+                'text-[14px] text-[#f5f5f7] placeholder:text-[#8e8e93]',
                 'focus:border-[#d4d4d4] focus:outline-none',
               )}
             />
@@ -220,7 +220,7 @@ export function GlobalSearch() {
 
             {sections.map((section) => (
               <section key={section.name} className="mb-3 last:mb-0">
-                <h3 className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8c8c8c]">{section.name}</h3>
+                <h3 className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8e8e93]">{section.name}</h3>
                 <ul className="space-y-0.5">
                   {section.items.map(({ item, index }) => {
                     const Icon = item.icon ?? ArrowRight
@@ -237,10 +237,10 @@ export function GlobalSearch() {
                           onMouseMove={() => setActive(index)}
                           className={cn(
                             'flex w-full items-center gap-3 rounded-[9px] px-2.5 py-2 text-left transition-colors',
-                            isActive ? 'bg-[#262626]' : 'hover:bg-[#1e1e1e]',
+                            isActive ? 'bg-[#2c2c2e]' : 'hover:bg-[#1c1c1e]',
                           )}
                         >
-                          <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-[#f4f4f4]' : 'text-[#8c8c8c]')} />
+                          <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-[#f5f5f7]' : 'text-[#8e8e93]')} />
                           <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                               {item.code && <span className="font-mono text-[11.5px] text-[#d4d4d4]">{item.code}</span>}
@@ -252,9 +252,9 @@ export function GlobalSearch() {
                                 </span>
                               )}
                             </span>
-                            {item.hint && <span className="mt-0.5 block truncate text-[12px] text-[#a6a6a6]">{item.hint}</span>}
+                            {item.hint && <span className="mt-0.5 block truncate text-[12px] text-[#98989d]">{item.hint}</span>}
                           </span>
-                          {isActive && <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" aria-hidden />}
+                          {isActive && <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-[#8e8e93]" aria-hidden />}
                         </button>
                       </li>
                     )
@@ -264,19 +264,19 @@ export function GlobalSearch() {
             ))}
 
             {trimmed && !isSearchable(trimmed) && items.length === 0 && (
-              <p className="py-8 text-center text-[12.5px] text-[#8c8c8c]">Noch ein Zeichen – oder eine Dienstnummer eingeben.</p>
+              <p className="py-8 text-center text-[12.5px] text-[#8e8e93]">Noch ein Zeichen – oder eine Dienstnummer eingeben.</p>
             )}
             {isSearchable(trimmed) && waiting && (
-              <p className="py-3 text-center text-[12.5px] text-[#8c8c8c]" aria-live="polite">Wird gesucht …</p>
+              <p className="py-3 text-center text-[12.5px] text-[#8e8e93]" aria-live="polite">Wird gesucht …</p>
             )}
             {isSearchable(trimmed) && !waiting && !error && items.length === 0 && (
-              <p className="py-8 text-center text-[12.5px] text-[#8c8c8c]">
+              <p className="py-8 text-center text-[12.5px] text-[#8e8e93]">
                 Nichts gefunden für „{trimmed}“. Verschlusssachen ohne Berechtigung erscheinen hier nicht.
               </p>
             )}
           </div>
 
-          <div className="mt-3 hidden items-center gap-4 border-t border-[#2c2c2c] pt-3 text-[11px] text-[#8c8c8c] sm:flex">
+          <div className="mt-3 hidden items-center gap-4 border-t border-[#3a3a3c] pt-3 text-[11px] text-[#8e8e93] sm:flex">
             <span><kbd className="font-mono">↑ ↓</kbd> auswählen</span>
             <span><kbd className="font-mono">Enter</kbd> öffnen</span>
             <span><kbd className="font-mono">Esc</kbd> schließen</span>

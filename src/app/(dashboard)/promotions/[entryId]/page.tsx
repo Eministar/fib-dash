@@ -141,7 +141,7 @@ function personName(person: Person | null | undefined) {
 function proposalTone(status: Proposal['status'], stale: boolean) {
   if (status === 'ACCEPTED') return { label: 'Angenommen', className: 'bg-[#34d399]/12 text-[#6ee7b7]' }
   if (status === 'REJECTED') return { label: 'Abgelehnt', className: 'bg-[#f87171]/12 text-[#fca5a5]' }
-  if (stale) return { label: 'Veraltet', className: 'bg-[#a6a6a6]/12 text-[#c3c3c3]' }
+  if (stale) return { label: 'Veraltet', className: 'bg-[#98989d]/12 text-[#c7c7cc]' }
   return { label: 'Offen', className: 'bg-[#fbbf24]/12 text-[#d6d6d6]' }
 }
 
@@ -162,15 +162,15 @@ function SnapshotComparison({ before, after }: { before: Snapshot; after: Snapsh
   ]
 
   return (
-    <div className="divide-y divide-[#343434]/45 overflow-hidden rounded-[10px] border border-[#343434]/55 bg-[#161616]/50">
+    <div className="divide-y divide-[#38383a]/45 overflow-hidden rounded-[10px] border border-[#38383a]/55 bg-[#161617]/50">
       {rows.map((row) => (
         <div key={row.label} className="grid gap-1.5 px-3 py-2.5 sm:grid-cols-[105px_1fr_18px_1fr] sm:items-center">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8c8c8c]">{row.label}</span>
-          <span className={cn('break-words text-[12px]', row.changed ? 'text-[#a6a6a6] line-through decoration-[#f87171]/55' : 'text-[#a6a6a6]')}>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8e8e93]">{row.label}</span>
+          <span className={cn('break-words text-[12px]', row.changed ? 'text-[#98989d] line-through decoration-[#f87171]/55' : 'text-[#98989d]')}>
             {row.oldValue}
           </span>
-          <ArrowRight size={12} className="hidden text-[#8c8c8c] sm:block" />
-          <span className={cn('break-words text-[12px] font-medium', row.changed ? 'text-[#f4f4f4]' : 'text-[#a6a6a6]')}>
+          <ArrowRight size={12} className="hidden text-[#8e8e93] sm:block" />
+          <span className={cn('break-words text-[12px] font-medium', row.changed ? 'text-[#f5f5f7]' : 'text-[#98989d]')}>
             {row.newValue}
           </span>
         </div>
@@ -213,7 +213,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
       <div className="mx-auto max-w-3xl py-12">
         <div className="glass-panel-elevated rounded-[14px] p-8 text-center">
           <p className="text-[15px] font-semibold text-white">Eintrag nicht verfügbar</p>
-          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">{loadError ?? 'Die Rangänderung wurde nicht gefunden.'}</p>
+          <p className="mt-1 text-[12.5px] text-[#98989d]">{loadError ?? 'Die Rangänderung wurde nicht gefunden.'}</p>
           <Link href="/promotions" className="mt-5 inline-flex text-[12.5px] font-medium text-[#d4d4d4] hover:text-[#d6d6d6]">Zurück zur Übersicht</Link>
         </div>
       </div>
@@ -321,10 +321,10 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
             { label: `${entry.agent.firstName} ${entry.agent.lastName}` },
           ]}
         />
-        <span className="font-mono text-[11px] uppercase tracking-[0.13em] text-[#8c8c8c]">Akte · Rev. {entry.revision}</span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.13em] text-[#8e8e93]">Akte · Rev. {entry.revision}</span>
       </div>
 
-      <section className="relative overflow-hidden rounded-[16px] border border-[#404040]/65 bg-[linear-gradient(135deg,rgba(33,33,33,.96),rgba(8,8,8,.96))] p-5 shadow-[0_18px_48px_rgba(0,0,0,.2)] sm:p-6">
+      <section className="relative overflow-hidden rounded-[16px] border border-[#48484a]/65 bg-[#1c1c1e] p-5 shadow-[0_18px_48px_rgba(0,0,0,.2)] sm:p-6">
         <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: accent }} />
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-start gap-4">
@@ -341,19 +341,19 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
               <h1 className="truncate text-[22px] font-semibold tracking-[-0.02em] text-white sm:text-[25px]">
                 {entry.agent.firstName} {entry.agent.lastName}
               </h1>
-              <p className="mt-1 text-[12px] text-[#a6a6a6]">
+              <p className="mt-1 text-[12px] text-[#98989d]">
                 Dienstnummer #{displayBadgeNumber(entry.agent.badgeNumber)} · Liste „{entry.list.name}“
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <RankTag rank={entry.currentRank} />
-                <ArrowRight size={14} className="text-[#8c8c8c]" />
+                <ArrowRight size={14} className="text-[#8e8e93]" />
                 <RankTag rank={entry.proposedRank} />
                 {entry.newBadgeNumber && <span className="text-[11px] font-medium text-[#d4d4d4]">neue DN #{displayBadgeNumber(entry.newBadgeNumber)}</span>}
               </div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <div className="inline-flex items-center gap-1 rounded-[9px] border border-[#404040]/65 bg-[#161616]/55 p-1" role="group" aria-label="Abstimmung zur Rangänderung">
+            <div className="inline-flex items-center gap-1 rounded-[9px] border border-[#48484a]/65 bg-[#161617]/55 p-1" role="group" aria-label="Abstimmung zur Rangänderung">
               {([
                 ['HIGHER', entry.voteSummary.higherVotes, ArrowUp, 'Höher einstufen', 'bg-[#34d399]/16 text-[#6ee7b7]'],
                 ['CONFIRM', entry.voteSummary.confirmVotes, Check, 'Vorschlag bestätigen', 'bg-[#d4d4d4]/16 text-[#d6d6d6]'],
@@ -372,7 +372,7 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40 disabled:cursor-not-allowed disabled:opacity-40',
                     entry.voteSummary.currentUserVote === value
                       ? activeClassName
-                      : 'text-[#a6a6a6] hover:bg-[#333333]/65 hover:text-white',
+                      : 'text-[#98989d] hover:bg-[#3a3a3c]/65 hover:text-white',
                   )}
                 >
                   <Icon size={13} /> {count}
@@ -391,43 +391,43 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
         <main className="space-y-4">
-          <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-5">
+          <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-5">
             <div className="mb-3 flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#d4d4d4]/10 text-[#d4d4d4]"><FilePenLine size={14} /></span>
               <h2 className="text-[14px] font-semibold text-white">Begründung</h2>
             </div>
-            <p className={cn('whitespace-pre-wrap text-[13px] leading-6', entry.note ? 'text-[#d0d0d0]' : 'italic text-[#8c8c8c]')}>
+            <p className={cn('whitespace-pre-wrap text-[13px] leading-6', entry.note ? 'text-[#c7c7cc]' : 'italic text-[#8e8e93]')}>
               {entry.note || 'Für diesen Eintrag wurde keine Begründung hinterlegt.'}
             </p>
           </section>
 
-          <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-5">
+          <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#fbbf24]/10 text-[#d6d6d6]"><FilePenLine size={14} /></span>
                 <h2 className="text-[14px] font-semibold text-white">Änderungsvorschläge</h2>
               </div>
-              <span className="text-[11px] font-medium text-[#a6a6a6]">{openProposals} offen · {entry.proposals.length} gesamt</span>
+              <span className="text-[11px] font-medium text-[#98989d]">{openProposals} offen · {entry.proposals.length} gesamt</span>
             </div>
             {entry.proposals.length === 0 ? (
-              <p className="rounded-[10px] border border-dashed border-[#404040]/55 px-4 py-7 text-center text-[12px] text-[#8c8c8c]">Noch keine Änderungsvorschläge.</p>
+              <p className="rounded-[10px] border border-dashed border-[#48484a]/55 px-4 py-7 text-center text-[12px] text-[#8e8e93]">Noch keine Änderungsvorschläge.</p>
             ) : (
               <div className="space-y-3">
                 {entry.proposals.map((proposal) => {
                   const tone = proposalTone(proposal.status, proposal.isStale)
                   return (
-                    <article key={proposal.id} className="rounded-[12px] border border-[#373737]/55 bg-[#191919]/55 p-4">
+                    <article key={proposal.id} className="rounded-[12px] border border-[#38383a]/55 bg-[#191919]/55 p-4">
                       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <p className="text-[12.5px] font-semibold text-[#f4f4f4]">{personName(proposal.author)}</p>
-                          <p className="mt-0.5 text-[11px] text-[#8c8c8c]">{formatDateTime(proposal.createdAt)} · basiert auf Revision {proposal.baseRevision}</p>
+                          <p className="text-[12.5px] font-semibold text-[#f5f5f7]">{personName(proposal.author)}</p>
+                          <p className="mt-0.5 text-[11px] text-[#8e8e93]">{formatDateTime(proposal.createdAt)} · basiert auf Revision {proposal.baseRevision}</p>
                         </div>
                         <span className={cn('rounded-[5px] px-2 py-1 text-[11px] font-semibold uppercase tracking-wide', tone.className)}>{tone.label}</span>
                       </div>
-                      {proposal.reason && <p className="mb-3 whitespace-pre-wrap text-[12px] leading-5 text-[#c3c3c3]">{proposal.reason}</p>}
+                      {proposal.reason && <p className="mb-3 whitespace-pre-wrap text-[12px] leading-5 text-[#c7c7cc]">{proposal.reason}</p>}
                       <SnapshotComparison before={proposal.beforeState} after={proposal.afterState} />
                       {proposal.reviewedAt && (
-                        <p className="mt-3 text-[11px] text-[#909090]">
+                        <p className="mt-3 text-[11px] text-[#8e8e93]">
                           Geprüft von {personName(proposal.reviewedBy)} am {formatDateTime(proposal.reviewedAt)}
                           {proposal.reviewNote ? ` · ${proposal.reviewNote}` : ''}
                         </p>
@@ -449,103 +449,103 @@ export default function RankChangeEntryPage({ params }: { params: Promise<{ entr
             )}
           </section>
 
-          <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-5">
+          <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-5">
             <div className="mb-4 flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#38bdf8]/10 text-[#7dd3fc]"><MessageSquare size={14} /></span>
               <h2 className="text-[14px] font-semibold text-white">Kommentare</h2>
-              <span className="text-[11px] text-[#8c8c8c]">{entry.comments.length}</span>
+              <span className="text-[11px] text-[#8e8e93]">{entry.comments.length}</span>
             </div>
             <div className="space-y-3">
-              {entry.comments.length === 0 && <p className="py-2 text-[12px] italic text-[#8c8c8c]">Noch keine Kommentare.</p>}
+              {entry.comments.length === 0 && <p className="py-2 text-[12px] italic text-[#8e8e93]">Noch keine Kommentare.</p>}
               {entry.comments.map((item) => {
                 const canDelete = item.authorId === data.currentUserId || data.permissions.canModerateComments
                 return (
-                  <div key={item.id} className="group flex gap-3 rounded-[10px] border border-[#343434]/45 bg-[#191919]/45 p-3">
+                  <div key={item.id} className="group flex gap-3 rounded-[10px] border border-[#38383a]/45 bg-[#191919]/45 p-3">
                     <span
                       role="img"
                       aria-label={`Discord-Profilbild von ${personName(item.author)}`}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#808080]/60 bg-[#333333]/65 bg-cover bg-center text-[#a6a6a6]"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#808080]/60 bg-[#3a3a3c]/65 bg-cover bg-center text-[#98989d]"
                       style={{ backgroundImage: item.author?.avatarUrl ? `url(${item.author.avatarUrl})` : undefined }}
                     >
                       {!item.author?.avatarUrl && <UserRound size={14} aria-hidden />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[11.5px] font-semibold text-[#f4f4f4]">{personName(item.author)}</p>
+                        <p className="text-[11.5px] font-semibold text-[#f5f5f7]">{personName(item.author)}</p>
                         <div className="flex items-center gap-1.5">
-                          <time className="text-[11px] text-[#8c8c8c]">{formatDateTime(item.createdAt)}</time>
+                          <time className="text-[11px] text-[#8e8e93]">{formatDateTime(item.createdAt)}</time>
                           {canDelete && (
-                            <button onClick={() => removeComment(item.id)} className="rounded-[5px] p-1 text-[#8c8c8c] opacity-0 transition-all hover:bg-[#321218]/60 hover:text-[#fca5a5] group-hover:opacity-100 focus-visible:opacity-100" aria-label="Kommentar löschen">
+                            <button onClick={() => removeComment(item.id)} className="rounded-[5px] p-1 text-[#8e8e93] opacity-0 transition-all hover:bg-[#321218]/60 hover:text-[#fca5a5] group-hover:opacity-100 focus-visible:opacity-100" aria-label="Kommentar löschen">
                               <Trash2 size={11} />
                             </button>
                           )}
                         </div>
                       </div>
-                      <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-5 text-[#c3c3c3]">{item.content}</p>
+                      <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-5 text-[#c7c7cc]">{item.content}</p>
                     </div>
                   </div>
                 )
               })}
             </div>
             {data.permissions.canComment && (
-              <div className="mt-4 border-t border-[#343434]/45 pt-4">
+              <div className="mt-4 border-t border-[#38383a]/45 pt-4">
                 <Textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Kommentar zur Rangänderung …" rows={3} maxLength={2000} />
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="text-[11px] tabular-nums text-[#8c8c8c]">{comment.length}/2000</span>
+                  <span className="text-[11px] tabular-nums text-[#8e8e93]">{comment.length}/2000</span>
                   <Button size="sm" loading={mutating} disabled={!comment.trim()} onClick={submitComment}><Send size={12} /> Kommentieren</Button>
                 </div>
               </div>
             )}
           </section>
 
-          <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-5">
+          <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-5">
             <div className="mb-4 flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#a6a6a6]/10 text-[#c3c3c3]"><History size={14} /></span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#98989d]/10 text-[#c7c7cc]"><History size={14} /></span>
               <h2 className="text-[14px] font-semibold text-white">Versionsverlauf</h2>
             </div>
             <div className="space-y-3">
               {entry.history.map((record) => (
-                <article key={record.id} className="relative border-l border-[#404040]/65 pl-4">
-                  <span className="absolute -left-[4.5px] top-1.5 h-2 w-2 rounded-full border border-[#d4d4d4]/60 bg-[#181818]" />
+                <article key={record.id} className="relative border-l border-[#48484a]/65 pl-4">
+                  <span className="absolute -left-[4.5px] top-1.5 h-2 w-2 rounded-full border border-[#d4d4d4]/60 bg-[#1c1c1e]" />
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-[11.5px] font-semibold text-[#f4f4f4]">
+                      <p className="text-[11.5px] font-semibold text-[#f5f5f7]">
                         {record.action === 'CREATED' ? 'Eintrag erstellt' : record.action === 'PROPOSAL_ACCEPTED' ? 'Vorschlag übernommen' : 'Direkt bearbeitet'}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-[#8c8c8c]">Revision {record.revision} · {personName(record.actor)} · {formatDateTime(record.createdAt)}</p>
+                      <p className="mt-0.5 text-[11px] text-[#8e8e93]">Revision {record.revision} · {personName(record.actor)} · {formatDateTime(record.createdAt)}</p>
                     </div>
                   </div>
                   {record.action !== 'CREATED' && <SnapshotComparison before={record.beforeState} after={record.afterState} />}
                 </article>
               ))}
               {entry.history.length === 0 && (
-                <p className="text-[12px] text-[#8c8c8c]">Dieser ältere Eintrag besitzt noch keinen protokollierten Versionsstand.</p>
+                <p className="text-[12px] text-[#8e8e93]">Dieser ältere Eintrag besitzt noch keinen protokollierten Versionsstand.</p>
               )}
             </div>
           </section>
         </main>
 
         <aside className="space-y-4">
-          <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-4">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.13em] text-[#8c8c8c]">Akteninformationen</p>
+          <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-4">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.13em] text-[#8e8e93]">Akteninformationen</p>
             <dl className="space-y-3">
               <div className="flex items-start gap-2.5">
                 <UserRound size={14} className="mt-0.5 text-[#d4d4d4]" />
-                <div><dt className="text-[11px] text-[#8c8c8c]">Eingereicht von</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{personName(entry.createdBy)}</dd></div>
+                <div><dt className="text-[11px] text-[#8e8e93]">Eingereicht von</dt><dd className="text-[12px] font-medium text-[#f5f5f7]">{personName(entry.createdBy)}</dd></div>
               </div>
               <div className="flex items-start gap-2.5">
                 <Clock3 size={14} className="mt-0.5 text-[#d4d4d4]" />
-                <div><dt className="text-[11px] text-[#8c8c8c]">Eingereicht am</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{formatDateTime(entry.createdAt)}</dd></div>
+                <div><dt className="text-[11px] text-[#8e8e93]">Eingereicht am</dt><dd className="text-[12px] font-medium text-[#f5f5f7]">{formatDateTime(entry.createdAt)}</dd></div>
               </div>
               <div className="flex items-start gap-2.5">
                 <ShieldCheck size={14} className="mt-0.5 text-[#d4d4d4]" />
-                <div><dt className="text-[11px] text-[#8c8c8c]">Freigabe</dt><dd className="text-[12px] font-medium text-[#f4f4f4]">{entry.executed ? `Durchgeführt von ${personName(entry.executedBy)}` : 'Noch nicht durchgeführt'}</dd></div>
+                <div><dt className="text-[11px] text-[#8e8e93]">Freigabe</dt><dd className="text-[12px] font-medium text-[#f5f5f7]">{entry.executed ? `Durchgeführt von ${personName(entry.executedBy)}` : 'Noch nicht durchgeführt'}</dd></div>
               </div>
             </dl>
           </section>
           <section className="rounded-[14px] border border-[#d4d4d4]/20 bg-[#d4d4d4]/[0.055] p-4">
             <p className="text-[11.5px] font-semibold text-[#d6d6d6]">Wer darf was?</p>
-            <p className="mt-1.5 text-[11px] leading-5 text-[#a6a6a6]">
+            <p className="mt-1.5 text-[11px] leading-5 text-[#98989d]">
               Der Ersteller und Nutzer mit Vollzugriff dürfen direkt bearbeiten und Vorschläge prüfen. Alle anderen reichen Änderungen zur Freigabe ein.
             </p>
           </section>

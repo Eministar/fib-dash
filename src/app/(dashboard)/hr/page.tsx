@@ -58,14 +58,14 @@ function HrLinks() {
     <div className="flex gap-1.5">
       <Link
         href="/ordnungen"
-        className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-3 text-[12.5px] font-medium text-[#f4f4f4] shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-all duration-150 hover:bg-[#232323]/50 active:scale-[0.98]"
+        className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] border border-[#48484a] px-3 text-[12.5px] font-medium text-[#f5f5f7] shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-all duration-150 hover:bg-[#2c2c2e]/50 active:scale-[0.98]"
       >
         <BookOpen size={14} strokeWidth={2} />
         Ordnungen
       </Link>
       <Link
         href="/ordnungen/sanktionskatalog"
-        className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] border border-[#404040] px-3 text-[12.5px] font-medium text-[#f4f4f4] shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-all duration-150 hover:bg-[#232323]/50 active:scale-[0.98]"
+        className="inline-flex h-[32px] items-center justify-center gap-1.5 rounded-[8px] border border-[#48484a] px-3 text-[12.5px] font-medium text-[#f5f5f7] shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-all duration-150 hover:bg-[#2c2c2e]/50 active:scale-[0.98]"
       >
         <ScrollText size={14} strokeWidth={2} />
         Sanktionskatalog
@@ -104,7 +104,7 @@ export default function HrDepartmentPage() {
                 'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors',
                 active
                   ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
-                  : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                  : 'border-[#38383a]/60 bg-[#1c1c1e]/55 text-[#98989d] hover:border-[#48484a] hover:text-white',
               )}
             >
               <Icon size={14} strokeWidth={2} />

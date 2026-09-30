@@ -193,17 +193,17 @@ export default function ApiTokensPage() {
       <motion.div
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[10px] bg-gradient-to-r from-[#1c1c1c]/60 via-[#1c1c1c]/40 to-[#1c1c1c]/60 border border-[#d4d4d4]/15 px-4 py-3 flex items-center gap-3"
+        className="rounded-[10px] bg-[#1c1c1e]/60 border border-[#d4d4d4]/15 px-4 py-3 flex items-center gap-3"
       >
-        <div className="h-9 w-9 rounded-[8px] bg-gradient-to-br from-[#d4d4d4]/20 to-[#d4d4d4]/5 border border-[#d4d4d4]/20 flex items-center justify-center text-[#d4d4d4]">
+        <div className="h-9 w-9 rounded-[8px] bg-[#d4d4d4]/20 border border-[#d4d4d4]/20 flex items-center justify-center text-[#d4d4d4]">
           <KeyRound size={15} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[12.5px] text-white/90 font-medium">
             Token-Limit: <span className="text-[#d4d4d4] font-mono">{limitDisplay}</span>
-            <span className="text-[#909090] font-normal"> aktive Tokens</span>
+            <span className="text-[#8e8e93] font-normal"> aktive Tokens</span>
           </p>
-          <p className="text-[11px] text-[#909090] mt-0.5">
+          <p className="text-[11px] text-[#8e8e93] mt-0.5">
             {maxPerUser === null
               ? 'Unbegrenzt — du kannst beliebig viele Tokens anlegen.'
               : `Widerrufe einen Token, um Platz für einen neuen zu schaffen, oder passe das Limit an.`}
@@ -217,16 +217,16 @@ export default function ApiTokensPage() {
       </motion.div>
 
       <div className="glass-panel-elevated rounded-[14px] overflow-hidden">
-        <div className="divide-y divide-[#343434]">
+        <div className="divide-y divide-[#38383a]">
           {tokens?.map((token, i) => (
             <motion.div
               key={token.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: i * 0.02 }}
-              className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#212121] transition-colors"
+              className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#2c2c2e] transition-colors"
             >
-              <div className="h-8 w-8 rounded-full bg-[#232323] flex items-center justify-center text-[#d4d4d4]">
+              <div className="h-8 w-8 rounded-full bg-[#2c2c2e] flex items-center justify-center text-[#d4d4d4]">
                 <KeyRound size={14} />
               </div>
               <div className="flex-1 min-w-0">
@@ -238,7 +238,7 @@ export default function ApiTokensPage() {
                     <ExpiredBadge />
                   )}
                 </div>
-                <p className="text-[11.5px] text-[#8c8c8c]">
+                <p className="text-[11.5px] text-[#8e8e93]">
                   {token.scopes.length === 0 ? 'Auto Perm' : `${token.scopes.length} Scopes`} ·
                   {' '}
                   {token.usageCount} Aufrufe · {token.lastUsedAt
@@ -252,10 +252,10 @@ export default function ApiTokensPage() {
               <div className="flex gap-0.5">
                 <button
                   onClick={() => setDetailToken(token)}
-                  className="p-1.5 rounded-[6px] hover:bg-[#212121] transition-colors"
+                  className="p-1.5 rounded-[6px] hover:bg-[#2c2c2e] transition-colors"
                   title="Details"
                 >
-                  <Activity size={13} className="text-[#8c8c8c]" />
+                  <Activity size={13} className="text-[#8e8e93]" />
                 </button>
                 {!token.revokedAt && (
                   <button
@@ -263,7 +263,7 @@ export default function ApiTokensPage() {
                     className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors"
                     title="Widerrufen"
                   >
-                    <ShieldOff size={13} className="text-[#8c8c8c] hover:text-[#fbbf24]" />
+                    <ShieldOff size={13} className="text-[#8e8e93] hover:text-[#fbbf24]" />
                   </button>
                 )}
                 <button
@@ -271,16 +271,16 @@ export default function ApiTokensPage() {
                   className="p-1.5 rounded-[6px] hover:bg-[#1c1111] transition-colors"
                   title="Endgültig löschen"
                 >
-                  <Trash2 size={13} className="text-[#8c8c8c] hover:text-[#f87171]" />
+                  <Trash2 size={13} className="text-[#8e8e93] hover:text-[#f87171]" />
                 </button>
               </div>
             </motion.div>
           ))}
           {(!tokens || tokens.length === 0) && (
             <div className="text-center py-16">
-              <KeyRound size={28} className="mx-auto mb-3 text-[#f4f4f4]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#909090]">Noch keine API-Tokens vorhanden</p>
-              <p className="text-[11.5px] text-[#8c8c8c] mt-1">Erstelle deinen ersten Token, um die API programmatisch zu nutzen.</p>
+              <KeyRound size={28} className="mx-auto mb-3 text-[#f5f5f7]" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#8e8e93]">Noch keine API-Tokens vorhanden</p>
+              <p className="text-[11.5px] text-[#8e8e93] mt-1">Erstelle deinen ersten Token, um die API programmatisch zu nutzen.</p>
             </div>
           )}
         </div>
@@ -300,7 +300,7 @@ export default function ApiTokensPage() {
           {/* User assignment — admin only */}
           {isAdmin && (
             <div>
-              <label className="block text-[12.5px] font-medium text-[#aeaeae] mb-2 flex items-center gap-1.5">
+              <label className="block text-[12.5px] font-medium text-[#98989d] mb-2 flex items-center gap-1.5">
                 <UserCog size={12} /> Inhaber (User zuweisen)
               </label>
               <UserPicker
@@ -310,14 +310,14 @@ export default function ApiTokensPage() {
                 selfId={user?.id}
                 selfName={user?.displayName ?? 'Ich'}
               />
-              <p className="text-[11px] text-[#8c8c8c] mt-1.5">
+              <p className="text-[11px] text-[#8e8e93] mt-1.5">
                 Standardmäßig erhältst du den Token. Als Administrator kannst du ihn auch für andere Benutzer anlegen.
               </p>
             </div>
           )}
 
           <div>
-            <label className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Ablauf</label>
+            <label className="block text-[12.5px] font-medium text-[#98989d] mb-2">Ablauf</label>
             <div className="flex gap-2">
               {[
                 { v: 0, l: 'Nie' },
@@ -333,7 +333,7 @@ export default function ApiTokensPage() {
                     'flex-1 text-[12px] py-2 rounded-[8px] border transition-colors',
                     form.expiresInDays === opt.v
                       ? 'bg-[#d4d4d4]/10 border-[#d4d4d4]/50 text-[#d4d4d4]'
-                      : 'bg-[#181818]/40 border-[#343434]/50 text-[#aeaeae] hover:border-[#d4d4d4]/30',
+                      : 'bg-[#1c1c1e]/40 border-[#38383a]/50 text-[#98989d] hover:border-[#d4d4d4]/30',
                   )}
                 >
                   {opt.l}
@@ -342,7 +342,7 @@ export default function ApiTokensPage() {
             </div>
           </div>
           <div>
-            <label className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Berechtigungsmodus</label>
+            <label className="block text-[12.5px] font-medium text-[#98989d] mb-2">Berechtigungsmodus</label>
             <div className="grid grid-cols-2 gap-2 mb-3">
               <button
                 type="button"
@@ -351,11 +351,11 @@ export default function ApiTokensPage() {
                   'p-3 rounded-[8px] border text-left transition-colors',
                   form.permissionMode === 'auto'
                     ? 'bg-[#d4d4d4]/10 border-[#d4d4d4]/50 text-[#d4d4d4]'
-                    : 'bg-[#181818]/40 border-[#343434]/50 text-[#aeaeae] hover:border-[#d4d4d4]/30',
+                    : 'bg-[#1c1c1e]/40 border-[#38383a]/50 text-[#98989d] hover:border-[#d4d4d4]/30',
                 )}
               >
                 <p className="text-[12.5px] font-semibold">Auto Perm</p>
-                <p className="text-[11px] text-[#909090] mt-0.5">Rechte automatisch vom Inhaber übernehmen</p>
+                <p className="text-[11px] text-[#8e8e93] mt-0.5">Rechte automatisch vom Inhaber übernehmen</p>
               </button>
               <button
                 type="button"
@@ -364,18 +364,18 @@ export default function ApiTokensPage() {
                   'p-3 rounded-[8px] border text-left transition-colors',
                   form.permissionMode === 'custom'
                     ? 'bg-[#d4d4d4]/10 border-[#d4d4d4]/50 text-[#d4d4d4]'
-                    : 'bg-[#181818]/40 border-[#343434]/50 text-[#aeaeae] hover:border-[#d4d4d4]/30',
+                    : 'bg-[#1c1c1e]/40 border-[#38383a]/50 text-[#98989d] hover:border-[#d4d4d4]/30',
                 )}
               >
                 <p className="text-[12.5px] font-semibold">Eigene Scopes</p>
-                <p className="text-[11px] text-[#909090] mt-0.5">Token auf ausgewählte Rechte begrenzen</p>
+                <p className="text-[11px] text-[#8e8e93] mt-0.5">Token auf ausgewählte Rechte begrenzen</p>
               </button>
             </div>
           </div>
           {form.permissionMode === 'custom' && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-[12.5px] font-medium text-[#aeaeae]">
+              <label className="block text-[12.5px] font-medium text-[#98989d]">
                 Scopes ({form.scopes.length} ausgewählt)
               </label>
               <button
@@ -386,7 +386,7 @@ export default function ApiTokensPage() {
                 {form.scopes.length === userPermissionSet.size ? 'Keine' : 'Alle eigenen Rechte'}
               </button>
             </div>
-            <p className="text-[11px] text-[#8c8c8c] mb-3">
+            <p className="text-[11px] text-[#8e8e93] mb-3">
               Token-Scopes sind immer eine Teilmenge der Inhaber-Rechte.
             </p>
             <div className="max-h-[260px] overflow-y-auto space-y-2 pr-1">
@@ -398,7 +398,7 @@ export default function ApiTokensPage() {
                     checked={form.scopes.includes(p)}
                     onCheckedChange={(c) => toggleScope(p, c)}
                     label={PERMISSION_LABELS[p]}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-2.5 py-1.5 text-[11.5px]"
+                    className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-2.5 py-1.5 text-[11.5px]"
                   />
                 ))}
               </div>
@@ -410,7 +410,7 @@ export default function ApiTokensPage() {
                     checked={form.scopes.includes(p)}
                     onCheckedChange={(c) => toggleScope(p, c)}
                     label={PERMISSION_LABELS[p]}
-                    className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-2.5 py-1.5 text-[11.5px]"
+                    className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-2.5 py-1.5 text-[11.5px]"
                   />
                 ))}
               </div>
@@ -444,33 +444,33 @@ export default function ApiTokensPage() {
               Speichere ihn jetzt sicher ab (z. B. in einem Secrets-Manager). Du kannst ihn später nicht wiederherstellen.
             </div>
             <div>
-              <label className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Name</label>
+              <label className="block text-[12.5px] font-medium text-[#98989d] mb-2">Name</label>
               <p className="text-[13px] text-[#eee]">{createdToken.name}</p>
             </div>
             {createdToken.ownerDisplayName && createdToken.ownerUserId !== user?.id && (
               <div>
-                <label className="block text-[12.5px] font-medium text-[#aeaeae] mb-2 flex items-center gap-1.5">
+                <label className="block text-[12.5px] font-medium text-[#98989d] mb-2 flex items-center gap-1.5">
                   <UserIcon size={11} /> Inhaber
                 </label>
                 <p className="text-[13px] text-[#eee]">{createdToken.ownerDisplayName}</p>
               </div>
             )}
             <div>
-              <label className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Token</label>
+              <label className="block text-[12.5px] font-medium text-[#98989d] mb-2">Token</label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 px-3 py-2.5 rounded-[8px] bg-[#080808] border border-[#343434] text-[12px] font-mono text-[#d4d4d4] break-all">
+                <code className="flex-1 px-3 py-2.5 rounded-[8px] bg-[#000000] border border-[#38383a] text-[12px] font-mono text-[#d4d4d4] break-all">
                   {revealed ? createdToken.plaintext : createdToken.plaintext.replace(/[a-zA-Z0-9]/g, '•')}
                 </code>
                 <button
                   onClick={() => setRevealed((v) => !v)}
-                  className="p-2 rounded-[8px] bg-[#181818]/60 border border-[#343434] text-[#aeaeae] hover:text-[#d4d4d4]"
+                  className="p-2 rounded-[8px] bg-[#1c1c1e]/60 border border-[#38383a] text-[#98989d] hover:text-[#d4d4d4]"
                   title={revealed ? 'Verbergen' : 'Anzeigen'}
                 >
                   {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
                 <button
                   onClick={() => copy(createdToken.plaintext, 'Token kopiert')}
-                  className="p-2 rounded-[8px] bg-[#181818]/60 border border-[#343434] text-[#aeaeae] hover:text-[#d4d4d4]"
+                  className="p-2 rounded-[8px] bg-[#1c1c1e]/60 border border-[#38383a] text-[#98989d] hover:text-[#d4d4d4]"
                   title="Kopieren"
                 >
                   <Copy size={14} />
@@ -478,8 +478,8 @@ export default function ApiTokensPage() {
               </div>
             </div>
             <div>
-              <label className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Beispiel</label>
-              <pre className="px-3 py-2.5 rounded-[8px] bg-[#080808] border border-[#343434] text-[11.5px] font-mono text-[#aeaeae] overflow-x-auto">
+              <label className="block text-[12.5px] font-medium text-[#98989d] mb-2">Beispiel</label>
+              <pre className="px-3 py-2.5 rounded-[8px] bg-[#000000] border border-[#38383a] text-[11.5px] font-mono text-[#98989d] overflow-x-auto">
 {`curl https://deine-domain/api/agents \\
   -H "Authorization: Bearer \${FIB_TOKEN}"`}
               </pre>
@@ -542,7 +542,7 @@ function LimitConfigModal({
   return (
     <Modal open={open} onClose={onClose} title="Token-Limit anpassen" size="md">
       <div className="space-y-4">
-        <p className="text-[12.5px] text-[#aeaeae] leading-relaxed">
+        <p className="text-[12.5px] text-[#98989d] leading-relaxed">
           Lege fest, wie viele aktive API-Tokens ein Benutzer maximal besitzen darf.
           Auf <strong className="text-white">unbegrenzt</strong> setzen, wenn du keine Obergrenze willst.
         </p>
@@ -554,13 +554,13 @@ function LimitConfigModal({
               'flex items-center gap-2 p-3 rounded-[8px] border transition-colors text-left',
               mode === 'unlimited'
                 ? 'bg-[#d4d4d4]/10 border-[#d4d4d4]/50 text-[#d4d4d4]'
-                : 'bg-[#181818]/40 border-[#343434]/50 text-[#aeaeae] hover:border-[#d4d4d4]/30',
+                : 'bg-[#1c1c1e]/40 border-[#38383a]/50 text-[#98989d] hover:border-[#d4d4d4]/30',
             )}
           >
             <InfinityIcon size={16} />
             <div>
               <p className="text-[12.5px] font-semibold">Unbegrenzt</p>
-              <p className="text-[11px] text-[#909090] mt-0.5">Keine Obergrenze</p>
+              <p className="text-[11px] text-[#8e8e93] mt-0.5">Keine Obergrenze</p>
             </div>
           </button>
           <button
@@ -570,13 +570,13 @@ function LimitConfigModal({
               'flex items-center gap-2 p-3 rounded-[8px] border transition-colors text-left',
               mode === 'limited'
                 ? 'bg-[#d4d4d4]/10 border-[#d4d4d4]/50 text-[#d4d4d4]'
-                : 'bg-[#181818]/40 border-[#343434]/50 text-[#aeaeae] hover:border-[#d4d4d4]/30',
+                : 'bg-[#1c1c1e]/40 border-[#38383a]/50 text-[#98989d] hover:border-[#d4d4d4]/30',
             )}
           >
             <Lock size={16} />
             <div>
               <p className="text-[12.5px] font-semibold">Begrenzt</p>
-              <p className="text-[11px] text-[#909090] mt-0.5">Max. Anzahl festlegen</p>
+              <p className="text-[11px] text-[#8e8e93] mt-0.5">Max. Anzahl festlegen</p>
             </div>
           </button>
         </div>
@@ -636,7 +636,7 @@ function UserPicker({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-[8px] bg-[#080808] border border-[#343434] text-[12.5px] text-[#f4f4f4] focus:outline-none focus:border-[#d4d4d4]/40 appearance-none cursor-pointer"
+        className="w-full px-3 py-2 rounded-[8px] bg-[#000000] border border-[#38383a] text-[12.5px] text-[#f5f5f7] focus:outline-none focus:border-[#d4d4d4]/40 appearance-none cursor-pointer"
       >
         {selfId && <option value={selfId}>👤 {selfName} (ich)</option>}
         {users
@@ -647,7 +647,7 @@ function UserPicker({
             </option>
           ))}
       </select>
-      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#8c8c8c]">▾</div>
+      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#8e8e93]">▾</div>
     </div>
   )
 }
@@ -706,14 +706,14 @@ function TokenDetailModal({ token, onClose }: { token: ApiToken | null; onClose:
             <Field label="Scopes" value={token.scopes.length === 0 ? 'Auto Perm' : `${token.scopes.length} Scopes`} />
           </div>
           <div>
-            <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-2">Letzte Aufrufe</p>
-            <div className="rounded-[10px] border border-[#343434] overflow-hidden">
-              {loading && <div className="p-4 text-center text-[12px] text-[#8c8c8c]"><RefreshCw size={12} className="inline animate-spin" /> lade…</div>}
+            <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Letzte Aufrufe</p>
+            <div className="rounded-[10px] border border-[#38383a] overflow-hidden">
+              {loading && <div className="p-4 text-center text-[12px] text-[#8e8e93]"><RefreshCw size={12} className="inline animate-spin" /> lade…</div>}
               {!loading && details && details.recentUsage.length === 0 && (
-                <div className="p-4 text-center text-[12px] text-[#8c8c8c]">Noch keine Aufrufe</div>
+                <div className="p-4 text-center text-[12px] text-[#8e8e93]">Noch keine Aufrufe</div>
               )}
               {!loading && details && details.recentUsage.length > 0 && (
-                <div className="divide-y divide-[#343434]/60 max-h-[300px] overflow-y-auto">
+                <div className="divide-y divide-[#38383a]/60 max-h-[300px] overflow-y-auto">
                   {details.recentUsage.map((u, i) => (
                     <div key={i} className="flex items-center gap-3 px-3 py-2 text-[11.5px]">
                       <span className={cn(
@@ -729,8 +729,8 @@ function TokenDetailModal({ token, onClose }: { token: ApiToken | null; onClose:
                       )}>
                         {u.statusCode}
                       </span>
-                      <span className="font-mono text-[#8c8c8c] w-14 text-right">{u.durationMs}ms</span>
-                      <span className="text-[#8c8c8c] w-24 text-right">
+                      <span className="font-mono text-[#8e8e93] w-14 text-right">{u.durationMs}ms</span>
+                      <span className="text-[#8e8e93] w-24 text-right">
                         {format(new Date(u.createdAt), 'dd.MM. HH:mm:ss', { locale: de })}
                       </span>
                     </div>
@@ -747,8 +747,8 @@ function TokenDetailModal({ token, onClose }: { token: ApiToken | null; onClose:
 
 function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="rounded-[8px] bg-[#181818]/40 border border-[#343434]/50 px-3 py-2">
-      <p className="text-[11px] text-[#8c8c8c] uppercase tracking-wider">{label}</p>
+    <div className="rounded-[8px] bg-[#1c1c1e]/40 border border-[#38383a]/50 px-3 py-2">
+      <p className="text-[11px] text-[#8e8e93] uppercase tracking-wider">{label}</p>
       <p className={cn('text-[12.5px] text-[#eee] mt-0.5', mono && 'font-mono text-[#d4d4d4]/80')}>{value}</p>
     </div>
   )

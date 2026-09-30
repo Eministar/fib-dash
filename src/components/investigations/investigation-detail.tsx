@@ -135,7 +135,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   if (error || !data) {
     return (
       <Card className="py-14 text-center">
-        <p className="text-[13.5px] text-[#a6a6a6]">{error || 'Ermittlungsakte nicht gefunden.'}</p>
+        <p className="text-[13.5px] text-[#98989d]">{error || 'Ermittlungsakte nicht gefunden.'}</p>
         <Link href="/investigations" className="mt-3 inline-block text-[12.5px] text-[#c4b5fd] hover:underline">
           Zurück zur Übersicht
         </Link>
@@ -328,7 +328,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         items={[{ label: 'Ermittlungen', href: '/investigations' }, { label: investigation.caseNumber }]}
       />
 
-      <div className="mb-5 rounded-[14px] border border-[#2a2a2a] bg-[#141414] p-5">
+      <div className="mb-5 rounded-[14px] border border-[#3a3a3c] bg-[#161617] p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <span className="font-mono text-[12px] text-[#d4af37]">{investigation.caseNumber}</span>
@@ -352,17 +352,17 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         </div>
 
         {investigation.summary && (
-          <p className="mt-4 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c4c4c4]">
+          <p className="mt-4 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c7c7cc]">
             {investigation.summary}
           </p>
         )}
 
         {/* Beschriftetes Raster statt der früheren Fließtext-Zeile: wer die
             Fallführung sucht, soll nicht erst einen Satz lesen müssen. */}
-        <dl className="mt-4 grid gap-x-6 gap-y-2.5 border-t border-[#232323] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="mt-4 grid gap-x-6 gap-y-2.5 border-t border-[#2c2c2e] pt-4 sm:grid-cols-2 lg:grid-cols-4">
           {factRows.map(([label, value]) => (
             <div key={label} className="min-w-0">
-              <dt className="text-[11px] uppercase tracking-wide text-[#8c8c8c]">{label}</dt>
+              <dt className="text-[11px] uppercase tracking-wide text-[#8e8e93]">{label}</dt>
               <dd className="mt-0.5 truncate text-[12.5px] text-[#d4d4d4]" title={value}>
                 {value}
               </dd>
@@ -389,14 +389,14 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         >
           <ol className="space-y-3">
             {investigation.entries.map((entry) => (
-              <li key={entry.id} className="rounded-[10px] border border-[#232323] bg-[#111111] p-3.5">
+              <li key={entry.id} className="rounded-[10px] border border-[#2c2c2e] bg-[#161617] p-3.5">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <EntryKindBadge kind={entry.kind} />
                       <h3 className="text-[13.5px] font-semibold text-white">{entry.title}</h3>
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8c8c8c]">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-[#8e8e93]">
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarClock className="h-3.5 w-3.5" />
                         {formatDateTime(entry.occurredAt)}
@@ -415,7 +415,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                     <button
                       type="button"
                       onClick={() => handleDeleteEntry(entry.id, entry.title)}
-                      className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
+                      className="shrink-0 text-[#8e8e93] transition-colors hover:text-[#fca5a5]"
                       aria-label="Eintrag löschen"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -424,7 +424,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                 </div>
 
                 {entry.content && (
-                  <p className="mt-2.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c4c4c4]">
+                  <p className="mt-2.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c7c7cc]">
                     {entry.content}
                   </p>
                 )}
@@ -467,7 +467,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
               ) : null
             }
           >
-            <ul className="divide-y divide-[#232323]">
+            <ul className="divide-y divide-[#2c2c2e]">
               {investigation.persons.map((link) => (
                 <li key={link.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
@@ -479,9 +479,9 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                         {link.person.firstName} {link.person.lastName}
                       </Link>
                       <RoleBadge role={link.role} />
-                      <span className="font-mono text-[11px] text-[#8c8c8c]">{link.person.personNumber}</span>
+                      <span className="font-mono text-[11px] text-[#8e8e93]">{link.person.personNumber}</span>
                     </div>
-                    {link.note && <p className="mt-0.5 text-[12px] text-[#a6a6a6]">{link.note}</p>}
+                    {link.note && <p className="mt-0.5 text-[12px] text-[#98989d]">{link.note}</p>}
                   </div>
                   {canManage && (
                     <button
@@ -489,7 +489,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                       onClick={() =>
                         handleUnlinkPerson(link.id, `${link.person.firstName} ${link.person.lastName}`)
                       }
-                      className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
+                      className="shrink-0 text-[#8e8e93] transition-colors hover:text-[#fca5a5]"
                       aria-label="Verknüpfung lösen"
                     >
                       <X className="h-4 w-4" />
@@ -584,7 +584,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                 <li key={spot.id}>
                   <Link
                     href="/map"
-                    className="flex items-center gap-1.5 rounded-full border border-[#343434] px-3 py-1.5 text-[12px] text-[#d4d4d4] hover:border-[#a78bfa]"
+                    className="flex items-center gap-1.5 rounded-full border border-[#38383a] px-3 py-1.5 text-[12px] text-[#d4d4d4] hover:border-[#a78bfa]"
                   >
                     <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} />
                     {spot.title}
@@ -643,7 +643,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             }}
           />
         )}
-        <div className="mt-5 flex justify-end border-t border-[#232323] pt-4">
+        <div className="mt-5 flex justify-end border-t border-[#2c2c2e] pt-4">
           <Button onClick={() => setLinkOpen(null)}>Fertig</Button>
         </div>
       </Modal>

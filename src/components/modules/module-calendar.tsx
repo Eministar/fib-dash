@@ -95,7 +95,7 @@ function DateBadge({ iso, color }: { iso: string; color: string }) {
       >
         <span className="text-[11px] uppercase font-bold tracking-wider" style={{ color }}>{MONTHS_DE[d.getMonth()]}</span>
         <span className="text-[20px] font-bold leading-none text-white">{d.getDate()}</span>
-        <span className="text-[11px] text-[#a6a6a6] mt-0.5">{DAYS_DE[d.getDay()]}</span>
+        <span className="text-[11px] text-[#98989d] mt-0.5">{DAYS_DE[d.getDay()]}</span>
       </div>
   )
 }
@@ -199,16 +199,16 @@ export function ModuleCalendar({
 
         {/* KPI Strip */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-            <p className="text-[11px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Kommend</p>
+          <div className="glass-panel-elevated rounded-[12px] border border-[#38383a]/45 p-3.5">
+            <p className="text-[11px] uppercase tracking-wider text-[#98989d] font-semibold">Kommend</p>
             <p className="mt-1 text-[22px] font-bold text-white">{upcoming.length}</p>
           </div>
-          <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-            <p className="text-[11px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Vergangen</p>
+          <div className="glass-panel-elevated rounded-[12px] border border-[#38383a]/45 p-3.5">
+            <p className="text-[11px] uppercase tracking-wider text-[#98989d] font-semibold">Vergangen</p>
             <p className="mt-1 text-[22px] font-bold text-white">{past.length}</p>
           </div>
-          <div className="glass-panel-elevated rounded-[12px] border border-[#373737]/45 p-3.5">
-            <p className="text-[11px] uppercase tracking-wider text-[#a6a6a6] font-semibold">Nächster</p>
+          <div className="glass-panel-elevated rounded-[12px] border border-[#38383a]/45 p-3.5">
+            <p className="text-[11px] uppercase tracking-wider text-[#98989d] font-semibold">Nächster</p>
             <p className="mt-1 text-[13.5px] font-semibold text-white truncate">{upcoming[0] ? (relativeDay(upcoming[0].startsAt) ?? new Date(upcoming[0].startsAt).toLocaleDateString('de-DE')) : '—'}</p>
           </div>
         </div>
@@ -228,7 +228,7 @@ export function ModuleCalendar({
                       'inline-flex h-8 items-center rounded-[8px] border px-3 text-[12px] font-medium transition-colors',
                       filter === f.id
                           ? 'border-[#d4d4d4]/45 bg-[#d4d4d4]/14 text-[#d4d4d4]'
-                          : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                          : 'border-[#38383a]/60 bg-[#1c1c1e]/55 text-[#98989d] hover:border-[#48484a] hover:text-white',
                   )}
               >
                 {f.label}
@@ -245,7 +245,7 @@ export function ModuleCalendar({
                     key={event.id}
                     className={cn(
                         'glass-panel-elevated rounded-[14px] border p-4 transition-all hover:translate-y-[-1px] group',
-                        isPast ? 'border-[#373737]/30 opacity-70' : 'border-[#373737]/45 hover:border-[#d4d4d4]/30',
+                        isPast ? 'border-[#38383a]/30 opacity-70' : 'border-[#38383a]/45 hover:border-[#d4d4d4]/30',
                     )}
                 >
                   <div className="flex items-start gap-3.5">
@@ -261,7 +261,7 @@ export function ModuleCalendar({
                           {eventTypeLabel(event.type, eventTypes)}
                         </span>
                             {rel && (
-                                <span className="rounded-[5px] bg-[#212121] px-1.5 py-0.5 text-[11px] font-semibold text-[#a6a6a6]">
+                                <span className="rounded-[5px] bg-[#2c2c2e] px-1.5 py-0.5 text-[11px] font-semibold text-[#98989d]">
                             {rel}
                           </span>
                             )}
@@ -270,7 +270,7 @@ export function ModuleCalendar({
                             )}
                           </div>
                           <h3 className="text-[14px] font-semibold text-white leading-snug">{event.title}</h3>
-                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-[#a6a6a6]">
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-[#98989d]">
                             <span className="inline-flex items-center gap-1"><Clock size={11} /> {timeRange(event.startsAt, event.endsAt)}</span>
                             {event.location && <span className="inline-flex items-center gap-1"><MapPin size={11} /> {event.location}</span>}
                           </div>
@@ -279,14 +279,14 @@ export function ModuleCalendar({
                             <button
                                 type="button"
                                 onClick={() => deleteEvent(event)}
-                                className="rounded-[6px] p-1.5 text-[#909090] opacity-0 group-hover:opacity-100 transition-all hover:bg-[#321218]/60 hover:text-[#fca5a5]"
+                                className="rounded-[6px] p-1.5 text-[#8e8e93] opacity-0 group-hover:opacity-100 transition-all hover:bg-[#321218]/60 hover:text-[#fca5a5]"
                                 title="Löschen"
                             >
                               <Trash2 size={13} />
                             </button>
                         )}
                       </div>
-                      {event.description && <p className="mt-2.5 text-[12px] leading-relaxed text-[#c3c3c3] line-clamp-3">{event.description}</p>}
+                      {event.description && <p className="mt-2.5 text-[12px] leading-relaxed text-[#c7c7cc] line-clamp-3">{event.description}</p>}
                       {event.agent && (
                           <Link
                               href={`/agents/${event.agent.id}`}
@@ -307,7 +307,7 @@ export function ModuleCalendar({
               <div className="inline-flex rounded-full p-4 mb-3" style={{ backgroundColor: `${color}12` }}>
                 <CalendarDays size={26} style={{ color }} />
               </div>
-              <p className="text-[13px] text-[#a6a6a6]">
+              <p className="text-[13px] text-[#98989d]">
                 {filter === 'upcoming' ? 'Keine kommenden Termine' : filter === 'past' ? 'Keine vergangenen Termine' : emptyLabel}
               </p>
               {canManage && filter === 'upcoming' && (
@@ -329,7 +329,7 @@ export function ModuleCalendar({
             <Input label="Ort optional" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
             <Select label="Agent-Bezug" value={form.agentId} onValueChange={(agentId) => setForm({ ...form, agentId })} options={agentOptions} />
             <Textarea label="Beschreibung" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
-            <label className="flex items-center gap-2 rounded-[9px] border border-[#343434]/60 bg-[#181818] px-3 py-2 text-[12.5px] text-[#c3c3c3]">
+            <label className="flex items-center gap-2 rounded-[9px] border border-[#38383a]/60 bg-[#1c1c1e] px-3 py-2 text-[12.5px] text-[#c7c7cc]">
               <input type="checkbox" checked={form.discordAnnouncement} onChange={(e) => setForm({ ...form, discordAnnouncement: e.target.checked })} />
               Discord-Ankündigung senden
             </label>

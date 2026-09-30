@@ -13,6 +13,7 @@ import { JOB_APPLICATION_STATUS_META, type JobApplicationStatusValue } from '@/l
 import { renderMarkdown } from '@/lib/markdown'
 import { pressReleaseExcerpt, type PressReleaseStatusValue } from '@/lib/press-releases'
 import { PublicPageTitle, PublicShell } from '@/components/portal/public-shell'
+import { ListSkeleton } from '@/components/ui/loading'
 
 interface PublicPressRelease {
   id: string
@@ -44,7 +45,7 @@ interface ApplicationPortalPayload {
 
 type Section = 'start' | 'bewerbung' | 'presse'
 
-const primaryAction = 'inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-[#d4d4d4] px-3.5 text-[13px] font-medium text-[#181818] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2'
+const primaryAction = 'inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-[#d4d4d4] px-3.5 text-[13px] font-medium text-[#1c1c1e] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2'
 
 const START_ITEMS = [
   { href: '/besucherportal/bewerbung', title: 'Bewerben oder Status prüfen', description: 'Bewerbung einreichen und den Bearbeitungsstand verfolgen.', icon: Briefcase },
@@ -70,15 +71,15 @@ export function VisitorPortal({ section = 'start', pressId }: { section?: Sectio
   return <PublicShell active={section} actions={actions}>
     {section === 'start' && <section>
       <PublicPageTitle title="Willkommen beim FIB" description="Öffentlicher Bereich des Federal Investigation Bureau. Was möchtest du erledigen?" />
-      <ul className="glass-panel-elevated divide-y divide-[#2c2c2c] overflow-hidden rounded-[14px]">
+      <ul className="glass-panel-elevated divide-y divide-[#3a3a3c] overflow-hidden rounded-[14px]">
         {START_ITEMS.map(item => <li key={item.href}>
-          <Link href={item.href} className="group flex items-center gap-4 px-5 py-4 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2">
+          <Link href={item.href} className="group flex items-center gap-4 px-5 py-4 hover:bg-[#2c2c2e] focus-visible:outline focus-visible:outline-2">
             <span className="icon-tile grid h-10 w-10 shrink-0 place-items-center rounded-[10px]"><item.icon size={18} /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-[14px] font-medium text-white">{item.title}</span>
-              <span className="mt-0.5 block text-[12.5px] text-[#909090]">{item.description}</span>
+              <span className="mt-0.5 block text-[12.5px] text-[#8e8e93]">{item.description}</span>
             </span>
-            <ChevronRight size={16} className="shrink-0 text-[#8c8c8c] group-hover:text-white" aria-hidden />
+            <ChevronRight size={16} className="shrink-0 text-[#8e8e93] group-hover:text-white" aria-hidden />
           </Link>
         </li>)}
       </ul>
@@ -86,40 +87,40 @@ export function VisitorPortal({ section = 'start', pressId }: { section?: Sectio
 
     {section === 'bewerbung' && <section className="max-w-2xl">
       <PublicPageTitle title="Deine Bewerbung" description="Einreichen, Bearbeitungsstand prüfen und nächste Schritte sehen." />
-      {authLoading ? <p role="status" className="text-[13px] text-[#a6a6a6]">Anmeldung wird geprüft …</p> : !user ? <div className="glass-panel-elevated rounded-[14px] p-5">
+      {authLoading ? <p role="status" className="text-[13px] text-[#98989d]">Anmeldung wird geprüft …</p> : !user ? <div className="glass-panel-elevated rounded-[14px] p-5">
         <h2 className="text-[15px] font-semibold text-white">Mit Discord anmelden</h2>
-        <p className="mb-4 mt-2 text-[13px] leading-6 text-[#a6a6a6]">Deine Bewerbung wird mit deinem Discord-Konto verknüpft. So kannst du den Status später wieder aufrufen.</p>
+        <p className="mb-4 mt-2 text-[13px] leading-6 text-[#98989d]">Deine Bewerbung wird mit deinem Discord-Konto verknüpft. So kannst du den Status später wieder aufrufen.</p>
         <a href="/api/auth/discord/login?mode=application&remember=1" className={primaryAction}>Mit Discord fortfahren</a>
       </div> : <div className="space-y-4">
-        {application.loading && !application.data ? <p role="status" className="text-[13px] text-[#a6a6a6]">Bewerbung wird geladen …</p> : application.error ? <PortalError message={application.error} retry={application.refetch} /> : currentApplication ? <div className="glass-panel-elevated space-y-3 rounded-[14px] p-5">
-          <div className="flex flex-wrap items-center gap-2"><Badge variant={JOB_APPLICATION_STATUS_META[currentApplication.status].variant}>{JOB_APPLICATION_STATUS_META[currentApplication.status].label}</Badge>{currentApplication.caseNumber && <span className="text-[12px] text-[#a6a6a6]">{currentApplication.caseNumber}</span>}</div>
+        {application.loading && !application.data ? <ListSkeleton /> : application.error ? <PortalError message={application.error} retry={application.refetch} /> : currentApplication ? <div className="glass-panel-elevated space-y-3 rounded-[14px] p-5">
+          <div className="flex flex-wrap items-center gap-2"><Badge variant={JOB_APPLICATION_STATUS_META[currentApplication.status].variant}>{JOB_APPLICATION_STATUS_META[currentApplication.status].label}</Badge>{currentApplication.caseNumber && <span className="text-[12px] text-[#98989d]">{currentApplication.caseNumber}</span>}</div>
           <p className="text-[13.5px] leading-6 text-[#e5e5e5]">{currentApplication.statusText}</p>
-          <p className="text-[12px] text-[#8c8c8c]">Aktualisiert: {formatDateTime(currentApplication.updatedAt)}</p>
-        </div> : <p className="glass-panel-elevated rounded-[14px] p-5 text-[13px] text-[#a6a6a6]">Du hast noch keine Bewerbung eingereicht.</p>}
+          <p className="text-[12px] text-[#8e8e93]">Aktualisiert: {formatDateTime(currentApplication.updatedAt)}</p>
+        </div> : <p className="glass-panel-elevated rounded-[14px] p-5 text-[13px] text-[#98989d]">Du hast noch keine Bewerbung eingereicht.</p>}
         <Link href="/bewerbung" className={primaryAction}>{currentApplication ? 'Bewerbung ansehen' : 'Bewerbung beginnen'}</Link>
       </div>}
     </section>}
 
     {section === 'presse' && <section className="max-w-3xl">
-      {pressId && <Link href="/besucherportal/presse" className="mb-5 inline-flex items-center gap-1.5 text-[12.5px] text-[#a6a6a6] hover:text-white"><ArrowLeft size={14} /> Alle Mitteilungen</Link>}
+      {pressId && <Link href="/besucherportal/presse" className="mb-5 inline-flex items-center gap-1.5 text-[12.5px] text-[#98989d] hover:text-white"><ArrowLeft size={14} /> Alle Mitteilungen</Link>}
       {!pressId && <PublicPageTitle title="Pressemitteilungen" description="Aktuelle Veröffentlichungen des Federal Investigation Bureau." />}
-      {press.loading && !press.data ? <p role="status" className="text-[13px] text-[#a6a6a6]">Mitteilungen werden geladen …</p> : press.error ? <PortalError message={press.error} retry={press.refetch} /> : pressId ? article ? <article>
+      {press.loading && !press.data ? <ListSkeleton /> : press.error ? <PortalError message={press.error} retry={press.refetch} /> : pressId ? article ? <article>
         <h1 className="text-[24px] font-semibold tracking-tight text-white">{article.title}</h1>
-        <p className="mb-5 mt-2 text-[12px] text-[#8c8c8c]">{formatDate(article.publishedAt ?? article.createdAt)}</p>
+        <p className="mb-5 mt-2 text-[12px] text-[#8e8e93]">{formatDate(article.publishedAt ?? article.createdAt)}</p>
         {article.imageUrl && <Image unoptimized src={article.imageUrl} alt={article.imageAlt ?? article.title} width={900} height={450} className="mb-5 max-h-80 w-full rounded-[14px] object-cover" />}
-        {article.summary && <p className="mb-5 text-[14px] leading-6 text-[#c3c3c3]">{article.summary}</p>}
+        {article.summary && <p className="mb-5 text-[14px] leading-6 text-[#c7c7cc]">{article.summary}</p>}
         <div className="markdown-document glass-panel-elevated rounded-[14px] p-5 sm:p-7" dangerouslySetInnerHTML={{ __html: html }} />
-      </article> : <p className="text-[13px] text-[#a6a6a6]">Diese Mitteilung ist nicht verfügbar.</p> : (press.data?.length
-        ? <ul className="glass-panel-elevated divide-y divide-[#2c2c2c] overflow-hidden rounded-[14px]">
+      </article> : <p className="text-[13px] text-[#98989d]">Diese Mitteilung ist nicht verfügbar.</p> : (press.data?.length
+        ? <ul className="glass-panel-elevated divide-y divide-[#3a3a3c] overflow-hidden rounded-[14px]">
           {press.data.map(item => <li key={item.id}>
-            <Link href={`/besucherportal/presse/${item.id}`} className="block px-5 py-4 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2">
-              <p className="text-[12px] text-[#8c8c8c]">{formatDate(item.publishedAt ?? item.createdAt)}</p>
+            <Link href={`/besucherportal/presse/${item.id}`} className="block px-5 py-4 hover:bg-[#2c2c2e] focus-visible:outline focus-visible:outline-2">
+              <p className="text-[12px] text-[#8e8e93]">{formatDate(item.publishedAt ?? item.createdAt)}</p>
               <h2 className="mt-1 text-[14.5px] font-medium text-white">{item.title}</h2>
-              <p className="mt-1.5 line-clamp-2 text-[13px] leading-6 text-[#a6a6a6]">{item.summary || pressReleaseExcerpt(item.content)}</p>
+              <p className="mt-1.5 line-clamp-2 text-[13px] leading-6 text-[#98989d]">{item.summary || pressReleaseExcerpt(item.content)}</p>
             </Link>
           </li>)}
         </ul>
-        : <p className="glass-panel-elevated rounded-[14px] px-5 py-10 text-center text-[13px] text-[#909090]">Noch keine Mitteilungen veröffentlicht.</p>)}
+        : <p className="glass-panel-elevated rounded-[14px] px-5 py-10 text-center text-[13px] text-[#8e8e93]">Noch keine Mitteilungen veröffentlicht.</p>)}
     </section>}
   </PublicShell>
 }

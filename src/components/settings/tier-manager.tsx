@@ -128,26 +128,26 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-[#aeaeae]">
+        <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-[#98989d]">
           <Layers size={14} /> Ebenen
         </p>
         <Button size="sm" variant="secondary" onClick={addTier}>
           <Plus size={13} /> Ebene hinzufügen
         </Button>
       </div>
-      <p className="text-[12px] text-[#909090] mb-3">
+      <p className="text-[12px] text-[#8e8e93] mb-3">
         Eine Ebene vergibt eine Discord-Rolle automatisch an alle Agent mit einem der zugewiesenen Ränge.
         Jeder Rang gehört zu genau einer Ebene.
       </p>
 
       {loading && tiers.length === 0 ? (
-        <p className="text-[12px] text-[#909090]">Lade Ebenen…</p>
+        <p className="text-[12px] text-[#8e8e93]">Lade Ebenen…</p>
       ) : tiers.length === 0 ? (
-        <p className="text-[12px] text-[#8c8c8c]">Noch keine Ebenen angelegt.</p>
+        <p className="text-[12px] text-[#8e8e93]">Noch keine Ebenen angelegt.</p>
       ) : (
         <div className="space-y-3">
           {tiers.map((tier) => (
-            <div key={tier.id} className="rounded-lg border border-[#343434]/50 bg-[#171717]/60 p-3">
+            <div key={tier.id} className="rounded-lg border border-[#38383a]/50 bg-[#171717]/60 p-3">
               <div className="flex flex-col sm:flex-row gap-3 mb-3">
                 <div className="flex-1">
                   <Input
@@ -182,8 +182,8 @@ export function TierManager({ roles, ranks }: TierManagerProps) {
                         selected
                           ? 'border-[#3b82f6] bg-[#1d4ed8]/25 text-[#dfdfdf]'
                           : lockedByOther
-                            ? 'border-[#252525] bg-transparent text-[#8c8c8c] cursor-not-allowed'
-                            : 'border-[#343434]/60 bg-transparent text-[#aeaeae] hover:border-[#2a5a8f]',
+                            ? 'border-[#2c2c2e] bg-transparent text-[#8e8e93] cursor-not-allowed'
+                            : 'border-[#38383a]/60 bg-transparent text-[#98989d] hover:border-[#2a5a8f]',
                       )}
                     >
                       {rank.name}

@@ -47,12 +47,12 @@ export default function DashboardError({
           <AlertTriangle size={22} strokeWidth={1.75} />
         </span>
         <h1 className="text-[17px] font-semibold text-white">Diese Ansicht konnte nicht geladen werden</h1>
-        <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[#a6a6a6]">
+        <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[#98989d]">
           {process.env.NODE_ENV === 'development' && error?.message
             ? error.message
             : 'Der Fehler wurde automatisch gemeldet. Versuch es erneut – der Rest des Dashboards funktioniert weiter.'}
         </p>
-        {error?.digest && <p className="mt-2 font-mono text-[11px] text-[#8c8c8c]">Fehler-ID: {error.digest}</p>}
+        {error?.digest && <p className="mt-2 font-mono text-[11px] text-[#8e8e93]">Fehler-ID: {error.digest}</p>}
         <div className="mt-6 flex flex-col-reverse justify-center gap-2 sm:flex-row">
           <Link href="/dashboard">
             <Button variant="ghost" className="w-full">Zum Dashboard</Button>

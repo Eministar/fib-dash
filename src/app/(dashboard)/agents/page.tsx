@@ -155,7 +155,7 @@ function DiscordMemberBadge({ agent, compact = false }: { agent: Pick<Agent, 'di
       ? inGuild ? 'Auf Discord' : 'Nicht auf Discord'
       : 'Discord ungeprüft'
   const className = !hasDiscordId || !checked
-    ? 'border-[#404040]/50 bg-[#1d1d1d]/70 text-[#909090]'
+    ? 'border-[#48484a]/50 bg-[#1c1c1e]/70 text-[#8e8e93]'
     : inGuild
       ? 'border-[#166534]/50 bg-[#052e1a]/70 text-[#86efac]'
       : 'border-[#7f1d1d]/55 bg-[#2a1212]/70 text-[#fca5a5]'
@@ -203,7 +203,7 @@ function FlagButton({
       style={{ backgroundColor: value ? getFlagColor(value) : 'transparent' }}
       onClick={(e) => e.stopPropagation()}
     >
-      {!value && <Flag size={size === 'lg' ? 13 : 10} className="text-[#8c8c8c]" strokeWidth={1.75} />}
+      {!value && <Flag size={size === 'lg' ? 13 : 10} className="text-[#8e8e93]" strokeWidth={1.75} />}
     </button>
   )
 
@@ -216,7 +216,7 @@ function FlagButton({
         <Popover.Content
           align="end"
           sideOffset={6}
-          className="z-[200] glass-panel-elevated rounded-[10px] p-1.5 border border-[#404040]/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+          className="z-[200] glass-panel-elevated rounded-[10px] p-1.5 border border-[#48484a]/90 shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1">
@@ -230,11 +230,11 @@ function FlagButton({
                     title={opt.label}
                     className={cn(
                       'h-[28px] w-[28px] rounded-full border flex items-center justify-center transition-all',
-                      active ? 'ring-2 ring-[#d4d4d4] ring-offset-1 ring-offset-[#1d1d1d] border-transparent' : 'border-[#404040]/70 hover:border-[#d4d4d4]/60'
+                      active ? 'ring-2 ring-[#d4d4d4] ring-offset-1 ring-offset-[#1c1c1e] border-transparent' : 'border-[#48484a]/70 hover:border-[#d4d4d4]/60'
                     )}
                     style={{ backgroundColor: opt.id ? opt.color : 'transparent' }}
                   >
-                    {!opt.id && <Flag size={12} className="text-[#a6a6a6]" strokeWidth={1.75} />}
+                    {!opt.id && <Flag size={12} className="text-[#98989d]" strokeWidth={1.75} />}
                   </button>
                 </Popover.Close>
               )
@@ -281,9 +281,9 @@ function DraggableAgentRow({
       style={style}
       className={cn(
         'transition-colors duration-100',
-        agent.flag ? getFlagRowClass(agent.flag) : 'hover:bg-[#212121]',
+        agent.flag ? getFlagRowClass(agent.flag) : 'hover:bg-[#2c2c2e]',
         isDragging && 'opacity-40 z-10',
-        rowIndex > 0 && 'border-t border-[#343434]'
+        rowIndex > 0 && 'border-t border-[#38383a]'
       )}
     >
       <td className="px-0 py-0 w-[3px]" aria-hidden>
@@ -298,7 +298,7 @@ function DraggableAgentRow({
         {canDrag ? (
           <button
             type="button"
-            className="inline-flex p-1 rounded-md text-[#8c8c8c] hover:text-[#d4d4d4] cursor-grab active:cursor-grabbing"
+            className="inline-flex p-1 rounded-md text-[#8e8e93] hover:text-[#d4d4d4] cursor-grab active:cursor-grabbing"
             aria-label="Zum Verschieben ziehen"
             {...attributes}
             {...listeners}
@@ -310,7 +310,7 @@ function DraggableAgentRow({
           <span className="inline-block w-5" />
         )}
       </td>
-      <td className="px-2 py-2.5 font-mono text-[12px] text-[#c3c3c3] align-middle">
+      <td className="px-2 py-2.5 font-mono text-[12px] text-[#c7c7cc] align-middle">
         {displayBadgeNumber(agent.badgeNumber)}
       </td>
       <td className="px-3 py-2.5 align-middle min-w-0 overflow-hidden">
@@ -340,12 +340,12 @@ function DraggableAgentRow({
               title={!available ? `${t.label} ist erst ab ${t.minRank?.name ?? 'Mindestrang'} vorgesehen` : t.label}
               className={cn(
                 'mx-auto h-[18px] w-[18px] rounded-[4px] flex items-center justify-center transition-all duration-150',
-                completed ? 'bg-[#d4d4d4]' : available ? 'bg-[#343434]' : 'bg-[#1d1d1d] border border-dashed border-[#808080]/60',
+                completed ? 'bg-[#d4d4d4]' : available ? 'bg-[#38383a]' : 'bg-[#1c1c1e] border border-dashed border-[#808080]/60',
                 !available && !completed && 'opacity-70',
-                canEditTrainings ? 'hover:bg-[#373737]' : 'cursor-not-allowed opacity-70'
+                canEditTrainings ? 'hover:bg-[#38383a]' : 'cursor-not-allowed opacity-70'
               )}
             >
-              {completed && <Check size={11} className="text-[#1d1d1d]" strokeWidth={3} />}
+              {completed && <Check size={11} className="text-[#1c1c1e]" strokeWidth={3} />}
             </button>
           </td>
         )
@@ -356,16 +356,16 @@ function DraggableAgentRow({
       <td className="px-2 py-2.5 whitespace-nowrap">
         <span className="inline-flex items-center gap-1.5">
           <span className={cn('h-[6px] w-[6px] rounded-full', getStatusDot(agent.status))} />
-          <span className="text-[12px] text-[#a6a6a6]">{getStatusLabel(agent.status)}</span>
+          <span className="text-[12px] text-[#98989d]">{getStatusLabel(agent.status)}</span>
         </span>
       </td>
       <td className="px-2 py-2.5 whitespace-nowrap">
         <DiscordMemberBadge agent={agent} compact />
       </td>
-      <td className="px-2 py-2.5 text-[12px] text-[#a6a6a6]" title={agent.lastOnline ? formatDateTime(agent.lastOnline) : 'Nie online gewesen'}>
+      <td className="px-2 py-2.5 text-[12px] text-[#98989d]" title={agent.lastOnline ? formatDateTime(agent.lastOnline) : 'Nie online gewesen'}>
         {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
       </td>
-      <td className="px-2 py-2.5 text-[12px] text-[#a6a6a6]">{formatDate(agent.hireDate)}</td>
+      <td className="px-2 py-2.5 text-[12px] text-[#98989d]">{formatDate(agent.hireDate)}</td>
       <td className="px-1.5 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1.5">
           <FlagButton
@@ -373,7 +373,7 @@ function DraggableAgentRow({
             disabled={!canEdit}
             onChange={(v) => onFlagChange(agent.id, v)}
           />
-          {agent.notes && <StickyNote size={12} className="text-[#8c8c8c]" strokeWidth={1.75} />}
+          {agent.notes && <StickyNote size={12} className="text-[#8e8e93]" strokeWidth={1.75} />}
         </div>
       </td>
     </tr>
@@ -400,8 +400,8 @@ function MobileAgentCard({
   return (
     <div
       className={cn(
-        'relative w-full rounded-[10px] border border-[#343434]/40 px-3.5 py-3 transition-colors',
-        agent.flag ? getFlagRowClass(agent.flag) : 'bg-[#181818]/60 hover:bg-[#212121]'
+        'relative w-full rounded-[10px] border border-[#38383a]/40 px-3.5 py-3 transition-colors',
+        agent.flag ? getFlagRowClass(agent.flag) : 'bg-[#1c1c1e]/60 hover:bg-[#2c2c2e]'
       )}
     >
       {agent.flag && (
@@ -415,7 +415,7 @@ function MobileAgentCard({
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <AgentAvatar agent={agent} ringColor={agent.rank.color} />
           <div className="min-w-0">
-            <span className="mb-1 block font-mono text-[11px] text-[#c3c3c3]">
+            <span className="mb-1 block font-mono text-[11px] text-[#c7c7cc]">
               {displayBadgeNumber(agent.badgeNumber)}
             </span>
             <Link
@@ -442,20 +442,20 @@ function MobileAgentCard({
           {agentUnitKeys(agent).length > 0 ? (
             <UnitBadges agent={agent} unitsByKey={unitsByKey} maxVisible={3} />
           ) : (
-            <span className="text-[11px] text-[#8c8c8c]">—</span>
+            <span className="text-[11px] text-[#8e8e93]">—</span>
           )}
         </div>
         <span className="inline-flex items-center gap-1.5 justify-self-end whitespace-nowrap pt-[3px]">
           <span className={cn('h-[6px] w-[6px] rounded-full shrink-0', getStatusDot(agent.status))} />
-          <span className="text-[11.5px] text-[#a6a6a6]">{getStatusLabel(agent.status)}</span>
+          <span className="text-[11.5px] text-[#98989d]">{getStatusLabel(agent.status)}</span>
         </span>
         <div className="col-span-2 flex items-center gap-2">
           <DiscordMemberBadge agent={agent} compact />
-          <span className="text-[11.5px] text-[#a6a6a6]">
+          <span className="text-[11.5px] text-[#98989d]">
             Zuletzt online: {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
           </span>
-          <span className="text-[11.5px] text-[#a6a6a6]">{formatDate(agent.hireDate)}</span>
-          {agent.notes && <StickyNote size={11} className="text-[#8c8c8c]" strokeWidth={1.75} />}
+          <span className="text-[11.5px] text-[#98989d]">{formatDate(agent.hireDate)}</span>
+          {agent.notes && <StickyNote size={11} className="text-[#8e8e93]" strokeWidth={1.75} />}
         </div>
       </div>
 
@@ -477,18 +477,18 @@ function MobileAgentCard({
                   completed
                     ? 'bg-[#d4d4d4]/15 border-[#d4d4d4]/40 text-[#e6d27a]'
                     : available
-                      ? 'bg-[#1d1d1d] border-[#343434]/60 text-[#909090]'
-                      : 'bg-[#080808] border-dashed border-[#808080]/50 text-[#8c8c8c]',
-                  canEditTrainings ? 'hover:border-[#404040]' : 'cursor-not-allowed opacity-70'
+                      ? 'bg-[#1c1c1e] border-[#38383a]/60 text-[#8e8e93]'
+                      : 'bg-[#000000] border-dashed border-[#808080]/50 text-[#8e8e93]',
+                  canEditTrainings ? 'hover:border-[#48484a]' : 'cursor-not-allowed opacity-70'
                 )}
               >
                 <span
                   className={cn(
                     'h-[10px] w-[10px] rounded-[3px] flex items-center justify-center',
-                    completed ? 'bg-[#d4d4d4]' : 'bg-[#343434]'
+                    completed ? 'bg-[#d4d4d4]' : 'bg-[#38383a]'
                   )}
                 >
-                  {completed && <Check size={7} className="text-[#1d1d1d]" strokeWidth={3} />}
+                  {completed && <Check size={7} className="text-[#1c1c1e]" strokeWidth={3} />}
                 </span>
                 {t.label}
               </button>
@@ -732,7 +732,7 @@ export default function AgentsPage() {
   if (loading) return <PageLoader withHeader />
 
   const filterClass =
-    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1d1d1d] text-[#c3c3c3] border border-[#343434]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
+    'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1c1c1e] text-[#c7c7cc] border border-[#38383a]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
   const totalActive = agents?.filter((o) => o.status === 'ACTIVE').length || 0
   const totalAway = agents?.filter((o) => o.status === 'AWAY' || o.status === 'ON_LEAVE').length || 0
   const totalFlagged = agents?.filter((o) => o.flag).length || 0
@@ -760,14 +760,14 @@ export default function AgentsPage() {
         <div className="relative">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8c8c]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8e8e93]"
             strokeWidth={1.75}
           />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche nach Name, Dienstnummer oder Discord-ID..."
-            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8c8c8c]')}
+            className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8e8e93]')}
           />
         </div>
 
@@ -827,8 +827,8 @@ export default function AgentsPage() {
         <div className="w-full min-w-0 rounded-[12px] overflow-hidden">
           {groupedByRank.length === 0 && (
             <div className="text-center py-24">
-              <Users size={28} className="mx-auto text-[#8c8c8c] mb-3" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#a6a6a6]">Keine Ränge gefunden</p>
+              <Users size={28} className="mx-auto text-[#8e8e93] mb-3" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#98989d]">Keine Ränge gefunden</p>
             </div>
           )}
 
@@ -840,19 +840,19 @@ export default function AgentsPage() {
                   <button
                     type="button"
                     onClick={() => toggleRankCollapse(rank.id)}
-                    className="w-full flex items-center gap-2.5 px-3 sm:px-4 py-2 rounded-[8px] hover:bg-[#212121] transition-colors group"
+                    className="w-full flex items-center gap-2.5 px-3 sm:px-4 py-2 rounded-[8px] hover:bg-[#2c2c2e] transition-colors group"
                   >
                     <ChevronDown
                       size={14}
                       strokeWidth={2}
-                      className={cn('text-[#8c8c8c] transition-transform duration-200 shrink-0', isCollapsed && '-rotate-90')}
+                      className={cn('text-[#8e8e93] transition-transform duration-200 shrink-0', isCollapsed && '-rotate-90')}
                     />
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: rank.color }} />
                     <span className="truncate text-[13px] font-semibold text-[#eee]">{rank.name}</span>
                     <RankNumberBadge number={rank.internalNumber} />
-                    <span className="text-[12px] text-[#8c8c8c] font-normal shrink-0">{groupAgents.length}</span>
+                    <span className="text-[12px] text-[#8e8e93] font-normal shrink-0">{groupAgents.length}</span>
                     {rank.badgeMin != null && rank.badgeMax != null && (
-                      <span className="hidden sm:inline text-[11px] text-[#8c8c8c] ml-auto font-mono">
+                      <span className="hidden sm:inline text-[11px] text-[#8e8e93] ml-auto font-mono">
                         DN {formatBadgeNumber(rank.badgeMin, '')}–{formatBadgeNumber(rank.badgeMax, '')}
                       </span>
                     )}
@@ -874,12 +874,12 @@ export default function AgentsPage() {
                               <tr>
                                 <th className="w-[3px] p-0" />
                                 <th className="w-[28px] px-1 py-2.5" />
-                                <th className="w-[58px] px-2 py-2.5 text-left text-[11px] font-medium text-[#909090]">DN</th>
-                                <th className="w-[170px] px-3 py-2.5 text-left text-[11px] font-medium text-[#909090]">Name</th>
+                                <th className="w-[58px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">DN</th>
+                                <th className="w-[170px] px-3 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Name</th>
                                 {allTrainings.map((t) => (
                                   <th
                                     key={t.id}
-                                    className="px-1.5 py-2.5 text-center text-[11px] font-medium text-[#909090]"
+                                    className="px-1.5 py-2.5 text-center text-[11px] font-medium text-[#8e8e93]"
                                     title={t.label}
                                   >
                                     <span className="block mx-auto max-w-full whitespace-normal break-words leading-tight">
@@ -887,12 +887,12 @@ export default function AgentsPage() {
                                     </span>
                                   </th>
                                 ))}
-                                <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#909090]">Unit</th>
-                                <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#909090]">Status</th>
-                                <th className="w-[112px] px-2 py-2.5 text-left text-[11px] font-medium text-[#909090]">Discord</th>
-                                <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#909090]">Zuletzt Online</th>
-                                <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#909090]">Einstellung</th>
-                                <th className="w-[44px] px-1.5 py-2.5 text-center text-[11px] font-medium text-[#909090]">
+                                <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Unit</th>
+                                <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Status</th>
+                                <th className="w-[112px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Discord</th>
+                                <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Zuletzt Online</th>
+                                <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Einstellung</th>
+                                <th className="w-[44px] px-1.5 py-2.5 text-center text-[11px] font-medium text-[#8e8e93]">
                                   <Flag size={11} className="inline" strokeWidth={1.75} />
                                 </th>
                               </tr>
@@ -915,7 +915,7 @@ export default function AgentsPage() {
                                 ))
                               ) : (
                                 <tr>
-                                  <td colSpan={10 + allTrainings.length} className="px-4 py-4 text-center text-[12.5px] text-[#909090]">
+                                  <td colSpan={10 + allTrainings.length} className="px-4 py-4 text-center text-[12.5px] text-[#8e8e93]">
                                     — Kein Agent hat diesen Rang
                                   </td>
                                 </tr>
@@ -940,7 +940,7 @@ export default function AgentsPage() {
                               />
                             ))
                           ) : (
-                            <div className="rounded-[10px] border border-dashed border-[#343434]/70 bg-[#181818]/40 px-3.5 py-3 text-center text-[12.5px] text-[#909090]">
+                            <div className="rounded-[10px] border border-dashed border-[#38383a]/70 bg-[#1c1c1e]/40 px-3.5 py-3 text-center text-[12.5px] text-[#8e8e93]">
                               — Kein Agent hat diesen Rang
                             </div>
                           )}
@@ -963,23 +963,23 @@ export default function AgentsPage() {
         {pendingTrainingOverride && (
           <div className="space-y-4">
             <div className="rounded-[10px] border border-[#d4d4d4]/25 bg-[#1d1608]/60 px-3.5 py-3">
-              <p className="text-[13px] font-medium text-[#f4f4f4]">
+              <p className="text-[13px] font-medium text-[#f5f5f7]">
                 {pendingTrainingOverride.training.label}
               </p>
-              <p className="mt-1 text-[12.5px] text-[#aeaeae]">
+              <p className="mt-1 text-[12.5px] text-[#98989d]">
                 Vorgesehen ab: {pendingTrainingOverride.training.minRank?.name ?? 'Mindestrang'}
               </p>
             </div>
-            <div className="rounded-[10px] border border-[#343434]/70 bg-[#181818]/70 px-3.5 py-3">
-              <p className="text-[12px] text-[#a6a6a6]">Agent</p>
+            <div className="rounded-[10px] border border-[#38383a]/70 bg-[#1c1c1e]/70 px-3.5 py-3">
+              <p className="text-[12px] text-[#98989d]">Agent</p>
               <p className="mt-1 text-[14px] font-semibold text-white">
                 {pendingTrainingOverride.agent.firstName} {pendingTrainingOverride.agent.lastName}
               </p>
-              <p className="mt-1 text-[12.5px] text-[#aeaeae]">
+              <p className="mt-1 text-[12.5px] text-[#98989d]">
                 DN {displayBadgeNumber(pendingTrainingOverride.agent.badgeNumber)} · {pendingTrainingOverride.agent.rank.name}
               </p>
             </div>
-            <p className="text-[13px] leading-relaxed text-[#aeaeae]">
+            <p className="text-[13px] leading-relaxed text-[#98989d]">
               Möchtest du diese Ausbildung wirklich exakt diesem Agent geben?
             </p>
             <div className="flex justify-end gap-2 pt-1">

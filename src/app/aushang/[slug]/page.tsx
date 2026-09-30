@@ -32,7 +32,7 @@ function Gate({ slug, state }: { slug: string; state: 'login' | 'denied' }) {
     <div className="glass-panel-elevated mx-auto max-w-md rounded-[14px] p-7 text-center">
       <div className="icon-tile mx-auto mb-4 grid h-12 w-12 place-items-center rounded-[12px]"><Lock size={20} /></div>
       <h1 className="text-[18px] font-semibold text-white">{state === 'login' ? 'Geschlossener Aushang' : 'Kein Zugriff'}</h1>
-      <p className="mt-2 text-[13px] leading-6 text-[#a6a6a6]">
+      <p className="mt-2 text-[13px] leading-6 text-[#98989d]">
         {state === 'login'
           ? 'Dieser Aushang ist nur für bestimmte Discord-Rollen freigegeben. Melde dich mit Discord an – danach landest du wieder hier.'
           : 'Deinem Discord-Konto fehlt eine der freigegebenen Rollen. Wende dich an die Person, die dir den Link geschickt hat.'}
@@ -40,7 +40,7 @@ function Gate({ slug, state }: { slug: string; state: 'login' | 'denied' }) {
       {state === 'login' && (
         <a
           href={`/api/auth/discord/login?mode=contract&remember=1&redirect=${encodeURIComponent(`/aushang/${slug}`)}`}
-          className="mt-5 inline-flex h-[36px] items-center rounded-[8px] bg-[#d4d4d4] px-4 text-[13px] font-medium text-[#181818] hover:bg-white"
+          className="mt-5 inline-flex h-[36px] items-center rounded-[8px] bg-[#d4d4d4] px-4 text-[13px] font-medium text-[#1c1c1e] hover:bg-white"
         >
           Mit Discord anmelden
         </a>
@@ -59,16 +59,16 @@ export default async function PublicNoticePage({ params }: Props) {
 
   return (
     <PublicShell active="aushang">
-      <Link href="/aushang" className="mb-5 inline-flex items-center gap-1.5 text-[12.5px] text-[#a6a6a6] hover:text-white">
+      <Link href="/aushang" className="mb-5 inline-flex items-center gap-1.5 text-[12.5px] text-[#98989d] hover:text-white">
         <ArrowLeft size={14} /> Schwarzes Brett
       </Link>
       <header className="mb-6">
         <h1 className="flex items-center gap-2 text-[24px] font-semibold tracking-tight text-white">
-          {publication.access === 'ROLES' && <Lock size={18} className="shrink-0 text-[#a6a6a6]" aria-label="Geschlossener Aushang" />}
+          {publication.access === 'ROLES' && <Lock size={18} className="shrink-0 text-[#98989d]" aria-label="Geschlossener Aushang" />}
           {publication.title}
         </h1>
-        {publication.summary && <p className="mt-2 text-[14px] leading-6 text-[#a6a6a6]">{publication.summary}</p>}
-        <p className="mt-2 text-[12px] text-[#8c8c8c]">
+        {publication.summary && <p className="mt-2 text-[14px] leading-6 text-[#98989d]">{publication.summary}</p>}
+        <p className="mt-2 text-[12px] text-[#8e8e93]">
           Veröffentlicht am {formatDate(publication.publishedAt ?? publication.createdAt)}
           {publication.updatedAt > (publication.publishedAt ?? publication.createdAt) && ` · aktualisiert am ${formatDate(publication.updatedAt)}`}
         </p>

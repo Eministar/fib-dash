@@ -21,17 +21,17 @@ export function Checkbox({ checked, onCheckedChange, label, disabled, className 
         disabled={disabled}
         className={cn(
           'h-[18px] w-[18px] rounded-[5px] border transition-all duration-150',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40',
+          'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#0a84ff]/50',
           checked
-            ? 'bg-gradient-to-b from-[#d4d4d4] to-[#b8b8b8] border-[#b8b8b8] text-[#181818] shadow-[0_1px_2px_rgba(212,212,212,0.2)]'
-            : 'border-[#464646] bg-[#181818]/60'
+            ? 'bg-[#0a84ff] border-[#0a84ff] text-white'
+            : 'border-[#636366] bg-[#2c2c2e]'
         )}
       >
         <CheckboxPrimitive.Indicator className="flex items-center justify-center">
           <Check size={12} strokeWidth={3} />
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
-      {label && <span className="text-[13px] text-[#c3c3c3]">{label}</span>}
+      {label && <span className="text-[13px] text-[#c7c7cc]">{label}</span>}
     </label>
   )
 }

@@ -11,7 +11,7 @@ import {
   ShieldX,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PdCloudLoader } from '@/components/ui/loading'
+import { DocumentSkeleton } from '@/components/ui/loading'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { ContractDocument, type ContractDocumentData } from '@/components/contracts/contract-document'
@@ -153,10 +153,7 @@ export default function ContractSigningPage() {
   if (state.kind === 'loading') {
     return (
       <Shell>
-        <div className="flex flex-col items-center gap-3 py-24 text-[#a6a6a6]">
-          <PdCloudLoader />
-          <p className="text-[13px]">Vertrag wird geladen…</p>
-        </div>
+        <DocumentSkeleton />
       </Shell>
     )
   }
@@ -187,7 +184,7 @@ export default function ContractSigningPage() {
             Federal Investigation Bureau
           </p>
           <h1 className="mt-1 text-[20px] font-semibold text-white">{signedContract.title}</h1>
-          <p className="mt-1 text-[12.5px] text-[#a6a6a6]">
+          <p className="mt-1 text-[12.5px] text-[#98989d]">
             <StatusLine contract={signedContract} />
           </p>
         </div>
@@ -198,12 +195,12 @@ export default function ContractSigningPage() {
       </div>
 
       {signedContract.access === 'auditor' && (
-        <div className="contract-no-print mb-5 rounded-[14px] border border-[#373737]/55 bg-[#181818]/60 p-4">
+        <div className="contract-no-print mb-5 rounded-[14px] border border-[#38383a]/55 bg-[#1c1c1e]/60 p-4">
           <div className="flex items-start gap-3">
             <Eye size={18} className="mt-0.5 shrink-0 text-[#93c5fd]" />
             <div>
               <p className="text-[13px] font-semibold text-white">Einsicht</p>
-              <p className="mt-1 text-[12.5px] leading-5 text-[#a6a6a6]">
+              <p className="mt-1 text-[12.5px] leading-5 text-[#98989d]">
                 Du siehst diesen Vertrag über deine Berechtigung zur Vertragseinsicht. Damit du
                 nicht versehentlich für die Gegenseite zeichnest, kannst du ihn hier nur lesen —
                 unterschreiben kann ihn jeder, der den Vertragslink erhalten hat.
@@ -239,7 +236,7 @@ export default function ContractSigningPage() {
       </ContractDocument>
 
       {editable && (
-        <div className="contract-no-print mt-5 rounded-[14px] border border-[#373737]/45 bg-[#1b1b1b]/80 p-4">
+        <div className="contract-no-print mt-5 rounded-[14px] border border-[#38383a]/45 bg-[#1c1c1e]/80 p-4">
           {missingRequired.length > 0 && (
             <p className="mb-3 text-[12.5px] text-[#f3b7b7]">
               Noch offen: {missingRequired.map((field) => field.label).join(', ')}
@@ -271,7 +268,7 @@ export default function ContractSigningPage() {
                 onChange={(event) => setDeclineReason(event.target.value)}
                 rows={3}
                 placeholder="Grund (optional)"
-                className="mt-2 w-full resize-none rounded-[9px] border border-[#4a2020]/70 bg-[#120b0b]/60 px-3 py-2 text-[13px] text-[#f4f4f4] outline-none placeholder:text-[#7a5555] focus:border-[#b45252]"
+                className="mt-2 w-full resize-none rounded-[9px] border border-[#4a2020]/70 bg-[#120b0b]/60 px-3 py-2 text-[13px] text-[#f5f5f7] outline-none placeholder:text-[#7a5555] focus:border-[#b45252]"
               />
               <div className="mt-2 flex justify-end">
                 <Button variant="danger" size="sm" onClick={decline} loading={declining}>
@@ -318,7 +315,7 @@ function StatusLine({ contract }: { contract: ContractPayload }) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[#080808] px-3 py-8 sm:px-6 lg:py-12">
+    <main className="min-h-screen bg-[#000000] px-3 py-8 sm:px-6 lg:py-12">
       <div className="mx-auto w-full max-w-[900px]">{children}</div>
     </main>
   )
@@ -336,12 +333,12 @@ function Notice({
   children?: React.ReactNode
 }) {
   return (
-    <section className="glass-panel-elevated rounded-[14px] border border-[#373737]/45 p-8 text-center">
+    <section className="glass-panel-elevated rounded-[14px] border border-[#38383a]/45 p-8 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[14px] border border-[#d4d4d4]/30 bg-[#d4d4d4]/12 text-[#d4d4d4]">
         <Icon size={26} />
       </div>
       <h1 className="text-[19px] font-semibold text-white">{title}</h1>
-      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#a6a6a6]">{description}</p>
+      <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#98989d]">{description}</p>
       {children && <div className="mt-5 flex justify-center">{children}</div>}
     </section>
   )

@@ -17,18 +17,18 @@ export function PageHeader({ title, description, eyebrow, action, breadcrumbs }:
                 <div className="min-w-0">
                     {breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
                     {eyebrow && (
-                        <p className="text-xs font-medium text-[#909090] mb-2">
+                        <p className="text-xs font-medium text-[#8e8e93] mb-2">
                             {eyebrow}
                         </p>
                     )}
                     <h1 className="text-[22px] sm:text-[24px] font-semibold text-white tracking-[-0.02em] leading-tight">{title}</h1>
                     {description && (
-                        <p className="text-[13px] text-[#a6a6a6] mt-1.5 max-w-2xl leading-relaxed">{description}</p>
+                        <p className="text-[13px] text-[#98989d] mt-1.5 max-w-2xl leading-relaxed">{description}</p>
                     )}
                 </div>
                 {action && <div className="shrink-0 flex flex-wrap gap-2">{action}</div>}
             </div>
-            <div className="mt-5 h-px w-full bg-[#343434]" />
+            <div className="mt-5 h-px w-full bg-[#38383a]" />
         </div>
     )
 }

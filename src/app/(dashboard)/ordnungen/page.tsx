@@ -20,7 +20,7 @@ function IconButton({ label, danger, onClick, children }: { label: string; dange
       onClick={(event) => { event.preventDefault(); onClick() }}
       aria-label={label}
       title={label}
-      className={`grid h-8 w-8 place-items-center rounded-[7px] text-[#919191] transition-colors hover:bg-[#262626] focus-visible:outline focus-visible:outline-2 ${danger ? 'hover:text-[#ff6b6b]' : 'hover:text-white'}`}
+      className={`grid h-8 w-8 place-items-center rounded-[7px] text-[#8e8e93] transition-colors hover:bg-[#2c2c2e] focus-visible:outline focus-visible:outline-2 ${danger ? 'hover:text-[#ff6b6b]' : 'hover:text-white'}`}
     >
       {children}
     </button>
@@ -57,10 +57,10 @@ export default function OrdnungenPage() {
         {data && canManage && <OrdnungenManager ref={managerRef} payload={data} canManage={canManage} onChanged={refetch} />}
       </div>
 
-      {isLoading && <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-16 animate-pulse rounded-[12px] bg-[#1c1c1c]" />)}</div>}
+      {isLoading && <div className="space-y-2">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-16 animate-pulse rounded-[12px] bg-[#1c1c1e]" />)}</div>}
 
       {!isLoading && matches === 0 && search.trim() && (
-        <p className="rounded-[12px] border border-[#343434] px-4 py-8 text-center text-[13px] text-[#909090]">Keine Ordnung passt zu „{search.trim()}“.</p>
+        <p className="rounded-[12px] border border-[#38383a] px-4 py-8 text-center text-[13px] text-[#8e8e93]">Keine Ordnung passt zu „{search.trim()}“.</p>
       )}
 
       <div className="space-y-8">
@@ -70,8 +70,8 @@ export default function OrdnungenPage() {
             <section key={category.id} aria-labelledby={`kategorie-${category.id}`}>
               <div className="mb-2 flex items-center gap-2.5 px-1">
                 <CategoryIcon size={15} strokeWidth={2} style={{ color: category.color }} aria-hidden />
-                <h2 id={`kategorie-${category.id}`} className="text-[13.5px] font-semibold text-[#f4f4f4]">{category.label}</h2>
-                <span className="text-[12px] text-[#8c8c8c]">{items.length}</span>
+                <h2 id={`kategorie-${category.id}`} className="text-[13.5px] font-semibold text-[#f5f5f7]">{category.label}</h2>
+                <span className="text-[12px] text-[#8e8e93]">{items.length}</span>
                 {canManage && (
                   <div className="ml-auto flex">
                     <IconButton label="Kategorie bearbeiten" onClick={() => managerRef.current?.openEditCategory(category)}><Pencil size={13} /></IconButton>
@@ -79,23 +79,23 @@ export default function OrdnungenPage() {
                   </div>
                 )}
               </div>
-              {category.description && <p className="mb-2 px-1 text-[12px] text-[#909090]">{category.description}</p>}
+              {category.description && <p className="mb-2 px-1 text-[12px] text-[#8e8e93]">{category.description}</p>}
 
               {items.length === 0
-                ? <p className="rounded-[12px] border border-dashed border-[#343434] px-4 py-4 text-[12.5px] text-[#8c8c8c]">Noch keine Ordnung in diesem Bereich.</p>
+                ? <p className="rounded-[12px] border border-dashed border-[#38383a] px-4 py-4 text-[12.5px] text-[#8e8e93]">Noch keine Ordnung in diesem Bereich.</p>
                 : (
-                  <ul className="divide-y divide-[#2c2c2c] overflow-hidden rounded-[12px] border border-[#343434] bg-[#161616]">
+                  <ul className="divide-y divide-[#3a3a3c] overflow-hidden rounded-[12px] border border-[#38383a] bg-[#161617]">
                     {items.map((ordnung) => {
                       const Icon = ordnungIcon(ordnung.icon)
                       return (
-                        <li key={ordnung.id} className="group flex items-center gap-2 pr-2 hover:bg-[#1e1e1e]">
+                        <li key={ordnung.id} className="group flex items-center gap-2 pr-2 hover:bg-[#1c1c1e]">
                           <Link href={`/ordnungen/${ordnung.slug}`} className="flex min-w-0 flex-1 items-center gap-3.5 px-4 py-3.5 focus-visible:outline focus-visible:outline-2">
                             <Icon size={18} strokeWidth={1.75} className="shrink-0" style={{ color: category.color }} aria-hidden />
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-[14px] font-medium text-[#f2f2f2]">{ordnung.title}</span>
-                              <span className="mt-0.5 block truncate text-[12.5px] text-[#909090]">{ordnung.description}</span>
+                              <span className="mt-0.5 block truncate text-[12.5px] text-[#8e8e93]">{ordnung.description}</span>
                             </span>
-                            <ChevronRight size={16} className="shrink-0 text-[#8c8c8c] group-hover:text-white" aria-hidden />
+                            <ChevronRight size={16} className="shrink-0 text-[#8e8e93] group-hover:text-white" aria-hidden />
                           </Link>
                           {canManage && (
                             <div className="flex shrink-0">

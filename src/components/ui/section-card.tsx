@@ -34,13 +34,13 @@ export function SectionCard({
         <h2 className="flex items-center gap-2 text-[14px] font-semibold text-white">
           {title}
           {count !== undefined && (
-            <span className="rounded-full bg-[#232323] px-1.5 font-mono text-[11px] text-[#909090]">{count}</span>
+            <span className="rounded-full bg-[#2c2c2e] px-1.5 font-mono text-[11px] text-[#8e8e93]">{count}</span>
           )}
         </h2>
         {action && <div className="shrink-0">{action}</div>}
       </div>
 
-      {isEmpty && empty ? <p className="py-3 text-[12.5px] text-[#8c8c8c]">{empty}</p> : children}
+      {isEmpty && empty ? <p className="py-3 text-[12.5px] text-[#8e8e93]">{empty}</p> : children}
     </Card>
   )
 }

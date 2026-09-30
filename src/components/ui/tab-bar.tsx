@@ -25,7 +25,7 @@ export function TabBar({
   label: string
 }) {
   return (
-    <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label={label}>
+    <div className="mb-5 inline-flex max-w-full flex-wrap gap-[2px] rounded-[9px] bg-[#1c1c1e] p-[3px]" role="tablist" aria-label={label}>
       {tabs.map((tab) => {
         const isActive = tab.id === active
         return (
@@ -36,11 +36,11 @@ export function TabBar({
             aria-selected={isActive}
             onClick={() => onSelect(tab.id)}
             className={cn(
-              'inline-flex h-9 items-center gap-2 rounded-[9px] border px-3 text-[12.5px] font-semibold transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a78bfa]/35',
+              'inline-flex h-8 items-center gap-2 rounded-[7px] px-3.5 text-[12.5px] font-medium transition-colors',
+              'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#0a84ff]/50',
               isActive
-                ? 'border-[#a78bfa]/40 bg-[#a78bfa]/10 text-[#c4b5fd]'
-                : 'border-[#343434]/60 bg-[#181818]/55 text-[#a6a6a6] hover:border-[#404040] hover:text-white',
+                ? 'bg-[#636366] text-white shadow-[0_1px_3px_rgba(0,0,0,0.3)]'
+                : 'text-[#98989d] hover:text-white',
             )}
           >
             {tab.label}
@@ -48,7 +48,7 @@ export function TabBar({
               <span
                 className={cn(
                   'rounded-full px-1.5 font-mono text-[11px]',
-                  isActive ? 'bg-[#a78bfa]/20 text-[#c4b5fd]' : 'bg-[#232323] text-[#8c8c8c]',
+                  isActive ? 'bg-white/15 text-white' : 'bg-[#2c2c2e] text-[#8e8e93]',
                 )}
               >
                 {tab.count}

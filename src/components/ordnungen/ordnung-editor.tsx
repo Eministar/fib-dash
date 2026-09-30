@@ -53,7 +53,7 @@ function IconGrid({ value, onChange }: { value: string; onChange: (v: string) =>
             className={`flex items-center justify-center h-9 rounded-[8px] border transition-colors ${
               active
                 ? 'border-[#4a8fd8] bg-[#4a8fd8]/15 text-[#7fb2e8]'
-                : 'border-[#373737]/50 text-[#919191] hover:border-[#4d4d4d] hover:text-[#d2d2d2]'
+                : 'border-[#38383a]/50 text-[#8e8e93] hover:border-[#4d4d4d] hover:text-[#d2d2d2]'
             }`}
             title={name}
           >
@@ -66,7 +66,7 @@ function IconGrid({ value, onChange }: { value: string; onChange: (v: string) =>
 }
 
 const EDITOR_TEXTAREA =
-  'flex-1 min-h-0 min-w-0 w-full rounded-[10px] bg-[#151515] border border-[#373737]/60 p-4 text-[13px] leading-relaxed font-mono text-[#ededed] resize-none focus:outline-none focus:border-[#4d4d4d] placeholder:text-[#8c8c8c]'
+  'flex-1 min-h-0 min-w-0 w-full rounded-[10px] bg-[#161617] border border-[#38383a]/60 p-4 text-[13px] leading-relaxed font-mono text-[#ededed] resize-none focus:outline-none focus:border-[#4d4d4d] placeholder:text-[#8e8e93]'
 
 export function OrdnungEditor({
   open,
@@ -113,12 +113,12 @@ export function OrdnungEditor({
                 className="fixed inset-2 sm:inset-4 lg:inset-6 z-50 flex flex-col overflow-hidden glass-panel-elevated rounded-[16px]"
               >
                 {/* Kopfzeile */}
-                <header className="flex items-center gap-3 px-5 py-3.5 border-b border-[#373737]/45 shrink-0">
+                <header className="flex items-center gap-3 px-5 py-3.5 border-b border-[#38383a]/45 shrink-0">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8c8c8c]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8e8e93]">
                       {isEditing ? 'Ordnung bearbeiten' : 'Neue Ordnung'}
                     </p>
-                    <Dialog.Title className="text-[15px] font-semibold text-[#f4f4f4] truncate">
+                    <Dialog.Title className="text-[15px] font-semibold text-[#f5f5f7] truncate">
                       {form.title.trim() || 'Ohne Titel'}
                     </Dialog.Title>
                     <Dialog.Description className="sr-only">
@@ -135,7 +135,7 @@ export function OrdnungEditor({
                     </Button>
                     <Dialog.Close asChild>
                       <button
-                        className="ml-1 p-1.5 rounded-[8px] text-[#909090] hover:text-[#d4d4d4] hover:bg-[#232323]/60 transition-colors"
+                        className="ml-1 p-1.5 rounded-[8px] text-[#8e8e93] hover:text-[#d4d4d4] hover:bg-[#2c2c2e]/60 transition-colors"
                         aria-label="Schließen"
                       >
                         <X size={16} strokeWidth={2} />
@@ -147,7 +147,7 @@ export function OrdnungEditor({
                 {/* Körper: Metadaten-Spalte + Editor */}
                 <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
                   {/* Metadaten */}
-                  <aside className="lg:w-[340px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#373737]/45 overflow-y-auto p-5 space-y-4">
+                  <aside className="lg:w-[340px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#38383a]/45 overflow-y-auto p-5 space-y-4">
                     <Input
                       label="Titel"
                       value={form.title}
@@ -175,7 +175,7 @@ export function OrdnungEditor({
                       placeholder="Kategorie wählen"
                     />
                     <div>
-                      <p className="block text-[12.5px] font-medium text-[#aeaeae] mb-1.5">Icon</p>
+                      <p className="block text-[12.5px] font-medium text-[#98989d] mb-1.5">Icon</p>
                       <IconGrid value={form.icon} onChange={(v) => onChange({ icon: v })} />
                     </div>
                   </aside>
@@ -183,7 +183,7 @@ export function OrdnungEditor({
                   {/* Editor */}
                   <section className="flex-1 min-w-0 flex flex-col p-4 gap-3">
                     <div className="flex items-center justify-between gap-3 shrink-0">
-                      <div className="inline-flex rounded-[9px] bg-[#1a1a1a] border border-[#373737]/60 p-0.5">
+                      <div className="inline-flex rounded-[9px] bg-[#1c1c1e] border border-[#38383a]/60 p-0.5">
                         {VIEW_MODES.map((m) => {
                           const active = view === m.key
                           const Icon = m.icon
@@ -194,8 +194,8 @@ export function OrdnungEditor({
                               onClick={() => setView(m.key)}
                               className={`inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[7px] text-[12px] font-medium transition-colors ${
                                 active
-                                  ? 'bg-[#333333] text-[#f4f4f4]'
-                                  : 'text-[#909090] hover:text-[#d2d2d2]'
+                                  ? 'bg-[#3a3a3c] text-[#f5f5f7]'
+                                  : 'text-[#8e8e93] hover:text-[#d2d2d2]'
                               }`}
                             >
                               <Icon size={13} strokeWidth={2} />
@@ -204,7 +204,7 @@ export function OrdnungEditor({
                           )
                         })}
                       </div>
-                      <span className="text-[11.5px] text-[#8c8c8c] tabular-nums">
+                      <span className="text-[11.5px] text-[#8e8e93] tabular-nums">
                         {charCount.toLocaleString('de-DE')} Zeichen
                       </span>
                     </div>
@@ -225,7 +225,7 @@ export function OrdnungEditor({
                       )}
                       {view !== 'edit' && (
                         <div
-                          className="markdown-document flex-1 min-h-0 min-w-0 overflow-auto rounded-[10px] bg-[#1a1a1a]/50 border border-[#373737]/40 p-4 text-[13px]"
+                          className="markdown-document flex-1 min-h-0 min-w-0 overflow-auto rounded-[10px] bg-[#1c1c1e]/50 border border-[#38383a]/40 p-4 text-[13px]"
                           dangerouslySetInnerHTML={{ __html: html }}
                         />
                       )}

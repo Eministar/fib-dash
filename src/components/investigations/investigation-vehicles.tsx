@@ -128,37 +128,37 @@ export function InvestigationVehicles({
       </div>
 
       {vehicles.length === 0 ? (
-        <p className="py-3 text-[12.5px] text-[#8c8c8c]">Keine Fahrzeuge zu dieser Akte.</p>
+        <p className="py-3 text-[12.5px] text-[#8e8e93]">Keine Fahrzeuge zu dieser Akte.</p>
       ) : (
-        <ul className="divide-y divide-[#232323]">
+        <ul className="divide-y divide-[#2c2c2e]">
           {vehicles.map((link) => (
             <li key={link.id} className="flex items-center justify-between gap-3 py-2.5">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Car className="h-3.5 w-3.5 shrink-0 text-[#8c8c8c]" />
+                  <Car className="h-3.5 w-3.5 shrink-0 text-[#8e8e93]" />
                   <span className="text-[13.5px] font-medium text-white">
                     {vehicleLabel(link.vehicle)}
                   </span>
-                  <span className="font-mono text-[11px] text-[#8c8c8c]">
+                  <span className="font-mono text-[11px] text-[#8e8e93]">
                     {link.vehicle.vehicleNumber}
                   </span>
                   {link.vehicle.stolen && <Badge variant="danger">Als gestohlen gemeldet</Badge>}
                   {link.vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}
                 </div>
-                <p className="mt-0.5 text-[11.5px] text-[#8c8c8c]">
+                <p className="mt-0.5 text-[11.5px] text-[#8e8e93]">
                   {link.vehicle.color ? `${link.vehicle.color} · ` : ''}
                   {link.vehicle.ownerPerson
                     ? `Halter: ${link.vehicle.ownerPerson.firstName} ${link.vehicle.ownerPerson.lastName}`
                     : 'Halter unbekannt'}
                 </p>
-                {link.note && <p className="mt-0.5 text-[12px] text-[#a6a6a6]">{link.note}</p>}
+                {link.note && <p className="mt-0.5 text-[12px] text-[#98989d]">{link.note}</p>}
               </div>
 
               {canManage && (
                 <button
                   type="button"
                   onClick={() => void handleUnlink(link)}
-                  className="shrink-0 text-[#8c8c8c] transition-colors hover:text-[#fca5a5]"
+                  className="shrink-0 text-[#8e8e93] transition-colors hover:text-[#fca5a5]"
                   aria-label="Fahrzeug entfernen"
                 >
                   <X className="h-4 w-4" />

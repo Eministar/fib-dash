@@ -60,7 +60,7 @@ export function DutyClockCard({ onChange }: { onChange?: () => void }) {
             <p className="text-[13.5px] font-semibold text-white">
               {session ? `Eingestempelt seit ${formatElapsed(now - new Date(session.clockInAt).getTime())}` : 'Du bist nicht eingestempelt'}
             </p>
-            <p className="text-[11.5px] text-[#868686] mt-0.5">Manuelle Erfassung aktiv – auch über die Buttons im Discord-Dienstzeiten-Channel möglich.</p>
+            <p className="text-[11.5px] text-[#8e8e93] mt-0.5">Manuelle Erfassung aktiv – auch über die Buttons im Discord-Dienstzeiten-Channel möglich.</p>
           </div>
         </div>
         {session

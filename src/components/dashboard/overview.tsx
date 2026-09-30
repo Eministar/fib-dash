@@ -168,8 +168,8 @@ const ACCENTS: Record<AccentKey, AccentTokens> = {
   rose: { text: '#fda4af', bg: 'rgba(244,114,182,0.10)', ring: 'rgba(244,114,182,0.30)', glow: 'rgba(244,114,182,0.20)' },
 }
 
-const panelClass = 'rounded-xl border border-[#343434] bg-[#1b1b1b]'
-const surfaceClass = 'rounded-[12px] border border-white/[0.05] bg-[#1f1f1f]/55'
+const panelClass = 'rounded-xl border border-[#38383a] bg-[#1c1c1e]'
+const surfaceClass = 'rounded-[12px] border border-white/[0.05] bg-[#1c1c1e]/55'
 
 const statCards: { key: StatKey; label: string; icon: LucideIcon; href: string; permission: Permission; accent: AccentKey; hint: string }[] = [
   { key: 'activeAgents', label: 'Aktive Agents', icon: UserCheck, href: '/agents', permission: 'agents:view', accent: 'emerald', hint: 'Im aktiven Dienst' },
@@ -213,12 +213,12 @@ function SectionHeader({
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-gradient-to-br from-[#d4d4d4]/15 to-[#d4d4d4]/5 border border-[#d4d4d4]/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-[#d4d4d4]/15 border border-[#d4d4d4]/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <Icon size={14} className="text-[#d4d4d4]" strokeWidth={1.85} />
           </span>
             <h3 className="text-[14px] font-semibold text-white tracking-[-0.01em]">{title}</h3>
           </div>
-          {description && <p className="text-[12px] text-[#919191] mt-2 max-w-2xl leading-relaxed pl-[38px]">{description}</p>}
+          {description && <p className="text-[12px] text-[#8e8e93] mt-2 max-w-2xl leading-relaxed pl-[38px]">{description}</p>}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>
@@ -230,10 +230,10 @@ function ProgressRow({ label, value, detail, color = '#d4d4d4' }: { label: strin
   return (
       <div>
         <div className="flex items-center justify-between gap-3 mb-1.5">
-          <span className="text-[12.5px] text-[#d0d0d0] truncate">{label}</span>
-          <span className="text-[11.5px] text-[#aeaeae] tabular-nums font-medium shrink-0">{detail}</span>
+          <span className="text-[12.5px] text-[#c7c7cc] truncate">{label}</span>
+          <span className="text-[11.5px] text-[#98989d] tabular-nums font-medium shrink-0">{detail}</span>
         </div>
-        <div className="h-[6px] bg-[#161616]/90 rounded-full overflow-hidden ring-1 ring-inset ring-white/[0.03]">
+        <div className="h-[6px] bg-[#161617]/90 rounded-full overflow-hidden ring-1 ring-inset ring-white/[0.03]">
           <div
 
               className="h-full rounded-full"
@@ -251,7 +251,7 @@ function ProgressRow({ label, value, detail, color = '#d4d4d4' }: { label: strin
 function notificationClass(severity: 'info' | 'warning' | 'error') {
   if (severity === 'error') return 'border-[#7f1d1d]/55 bg-[#2a1212]/55 text-[#fca5a5] hover:border-[#7f1d1d]/80'
   if (severity === 'warning') return 'border-[#b45309]/50 bg-[#1d1608]/55 text-[#fbbf24] hover:border-[#b45309]/75'
-  return 'border-[#404040]/65 bg-[#181818]/55 text-[#93c5fd] hover:border-[#404040]/90'
+  return 'border-[#48484a]/65 bg-[#1c1c1e]/55 text-[#93c5fd] hover:border-[#48484a]/90'
 }
 
 function agentName(agent: { firstName: string; lastName: string }) {
@@ -436,7 +436,7 @@ export default function DashboardPage() {
               <AlertTriangle size={22} className="text-[#f87171]" strokeWidth={1.75} />
             </div>
             <h2 className="text-[15px] font-semibold text-white mb-1">Dashboard nicht verfügbar</h2>
-            <p className="text-[12.5px] text-[#aeaeae] mb-5 max-w-md mx-auto">{error || 'Die Dashboard-Daten konnten gerade nicht geladen werden.'}</p>
+            <p className="text-[12.5px] text-[#98989d] mb-5 max-w-md mx-auto">{error || 'Die Dashboard-Daten konnten gerade nicht geladen werden.'}</p>
             <Button size="sm" onClick={refetch}>
               <RefreshCw size={13} strokeWidth={2} />
               Erneut laden
@@ -457,17 +457,17 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto space-y-6 pb-4">
         <DutyClockCard />
         {/* Tagesübersicht */}
-        <section className="border-b border-[#343434]">
+        <section className="border-b border-[#38383a]">
           <div className="py-3">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d4d4d4]/25 bg-[#d4d4d4]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#cfcfcf]">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d4d4d4]/25 bg-[#d4d4d4]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#c7c7cc]">
                   Übersicht
                 </span>
-                  <span className="text-[11px] font-medium text-[#909090] uppercase tracking-[0.16em]">{dateLine}</span>
+                  <span className="text-[11px] font-medium text-[#8e8e93] uppercase tracking-[0.16em]">{dateLine}</span>
                   {timeLine && (
-                      <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-[#909090] uppercase tracking-[0.1em]">
+                      <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-[#8e8e93] uppercase tracking-[0.1em]">
                     · {timeLine} Uhr
                   </span>
                   )}
@@ -475,7 +475,7 @@ export default function DashboardPage() {
                 <h1 className="text-[26px] sm:text-[30px] font-semibold text-white tracking-[-0.025em] leading-tight">
                   {greeting}{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}.
                 </h1>
-                <p className="text-[13.5px] text-[#aeaeae] mt-1.5 max-w-xl leading-relaxed">
+                <p className="text-[13.5px] text-[#98989d] mt-1.5 max-w-xl leading-relaxed">
                   {stats.currentAgents > 0 ? `${stats.activeAgents} von ${stats.currentAgents} Agents sind aktuell einsatzbereit.` : 'Aktuell sind keine Agents im System.'}
                 </p>
               </div>
@@ -527,7 +527,7 @@ export default function DashboardPage() {
                 >
                   <Link
                       href={card.href}
-                      className="group relative block rounded-[14px] border border-[#323232]/55 bg-[#1b1b1b]/70 p-4 transition-colors duration-150 hover:border-[var(--accent-ring)] overflow-hidden"
+                      className="group relative block rounded-[14px] border border-[#38383a]/55 bg-[#1c1c1e]/70 p-4 transition-colors duration-150 hover:border-[var(--accent-ring)] overflow-hidden"
                       style={{
                         // @ts-expect-error CSS custom prop
                         '--accent-ring': accent.ring,
@@ -540,12 +540,12 @@ export default function DashboardPage() {
                   >
                     <Icon size={16} strokeWidth={1.85} />
                   </span>
-                      <ArrowUpRight size={13} className="text-[#8c8c8c] group-hover:text-[#d4d4d4] transition-colors" strokeWidth={1.85} />
+                      <ArrowUpRight size={13} className="text-[#8e8e93] group-hover:text-[#d4d4d4] transition-colors" strokeWidth={1.85} />
                     </div>
                     <div className="relative mt-3">
                       <p className="text-[26px] font-semibold text-white tabular-nums leading-none tracking-tight"><LiveNumber value={stats[card.key]} /></p>
-                      <p className="text-[12px] text-[#d0d0d0] mt-2 font-medium leading-tight">{label}</p>
-                      <p className="text-[11px] text-[#909090] mt-1 leading-tight">{subLine}</p>
+                      <p className="text-[12px] text-[#c7c7cc] mt-2 font-medium leading-tight">{label}</p>
+                      <p className="text-[11px] text-[#8e8e93] mt-1 leading-tight">{subLine}</p>
                     </div>
                   </Link>
                 </div>
@@ -605,15 +605,15 @@ export default function DashboardPage() {
                               {agentName(absence.agent)}
                               <span className="ml-1.5 font-mono text-[#d4d4d4]">#{displayBadgeNumber(absence.agent.badgeNumber)}</span>
                             </Link>
-                            <p className="text-[11.5px] text-[#a6a6a6] mt-0.5">{absence.agent.rank.name}</p>
+                            <p className="text-[11.5px] text-[#98989d] mt-0.5">{absence.agent.rank.name}</p>
                           </div>
-                          <span className="shrink-0 rounded-full border border-[#38bdf8]/25 bg-[#1e1e1e]/60 px-2.5 py-1 text-[11px] text-[#93c5fd] font-medium">
+                          <span className="shrink-0 rounded-full border border-[#38bdf8]/25 bg-[#1c1c1e]/60 px-2.5 py-1 text-[11px] text-[#93c5fd] font-medium">
                       bis {formatDate(absence.endsAt)}
                     </span>
                         </div>
                         <p className="mt-2.5 text-[12.5px] leading-relaxed text-[#d2d2d2]">{absence.reason}</p>
                         <div className="mt-3 flex items-center justify-between gap-2 pt-3 border-t border-white/[0.04]">
-                    <span className="text-[11px] text-[#909090] tabular-nums">
+                    <span className="text-[11px] text-[#8e8e93] tabular-nums">
                       {formatDateTime(absence.startsAt)} → {formatDateTime(absence.endsAt)}
                     </span>
                           {canCancel && (
@@ -652,17 +652,17 @@ export default function DashboardPage() {
               <div className={cn(surfaceClass, 'p-4 flex items-center gap-4')}>
                 <RingProgress value={stats.readinessRate} color="#34d399" />
                 <div className="min-w-0">
-                  <p className="text-[11.5px] font-medium text-[#aeaeae] uppercase tracking-[0.08em]">Dienstbereit</p>
+                  <p className="text-[11.5px] font-medium text-[#98989d] uppercase tracking-[0.08em]">Dienstbereit</p>
                   <p className="text-[20px] font-semibold text-white tabular-nums leading-tight mt-0.5">{stats.activeAgents}</p>
-                  <p className="text-[11px] text-[#919191] mt-0.5">{activeSummary}</p>
+                  <p className="text-[11px] text-[#8e8e93] mt-0.5">{activeSummary}</p>
                 </div>
               </div>
               <div className={cn(surfaceClass, 'p-4 flex items-center gap-4')}>
                 <RingProgress value={stats.trainingCompletionRate} color="#d4d4d4" />
                 <div className="min-w-0">
-                  <p className="text-[11.5px] font-medium text-[#aeaeae] uppercase tracking-[0.08em]">Ausbildung</p>
+                  <p className="text-[11.5px] font-medium text-[#98989d] uppercase tracking-[0.08em]">Ausbildung</p>
                   <p className="text-[20px] font-semibold text-white tabular-nums leading-tight mt-0.5">{stats.completedTrainingAssignments}</p>
-                  <p className="text-[11px] text-[#919191] mt-0.5">{trainingSummary}</p>
+                  <p className="text-[11px] text-[#8e8e93] mt-0.5">{trainingSummary}</p>
                 </div>
               </div>
               <Link href="/promotions" className={cn(surfaceClass, 'p-4 flex items-center gap-4 transition-colors hover:border-[#d4d4d4]/20 group')}>
@@ -670,11 +670,11 @@ export default function DashboardPage() {
                   <ListChecks size={22} className="text-[#d4d4d4]" strokeWidth={1.75} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11.5px] font-medium text-[#aeaeae] uppercase tracking-[0.08em]">Offene Listen</p>
+                  <p className="text-[11.5px] font-medium text-[#98989d] uppercase tracking-[0.08em]">Offene Listen</p>
                   <p className="text-[20px] font-semibold text-white tabular-nums leading-tight mt-0.5">{stats.draftRankChangeLists}</p>
-                  <p className="text-[11px] text-[#919191] mt-0.5">Beförderungen & Degradierungen</p>
+                  <p className="text-[11px] text-[#8e8e93] mt-0.5">Beförderungen & Degradierungen</p>
                 </div>
-                <ArrowRight size={14} className="text-[#8c8c8c] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
+                <ArrowRight size={14} className="text-[#8e8e93] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
               </Link>
             </div>
 
@@ -684,12 +684,12 @@ export default function DashboardPage() {
                     className={cn(surfaceClass, 'mb-5 flex flex-col gap-3 p-4 transition-all duration-200 hover:border-[#d4d4d4]/20 sm:flex-row sm:items-center sm:justify-between')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-[10px] flex items-center justify-center bg-gradient-to-br from-[#d4d4d4] to-[#b8b8b8] text-[#181818] shadow-[0_1px_3px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]">
+                    <div className="h-10 w-10 rounded-[10px] flex items-center justify-center bg-[#0a84ff] text-white hover:bg-[#1a8cff]">
                       <Clock3 size={17} strokeWidth={1.85} />
                     </div>
                     <div>
                       <p className="text-[13px] font-semibold text-white">Dienstzeiten</p>
-                      <p className="text-[11.5px] text-[#aeaeae]">{stats.dutyTimes.activeCount} im Dienst · {formatDuration(stats.dutyTimes.totalWeekDurationMs)} diese Woche</p>
+                      <p className="text-[11.5px] text-[#98989d]">{stats.dutyTimes.activeCount} im Dienst · {formatDuration(stats.dutyTimes.totalWeekDurationMs)} diese Woche</p>
                     </div>
                   </div>
                   <span className="text-[12.5px] font-semibold tabular-nums text-[#d4d4d4]">
@@ -729,14 +729,14 @@ export default function DashboardPage() {
                         href={action.href}
                         className={cn('group flex items-center gap-3 px-3.5 py-3 transition-all duration-200 hover:border-[#d4d4d4]/20', surfaceClass)}
                     >
-                      <div className="h-9 w-9 rounded-[9px] flex items-center justify-center bg-gradient-to-br from-[#d4d4d4]/15 to-[#d4d4d4]/5 border border-[#d4d4d4]/20 text-[#d4d4d4]">
+                      <div className="h-9 w-9 rounded-[9px] flex items-center justify-center bg-[#d4d4d4]/15 border border-[#d4d4d4]/20 text-[#d4d4d4]">
                         <Icon size={15} strokeWidth={1.85} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] font-semibold text-white">{action.label}</p>
-                        <p className="text-[11.5px] text-[#a6a6a6] truncate">{action.description}</p>
+                        <p className="text-[11.5px] text-[#98989d] truncate">{action.description}</p>
                       </div>
-                      <ArrowRight size={13} className="text-[#8c8c8c] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
+                      <ArrowRight size={13} className="text-[#8e8e93] group-hover:text-[#d4d4d4] group-hover:translate-x-0.5 transition-all" strokeWidth={1.85} />
                     </Link>
                 )
               })}
@@ -764,12 +764,12 @@ export default function DashboardPage() {
                             {agentName(agent)}
                             <span className="text-[#d4d4d4] font-mono ml-1.5 font-medium">#{displayBadgeNumber(agent.badgeNumber)}</span>
                           </p>
-                          <p className="text-[11.5px] text-[#a6a6a6] truncate mt-0.5">
+                          <p className="text-[11.5px] text-[#98989d] truncate mt-0.5">
                             {agent.rank.name} · {agent.lastOnline ? `zuletzt online ${formatRelativeTime(agent.lastOnline)}` : `aktualisiert ${formatDate(agent.updatedAt)}`}
                           </p>
                         </div>
                         {agent.status && (
-                            <span className="inline-flex items-center gap-1.5 shrink-0 text-[11.5px] text-[#c3c3c3]">
+                            <span className="inline-flex items-center gap-1.5 shrink-0 text-[11.5px] text-[#c7c7cc]">
                       <span className={cn('h-[6px] w-[6px] rounded-full', getStatusDot(agent.status))} />
                               {getStatusLabel(agent.status)}
                     </span>
@@ -795,7 +795,7 @@ export default function DashboardPage() {
                 description="Letzte Änderungen im Systemprotokoll"
                 action={
                   hasPermission(user, 'logs:view') ? (
-                      <Link href="/logs" className="inline-flex items-center gap-1 text-[11.5px] font-medium text-[#d4d4d4] hover:text-[#cfcfcf] transition-colors">
+                      <Link href="/logs" className="inline-flex items-center gap-1 text-[11.5px] font-medium text-[#d4d4d4] hover:text-[#c7c7cc] transition-colors">
                         Alle ansehen
                         <ArrowRight size={11} strokeWidth={2} />
                       </Link>
@@ -805,7 +805,7 @@ export default function DashboardPage() {
             {stats.recentActivity.length > 0 ? (
                 <div className="relative">
                   {/* timeline rail */}
-                  <div className="absolute left-[18px] top-2 bottom-2 w-px bg-gradient-to-b from-[#d4d4d4]/25 via-[#d4d4d4]/8 to-transparent" aria-hidden />
+                  <div className="absolute left-[18px] top-2 bottom-2 w-px bg-[#38383a]" aria-hidden />
                   <div className="space-y-3.5">
                     {stats.recentActivity.map((entry) => {
                       const label = auditActionLabel(entry.action)
@@ -813,7 +813,7 @@ export default function DashboardPage() {
                       return (
                           <div key={entry.id} className="relative flex items-start gap-3.5 pl-0">
                             <div
-                                className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-[#131313]"
+                                className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-[#161617]"
                                 style={{ borderColor: accent.ring, color: accent.text, boxShadow: `0 0 0 3px rgba(19,19,19,0.9)` }}
                             >
                               <Activity size={13} strokeWidth={1.85} />
@@ -827,15 +827,15 @@ export default function DashboardPage() {
                                     </Link>
                                 )}
                               </div>
-                              {entry.details && <p className="text-[12px] text-[#c3c3c3] mt-0.5">{auditDetails(entry.details)}</p>}
+                              {entry.details && <p className="text-[12px] text-[#c7c7cc] mt-0.5">{auditDetails(entry.details)}</p>}
                               {entry.oldValue && entry.newValue && (
-                                  <p className="text-[11.5px] text-[#868686] mt-0.5">
+                                  <p className="text-[11.5px] text-[#8e8e93] mt-0.5">
                                     <span className="line-through opacity-70">{entry.oldValue}</span>
-                                    <span className="mx-1.5 text-[#8c8c8c]">→</span>
-                                    <span className="text-[#d0d0d0]">{entry.newValue}</span>
+                                    <span className="mx-1.5 text-[#8e8e93]">→</span>
+                                    <span className="text-[#c7c7cc]">{entry.newValue}</span>
                                   </p>
                               )}
-                              <p className="text-[11px] text-[#909090] mt-1 tabular-nums">
+                              <p className="text-[11px] text-[#8e8e93] mt-1 tabular-nums">
                                 {entry.user?.displayName ?? 'Gelöscht'} · {formatRelativeTime(entry.createdAt)}
                               </p>
                             </div>
@@ -864,7 +864,7 @@ export default function DashboardPage() {
                             className={cn('block px-3.5 py-3 transition-colors hover:border-[#d4d4d4]/15', surfaceClass)}
                         >
                           <p className="text-[13px] font-semibold text-white">{note.title || 'Notiz'}</p>
-                          <p className="text-[12px] text-[#c3c3c3] mt-1 leading-relaxed">{truncateText(note.content, 120)}</p>
+                          <p className="text-[12px] text-[#c7c7cc] mt-1 leading-relaxed">{truncateText(note.content, 120)}</p>
                           <p className="text-[11px] text-[#d4d4d4] mt-2 font-medium">
                             {note.agent ? `${agentName(note.agent)} · ` : ''}{note.author?.displayName ?? 'Gelöscht'}
                           </p>
@@ -893,7 +893,7 @@ export default function DashboardPage() {
                             <p className="text-[13px] font-semibold text-white truncate">
                               {agentName(agent)}
                             </p>
-                            <p className="text-[11.5px] text-[#a6a6a6] truncate mt-0.5">{agent.rank.name}</p>
+                            <p className="text-[11.5px] text-[#98989d] truncate mt-0.5">{agent.rank.name}</p>
                           </div>
                           <span className="text-[11px] text-[#d4d4d4] shrink-0 font-medium tabular-nums">{formatDate(agent.hireDate)}</span>
                         </Link>
@@ -948,7 +948,7 @@ export default function DashboardPage() {
                 required
             />
             {!user?.discordId && !canManageAbsences && (
-                <p className="rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3.5 py-2.5 text-[12px] text-[#cacaca] leading-relaxed">
+                <p className="rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3.5 py-2.5 text-[12px] text-[#c7c7cc] leading-relaxed">
                   Dein Dashboard-User braucht eine Discord-ID, damit die Abmeldung deinem Agent zugeordnet werden kann.
                 </p>
             )}

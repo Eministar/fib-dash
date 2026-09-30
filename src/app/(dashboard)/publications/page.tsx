@@ -49,32 +49,32 @@ export default function PublicationsPage() {
         description="Schreiben und Tabellen veröffentlichen – öffentlich einsehbar auf dem Schwarzen Brett oder nur per Link."
         action={
           <div className="flex gap-2">
-            <a href="/aushang" target="_blank" rel="noopener noreferrer" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#232323] px-3 text-[12.5px] font-medium text-[#f4f4f4] hover:bg-[#333333]"><ExternalLink size={13} /> Schwarzes Brett</a>
-            <Link href="/publications/new" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#d4d4d4] px-3 text-[12.5px] font-medium text-[#181818] hover:bg-white"><Plus size={14} /> Neuer Aushang</Link>
+            <a href="/aushang" target="_blank" rel="noopener noreferrer" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#2c2c2e] px-3 text-[12.5px] font-medium text-[#f5f5f7] hover:bg-[#3a3a3c]"><ExternalLink size={13} /> Schwarzes Brett</a>
+            <Link href="/publications/new" className="inline-flex h-[32px] items-center gap-1.5 rounded-[8px] bg-[#d4d4d4] px-3 text-[12.5px] font-medium text-[#1c1c1e] hover:bg-white"><Plus size={14} /> Neuer Aushang</Link>
           </div>
         }
       />
       <SearchInput value={search} onChange={setSearch} placeholder="Aushänge durchsuchen" className="mb-4" />
       {error && <p role="alert" className="mb-4 text-[13px] text-[#fca5a5]">{error}</p>}
       {loading && !data
-        ? <div className="space-y-2">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-16 animate-pulse rounded-[12px] bg-[#1c1c1c]" />)}</div>
+        ? <div className="space-y-2">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-16 animate-pulse rounded-[12px] bg-[#1c1c1e]" />)}</div>
         : items.length === 0
-          ? <p className="glass-panel-elevated rounded-[14px] px-5 py-10 text-center text-[13px] text-[#909090]">{search ? 'Keine Treffer.' : 'Noch keine Aushänge. Lege mit „Neuer Aushang“ ein Schreiben oder eine Tabelle an.'}</p>
+          ? <p className="glass-panel-elevated rounded-[14px] px-5 py-10 text-center text-[13px] text-[#8e8e93]">{search ? 'Keine Treffer.' : 'Noch keine Aushänge. Lege mit „Neuer Aushang“ ein Schreiben oder eine Tabelle an.'}</p>
           : (
-            <ul className="glass-panel-elevated divide-y divide-[#2c2c2c] overflow-hidden rounded-[14px]">
+            <ul className="glass-panel-elevated divide-y divide-[#3a3a3c] overflow-hidden rounded-[14px]">
               {items.map((item) => {
                 const Icon = item.kind === 'TABLE' ? Table2 : FileText
                 return (
                   <li key={item.id}>
-                    <Link href={`/publications/${item.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-[#232323] focus-visible:outline focus-visible:outline-2">
-                      <Icon size={18} className="shrink-0 text-[#a6a6a6]" aria-hidden />
+                    <Link href={`/publications/${item.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-[#2c2c2e] focus-visible:outline focus-visible:outline-2">
+                      <Icon size={18} className="shrink-0 text-[#98989d]" aria-hidden />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2 text-[14px] font-medium text-white">
                           {item.pinned && <Pin size={13} aria-label="Angeheftet" />}
                           {item.access === 'ROLES' && <Lock size={13} aria-label="Nur für freigegebene Rollen" />}
                           <span className="truncate">{item.title}</span>
                         </span>
-                        <span className="mt-0.5 block truncate text-[12px] text-[#909090]">
+                        <span className="mt-0.5 block truncate text-[12px] text-[#8e8e93]">
                           {item.status === 'PUBLISHED' ? (item.listed ? 'Auf dem Schwarzen Brett' : 'Nur per Link') : 'Nicht öffentlich'} · geändert {formatDate(item.updatedAt)}{item.createdBy ? ` · ${item.createdBy.displayName}` : ''}
                         </span>
                       </span>

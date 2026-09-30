@@ -18,8 +18,8 @@ function OutlineLinks({ entries, active, onNavigate }: { entries: OutlineEntry[]
               'block rounded-[6px] border-l-2 py-1.5 pr-2 text-[12.5px] leading-snug transition-colors focus-visible:outline focus-visible:outline-2',
               entry.depth === 0 ? 'pl-3' : 'pl-6 text-[12px]',
               active === entry.id
-                ? 'border-[#d4d4d4] bg-[#232323] font-medium text-white'
-                : 'border-transparent text-[#a6a6a6] hover:bg-[#1f1f1f] hover:text-white',
+                ? 'border-[#d4d4d4] bg-[#2c2c2e] font-medium text-white'
+                : 'border-transparent text-[#98989d] hover:bg-[#1c1c1e] hover:text-white',
             )}
           >
             {entry.text}
@@ -63,7 +63,7 @@ export function OrdnungOutline({ entries, variant }: { entries: OutlineEntry[]; 
 
   if (variant === 'inline') {
     return (
-      <div className="mb-4 rounded-[12px] border border-[#343434] bg-[#181818] xl:hidden">
+      <div className="mb-4 rounded-[12px] border border-[#38383a] bg-[#1c1c1e] xl:hidden">
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -71,16 +71,16 @@ export function OrdnungOutline({ entries, variant }: { entries: OutlineEntry[]; 
           className="flex w-full items-center justify-between gap-2 px-4 py-3 text-[13px] font-medium text-[#e5e5e5]"
         >
           <span className="flex items-center gap-2"><ListTree size={15} /> Inhalt · {entries.length} Abschnitte</span>
-          <span className="text-[12px] text-[#909090]">{open ? 'Schließen' : 'Anzeigen'}</span>
+          <span className="text-[12px] text-[#8e8e93]">{open ? 'Schließen' : 'Anzeigen'}</span>
         </button>
-        {open && <div className="border-t border-[#343434] p-2"><OutlineLinks entries={entries} active={active} onNavigate={() => setOpen(false)} /></div>}
+        {open && <div className="border-t border-[#38383a] p-2"><OutlineLinks entries={entries} active={active} onNavigate={() => setOpen(false)} /></div>}
       </div>
     )
   }
 
   return (
     <nav aria-label="Abschnitte" className="sticky top-4 hidden max-h-[calc(100vh-2rem)] overflow-y-auto xl:block">
-      <p className="mb-2 flex items-center gap-2 px-3 text-[11.5px] font-medium uppercase tracking-[0.08em] text-[#8c8c8c]">
+      <p className="mb-2 flex items-center gap-2 px-3 text-[11.5px] font-medium uppercase tracking-[0.08em] text-[#8e8e93]">
         <ListTree size={13} /> Abschnitte
       </p>
       <OutlineLinks entries={entries} active={active} />
