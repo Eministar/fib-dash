@@ -45,18 +45,38 @@ async function request<T>(path: string): Promise<T> {
     throw new LspdUnavailableError('Das LSPD-Panel ist gerade nicht erreichbar.')
   }
 
-  if (response.status === 404) throw new LspdUnavailableError('Beamter im LSPD-Panel nicht gefunden.', 404)
-  if (response.status === 401) throw new LspdUnavailableError('Das LSPD-Panel hat das Secret abgelehnt.', 502)
-  if (!response.ok) throw new LspdUnavailableError(`Das LSPD-Panel antwortet mit Status ${response.status}.`, 502)
-
-  const body = (await response.json().catch(() => null)) as { success?: boolean; data?: T; error?: string } | null
-  if (!body?.success || body.data === undefined) {
-    throw new LspdUnavailableError(body?.error || 'Unerwartete Antwort vom LSPD-Panel.', 502)
+  const fail = (message: string, status = 502): never => {
+    // Ins Server-Log mit Ziel und Status – die Oberfläche zeigt nur die Meldung.
+    console.error(`[lspd-hr] ${response.status} ${config.url}${path.split('?')[0]}: ${message}`)
+    throw new LspdUnavailableError(message, status)
   }
 
+  if (response.status === 401) {
+    fail('Das LSPD-Panel lehnt das Secret ab: LSPD_HR_API_SECRET (fib-dash) muss exakt FIB_API_SECRET (LSPD-Panel) entsprechen.')
+  }
+  if (response.status === 503) {
+    fail('Im LSPD-Panel ist FIB_API_SECRET nicht gesetzt oder kürzer als 24 Zeichen (danach das Panel neu starten).')
+  }
+  if (response.status === 404) {
+    // Beim Einzelabruf heißt 404 „Beamter fehlt“; bei der Suche fehlt die Schnittstelle selbst.
+    if (path.startsWith('/api/external/officers/')) fail('Beamter im LSPD-Panel nicht gefunden.', 404)
+    fail('Schnittstelle im LSPD-Panel nicht gefunden: Ist lspd-hr aktualisiert und zeigt LSPD_HR_API_URL auf das Panel?')
+  }
+  if (!response.ok) fail(`Das LSPD-Panel antwortet mit Status ${response.status}.`)
+
+  const raw = await response.text().catch(() => '')
+  let body: { success?: boolean; data?: T; error?: string } | null = null
+  try {
+    body = JSON.parse(raw)
+  } catch {
+    fail('Keine gültige Antwort vom LSPD-Panel (kein JSON): LSPD_HR_API_URL zeigt vermutlich auf eine andere Seite oder einen Login.')
+  }
+  if (!body?.success || body.data === undefined) fail(body?.error || 'Unerwartete Antwort vom LSPD-Panel.')
+  const data = body!.data as T
+
   if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string)
-  cache.set(path, { at: Date.now(), data: body.data })
-  return body.data
+  cache.set(path, { at: Date.now(), data })
+  return data
 }
 
 export function searchLspdOfficers(options: { q?: string; status?: string[]; limit?: number } = {}) {
