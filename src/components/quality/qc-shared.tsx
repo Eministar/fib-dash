@@ -1,14 +1,16 @@
 'use client'
 
-import { MinusCircle, PlusCircle, StickyNote, type LucideIcon } from 'lucide-react'
+import { MinusCircle, Pencil, PlusCircle, StickyNote, Trash2, type LucideIcon } from 'lucide-react'
 
 import {
   QC_ENTRY_KIND_LABELS,
   QC_GRADE_LABELS,
   QC_RATING_LABELS,
-  isQcGrade,
   correctedEntryIds,
   entryBalance,
+  formatQcGrade,
+  isQcGrade,
+  qcBaseGrade,
   type QcEntryKind,
   type QcRating,
 } from '@/lib/quality-checks'
@@ -22,6 +24,7 @@ export interface QcEntry {
   correctsId: string | null
   authorName?: string
   createdAt?: string
+  editedAt?: string | null
 }
 
 export interface QcCheck {
@@ -67,16 +70,17 @@ export function RatingBadge({ rating }: { rating: string | null }) {
 
 const GRADE_STYLE = ['', 'text-[#30d158]', 'text-[#30d158]', 'text-[#d4d4d4]', 'text-[#ffd60a]', 'text-[#ff6961]', 'text-[#ff6961]']
 
-/** Schulnote 1–6; ohne Note nichts anzeigen. */
+/** Schulnote 1+ bis 6; ohne Note nichts anzeigen. */
 export function GradeBadge({ grade, long = false }: { grade: number | null | undefined; long?: boolean }) {
   if (!isQcGrade(grade)) return null
+  const base = qcBaseGrade(grade)
   return (
     <span
-      title={`Note ${grade} – ${QC_GRADE_LABELS[grade]}`}
-      className={cn('rounded-full bg-[#2c2c2e] px-2 py-0.5 font-mono text-[11.5px] font-semibold', GRADE_STYLE[grade])}
+      title={`Note ${formatQcGrade(grade)} – ${QC_GRADE_LABELS[base]}`}
+      className={cn('rounded-full bg-[#2c2c2e] px-2 py-0.5 font-mono text-[11.5px] font-semibold', GRADE_STYLE[base])}
     >
-      Note {grade}
-      {long && <span className="font-sans font-medium"> · {QC_GRADE_LABELS[grade]}</span>}
+      Note {formatQcGrade(grade)}
+      {long && <span className="font-sans font-medium"> · {QC_GRADE_LABELS[base]}</span>}
     </span>
   )
 }
@@ -84,8 +88,7 @@ export function GradeBadge({ grade, long = false }: { grade: number | null | und
 /** Durchschnittsnote, eine Nachkommastelle; `–` solange keine Note vergeben ist. */
 export function AverageGrade({ value }: { value: number | null | undefined }) {
   if (value === null || value === undefined) return <span className="text-[#636366]" title="Noch keine Note">–</span>
-  const rounded = Math.min(6, Math.max(1, Math.round(value)))
-  const label = isQcGrade(rounded) ? QC_GRADE_LABELS[rounded] : ''
+  const label = QC_GRADE_LABELS[qcBaseGrade(value)]
   const color = value <= 2.5 ? 'text-[#30d158]' : value <= 3.5 ? 'text-[#d4d4d4]' : value <= 4.5 ? 'text-[#ffd60a]' : 'text-[#ff6961]'
   return (
     <span className={color} title={`Durchschnittsnote ${value.toLocaleString('de-DE')} – ${label}`}>
@@ -115,10 +118,14 @@ export function QcEntryList({
   entries,
   showAuthors = true,
   onCorrect,
+  onEdit,
+  onDelete,
 }: {
   entries: QcEntry[]
   showAuthors?: boolean
   onCorrect?: (entry: QcEntry) => void
+  onEdit?: (entry: QcEntry) => void
+  onDelete?: (entry: QcEntry) => void
 }) {
   if (entries.length === 0) {
     return <p className="py-6 text-center text-[12.5px] text-[#8e8e93]">Noch keine Einträge.</p>
@@ -149,10 +156,27 @@ export function QcEntryList({
               {showAuthors && entry.authorName && <span className="text-[#8e8e93]">· {entry.authorName}</span>}
               {original && <span className="text-[#ffd60a]">· Korrektur zum Eintrag {timeFormat(original.occurredAt)}</span>}
               {isCorrected && replacement && <span className="text-[#ffd60a]">· korrigiert um {timeFormat(replacement.occurredAt)}</span>}
-              {onCorrect && !isCorrected && (
-                <button type="button" onClick={() => onCorrect(entry)} className="ml-auto text-[#98989d] hover:text-white">
-                  Korrigieren
-                </button>
+              {entry.editedAt && (
+                <span className="text-[#8e8e93]" title={`Bearbeitet ${formatDateTime(entry.editedAt)}`}>· bearbeitet</span>
+              )}
+              {(onCorrect || onEdit || onDelete) && (
+                <span className="ml-auto flex items-center gap-3">
+                  {onCorrect && !isCorrected && (
+                    <button type="button" onClick={() => onCorrect(entry)} className="text-[#98989d] hover:text-white">
+                      Korrigieren
+                    </button>
+                  )}
+                  {onEdit && (
+                    <button type="button" onClick={() => onEdit(entry)} className="text-[#98989d] hover:text-white" aria-label="Eintrag bearbeiten" title="Bearbeiten">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button type="button" onClick={() => onDelete(entry)} className="text-[#98989d] hover:text-[#ff6961]" aria-label="Eintrag löschen" title="Löschen">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </span>
               )}
             </div>
             <p className={cn('mt-1 whitespace-pre-wrap break-words text-[13px] text-[#f5f5f7]', isCorrected && 'line-through')}>

@@ -15,11 +15,13 @@ import {
   QUALITY_CHECK_PREFIX,
   aggregateOfficerStats,
   correctionError,
+  formatQcGrade,
   qcShareCovers,
   qcShareIsActive,
   type qcCompleteSchema,
   type qcCreateSchema,
   type qcEntrySchema,
+  type qcEntryUpdateSchema,
   type qcGradeSchema,
   type qcShareSchema,
   type qcShareUpdateSchema,
@@ -154,6 +156,59 @@ export async function addQualityEntry(user: CurrentUser, checkId: string, input:
   })
 }
 
+async function findEntry(tx: Prisma.TransactionClient, checkId: string, entryId: string) {
+  const entry = await tx.qualityCheckEntry.findFirst({ where: { id: entryId, checkId } })
+  if (!entry) throw new QcError('Eintrag nicht gefunden', 404)
+  return entry
+}
+
+export async function updateQualityEntry(user: CurrentUser, checkId: string, entryId: string, input: z.infer<typeof qcEntryUpdateSchema>) {
+  return prisma.$transaction(async (tx) => {
+    const check = await lockRunningCheck(tx, checkId)
+    const before = await findEntry(tx, checkId, entryId)
+    const entry = await tx.qualityCheckEntry.update({
+      where: { id: entryId },
+      data: {
+        ...(input.kind !== undefined ? { kind: input.kind } : {}),
+        ...(input.text !== undefined ? { text: input.text } : {}),
+        ...(input.occurredAt !== undefined ? { occurredAt: new Date(input.occurredAt) } : {}),
+        editedAt: new Date(),
+      },
+    })
+    await createAuditLog(
+      {
+        action: 'QUALITY_CHECK_ENTRY_EDITED',
+        userId: user.id,
+        details: `Qualitätskontrolle ${check.number}: Eintrag bearbeitet (${before.kind} → ${entry.kind})`,
+        oldValue: before.text.slice(0, 2000),
+        newValue: entry.text.slice(0, 2000),
+      },
+      tx,
+    )
+    return entry
+  })
+}
+
+/** Löscht einen Eintrag; Korrekturen, die auf ihn verweisen, bleiben als normale Einträge stehen. */
+export async function deleteQualityEntry(user: CurrentUser, checkId: string, entryId: string) {
+  return prisma.$transaction(async (tx) => {
+    const check = await lockRunningCheck(tx, checkId)
+    const entry = await findEntry(tx, checkId, entryId)
+    await tx.qualityCheckEntry.updateMany({ where: { checkId, correctsId: entryId }, data: { correctsId: null } })
+    await tx.qualityCheckEntry.delete({ where: { id: entryId } })
+    await createAuditLog(
+      {
+        action: 'QUALITY_CHECK_ENTRY_DELETED',
+        userId: user.id,
+        details: `Qualitätskontrolle ${check.number}: ${entry.kind}-Eintrag gelöscht`,
+        oldValue: entry.text.slice(0, 2000),
+      },
+      tx,
+    )
+    return { id: entryId }
+  })
+}
+
 export async function gradeQualityCheck(user: CurrentUser, id: string, input: z.infer<typeof qcGradeSchema>) {
   return prisma.$transaction(async (tx) => {
     const check = await lockRunningCheck(tx, id)
@@ -162,7 +217,7 @@ export async function gradeQualityCheck(user: CurrentUser, id: string, input: z.
       {
         action: 'QUALITY_CHECK_GRADED',
         userId: user.id,
-        details: `Qualitätskontrolle ${check.number}: Note ${input.grade ?? 'entfernt'}`,
+        details: `Qualitätskontrolle ${check.number}: Note ${input.grade === null ? 'entfernt' : formatQcGrade(input.grade)}`,
       },
       tx,
     )

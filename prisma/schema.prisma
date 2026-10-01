@@ -2749,8 +2749,9 @@ model QualityCheck {
   status        String    @default("RUNNING") @db.VarChar(20)
   /// POSITIVE | NEUTRAL | NEGATIVE – erst beim Abschluss gesetzt.
   rating        String?   @db.VarChar(20)
-  /// Schulnote 1–6; lässt sich schon während der laufenden Kontrolle setzen.
-  grade         Int?      @db.TinyInt
+  /// Schulnote 0.7 (1+) bis 6; ±0.3 = Tendenz (1− = 1.3). Lässt sich schon
+  /// während der laufenden Kontrolle setzen.
+  grade         Float?
   startedAt     DateTime
   endedAt       DateTime?
   location      String?   @db.VarChar(200)
@@ -2768,8 +2769,9 @@ model QualityCheck {
   @@index([startedAt])
 }
 
-/// Protokolleintrag einer Qualitätskontrolle. Wird nie geändert oder gelöscht;
-/// Korrekturen sind eigene Einträge mit Verweis (`correctsId`).
+/// Protokolleintrag einer Qualitätskontrolle. Solange die Kontrolle läuft,
+/// lässt er sich bearbeiten oder löschen (beides im Audit-Log); Korrekturen
+/// mit Verweis (`correctsId`) bleiben als nachvollziehbare Alternative.
 model QualityCheckEntry {
   id         String       @id @default(cuid())
   checkId    String
@@ -2783,6 +2785,8 @@ model QualityCheckEntry {
   author     User?        @relation("QualityCheckEntryAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   authorName String       @db.VarChar(200)
   createdAt  DateTime     @default(now())
+  /// Zuletzt nachträglich bearbeitet; `null` = unverändert.
+  editedAt   DateTime?
 
   @@index([checkId, occurredAt])
 }

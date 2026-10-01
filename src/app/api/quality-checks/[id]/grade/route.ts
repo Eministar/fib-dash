@@ -7,7 +7,7 @@ import { gradeQualityCheck, qcRouteError } from '@/lib/quality-checks-server'
 
 export const dynamic = 'force-dynamic'
 
-/** Schulnote (1–6) einer laufenden Kontrolle setzen oder entfernen. */
+/** Schulnote (1+ bis 6) einer laufenden Kontrolle setzen oder entfernen. */
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requirePermission('quality-checks:manage')

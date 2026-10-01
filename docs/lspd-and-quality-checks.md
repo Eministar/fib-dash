@@ -28,7 +28,7 @@ Menüpunkt **Qualitätskontrollen** (Recht `quality-checks:view`; Durchführen u
 ## Bereitstellung
 
 1. Datenbank sichern.
-2. `npm run db:push` **oder** die Patches in dieser Reihenfolge einmalig anwenden: `prisma/patches/2026-10-01-notifications-custody.sql`, dann `prisma/patches/2026-10-01-lspd-quality-checks.sql`.
+2. `npm run db:push` **oder** die Patches in dieser Reihenfolge einmalig anwenden: `prisma/patches/2026-10-01-notifications-custody.sql`, dann `prisma/patches/2026-10-01-lspd-quality-checks.sql`, dann `prisma/patches/2026-10-01-quality-grades-entry-edits.sql` (Zwischennoten 1+ … 5−, bearbeitbare Einträge).
 3. `.env` in beiden Dashboards ergänzen (siehe oben), beide bauen und neu starten.
 4. Den passenden Benutzergruppen `quality-checks:view` bzw. `quality-checks:manage` geben.
 

@@ -24,9 +24,10 @@ export const QC_RATING_LABELS: Record<QcRating, string> = {
   NEGATIVE: 'Negativ',
 }
 
-export const QC_GRADES = [1, 2, 3, 4, 5, 6] as const
-export type QcGrade = (typeof QC_GRADES)[number]
-export const QC_GRADE_LABELS: Record<QcGrade, string> = {
+/** Ganze Schulnoten 1–6; `+`/`−` liegen 0,3 darüber bzw. darunter (1+ = 0,7, 1− = 1,3). */
+export const QC_BASE_GRADES = [1, 2, 3, 4, 5, 6] as const
+export type QcBaseGrade = (typeof QC_BASE_GRADES)[number]
+export const QC_GRADE_LABELS: Record<QcBaseGrade, string> = {
   1: 'Sehr gut',
   2: 'Gut',
   3: 'Befriedigend',
@@ -34,9 +35,37 @@ export const QC_GRADE_LABELS: Record<QcGrade, string> = {
   5: 'Mangelhaft',
   6: 'Ungenügend',
 }
-export const isQcGrade = (value: unknown): value is QcGrade => QC_GRADES.includes(value as QcGrade)
 
-const gradeSchema = z.number().int().min(1, 'Note 1 bis 6').max(6, 'Note 1 bis 6')
+export const QC_GRADE_TENDENCY = 0.3
+
+/** Alle wählbaren Noten: 1+ 1 1− … 5+ 5 5− 6 (eine 6 gibt es nur glatt). */
+export const QC_GRADES: readonly number[] = QC_BASE_GRADES.flatMap((base) =>
+  base === 6 ? [6] : [roundGrade(base - QC_GRADE_TENDENCY), base, roundGrade(base + QC_GRADE_TENDENCY)],
+)
+
+function roundGrade(value: number) {
+  return Math.round(value * 10) / 10
+}
+
+export const isQcGrade = (value: unknown): value is number =>
+  typeof value === 'number' && QC_GRADES.some((grade) => Math.abs(grade - value) < 0.001)
+
+/** Zugehörige ganze Note (1+ und 1− → 1). */
+export function qcBaseGrade(value: number): QcBaseGrade {
+  return Math.min(6, Math.max(1, Math.round(value))) as QcBaseGrade
+}
+
+/** „1+“, „2“, „3−“ … */
+export function formatQcGrade(value: number) {
+  const base = qcBaseGrade(value)
+  const diff = roundGrade(value - base)
+  return `${base}${diff < 0 ? '+' : diff > 0 ? '−' : ''}`
+}
+
+const gradeSchema = z
+  .number()
+  .refine(isQcGrade, 'Note 1+ bis 6')
+  .transform(roundGrade)
 
 export const QC_STATUS_LABELS: Record<string, string> = {
   RUNNING: 'Läuft',
@@ -71,6 +100,16 @@ export const qcEntrySchema = z
     correctsId: z.string().trim().min(1).max(191).optional(),
   })
   .strict()
+
+/** Eintrag einer laufenden Kontrolle nachträglich ändern. */
+export const qcEntryUpdateSchema = z
+  .object({
+    kind: z.enum(QC_ENTRY_KINDS).optional(),
+    text: z.string().trim().min(1, 'Bitte etwas eintragen').max(5000).optional(),
+    occurredAt: isoDate.refine(notInFuture, 'Der Zeitpunkt darf nicht in der Zukunft liegen').optional(),
+  })
+  .strict()
+  .refine((input) => Object.values(input).some((value) => value !== undefined), 'Keine Änderung angegeben')
 
 export const qcCompleteSchema = z
   .object({

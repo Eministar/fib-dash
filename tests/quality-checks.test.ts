@@ -5,7 +5,10 @@ import {
   correctionError,
   entryBalance,
   qcCompleteSchema,
+  QC_GRADES,
+  formatQcGrade,
   qcEntrySchema,
+  qcEntryUpdateSchema,
   qcGradeSchema,
   qcShareCovers,
   qcShareIsActive,
@@ -46,10 +49,21 @@ test('Eingaben werden geprüft', () => {
   assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', grade: 7, summary: 'Gut' }).success, false)
 })
 
-test('Note: nur ganze Zahlen 1–6 oder null', () => {
-  for (const grade of [1, 6, null]) assert.equal(qcGradeSchema.safeParse({ grade }).success, true)
-  for (const grade of [0, 7, 2.5, '3']) assert.equal(qcGradeSchema.safeParse({ grade }).success, false)
+test('Note: 1+ bis 6 mit Tendenzen oder null', () => {
+  for (const grade of [0.7, 1, 1.3, 2.7, 5.3, 6, null]) assert.equal(qcGradeSchema.safeParse({ grade }).success, true)
+  for (const grade of [0, 0.3, 5.7, 6.3, 7, 2.5, '3']) assert.equal(qcGradeSchema.safeParse({ grade }).success, false)
   assert.equal(qcGradeSchema.safeParse({}).success, false)
+  // Fließkomma-Rauschen wird auf den kanonischen Wert gerundet.
+  assert.deepEqual(qcGradeSchema.parse({ grade: 1 + 0.3 }), { grade: 1.3 })
+  assert.equal(QC_GRADES.length, 16)
+  assert.deepEqual([0.7, 1, 1.3, 1.7, 6].map(formatQcGrade), ['1+', '1', '1−', '2+', '6'])
+})
+
+test('Eintrag bearbeiten: mindestens ein Feld, gleiche Regeln wie beim Anlegen', () => {
+  assert.equal(qcEntryUpdateSchema.safeParse({}).success, false)
+  assert.equal(qcEntryUpdateSchema.safeParse({ text: '  ' }).success, false)
+  assert.equal(qcEntryUpdateSchema.safeParse({ kind: 'NEGATIVE' }).success, true)
+  assert.equal(qcEntryUpdateSchema.safeParse({ text: 'neu', correctsId: 'x' }).success, false)
 })
 
 test('Freigabe: Bereich braucht passendes Ziel, Ablauf in der Zukunft', () => {

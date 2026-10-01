@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import { PageLoader } from '@/components/ui/loading'
 import { Modal } from '@/components/ui/modal'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,12 +18,15 @@ import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { hasPermission } from '@/lib/permissions'
 import {
+  QC_BASE_GRADES,
   QC_ENTRY_KIND_LABELS,
-  QC_GRADES,
   QC_GRADE_LABELS,
+  QC_GRADE_TENDENCY,
   QC_RATINGS,
   QC_RATING_LABELS,
   entryBalance,
+  formatQcGrade,
+  qcBaseGrade,
   suggestRating,
   type QcEntryKind,
   type QcRating,
@@ -39,6 +43,27 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
   const [completeOpen, setCompleteOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [correcting, setCorrecting] = useState<QcEntry | null>(null)
+  const [editing, setEditing] = useState<QcEntry | null>(null)
+  const confirm = useConfirm()
+  const { addToast } = useToast()
+  const { execute } = useApi()
+
+  const deleteEntry = async (entry: QcEntry) => {
+    const ok = await confirm({
+      title: 'Eintrag löschen?',
+      description: `„${entry.text.slice(0, 120)}${entry.text.length > 120 ? '…' : ''}“ wird aus dem Protokoll entfernt.`,
+      confirmLabel: 'Löschen',
+      tone: 'danger',
+    })
+    if (!ok) return
+    try {
+      await execute(`/api/quality-checks/${checkId}/entries/${entry.id}`, { method: 'DELETE' })
+      if (correcting?.id === entry.id) setCorrecting(null)
+      void refetch()
+    } catch (cause) {
+      addToast({ type: 'error', title: 'Eintrag nicht gelöscht', message: cause instanceof Error ? cause.message : '' })
+    }
+  }
 
   if (!canView) return <UnauthorizedContent />
   if (loading && !check) return <PageLoader withHeader />
@@ -126,8 +151,25 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
 
       <Card>
         <h2 className="mb-3 text-[14px] font-semibold text-white">Protokoll ({check.entries.length})</h2>
-        <QcEntryList entries={check.entries} onCorrect={running && canManage ? setCorrecting : undefined} />
+        <QcEntryList
+          entries={check.entries}
+          onCorrect={running && canManage ? setCorrecting : undefined}
+          onEdit={running && canManage ? setEditing : undefined}
+          onDelete={running && canManage ? (entry) => void deleteEntry(entry) : undefined}
+        />
       </Card>
+
+      {editing && (
+        <EditEntryDialog
+          checkId={check.id}
+          entry={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            void refetch()
+          }}
+        />
+      )}
 
       {completeOpen && (
         <CompleteDialog check={check} onClose={() => setCompleteOpen(false)} onSaved={() => { setCompleteOpen(false); void refetch() }} />
@@ -143,7 +185,7 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
   )
 }
 
-/** Note 1–6 schon während der Mitfahrt setzen; nochmal tippen nimmt sie zurück. */
+/** Note schon während der Mitfahrt setzen; nochmal tippen nimmt sie zurück. */
 function GradePicker({ checkId, grade, onSaved }: { checkId: string; grade: number | null; onSaved: () => void }) {
   const { addToast } = useToast()
   const { execute, loading } = useApi()
@@ -160,33 +202,132 @@ function GradePicker({ checkId, grade, onSaved }: { checkId: string; grade: numb
   return (
     <div className="mt-4 border-t border-[#2c2c2e] pt-3">
       <p className="mb-1.5 text-[11px] uppercase tracking-wide text-[#8e8e93]">Note</p>
-      <GradeButtons value={grade} disabled={loading} onChange={(next) => void save(next === grade ? null : next)} />
+      <GradeButtons value={grade} disabled={loading} onChange={(next) => void save(sameGrade(next, grade) ? null : next)} />
     </div>
   )
 }
 
+const sameGrade = (a: number | null, b: number | null) => a !== null && b !== null && Math.abs(a - b) < 0.001
+const withTendency = (base: number, sign: -1 | 1) => Math.round((base + sign * QC_GRADE_TENDENCY) * 10) / 10
+
+/** Je Spalte eine ganze Note, darüber die Tendenz nach oben (1+), darunter nach unten (1−). */
 function GradeButtons({ value, disabled, onChange }: { value: number | null; disabled?: boolean; onChange: (grade: number) => void }) {
+  const option = (grade: number, main: boolean) => {
+    const active = sameGrade(value, grade)
+    const label = QC_GRADE_LABELS[qcBaseGrade(grade)]
+    return (
+      <button
+        type="button"
+        role="radio"
+        aria-checked={active}
+        aria-label={`Note ${formatQcGrade(grade)}`}
+        title={`${formatQcGrade(grade)} – ${label}`}
+        disabled={disabled}
+        onClick={() => onChange(grade)}
+        className={cn(
+          'flex flex-col items-center justify-center rounded-[10px] border font-semibold leading-tight disabled:opacity-60',
+          main ? 'h-11' : 'h-7 font-mono text-[12.5px]',
+          active ? 'border-white/60 bg-[#2c2c2e] text-white' : 'border-[#38383a] text-[#8e8e93] hover:bg-[#1c1c1e]',
+        )}
+      >
+        {main ? (
+          <>
+            <span className="text-[15px]">{grade}</span>
+            <span className="hidden text-[10px] font-normal sm:block">{label}</span>
+          </>
+        ) : (
+          formatQcGrade(grade)
+        )}
+      </button>
+    )
+  }
+
   return (
     <div className="grid grid-cols-6 gap-1.5" role="radiogroup" aria-label="Note">
-      {QC_GRADES.map((grade) => (
-        <button
-          key={grade}
-          type="button"
-          role="radio"
-          aria-checked={value === grade}
-          title={QC_GRADE_LABELS[grade]}
-          disabled={disabled}
-          onClick={() => onChange(grade)}
-          className={cn(
-            'flex h-11 flex-col items-center justify-center rounded-[10px] border font-semibold leading-tight disabled:opacity-60',
-            value === grade ? 'border-white/60 bg-[#2c2c2e] text-white' : 'border-[#38383a] text-[#8e8e93] hover:bg-[#1c1c1e]',
-          )}
-        >
-          <span className="text-[15px]">{grade}</span>
-          <span className="hidden text-[10px] font-normal sm:block">{QC_GRADE_LABELS[grade]}</span>
-        </button>
+      {QC_BASE_GRADES.map((base) => (
+        <div key={base} className="flex flex-col gap-1">
+          {base === 6 ? <span className="h-7" aria-hidden /> : option(withTendency(base, -1), false)}
+          {option(base, true)}
+          {base === 6 ? <span className="h-7" aria-hidden /> : option(withTendency(base, 1), false)}
+        </div>
       ))}
     </div>
+  )
+}
+
+function KindButtons({ value, onChange }: { value: QcEntryKind; onChange: (kind: QcEntryKind) => void }) {
+  return (
+    <div className="mb-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Art des Eintrags">
+      {(['POSITIVE', 'NEGATIVE', 'NOTE'] as const).map((kind) => {
+        const style = KIND_STYLE[kind]
+        const Icon = style.icon
+        const active = value === kind
+        return (
+          <button
+            key={kind}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(kind)}
+            className={cn(
+              'flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-[12px] border text-[13px] font-semibold transition-colors',
+              active ? cn(style.border, style.bg, style.text) : 'border-[#38383a] text-[#8e8e93] hover:bg-[#2c2c2e]',
+            )}
+          >
+            <Icon className="h-5 w-5" />
+            {QC_ENTRY_KIND_LABELS[kind]}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** ISO-Zeitpunkt → Wert für `<input type="datetime-local">` in Ortszeit. */
+function toLocalInput(iso: string) {
+  const date = new Date(iso)
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+}
+
+function EditEntryDialog({ checkId, entry, onClose, onSaved }: { checkId: string; entry: QcEntry; onClose: () => void; onSaved: () => void }) {
+  const { execute, loading } = useApi()
+  const [kind, setKind] = useState<QcEntryKind>((entry.kind as QcEntryKind) ?? 'NOTE')
+  const [text, setText] = useState(entry.text)
+  const [time, setTime] = useState(toLocalInput(entry.occurredAt))
+  const [failure, setFailure] = useState('')
+
+  const save = async () => {
+    setFailure('')
+    try {
+      await execute(`/api/quality-checks/${checkId}/entries/${entry.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ kind, text, ...(time ? { occurredAt: new Date(time).toISOString() } : {}) }),
+      })
+      onSaved()
+    } catch (cause) {
+      setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen')
+    }
+  }
+
+  return (
+    <Modal open onClose={loading ? () => {} : onClose} title="Eintrag bearbeiten" size="lg">
+      <KindButtons value={kind} onChange={setKind} />
+      <Textarea label="Beobachtung" rows={4} maxLength={5000} value={text} onChange={(event) => setText(event.target.value)} />
+      <label className="mt-3 block text-[12px] text-[#98989d]">
+        Zeitpunkt
+        <input
+          type="datetime-local"
+          value={time}
+          onChange={(event) => setTime(event.target.value)}
+          className="mt-1 block h-[34px] rounded-[8px] border border-[#38383a] bg-[#1c1c1e] px-2 text-[12.5px] text-white"
+        />
+      </label>
+      {failure && <p role="alert" className="mt-3 text-[12.5px] text-[#fca5a5]">{failure}</p>}
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="ghost" onClick={onClose} disabled={loading}>Abbrechen</Button>
+        <Button onClick={() => void save()} loading={loading} disabled={!text.trim()}>Speichern</Button>
+      </div>
+    </Modal>
   )
 }
 
@@ -239,29 +380,7 @@ function EntryComposer({
           <button type="button" onClick={onCancelCorrection} className="shrink-0 text-[#e5e5ea] hover:text-white">Abbrechen</button>
         </div>
       )}
-      <div className="mb-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Art des Eintrags">
-        {(['POSITIVE', 'NEGATIVE', 'NOTE'] as const).map((value) => {
-          const style = KIND_STYLE[value]
-          const Icon = style.icon
-          const active = kind === value
-          return (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setKind(value)}
-              className={cn(
-                'flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-[12px] border text-[13px] font-semibold transition-colors',
-                active ? cn(style.border, style.bg, style.text) : 'border-[#38383a] text-[#8e8e93] hover:bg-[#2c2c2e]',
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {QC_ENTRY_KIND_LABELS[value]}
-            </button>
-          )
-        })}
-      </div>
+      <KindButtons value={kind} onChange={setKind} />
       <Textarea
         label="Beobachtung"
         rows={3}
@@ -341,7 +460,7 @@ function CompleteDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: 
           <p className="mb-1.5 text-[12.5px] font-medium text-[#c7c7cc]">
             Note <span className="font-normal text-[#8e8e93]">(optional)</span>
           </p>
-          <GradeButtons value={grade} onChange={(next) => setGrade(next === grade ? null : next)} />
+          <GradeButtons value={grade} onChange={(next) => setGrade(sameGrade(next, grade) ? null : next)} />
         </div>
         <Textarea label="Fazit" rows={5} maxLength={20000} value={summary} onChange={(event) => setSummary(event.target.value)} required />
         {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}
