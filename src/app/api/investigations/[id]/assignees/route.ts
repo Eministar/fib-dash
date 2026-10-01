@@ -8,6 +8,7 @@ import { canAccessInvestigation, investigationAccessInclude } from '@/lib/invest
 import { agentDisplayName, cleanText, routeError } from '@/lib/investigations-server'
 import { isUniqueConstraintError } from '@/lib/prisma-errors'
 import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
+import { notifyInvestigationTeam } from '@/lib/notifications-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,6 +68,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         agentId,
         details: `Akte ${investigation.caseNumber}: ${agentDisplayName(agent)} als Ermittler zugewiesen`,
       })
+
+      await notifyInvestigationTeam({ investigation, actorId: user.id, addedAssigneeIds: [agentId] })
 
       // Verschlusssachen filtert `sendDiscordInvestigationEvent` selbst heraus:
       // die Zuweisung zu einer geheimen Akte darf nicht im offenen Channel

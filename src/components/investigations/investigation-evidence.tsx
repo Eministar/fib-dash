@@ -3,7 +3,7 @@
 import { displayBadgeNumber } from '@/lib/badge-number'
 
 import { useState } from 'react'
-import { Boxes, MapPin, Package, Plus, Trash2 } from 'lucide-react'
+import { Boxes, Link2, MapPin, Package, Plus, Trash2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,7 @@ import {
 import { formatDateTime } from '@/lib/utils'
 import type { AgentLite, Evidence, InvestigationEntry } from '@/components/investigations/types'
 import { useConfirm } from '@/components/ui/confirm-dialog'
+import { EvidenceCustodyDialog } from '@/components/investigations/evidence-custody'
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info'
 
@@ -87,6 +88,7 @@ export function InvestigationEvidence({
   const confirm = useConfirm()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<EvidenceForm>(emptyForm)
+  const [custodyId, setCustodyId] = useState<string | null>(null)
 
   const set = <K extends keyof EvidenceForm>(key: K, value: EvidenceForm[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -140,6 +142,14 @@ export function InvestigationEvidence({
         )}
       </div>
 
+      <EvidenceCustodyDialog
+        evidenceId={custodyId}
+        onClose={() => setCustodyId(null)}
+        agents={agents}
+        canManage={canManage}
+        onChanged={onChanged}
+      />
+
       {evidence.length === 0 ? (
         <p className="py-3 text-[12.5px] text-[#8e8e93]">Keine Asservate zu dieser Akte.</p>
       ) : (
@@ -187,24 +197,30 @@ export function InvestigationEvidence({
                   </div>
                 </div>
 
-                {canManage && (
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Select
-                      size="sm"
-                      options={labelOptions(EVIDENCE_STATUS_LABELS)}
-                      value={item.status}
-                      onValueChange={(value) => void handleStatusChange(item, value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete(item)}
-                      className="text-[#8e8e93] transition-colors hover:text-[#fca5a5]"
-                      aria-label="Asservat löschen"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setCustodyId(item.id)}>
+                    <Link2 className="h-3.5 w-3.5" />
+                    Beweiskette
+                  </Button>
+                  {canManage && (
+                    <>
+                      <Select
+                        size="sm"
+                        options={labelOptions(EVIDENCE_STATUS_LABELS)}
+                        value={item.status}
+                        onValueChange={(value) => void handleStatusChange(item, value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleDelete(item)}
+                        className="text-[#8e8e93] transition-colors hover:text-[#fca5a5]"
+                        aria-label="Asservat löschen"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </li>
           ))}

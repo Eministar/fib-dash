@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Car, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Car, Network, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -37,6 +38,8 @@ import type {
 } from '@/components/investigations/types'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { usePageAction } from '@/hooks/use-page-action'
+import { CrossHitHint, vehicleCrossHitQuery } from '@/components/investigations/cross-hits'
 
 type VehicleDetail = Vehicle & {
   investigations: {
@@ -65,6 +68,21 @@ export function VehicleRegister() {
   /** Gefüllt, solange die geöffnete Fahrzeugakte bearbeitet wird. */
   const [edit, setEdit] = useState<VehicleForm | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const searchParams = useSearchParams()
+
+  // Direktsprung auf eine Fahrzeugakte, z. B. aus dem Hinweis „Bereits erfasst“.
+  useEffect(() => {
+    const requested = searchParams.get('vehicle')
+    if (requested) setSelectedId(requested)
+  }, [searchParams])
+  usePageAction(
+    'new',
+    () => {
+      setForm(emptyVehicleForm())
+      setCreateOpen(true)
+    },
+    canManage,
+  )
 
   const query = useMemo(() => {
     const params = new URLSearchParams()
@@ -237,20 +255,28 @@ export function VehicleRegister() {
                 {detail.stolen && <Badge variant="danger">Als gestohlen gemeldet</Badge>}
                 {detail.wanted && <Badge variant="warning">Zur Fahndung ausgeschrieben</Badge>}
               </div>
-              {canManage && (
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setEdit(vehicleFormFrom(detail))}>
-                    <Pencil className="h-3.5 w-3.5" />
-                    Akte bearbeiten
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/investigations/graph?focus=vehicle:${detail.id}`}>
+                  <Button variant="outline" size="sm">
+                    <Network className="h-3.5 w-3.5" />
+                    Netzwerk
                   </Button>
-                  {canDelete && (
-                    <Button variant="ghost" size="sm" onClick={() => setDeleting(true)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Löschen
+                </Link>
+                {canManage && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => setEdit(vehicleFormFrom(detail))}>
+                      <Pencil className="h-3.5 w-3.5" />
+                      Akte bearbeiten
                     </Button>
-                  )}
-                </div>
-              )}
+                    {canDelete && (
+                      <Button variant="ghost" size="sm" onClick={() => setDeleting(true)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Löschen
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
             {detail.photoId && (
@@ -373,6 +399,7 @@ export function VehicleRegister() {
       >
         <div className="space-y-4">
           <VehicleFormFields form={form} persons={persons ?? []} onChange={setForm} />
+          <CrossHitHint query={vehicleCrossHitQuery(form.plate)} />
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="ghost" disabled={saving} onClick={() => setCreateOpen(false)}>
               Abbrechen

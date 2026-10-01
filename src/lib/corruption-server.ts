@@ -4,6 +4,7 @@ import { prisma } from './prisma'
 import { createAuditLog } from './audit'
 import { error, unauthorized, forbidden } from './api-response'
 import { officialNumber, parseOfficialNumber, type CorruptionInput } from './corruption-validation'
+import { LSPD_AGENCY, type LspdOfficer } from './lspd-officers'
 
 export const corruptionInclude = {
   official: true,
@@ -48,7 +49,20 @@ export function officialListWhere(search: string, agency: string): Prisma.Public
   }
 }
 
-export async function createCorruptionCheck(tx: Prisma.TransactionClient, input: CorruptionInput, userId: string) {
+/**
+ * Beamtenakte zu einem LSPD-Officer: vorhandene (ggf. zusammengeführte) Akte
+ * nehmen, sonst mit den Stammdaten aus dem Panel anlegen.
+ */
+export async function officialForLspdOfficer(tx: Prisma.TransactionClient, officer: LspdOfficer) {
+  const linked = await tx.publicOfficial.findUnique({ where: { lspdOfficerId: officer.id } })
+  if (linked) return resolveOfficial(tx, linked.id)
+  return tx.publicOfficial.create({ data: {
+    firstName: officer.firstName.slice(0, 100), lastName: officer.lastName.slice(0, 100),
+    agency: LSPD_AGENCY, badgeNumber: officer.badgeNumber.slice(0, 100) || null, lspdOfficerId: officer.id,
+  } })
+}
+
+export async function createCorruptionCheck(tx: Prisma.TransactionClient, input: CorruptionInput, userId: string, lspdOfficer?: LspdOfficer) {
   const existing = await tx.corruptionCheck.findUnique({ where: { requestId: input.requestId }, include: corruptionInclude })
   if (existing) {
     if (existing.createdById !== userId) throw new CorruptionError('Anfragekennung bereits verwendet', 409)
@@ -58,7 +72,9 @@ export async function createCorruptionCheck(tx: Prisma.TransactionClient, input:
   if (agents.length !== input.agentIds.length) throw new CorruptionError('Ein ausgewählter Agent existiert nicht mehr. Bitte Auswahl aktualisieren.')
   const official = input.officialId
     ? await resolveOfficial(tx, input.officialId)
-    : await tx.publicOfficial.create({ data: input.official! })
+    : lspdOfficer
+      ? await officialForLspdOfficer(tx, lspdOfficer)
+      : await tx.publicOfficial.create({ data: input.official! })
   if (!official) throw new CorruptionError('Beamtenakte nicht gefunden', 404)
   const check = await tx.corruptionCheck.create({ data: {
     requestId: input.requestId, officialId: official.id, conductedAt: new Date(input.conductedAt),
@@ -71,8 +87,19 @@ export async function createCorruptionCheck(tx: Prisma.TransactionClient, input:
 }
 
 export async function saveCorruptionCheck(input: CorruptionInput, userId: string) {
-  try { return await prisma.$transaction(tx => createCorruptionCheck(tx, input, userId), { isolationLevel: 'Serializable' }) }
+  // Das Panel wird VOR der Transaktion gefragt – keine Netzwerkanfrage in einer serialisierbaren Transaktion.
+  let lspdOfficer: LspdOfficer | undefined
+  if (input.lspdOfficerId) {
+    // Dynamisch: der Client ist `server-only` und soll die reine Logik (und ihre Tests) nicht mitziehen.
+    const { LspdUnavailableError, getLspdOfficerFile } = await import('./lspd-hr-client')
+    try { lspdOfficer = await getLspdOfficerFile(input.lspdOfficerId) }
+    catch (cause) { throw cause instanceof LspdUnavailableError ? new CorruptionError(cause.message, cause.status) : cause }
+  }
+  const run = () => prisma.$transaction(tx => createCorruptionCheck(tx, input, userId, lspdOfficer), { isolationLevel: 'Serializable' })
+  try { return await run() }
   catch (cause) {
+    // Zwei gleichzeitige Erstkontrollen desselben LSPD-Beamten: die zweite nimmt beim erneuten Versuch die neue Akte.
+    if (lspdOfficer && cause instanceof Prisma.PrismaClientKnownRequestError && cause.code === 'P2002' && String(cause.meta?.target ?? '').includes('lspdOfficerId')) return run()
     // Concurrent retries roll back their new official before returning the first result.
     if (cause instanceof Prisma.PrismaClientKnownRequestError && cause.code === 'P2002') {
       const saved = await prisma.corruptionCheck.findUnique({ where: { requestId: input.requestId }, include: corruptionInclude })

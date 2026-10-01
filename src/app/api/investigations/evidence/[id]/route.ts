@@ -5,6 +5,7 @@ import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
 import {
+  EVIDENCE_STATUS_LABELS,
   canAccessInvestigation,
   evidenceInclude,
   investigationAccessInclude,
@@ -12,9 +13,33 @@ import {
   isEvidenceStatus,
 } from '@/lib/investigations'
 import { cleanText, parseDate, parseQuantity, routeError } from '@/lib/investigations-server'
+import { appendCustodyEvent } from '@/lib/custody-server'
 import type { Prisma } from '@/generated/prisma'
 
 export const dynamic = 'force-dynamic'
+
+const TRACKED_FIELDS = {
+  title: 'Bezeichnung',
+  kind: 'Art',
+  status: 'Status',
+  description: 'Beschreibung',
+  quantity: 'Menge',
+  seizedAt: 'Sicherstellungszeit',
+  seizedLocation: 'Fundort',
+  seizedByAgentId: 'Sichergestellt durch',
+  storageLocation: 'Verwahrort',
+  photoUrl: 'Foto',
+} as const
+
+type TrackedEvidence = { [K in keyof typeof TRACKED_FIELDS]: unknown }
+
+/** Welche protokollierten Felder sich geändert haben – als lesbare Namen. */
+function changedEvidenceFields(before: TrackedEvidence, after: TrackedEvidence) {
+  const comparable = (value: unknown) => (value instanceof Date ? value.getTime() : value ?? null)
+  return (Object.keys(TRACKED_FIELDS) as (keyof typeof TRACKED_FIELDS)[])
+    .filter((key) => comparable(before[key]) !== comparable(after[key]))
+    .map((key) => TRACKED_FIELDS[key])
+}
 
 const accessInclude = {
   investigation: { include: investigationAccessInclude },
@@ -72,10 +97,32 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
-    const evidence = await prisma.evidence.update({
-      where: { id },
-      data,
-      include: evidenceInclude,
+    const evidence = await prisma.$transaction(async (tx) => {
+      const updated = await tx.evidence.update({
+        where: { id },
+        data,
+        include: evidenceInclude,
+      })
+
+      const changed = changedEvidenceFields(existing, updated)
+      if (changed.length > 0) {
+        const statusChanged = existing.status !== updated.status
+        const others = changed.filter((label) => label !== 'Status')
+        await appendCustodyEvent(tx, updated, {
+          action: statusChanged ? 'STATUS_CHANGED' : 'UPDATED',
+          actor: user,
+          location: existing.storageLocation !== updated.storageLocation ? updated.storageLocation : null,
+          note: [
+            statusChanged
+              ? `${EVIDENCE_STATUS_LABELS[existing.status]} → ${EVIDENCE_STATUS_LABELS[updated.status]}`
+              : null,
+            others.length > 0 ? `Geändert: ${others.join(', ')}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        })
+      }
+      return updated
     })
 
     await createAuditLog({
@@ -99,7 +146,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     if (!existing) return notFound('Asservat')
     if (!canAccessInvestigation(user, existing.investigation)) return forbidden()
 
-    await prisma.evidence.delete({ where: { id } })
+    // Die Kette bleibt erhalten (evidenceId wird NULL) – mit dem Löschen als letztem Eintrag.
+    await prisma.$transaction(async (tx) => {
+      await appendCustodyEvent(tx, existing, { action: 'DELETED', actor: user, note: existing.title })
+      await tx.evidence.delete({ where: { id } })
+    })
 
     await createAuditLog({
       action: 'EVIDENCE_DELETED',

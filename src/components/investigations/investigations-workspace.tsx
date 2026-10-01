@@ -5,6 +5,7 @@ import { displayBadgeNumber } from '@/lib/badge-number'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { usePageAction } from '@/hooks/use-page-action'
 import { FileVideo, FolderOpen, Plus, Users } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
@@ -108,6 +109,7 @@ export function InvestigationsWorkspace() {
   const [chooseType, setChooseType] = useState(false)
   const [dossierSearch, setDossierSearch] = useState('')
   const [form, setForm] = useState<CreateForm>(emptyForm)
+  usePageAction('new', () => setCreateOpen(true), canManage)
 
   const query = useMemo(() => {
     const params = new URLSearchParams()

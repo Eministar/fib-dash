@@ -176,7 +176,7 @@ export async function GET(req: NextRequest) {
         code: row.plate ?? row.vehicleNumber,
         title: row.model || row.vehicleNumber,
         hint: row.color ?? undefined,
-        href: '/investigations/vehicles',
+        href: `/investigations/vehicles?vehicle=${encodeURIComponent(row.id)}`,
       })),
       ...mapSpots.map((row) => ({
         id: row.id,

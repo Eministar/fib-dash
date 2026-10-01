@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { useFetch } from '@/hooks/use-fetch'
 import { visitorRedirectTarget, type BodycamAnswer } from '@/lib/visitor-routing'
 import { GlobalSearch } from '@/components/layout/global-search'
+import { NotificationBell } from '@/components/layout/notification-bell'
 import { ConnectionBanner } from '@/components/layout/connection-banner'
 
 interface ActiveTestSession {
@@ -165,8 +166,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <main className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Rechtsbündig über dem Inhalt: erreichbar von jeder Seite, ohne
             das Layout der einzelnen Ansichten anzufassen. */}
-        <div className="flex justify-end px-3 pt-16 sm:px-6 lg:px-8 lg:pt-4 print:hidden">
+        <div className="flex justify-end gap-2 px-3 pt-16 sm:px-6 lg:px-8 lg:pt-4 print:hidden">
           <GlobalSearch />
+          <NotificationBell />
         </div>
         <div className="w-full flex-1 px-3 pb-10 pt-3 sm:px-6 lg:px-8 print:p-0">
           <ConnectionBanner />

@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { AlertTriangle, Car, Pencil, Plus, Trash2, UserSearch } from 'lucide-react'
+import { usePageAction } from '@/hooks/use-page-action'
+import { CrossHitHint, personCrossHitQuery } from '@/components/investigations/cross-hits'
+import { AlertTriangle, Car, Network, Pencil, Plus, Trash2, UserSearch } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -121,6 +123,14 @@ export function PersonRegister() {
   const [editor, setEditor] = useState<'create' | 'edit' | null>(null)
   const [form, setForm] = useState<PersonForm>(emptyForm)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  usePageAction(
+    'new',
+    () => {
+      setForm(emptyForm())
+      setEditor('create')
+    },
+    canManage,
+  )
 
   // Erlaubt den Direktsprung aus einer Akte auf eine bestimmte Personenakte.
   useEffect(() => {
@@ -320,6 +330,12 @@ export function PersonRegister() {
               {detail.wanted && <Badge variant="danger">Zur Fahndung ausgeschrieben</Badge>}
               {detail.dangerous && <Badge variant="warning">Als gefährlich eingestuft</Badge>}
               <div className="ml-auto flex gap-2">
+                <Link href={`/investigations/graph?focus=person:${detail.id}`}>
+                  <Button variant="outline" size="sm">
+                    <Network className="h-3.5 w-3.5" />
+                    Netzwerk
+                  </Button>
+                </Link>
                 {canManage && (
                   <Button
                     variant="outline"
@@ -498,6 +514,7 @@ export function PersonRegister() {
               onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
             />
           </div>
+          {editor === 'create' && <CrossHitHint query={personCrossHitQuery(form)} />}
           <PhotoField value={form.photoId ? catalogPhotoUrl(form.photoId) : null} onChange={photo => setForm(prev => ({ ...prev, photoId: photo?.id ?? null }))} />
           <Textarea
             label="Notizen"

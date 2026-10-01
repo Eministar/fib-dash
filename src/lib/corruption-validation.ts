@@ -31,6 +31,8 @@ export const corruptionCheckSchema = z.object({
   requestId: z.uuid(),
   officialId: officialId.optional(),
   official: officialFieldsSchema.optional(),
+  /** Beamter aus dem LSPD-Panel – Akte wird gefunden oder angelegt. */
+  lspdOfficerId: z.string().trim().min(1).max(191).optional(),
   conductedAt: z.iso.datetime({ offset: true }).refine(v => new Date(v).getTime() <= Date.now() + 60_000, 'Eine durchgeführte Kontrolle darf nicht in der Zukunft liegen'),
   agentIds: z.array(z.string().trim().min(1).max(191)).min(1, 'Mindestens einen durchführenden Agent auswählen').max(30).transform(ids => [...new Set(ids)]),
   result: z.enum(['CLEAR', 'FINDINGS']),
@@ -38,7 +40,7 @@ export const corruptionCheckSchema = z.object({
   location: z.string().trim().max(200).optional(),
   notes: z.string().trim().max(30000).optional(),
 }).strict().superRefine((input, ctx) => {
-  if (Boolean(input.officialId) === Boolean(input.official)) ctx.addIssue({ code: 'custom', message: 'Eine bestehende Beamtenakte wählen oder einen neuen Beamten anlegen', path: ['officialId'] })
+  if ([input.officialId, input.official, input.lspdOfficerId].filter(Boolean).length !== 1) ctx.addIssue({ code: 'custom', message: 'Eine bestehende Beamtenakte wählen, einen LSPD-Beamten auswählen oder einen neuen Beamten anlegen', path: ['officialId'] })
   if (input.result === 'FINDINGS' && !input.findings) ctx.addIssue({ code: 'custom', message: 'Bitte den Befund beschreiben', path: ['findings'] })
 })
 

@@ -18,6 +18,7 @@ import {
   parseQuantity,
   routeError,
 } from '@/lib/investigations-server'
+import { appendCustodyEvent } from '@/lib/custody-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,24 +66,38 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const itemNumber = await nextEvidenceNumber()
 
-    const evidence = await prisma.evidence.create({
-      data: {
-        investigationId: id,
-        entryId,
-        itemNumber,
-        kind,
-        status,
-        title,
-        description: cleanText(body.description) || null,
-        quantity: parseQuantity(body.quantity),
-        seizedAt: parseDate(body.seizedAt),
-        seizedLocation: cleanText(body.seizedLocation).slice(0, 200) || null,
-        seizedByAgentId,
-        storageLocation: cleanText(body.storageLocation).slice(0, 200) || null,
-        photoUrl: cleanText(body.photoUrl).slice(0, 2048) || null,
-        createdById: user.id,
-      },
-      include: evidenceInclude,
+    const evidence = await prisma.$transaction(async (tx) => {
+      const created = await tx.evidence.create({
+        data: {
+          investigationId: id,
+          entryId,
+          itemNumber,
+          kind,
+          status,
+          title,
+          description: cleanText(body.description) || null,
+          quantity: parseQuantity(body.quantity),
+          seizedAt: parseDate(body.seizedAt),
+          seizedLocation: cleanText(body.seizedLocation).slice(0, 200) || null,
+          seizedByAgentId,
+          storageLocation: cleanText(body.storageLocation).slice(0, 200) || null,
+          photoUrl: cleanText(body.photoUrl).slice(0, 2048) || null,
+          createdById: user.id,
+        },
+        include: evidenceInclude,
+      })
+      // Erster Eintrag der Beweiskette – in derselben Transaktion, damit es
+      // kein Asservat ohne Kettenanfang geben kann.
+      await appendCustodyEvent(tx, created, {
+        action: 'CREATED',
+        actor: user,
+        toHolder: created.seizedByAgent
+          ? `${created.seizedByAgent.firstName} ${created.seizedByAgent.lastName}`
+          : null,
+        location: created.storageLocation ?? created.seizedLocation,
+        note: created.seizedLocation ? `Sichergestellt: ${created.seizedLocation}` : null,
+      })
+      return created
     })
 
     await prisma.investigation.update({ where: { id }, data: { updatedAt: new Date() } })

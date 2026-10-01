@@ -9,6 +9,7 @@ import {
   CalendarClock,
   ImageIcon,
   MapPin,
+  Network,
   Pencil,
   Plus,
   Trash2,
@@ -71,6 +72,8 @@ import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { InvestigationTemplateProgress } from './investigation-template-progress'
+import { OtherCasesNote } from '@/components/investigations/cross-hits'
+import { InvestigationTimeline } from '@/components/investigations/investigation-timeline'
 
 function localDateTimeValue(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
@@ -154,6 +157,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
 
   const tabs: TabItem[] = [
     { id: 'chronologie', label: 'Chronologie', count: investigation.entries.length },
+    { id: 'zeitstrahl', label: 'Zeitstrahl' },
     {
       id: 'beteiligte',
       label: 'Beteiligte',
@@ -341,15 +345,23 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             </div>
           </div>
 
-          {canManage && (
-            <div className="flex shrink-0 items-center gap-2">
-              <Button onClick={() => setEntryOpen(true)}>
-                <Plus className="h-4 w-4" />
-                Eintrag hinzufügen
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href={`/investigations/graph?focus=investigation:${investigation.id}`}>
+              <Button variant="outline">
+                <Network className="h-4 w-4" />
+                Netzwerk
               </Button>
-              <ActionMenu items={menuItems} />
-            </div>
-          )}
+            </Link>
+            {canManage && (
+              <>
+                <Button onClick={() => setEntryOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Eintrag hinzufügen
+                </Button>
+                <ActionMenu items={menuItems} />
+              </>
+            )}
+          </div>
         </div>
 
         {investigation.summary && (
@@ -445,6 +457,18 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         </SectionCard>
       )}
 
+      {activeTab === 'zeitstrahl' && (
+        <InvestigationTimeline
+          investigation={investigation}
+          onOpen={(item) => {
+            if (item.kind === 'clip') setActiveClip(investigation.clips.find((clip) => clip.id === item.refId) ?? null)
+            else if (item.kind === 'photo' && item.refId) setLightboxId(item.refId)
+            else if (item.kind === 'entry') selectTab('chronologie')
+            else if (item.kind === 'evidence' || item.kind === 'custody') selectTab('asservate')
+          }}
+        />
+      )}
+
       {activeTab === 'beteiligte' && (
         <>
           <InvestigationAssignees
@@ -485,6 +509,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
                       <span className="font-mono text-[11px] text-[#8e8e93]">{link.person.personNumber}</span>
                     </div>
                     {link.note && <p className="mt-0.5 text-[12px] text-[#98989d]">{link.note}</p>}
+                    <OtherCasesNote cases={investigation.crossHits?.persons[link.person.id]} />
                   </div>
                   {canManage && (
                     <button
@@ -506,6 +531,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           <InvestigationVehicles
             investigationId={investigationId}
             vehicles={investigation.vehicles}
+            otherCases={investigation.crossHits?.vehicles}
             canManage={canManage}
             onChanged={refetch}
           />

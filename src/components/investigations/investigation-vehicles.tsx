@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { CrossHitHint, OtherCasesNote, vehicleCrossHitQuery } from '@/components/investigations/cross-hits'
+import type { CaseRef } from '@/lib/cross-hits'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,6 +25,8 @@ export function vehicleLabel(vehicle: Vehicle) {
 interface InvestigationVehiclesProps {
   investigationId: string
   vehicles: InvestigationVehicleLink[]
+  /** Weitere Akten je Fahrzeug-ID (Treffer über Fälle hinweg). */
+  otherCases?: Record<string, CaseRef[]>
   canManage: boolean
   onChanged: () => void | Promise<void>
 }
@@ -30,6 +34,7 @@ interface InvestigationVehiclesProps {
 export function InvestigationVehicles({
   investigationId,
   vehicles,
+  otherCases,
   canManage,
   onChanged,
 }: InvestigationVehiclesProps) {
@@ -152,6 +157,7 @@ export function InvestigationVehicles({
                     : 'Halter unbekannt'}
                 </p>
                 {link.note && <p className="mt-0.5 text-[12px] text-[#98989d]">{link.note}</p>}
+                <OtherCasesNote cases={otherCases?.[link.vehicleId]} />
               </div>
 
               {canManage && (
@@ -212,6 +218,7 @@ export function InvestigationVehicles({
                   placeholder="z. B. Sultan RS"
                 />
               </div>
+              <CrossHitHint query={vehicleCrossHitQuery(draft.plate)} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input
                   label="Farbe"

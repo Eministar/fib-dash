@@ -1,17 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { Car, FolderOpen, Library, Share2, UserSearch, Video, Images, ChevronDown } from 'lucide-react'
+import { Car, FolderOpen, Library, Network, Share2, UserSearch, Video, Images, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { usePersistentBoolean } from '@/hooks/use-persistent-boolean'
 
-export type InvestigationsSection = 'cases' | 'clips' | 'persons' | 'vehicles' | 'photos' | 'dossiers' | 'shares'
+export type InvestigationsSection = 'cases' | 'clips' | 'persons' | 'vehicles' | 'photos' | 'dossiers' | 'shares' | 'graph'
 const sections = [
   { id: 'cases', label: 'Einsatzakten', href: '/investigations', icon: FolderOpen, group: 'Akten' },
   { id: 'dossiers', label: 'Dauerakten', href: '/investigations/dossiers', icon: Library, group: 'Akten' },
   { id: 'persons', label: 'Personen', href: '/investigations/persons', icon: UserSearch, group: 'Akten' },
   { id: 'vehicles', label: 'Fahrzeuge', href: '/investigations/vehicles', icon: Car, group: 'Akten' },
+  { id: 'graph', label: 'Netzwerk', href: '/investigations/graph', icon: Network, group: 'Akten' },
   { id: 'clips', label: 'Bodycams', href: '/investigations/clips', icon: Video, group: 'Material' },
   { id: 'photos', label: 'Bilder', href: '/investigations/photos', icon: Images, group: 'Material' },
   { id: 'shares', label: 'Freigaben', href: '/investigations/shares', icon: Share2, group: 'Material' },

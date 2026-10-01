@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Clock, CornerDownLeft, EyeOff, LogOut, Search, UserPlus } from 'lucide-react'
+import { ArrowRight, Car, Clock, CornerDownLeft, EyeOff, FolderPlus, Gavel, History, LogOut, Plane, Search, UserPlus, UserRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { Modal } from '@/components/ui/modal'
@@ -13,10 +13,29 @@ import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { SEARCH_GROUPS, isSearchable, type SearchGroup, type SearchHit } from '@/lib/global-search'
 import { matchesSearch } from '@/lib/search-match'
+import {
+  agentHitActions,
+  allowedAgentActions,
+  allowedPageActions,
+  type AgentActionDef,
+  type PaletteActionIcon,
+  type PaletteTarget,
+} from '@/lib/palette-actions'
+import { startPageAction } from '@/hooks/use-page-action'
 import { cn } from '@/lib/utils'
 
 /** Reihenfolge der Gruppen im Ergebnis – die häufigsten zuerst. */
 const GROUP_ORDER: SearchGroup[] = ['agents', 'investigations', 'dossiers', 'persons', 'vehicles', 'mapSpots', 'entries']
+
+const ACTION_ICONS: Record<PaletteActionIcon, LucideIcon> = {
+  investigation: FolderPlus,
+  person: UserRound,
+  vehicle: Car,
+  sanction: Gavel,
+  absence: Plane,
+  agent: UserPlus,
+  timeline: History,
+}
 
 type PaletteItem = {
   key: string
@@ -24,6 +43,7 @@ type PaletteItem = {
   title: string
   code?: string
   hint?: string
+  keywords?: string[]
   icon?: LucideIcon
   classified?: boolean
   run: () => void
@@ -43,6 +63,8 @@ export function GlobalSearch() {
   const [term, setTerm] = useState('')
   const [debounced, setDebounced] = useState('')
   const [active, setActive] = useState(0)
+  /** Gewählte Agent-Aktion („Sanktion ausstellen …“) – danach wird ein Agent gesucht. */
+  const [agentAction, setAgentAction] = useState<AgentActionDef | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -70,12 +92,18 @@ export function GlobalSearch() {
     setOpen(false)
     setTerm('')
     setActive(0)
+    setAgentAction(null)
   }
 
   const items = useMemo<PaletteItem[]>(() => {
     const go = (href: string) => () => {
       close()
       router.push(href)
+    }
+    const goTo = (target: PaletteTarget) => () => {
+      close()
+      if (target.action) startPageAction(target.path, target.action, (href) => router.push(href))
+      else router.push(target.path)
     }
     const trimmed = term.trim()
     const allowed = (item: NavItem) => !item.permission || hasPermission(user, item.permission)
@@ -85,6 +113,27 @@ export function GlobalSearch() {
       ...(hasPermission(user, 'agents:write')
         ? [{ key: 'action:new-agent', section: 'Aktionen', title: 'Neuen Agent anlegen', icon: UserPlus, run: go('/agents/new') }]
         : []),
+      ...allowedPageActions(user).map((action) => ({
+        key: `action:${action.id}`,
+        section: 'Aktionen',
+        title: action.title,
+        keywords: action.keywords,
+        icon: ACTION_ICONS[action.icon],
+        run: goTo({ path: action.path, action: action.action }),
+      })),
+      ...allowedAgentActions(user).map((action) => ({
+        key: `agent-action:${action.id}`,
+        section: 'Aktionen',
+        title: action.title,
+        keywords: action.keywords,
+        hint: 'Danach Agent wählen',
+        icon: ACTION_ICONS[action.icon],
+        run: () => {
+          setAgentAction(action)
+          setTerm('')
+          setActive(0)
+        },
+      })),
       {
         key: 'action:logout',
         section: 'Aktionen',
@@ -96,6 +145,24 @@ export function GlobalSearch() {
         },
       },
     ]
+
+    const hits = data ?? []
+
+    // Agent-Auswahl für eine vorher gewählte Aktion: nur Agents, direkt mit Ziel.
+    if (agentAction) {
+      if (!isSearchable(debounced)) return []
+      return hits
+        .filter((hit) => hit.group === 'agents')
+        .map((hit) => ({
+          key: `${agentAction.id}:${hit.id}`,
+          section: 'Agent wählen',
+          title: agentAction.forAgent(hit.title),
+          code: hit.code,
+          hint: hit.hint,
+          icon: ACTION_ICONS[agentAction.icon],
+          run: goTo(agentAction.target(hit.id)),
+        }))
+    }
 
     if (!trimmed) {
       return [
@@ -118,16 +185,16 @@ export function GlobalSearch() {
       ]
     }
 
-    const hits = data ?? []
+    const firstAgent = hits.find((hit) => hit.group === 'agents')
     return [
       ...pages
         .filter((page) => matchesSearch(trimmed, [page.name, page.href.replace(/[/-]/g, ' ')]))
         .slice(0, 5)
         .map((page) => ({ key: `page:${page.href}`, section: 'Seiten', title: page.name, icon: page.icon, run: go(page.href) })),
-      ...actions.filter((action) => matchesSearch(trimmed, [action.title])),
+      ...actions.filter((action) => matchesSearch(trimmed, [action.title, ...(action.keywords ?? [])])),
       ...(isSearchable(debounced)
-        ? GROUP_ORDER.flatMap((group) =>
-            hits
+        ? GROUP_ORDER.flatMap((group) => [
+            ...hits
               .filter((hit) => hit.group === group)
               .map((hit) => ({
                 key: `${hit.group}:${hit.id}`,
@@ -138,10 +205,20 @@ export function GlobalSearch() {
                 classified: hit.classified,
                 run: go(hit.href),
               })),
-          )
+            // Direkt unter den Agents: Aktionen zum besten Treffer.
+            ...(group === 'agents' && firstAgent
+              ? agentHitActions(user, firstAgent.id, firstAgent.title).map((action) => ({
+                  key: `agent-hit:${action.id}`,
+                  section: `Aktionen zu ${firstAgent.title}`,
+                  title: action.title,
+                  icon: ACTION_ICONS[action.icon],
+                  run: goTo(action.target),
+                }))
+              : []),
+          ])
         : []),
     ]
-  }, [data, debounced, logout, recent, router, term, user])
+  }, [agentAction, data, debounced, logout, recent, router, term, user])
 
   const activeIndex = Math.min(active, Math.max(items.length - 1, 0))
 
@@ -150,7 +227,11 @@ export function GlobalSearch() {
   }, [activeIndex])
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'ArrowDown') {
+    if (event.key === 'Backspace' && agentAction && !term) {
+      event.preventDefault()
+      setAgentAction(null)
+      setActive(0)
+    } else if (event.key === 'ArrowDown') {
       event.preventDefault()
       setActive((index) => (items.length ? (Math.min(index, items.length - 1) + 1) % items.length : 0))
     } else if (event.key === 'ArrowUp') {
@@ -201,7 +282,11 @@ export function GlobalSearch() {
                 setActive(0)
               }}
               onKeyDown={onKeyDown}
-              placeholder="Name, Dienstnummer, Discord-ID, Akte, Kennzeichen oder Seite …"
+              placeholder={
+                agentAction
+                  ? 'Agent suchen: Name, Dienstnummer oder Discord-ID …'
+                  : 'Name, Dienstnummer, Discord-ID, Akte, Kennzeichen, Seite oder Aktion …'
+              }
               aria-label="Suchen oder Befehl eingeben"
               role="combobox"
               aria-expanded
@@ -214,6 +299,13 @@ export function GlobalSearch() {
               )}
             />
           </div>
+
+          {agentAction && (
+            <p className="mt-2 flex items-center gap-2 px-1 text-[12px] text-[#98989d]">
+              <span className="rounded-[6px] border border-[#48484a] px-1.5 py-0.5 text-[#f5f5f7]">{agentAction.title.replace(' …', '')}</span>
+              Agent wählen · <kbd className="font-mono">⌫</kbd> zurück
+            </p>
+          )}
 
           <div ref={listRef} id="palette-results" role="listbox" className="mt-3 max-h-[min(60dvh,520px)] overflow-y-auto">
             {error && <p role="alert" className="py-6 text-center text-[12.5px] text-red-300">{error}</p>}
@@ -263,6 +355,9 @@ export function GlobalSearch() {
               </section>
             ))}
 
+            {agentAction && !trimmed && (
+              <p className="py-8 text-center text-[12.5px] text-[#8e8e93]">Für wen? Name oder Dienstnummer eingeben.</p>
+            )}
             {trimmed && !isSearchable(trimmed) && items.length === 0 && (
               <p className="py-8 text-center text-[12.5px] text-[#8e8e93]">Noch ein Zeichen – oder eine Dienstnummer eingeben.</p>
             )}

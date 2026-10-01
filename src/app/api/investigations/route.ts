@@ -4,6 +4,7 @@ import { error, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
+import { notifyInvestigationTeam } from '@/lib/notifications-server'
 import { prisma } from '@/lib/prisma'
 import {
   INVESTIGATION_PRIORITY_LABELS,
@@ -164,6 +165,13 @@ export async function POST(req: NextRequest) {
       action: 'INVESTIGATION_CREATED',
       userId: user.id,
       details: `Ermittlungsakte ${caseNumber}: "${title}"${classified ? ' (Verschlusssache)' : ''}`,
+    })
+
+    await notifyInvestigationTeam({
+      investigation,
+      actorId: user.id,
+      addedAssigneeIds: assigneeIds,
+      newLeadAgentId: leadAgentId,
     })
 
     queueDiscordInvestigationEvent({

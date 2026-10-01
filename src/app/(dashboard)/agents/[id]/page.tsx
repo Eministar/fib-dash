@@ -55,6 +55,7 @@ import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { CodenameHistory } from '@/components/codenames/codename-history'
 import { AgentRecordsPanel } from '@/components/agents/agent-records-panel'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
+import { usePageAction } from '@/hooks/use-page-action'
 
 interface Rank { id: string; name: string; sortOrder: number; internalNumber: number | null; color: string }
 interface Unit { id: string; key: string; name: string; color: string; active: boolean }
@@ -767,6 +768,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     setAbsenceReason('')
     setAbsenceModal(true)
   }
+
+  // Aus der Befehlspalette: „Sanktion für …“ / „Abmeldung für …“.
+  const agentActive = Boolean(agent && agent.status !== 'TERMINATED')
+  usePageAction('sanction', openSanctionModal, canSanction && agentActive)
+  usePageAction('absence', openAbsenceModal, canEditAgent && agentActive)
 
   const handleAddAbsence = async () => {
     if (!absenceReason.trim() || !absenceEndsAt) return

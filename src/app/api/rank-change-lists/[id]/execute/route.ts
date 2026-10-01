@@ -10,6 +10,7 @@ import { findBadgeNumberConflict, getBlacklistedBadgeRows, releaseTerminatedBadg
 import { queueDiscordHrEvent, queueAgentRoleSync } from '@/lib/discord-integration'
 import { undoPromotionListEntry } from '@/lib/rank-change-list-undo'
 import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
+import { notifyAgents } from '@/lib/notifications-server'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -126,6 +127,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         oldValue: entry.currentRank.name,
         newValue: entry.proposedRank.name,
         details: `${action} via "${list.name}": ${entry.agent.firstName} ${entry.agent.lastName} – ${entry.currentRank.name} → ${entry.proposedRank.name}`,
+      })
+
+      await notifyAgents([entry.agentId], {
+        kind: 'RANK_CHANGED',
+        title: action === 'Beförderung' ? 'Deine Beförderung ist durch' : 'Dein Rang wurde geändert',
+        body: `${entry.currentRank.name} → ${entry.proposedRank.name}`,
+        href: '/account',
+        actorId: user.id,
       })
 
       queueAgentRoleSync(entry.agentId)

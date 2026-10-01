@@ -5,6 +5,7 @@ Eigenständiger Hauptmenüpunkt **Korruptionskontrollen** unter `/corruption-che
 ## Bedienung
 
 - **Kontrolle eintragen → Neuer Staatsbeamter:** Vorname, Nachname, Behörde und optional Dienstnummer erfassen. Bei der ersten erfolgreich gespeicherten Kontrolle entsteht die Beamtenakte mit ihrer festen Nummer, zum Beispiel `BEA-000001`.
+- **LSPD-Beamter aus dem Panel:** Beamten direkt aus dem lspd-hr-Panel wählen. Die Akte wird verwendet oder angelegt und mit dem Officer verknüpft; sie zeigt dann dessen LSPD-Stammdaten und Laufbahn. Einrichtung siehe `docs/lspd-and-quality-checks.md`.
 - **Bestehende Beamtenakte:** Nach Nummer (auch ohne Präfix), Vorname/Nachname oder Dienstnummer suchen und im Dropdown auswählen. Gleichnamige Personen werden anhand Nummer, Behörde und optional Dienstnummer unterschieden; die Neuanlage zeigt mögliche vorhandene Akten zur Auswahl an.
 - Datum und Uhrzeit werden in der lokalen Browserzeitzone eingegeben und als UTC gespeichert. Mindestens einen durchführenden Agent auswählen; mehrere sind möglich. Ausgeschiedene Agents bleiben für nachträgliche Einträge auswählbar.
 - Ergebnis **Mit Befund** verlangt eine Beschreibung. **Ohne Befund** kann mit zusätzlichen Feststellungen ergänzt werden. Ort und weitere Informationen sind optional.

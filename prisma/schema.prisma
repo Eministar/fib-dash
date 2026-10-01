@@ -329,6 +329,14 @@ model User {
   uploadSessions               UploadSession[]         @relation("UploadSessionOwner")
   uploadKeysCreated            UploadKey[]             @relation("UploadKeyCreator")
   fileUploadsCreated           FileUpload[]            @relation("FileUploadUploader")
+
+  notificationsReceived Notification[]         @relation("NotificationRecipient")
+  notificationsCaused   Notification[]         @relation("NotificationActor")
+  notificationReceipts  NotificationReceipt[]
+  custodyEvents         EvidenceCustodyEvent[] @relation("CustodyActor")
+  qualityChecks         QualityCheck[]         @relation("QualityCheckConductor")
+  qualityCheckEntries   QualityCheckEntry[]    @relation("QualityCheckEntryAuthor")
+  qualityShares         QualityShare[]         @relation("QualityShareCreator")
 }
 
 model UserGroupMembership {
@@ -2029,6 +2037,8 @@ model Evidence {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  custodyEvents EvidenceCustodyEvent[]
+
   @@index([investigationId, seizedAt])
   @@index([entryId])
   @@index([status])
@@ -2218,18 +2228,21 @@ model Dossier {
 
 /// Eigenständige Staatsbeamtenakte; öffentliche Nummer wird als BEA-000001 dargestellt.
 model PublicOfficial {
-  mergedIntoId Int?
-  mergedInto   PublicOfficial?    @relation("OfficialMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  mergedFrom   PublicOfficial[]   @relation("OfficialMerge")
-  id           Int                @id @default(autoincrement())
-  version      Int                @default(1)
-  firstName    String             @db.VarChar(100)
-  lastName     String             @db.VarChar(100)
-  agency       String             @db.VarChar(150)
-  badgeNumber  String?            @db.VarChar(100)
-  createdAt    DateTime           @default(now())
-  checks       CorruptionCheck[]
-  revisions    OfficialRevision[]
+  mergedIntoId  Int?
+  mergedInto    PublicOfficial?    @relation("OfficialMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  mergedFrom    PublicOfficial[]   @relation("OfficialMerge")
+  id            Int                @id @default(autoincrement())
+  version       Int                @default(1)
+  firstName     String             @db.VarChar(100)
+  lastName      String             @db.VarChar(100)
+  agency        String             @db.VarChar(150)
+  badgeNumber   String?            @db.VarChar(100)
+  /// Verknüpfung mit dem Officer im lspd-hr-Panel (externe ID). Eindeutig, damit
+  /// ein LSPD-Beamter genau eine Beamtenakte hat.
+  lspdOfficerId String?            @unique @db.VarChar(191)
+  createdAt     DateTime           @default(now())
+  checks        CorruptionCheck[]
+  revisions     OfficialRevision[]
 
   @@index([lastName, firstName])
   @@index([agency])
@@ -2651,4 +2664,146 @@ model Publication {
   updatedAt   DateTime  @updatedAt
 
   @@index([status, listed, publishedAt])
+}
+
+/// In-App-Benachrichtigung. Empfänger ist entweder ein einzelnes Konto
+/// (`userId`) oder alle Inhaber eines Rechts (`permission`). Der Gelesen-Status
+/// liegt pro Nutzer in `NotificationReceipt`, damit auch Broadcasts je Person
+/// abgehakt werden können.
+model Notification {
+  id         String   @id @default(cuid())
+  kind       String   @db.VarChar(40)
+  title      String   @db.VarChar(200)
+  body       String?  @db.VarChar(500)
+  href       String?  @db.VarChar(500)
+  userId     String?
+  user       User?    @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  permission String?  @db.VarChar(60)
+  actorId    String?
+  actor      User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  /// Verhindert Doppelungen bei wiederholten Läufen (z. B. Probezeit-Erinnerung).
+  dedupeKey  String?  @unique @db.VarChar(191)
+  createdAt  DateTime @default(now())
+
+  receipts NotificationReceipt[]
+
+  @@index([userId, createdAt])
+  @@index([permission, createdAt])
+  @@index([createdAt])
+}
+
+model NotificationReceipt {
+  id             String       @id @default(cuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([notificationId, userId])
+  @@index([userId])
+}
+
+/// Beweiskette eines Asservats. Einträge werden nie geändert oder gelöscht;
+/// jeder Eintrag trägt den Hash seines Vorgängers, sodass nachträgliche
+/// Manipulation in der Datenbank auffällt. Asservatennummer und Akte stehen als
+/// Snapshot drin, damit die Kette die Löschung des Asservats überlebt.
+model EvidenceCustodyEvent {
+  id              String    @id @default(cuid())
+  /// Ursprüngliche Asservat-ID, bleibt nach dem Löschen erhalten. Kettenschlüssel –
+  /// die Asservatennummer kann nach einer Löschung neu vergeben werden.
+  chainKey        String    @db.VarChar(191)
+  evidenceId      String?
+  evidence        Evidence? @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  itemNumber      String    @db.VarChar(24)
+  investigationId String    @db.VarChar(191)
+  /// CREATED | VIEWED | UPDATED | STATUS_CHANGED | TRANSFERRED | DELETED
+  action          String    @db.VarChar(20)
+  actorId         String?
+  actor           User?     @relation("CustodyActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorName       String    @db.VarChar(200)
+  fromHolder      String?   @db.VarChar(200)
+  toHolder        String?   @db.VarChar(200)
+  location        String?   @db.VarChar(200)
+  note            String?   @db.Text
+  prevHash        String?   @db.VarChar(64)
+  hash            String    @db.VarChar(64)
+  createdAt       DateTime  @default(now())
+
+  @@index([chainKey, createdAt])
+  @@index([evidenceId, createdAt])
+  @@index([investigationId, createdAt])
+}
+
+/// Qualitätskontrolle eines LSPD-Beamten (verdeckte Mitfahrt). Der Beamte lebt
+/// im lspd-hr-Panel; hier stehen seine externe ID und eine Momentaufnahme.
+model QualityCheck {
+  id            String    @id @default(cuid())
+  /// Fortlaufend, z. B. "QK-0001".
+  number        String    @unique @db.VarChar(24)
+  lspdOfficerId String    @db.VarChar(191)
+  officerName   String    @db.VarChar(220)
+  officerBadge  String    @db.VarChar(100)
+  officerRank   String    @db.VarChar(120)
+  /// RUNNING | COMPLETED
+  status        String    @default("RUNNING") @db.VarChar(20)
+  /// POSITIVE | NEUTRAL | NEGATIVE – erst beim Abschluss gesetzt.
+  rating        String?   @db.VarChar(20)
+  startedAt     DateTime
+  endedAt       DateTime?
+  location      String?   @db.VarChar(200)
+  summary       String?   @db.Text
+  conductedById String?
+  conductedBy   User?     @relation("QualityCheckConductor", fields: [conductedById], references: [id], onDelete: SetNull)
+  conductorName String    @db.VarChar(200)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  entries QualityCheckEntry[]
+
+  @@index([lspdOfficerId, startedAt])
+  @@index([status, startedAt])
+  @@index([startedAt])
+}
+
+/// Protokolleintrag einer Qualitätskontrolle. Wird nie geändert oder gelöscht;
+/// Korrekturen sind eigene Einträge mit Verweis (`correctsId`).
+model QualityCheckEntry {
+  id         String       @id @default(cuid())
+  checkId    String
+  check      QualityCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  /// POSITIVE | NEGATIVE | NOTE. Eine Korrektur ist ein normaler Eintrag mit `correctsId`.
+  kind       String       @db.VarChar(20)
+  text       String       @db.Text
+  occurredAt DateTime
+  correctsId String?      @db.VarChar(191)
+  authorId   String?
+  author     User?        @relation("QualityCheckEntryAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorName String       @db.VarChar(200)
+  createdAt  DateTime     @default(now())
+
+  @@index([checkId, occurredAt])
+}
+
+/// Freigabelink für Qualitätskontrollen: wer den Link hat, darf lesen.
+/// Gespeichert wird nur der SHA-256-Hash des Tokens.
+model QualityShare {
+  id            String    @id @default(cuid())
+  title         String    @db.VarChar(200)
+  tokenHash     String    @unique @db.VarChar(64)
+  /// CHECK | OFFICER | ALL
+  scope         String    @db.VarChar(20)
+  checkId       String?   @db.VarChar(191)
+  lspdOfficerId String?   @db.VarChar(191)
+  /// LSPD-Laufbahn (Beförderungen, Sanktionen …) in der Freigabe zeigen.
+  includeCareer Boolean   @default(false)
+  enabled       Boolean   @default(true)
+  expiresAt     DateTime?
+  createdById   String
+  createdBy     User      @relation("QualityShareCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  lastAccessAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([createdById, createdAt])
 }

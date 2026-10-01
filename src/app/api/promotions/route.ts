@@ -9,6 +9,7 @@ import { isUniqueConstraintError } from '@/lib/prisma-errors'
 import { findBadgeNumberConflict, getBlacklistedBadgeRows, releaseTerminatedBadgeNumberConflicts } from '@/lib/badge-blacklist'
 import { queueDiscordHrEvent, queueAgentRoleSync } from '@/lib/discord-integration'
 import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
+import { notifyAgents } from '@/lib/notifications-server'
 
 export async function GET() {
   try {
@@ -114,6 +115,14 @@ export async function POST(req: NextRequest) {
       oldValue: agent.rank.name,
       newValue: newRank.name,
       details: `${agent.firstName} ${agent.lastName}: ${agent.rank.name} → ${newRank.name}`,
+    })
+
+    await notifyAgents([agentId], {
+      kind: 'RANK_CHANGED',
+      title: newRank.sortOrder < agent.rank.sortOrder ? 'Du wurdest befördert' : 'Dein Rang wurde geändert',
+      body: `${agent.rank.name} → ${newRank.name}`,
+      href: '/account',
+      actorId: user.id,
     })
 
     queueAgentRoleSync(agentId)

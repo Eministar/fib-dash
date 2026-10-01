@@ -7,6 +7,7 @@ import type {
   InvestigationStatusKey,
   PersonLinkTypeKey,
 } from '@/lib/investigations'
+import type { CaseCrossHits } from '@/lib/cross-hits'
 
 export type RankLite = { id: string; name: string; color: string }
 
@@ -203,4 +204,6 @@ export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assign
   photos: { id: string; title: string; createdAt: string; uploadedById: string | null }[]
   linksFrom: InvestigationCrossLink[]
   linksTo: InvestigationCrossLink[]
+  /** Nur im GET der Akte: weitere Akten je beteiligter Person / Fahrzeug. */
+  crossHits?: CaseCrossHits
 }

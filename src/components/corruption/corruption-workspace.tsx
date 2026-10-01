@@ -5,7 +5,7 @@ import { displayBadgeNumber } from '@/lib/badge-number'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check as CheckIcon, ChevronRight, Plus, ShieldAlert, ShieldCheck, SlidersHorizontal, UserPlus, X } from 'lucide-react'
+import { ArrowLeft, Check as CheckIcon, ChevronRight, Plus, ShieldAlert, ShieldCheck, ShieldUser, SlidersHorizontal, UserPlus, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,13 +24,16 @@ import { ReportDetail, MergeOfficial, EditOfficial, OfficialHistory } from './re
 import { useUrlState } from '@/hooks/use-url-state'
 import { matchesAgent } from '@/lib/search-match'
 import { ListSkeleton } from '@/components/ui/loading'
+import { LspdOfficerPicker } from '@/components/lspd/lspd-officer-picker'
+import { LspdOfficerFilePanel } from '@/components/lspd/lspd-officer-file'
+import { LSPD_AGENCY, lspdOfficerName, type LspdOfficer } from '@/lib/lspd-officers'
 
 export type Agent = { id: string; firstName: string; lastName: string; badgeNumber: string; status: string }
 export type OfficialSnapshot = { firstName: string; lastName: string; agency: string; badgeNumber: string | null }
 export type OfficialRevision = { id: string; version: number; reason: string; actorName: string; createdAt: string; before: OfficialSnapshot; after: OfficialSnapshot }
 export type Official = {
   mergedFrom?: { id: number; firstName: string; lastName: string }[];
-  id: number; version?: number; firstName: string; lastName: string; agency: string; badgeNumber: string | null;
+  id: number; version?: number; firstName: string; lastName: string; agency: string; badgeNumber: string | null; lspdOfficerId?: string | null;
   _count?: { checks: number }; checks?: { conductedAt: string; result: string }[];
   revisions?: OfficialRevision[];
 }
@@ -221,6 +224,7 @@ function OfficialHeader({ official, onChanged }: { official: { data: Official | 
         <div className="flex flex-wrap gap-2"><EditOfficial official={person} onSaved={onChanged} /><MergeOfficial source={person} /></div>
       </div>
       <OfficialHistory revisions={person.revisions ?? []} />
+      {person.lspdOfficerId && <div className="mt-4"><LspdOfficerFilePanel officerId={person.lspdOfficerId} /></div>}
       <h3 className="mt-5 text-[13px] font-semibold text-white">Kontrollen dieses Beamten</h3>
     </> : official.loading ? <ListSkeleton /> : <p className="text-sm text-[#8e8e93]">Beamtenakte nicht verfügbar.</p>}
   </section>
@@ -240,7 +244,8 @@ function ChoiceCard({ active, onClick, title, text, icon: Icon, tone }: { active
 }
 
 function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: { initialOfficial?: Official; agents: Agent[]; agentsError: string | null; onClose: () => void; onSaved: (check: Check) => void }) {
-  const [mode, setMode] = useState<'existing' | 'new'>('existing')
+  const [mode, setMode] = useState<'existing' | 'new' | 'lspd'>('existing')
+  const [lspdOfficer, setLspdOfficer] = useState<LspdOfficer | null>(null)
   const [person, setPerson] = useState<Official | null>(initialOfficial ?? null)
   const [search, setSearch] = useState('')
   const [firstName, setFirstName] = useState('')
@@ -261,14 +266,18 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
   const matches = useFetch<List<Official>>(!person || mode === 'new' ? `/api/corruption-checks/officials?search=${encodeURIComponent(lookupSearch)}&page=1` : null)
   const chosenAgents = agentIds.map(id => agents.find(agent => agent.id === id)).filter((agent): agent is Agent => !!agent)
   const agentMatches = agents.filter(agent => !agentIds.includes(agent.id) && agent.status !== 'TERMINATED' && matchesAgent(agentSearch, agent)).slice(0, 40)
-  const officialSummary = mode === 'existing' ? (person ? `${person.firstName} ${person.lastName} · ${person.agency}` : '—') : `${firstName} ${lastName} · ${agency} (neu)`
+  const officialSummary = mode === 'existing'
+    ? (person ? `${person.firstName} ${person.lastName} · ${person.agency}` : '—')
+    : mode === 'lspd'
+      ? (lspdOfficer ? `${lspdOfficerName(lspdOfficer)} · ${LSPD_AGENCY} · DN ${lspdOfficer.badgeNumber}` : '—')
+      : `${firstName} ${lastName} · ${agency} (neu)`
 
   const submit = async () => {
     if (loading) return
     setFailure('')
     try {
       const check = await execute('/api/corruption-checks', { method: 'POST', body: JSON.stringify({
-        requestId, ...(mode === 'existing' ? { officialId: person!.id } : { official: { firstName, lastName, agency, badgeNumber } }),
+        requestId, ...(mode === 'existing' ? { officialId: person!.id } : mode === 'lspd' ? { lspdOfficerId: lspdOfficer!.id } : { official: { firstName, lastName, agency, badgeNumber } }),
         conductedAt: new Date(conductedAt).toISOString(), agentIds, result, findings, location, notes,
       }) })
       if (check) onSaved(check)
@@ -281,8 +290,14 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
       label: 'Beamter',
       invalid: mode === 'existing'
         ? (person ? undefined : 'Bitte den kontrollierten Beamten auswählen oder neu anlegen.')
-        : (!firstName.trim() || !lastName.trim() || !agency.trim() ? 'Bitte Vorname, Nachname und Behörde angeben.' : undefined),
-      content: mode === 'existing' ? <div className="space-y-3">
+        : mode === 'lspd'
+          ? (lspdOfficer ? undefined : 'Bitte den LSPD-Beamten auswählen.')
+          : (!firstName.trim() || !lastName.trim() || !agency.trim() ? 'Bitte Vorname, Nachname und Behörde angeben.' : undefined),
+      content: mode === 'lspd' ? <div className="space-y-3">
+        <p className="text-sm text-[#98989d]">Beamter direkt aus dem LSPD-Panel. Gibt es zu ihm schon eine Beamtenakte, wird sie verwendet – sonst legt das Speichern eine an.</p>
+        <LspdOfficerPicker value={lspdOfficer} onChange={setLspdOfficer} />
+        <Button type="button" variant="ghost" size="sm" onClick={() => setMode('existing')}><ArrowLeft size={13} />Zurück zur Suche</Button>
+      </div> : mode === 'existing' ? <div className="space-y-3">
         <p className="text-sm text-[#98989d]">Wer wurde kontrolliert? Suche nach Name oder BEA-Nummer.</p>
         {person ? <div className="flex items-center justify-between gap-3 rounded-[12px] border border-[#98989d]/50 bg-[#2c2c2e] p-4">
           <div><p className="font-mono text-xs text-[#98989d]">{officialNumber(person.id)}</p><p className="mt-0.5 text-[14px] font-medium text-white">{person.firstName} {person.lastName}</p><p className="text-[12.5px] text-[#98989d]">{person.agency}{person.badgeNumber ? ` · DN ${person.badgeNumber}` : ''}</p></div>
@@ -299,7 +314,10 @@ function CheckForm({ initialOfficial, agents, agentsError, onClose, onSaved }: {
           </div>
           {matches.error && <p role="alert" className="text-xs text-red-300">{matches.error}</p>}
         </>}
-        {!person && <Button type="button" variant="secondary" onClick={() => { setMode('new'); const [first = '', ...rest] = search.trim().split(/\s+/); if (!/^bea/i.test(first)) { setFirstName(first); setLastName(rest.join(' ')) } }}><UserPlus size={14} />Beamter noch nicht erfasst – neu anlegen</Button>}
+        {!person && <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" onClick={() => setMode('lspd')}><ShieldUser size={14} />LSPD-Beamter aus dem Panel</Button>
+          <Button type="button" variant="secondary" onClick={() => { setMode('new'); const [first = '', ...rest] = search.trim().split(/\s+/); if (!/^bea/i.test(first)) { setFirstName(first); setLastName(rest.join(' ')) } }}><UserPlus size={14} />Beamter noch nicht erfasst – neu anlegen</Button>
+        </div>}
       </div> : <div className="space-y-3">
         <p className="text-sm text-[#98989d]">Der Beamte bekommt beim Speichern automatisch eine feste BEA-Nummer.</p>
         <div className="grid gap-3 sm:grid-cols-2"><Input label="Vorname" required maxLength={100} value={firstName} onChange={e => setFirstName(e.target.value)} /><Input label="Nachname" required maxLength={100} value={lastName} onChange={e => setLastName(e.target.value)} /><Input label="Behörde" required maxLength={150} placeholder="z. B. LSPD, LSSD, Regierung" value={agency} onChange={e => setAgency(e.target.value)} /><Input label="Dienstnummer (optional)" maxLength={100} value={badgeNumber} onChange={e => setBadgeNumber(e.target.value)} /></div>

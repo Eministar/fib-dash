@@ -5,6 +5,8 @@ import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { deleteClipFile } from '@/lib/clips'
 import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
+import { notifyInvestigationTeam } from '@/lib/notifications-server'
+import { caseCrossHits } from '@/lib/cross-hits-server'
 import { prisma } from '@/lib/prisma'
 import {
   INVESTIGATION_PRIORITY_LABELS,
@@ -39,7 +41,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (!investigation) return notFound('Ermittlungsakte')
     if (!canAccessInvestigation(user, investigation)) return forbidden()
 
-    return success(serializeBigInts(investigation))
+    const crossHits = await caseCrossHits(
+      user,
+      investigation.id,
+      investigation.persons.map((link) => link.personId),
+      investigation.vehicles.map((link) => link.vehicleId),
+    )
+
+    return success(serializeBigInts({ ...investigation, crossHits }))
   } catch (cause: unknown) {
     return routeError(cause)
   }
@@ -59,6 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!canAccessInvestigation(user, existing)) return forbidden()
 
     const data: Prisma.InvestigationUpdateInput = {}
+    let addedAssigneeIds: string[] = []
 
     if (body.title !== undefined) {
       const title = cleanText(body.title)
@@ -106,6 +116,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       // /api/investigations/[id]/assignees, damit gleichzeitige Zuweisungen
       // sich nicht gegenseitig ueberschreiben.
       const assigneeIds = await validateAgentIds(body.assigneeIds)
+      const before = await prisma.investigationAssignee.findMany({
+        where: { investigationId: id },
+        select: { agentId: true },
+      })
+      const previous = new Set(before.map((row) => row.agentId))
+      addedAssigneeIds = assigneeIds.filter((agentId) => !previous.has(agentId))
       data.assignees = {
         deleteMany: {},
         create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })),
@@ -141,6 +157,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       userId: user.id,
       details: `Ermittlungsakte ${investigation.caseNumber}: "${investigation.title}" bearbeitet`,
     })
+
+    const newLeadAgentId =
+      investigation.leadAgent && investigation.leadAgent.id !== existing.leadAgentId ? investigation.leadAgent.id : null
+    await notifyInvestigationTeam({ investigation, actorId: user.id, addedAssigneeIds, newLeadAgentId })
 
     if (body.status !== undefined && body.status !== existing.status) {
       const closing = investigation.status === 'CLOSED' || investigation.status === 'ARCHIVED'

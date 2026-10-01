@@ -5,6 +5,7 @@ import { DutyClockCard } from '@/components/duty/duty-clock-card'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useFetch } from '@/hooks/use-fetch'
+import { usePageAction } from '@/hooks/use-page-action'
 import { useApi } from '@/hooks/use-api'
 import { PageLoader } from '@/components/ui/loading'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -376,6 +377,7 @@ export default function DashboardPage() {
     setAbsenceReason('')
     setAbsenceModalOpen(true)
   }
+  usePageAction('absence', openAbsenceModal, Boolean(user?.discordId) || canManageAbsences)
 
   const updateAbsenceDuration = (value: string) => {
     setAbsenceDuration(value)

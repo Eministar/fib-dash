@@ -6,6 +6,7 @@ import { resolveEntryBadgeNumbers } from '@/lib/badge-number'
 import { getBadgePrefix } from '@/lib/settings-helpers'
 import { getBlacklistedBadgeRows } from '@/lib/badge-blacklist'
 import { summarizeRankChangeVotes } from '@/lib/rank-change-votes'
+import { notify } from '@/lib/notifications-server'
 import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
 
 export async function GET(req: NextRequest) {
@@ -101,6 +102,15 @@ export async function POST(req: NextRequest) {
         createdBy: { select: { displayName: true } },
         entries: true,
       },
+    })
+
+    await notify({
+      kind: 'RANK_VOTE_OPEN',
+      title: 'Neue Rangänderungsliste – Abstimmung offen',
+      body: list.name,
+      href: '/promotions',
+      permission: 'rank-changes:view',
+      actorId: user.id,
     })
 
     return success(list, 201)
