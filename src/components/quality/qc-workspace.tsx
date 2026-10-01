@@ -22,7 +22,7 @@ import { LSPD_ACTIVE_STATUSES, type LspdOfficer } from '@/lib/lspd-officers'
 import { hasPermission } from '@/lib/permissions'
 import { QC_SHARE_SCOPE_LABELS, buildOfficerDirectory, type QcOfficerStats, type QcShareScope } from '@/lib/quality-checks'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
-import { BalanceChips, GradeBadge, RatingBadge, type QcCheck } from './qc-shared'
+import { AverageGrade, BalanceChips, GradeBadge, RatingBadge, type QcCheck } from './qc-shared'
 import { ShareDialog, StartCheckDialog } from './qc-dialogs'
 
 type CheckList = { items: (Omit<QcCheck, 'entries'> & { entries: QcCheck['entries'] })[]; total: number; page: number; pageSize: number }
@@ -117,6 +117,14 @@ function OfficersTab() {
                       {row.status && <span className={cn(row.terminated && 'text-[#ff6961]')}> · {row.status}</span>}
                     </span>
                   </span>
+                  {row.stats && (
+                    <span className="flex shrink-0 flex-col items-center rounded-[8px] bg-[#1c1c1e] px-2.5 py-1 leading-tight">
+                      <span className="font-mono text-[15px] font-semibold">
+                        <AverageGrade value={row.stats.gradeAverage} />
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide text-[#8e8e93]">Ø Note</span>
+                    </span>
+                  )}
                   {row.stats ? (
                     <span className="hidden shrink-0 text-right text-[11.5px] text-[#98989d] sm:block">
                       {row.stats.total} Kontrollen · zuletzt {formatDate(row.stats.lastCheckAt)}

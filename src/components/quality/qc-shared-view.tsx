@@ -8,9 +8,9 @@ import { TabBar } from '@/components/ui/tab-bar'
 import { LspdOfficerFileView } from '@/components/lspd/lspd-officer-file'
 import { useFetch } from '@/hooks/use-fetch'
 import type { LspdOfficerFile } from '@/lib/lspd-officers'
-import { QC_GRADE_LABELS, isQcGrade, type QcOfficerStats } from '@/lib/quality-checks'
+import type { QcOfficerStats } from '@/lib/quality-checks'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
-import { BalanceChips, GradeBadge, QcEntryList, RatingBadge, type QcEntry } from './qc-shared'
+import { AverageGrade, BalanceChips, GradeBadge, QcEntryList, RatingBadge, type QcEntry } from './qc-shared'
 
 type Overview = { title: string; scope: string; expiresAt: string | null; officers: QcOfficerStats[] }
 type SharedCheck = {
@@ -172,6 +172,7 @@ function Register({ officers, onOpen }: { officers: QcOfficerStats[]; onOpen: (i
                     {officer.running > 0 && <span className="ml-1.5 text-[#64d2ff]">({officer.running} läuft)</span>}
                   </span>
                   <span className="font-mono">
+                    <span className="text-[#8e8e93] sm:hidden">Ø </span>
                     <AverageGrade value={officer.gradeAverage} />
                   </span>
                   <span className="flex gap-2.5 font-mono">
@@ -188,19 +189,6 @@ function Register({ officers, onOpen }: { officers: QcOfficerStats[]; onOpen: (i
         {!rows.length && <p className="px-5 py-8 text-sm text-[#8e8e93]">Keine Akten gefunden.</p>}
       </div>
     </section>
-  )
-}
-
-function AverageGrade({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-[#636366]">–</span>
-  const rounded = Math.min(6, Math.max(1, Math.round(value)))
-  const label = isQcGrade(rounded) ? QC_GRADE_LABELS[rounded] : ''
-  const color = value <= 2.5 ? 'text-[#30d158]' : value <= 3.5 ? 'text-[#d4d4d4]' : value <= 4.5 ? 'text-[#ffd60a]' : 'text-[#ff6961]'
-  return (
-    <span className={color} title={`Durchschnitt ${value.toLocaleString('de-DE')} – ${label}`}>
-      <span className="text-[#8e8e93] sm:hidden">Ø </span>
-      {value.toLocaleString('de-DE', { minimumFractionDigits: 1 })}
-    </span>
   )
 }
 

@@ -81,6 +81,19 @@ export function GradeBadge({ grade, long = false }: { grade: number | null | und
   )
 }
 
+/** Durchschnittsnote, eine Nachkommastelle; `–` solange keine Note vergeben ist. */
+export function AverageGrade({ value }: { value: number | null | undefined }) {
+  if (value === null || value === undefined) return <span className="text-[#636366]" title="Noch keine Note">–</span>
+  const rounded = Math.min(6, Math.max(1, Math.round(value)))
+  const label = isQcGrade(rounded) ? QC_GRADE_LABELS[rounded] : ''
+  const color = value <= 2.5 ? 'text-[#30d158]' : value <= 3.5 ? 'text-[#d4d4d4]' : value <= 4.5 ? 'text-[#ffd60a]' : 'text-[#ff6961]'
+  return (
+    <span className={color} title={`Durchschnittsnote ${value.toLocaleString('de-DE')} – ${label}`}>
+      {value.toLocaleString('de-DE', { minimumFractionDigits: 1 })}
+    </span>
+  )
+}
+
 export function BalanceChips({ entries }: { entries: Pick<QcEntry, 'id' | 'kind' | 'correctsId'>[] }) {
   const balance = entryBalance(entries)
   return (
