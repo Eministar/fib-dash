@@ -22,7 +22,7 @@ import { LSPD_ACTIVE_STATUSES, type LspdOfficer } from '@/lib/lspd-officers'
 import { hasPermission } from '@/lib/permissions'
 import { QC_SHARE_SCOPE_LABELS, buildOfficerDirectory, type QcOfficerStats, type QcShareScope } from '@/lib/quality-checks'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
-import { BalanceChips, RatingBadge, type QcCheck } from './qc-shared'
+import { BalanceChips, GradeBadge, RatingBadge, type QcCheck } from './qc-shared'
 import { ShareDialog, StartCheckDialog } from './qc-dialogs'
 
 type CheckList = { items: (Omit<QcCheck, 'entries'> & { entries: QcCheck['entries'] })[]; total: number; page: number; pageSize: number }
@@ -188,6 +188,7 @@ function ChecksTab() {
                       </span>
                     </span>
                     <BalanceChips entries={check.entries} />
+                    <GradeBadge grade={check.grade} />
                     <RatingBadge rating={check.rating} />
                   </Link>
                 </li>

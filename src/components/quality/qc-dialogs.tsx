@@ -138,7 +138,7 @@ export function ShareDialog({
       {link ? (
         <div className="space-y-3">
           <p className="text-[12.5px] text-[#c7c7cc]">
-            Wer diesen Link hat, kann die abgeschlossenen Kontrollen ohne Login lesen. Er wird nur jetzt angezeigt.
+            Wer diesen Link hat, kann die Kontrollen ohne Login lesen – laufende samt ihrem aktuellen Stand. Er wird nur jetzt angezeigt.
           </p>
           <div className="flex gap-2">
             <input readOnly value={link} onFocus={(event) => event.target.select()} className="h-[36px] min-w-0 flex-1 rounded-[9px] border border-[#38383a] bg-[#1c1c1e] px-3 font-mono text-[12px] text-white" />
@@ -161,7 +161,7 @@ export function ShareDialog({
             label="LSPD-Laufbahn mitteilen (Beförderungen, Sanktionen, Trainings, Kündigungen)"
           />
           <p className="text-[11.5px] text-[#8e8e93]">
-            Freigegeben werden nur abgeschlossene Kontrollen. Namen der Prüfer erscheinen im Link nicht.
+            Laufende Kontrollen sind mit ihrem aktuellen Stand sichtbar. Namen der Prüfer erscheinen im Link nicht.
           </p>
           {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}
           <div className="flex justify-end gap-2">

@@ -4,7 +4,9 @@ import { MinusCircle, PlusCircle, StickyNote, type LucideIcon } from 'lucide-rea
 
 import {
   QC_ENTRY_KIND_LABELS,
+  QC_GRADE_LABELS,
   QC_RATING_LABELS,
+  isQcGrade,
   correctedEntryIds,
   entryBalance,
   type QcEntryKind,
@@ -31,6 +33,7 @@ export interface QcCheck {
   officerRank: string
   status: string
   rating: string | null
+  grade: number | null
   startedAt: string
   endedAt: string | null
   location: string | null
@@ -58,6 +61,22 @@ export function RatingBadge({ rating }: { rating: string | null }) {
   return (
     <span className={cn('rounded-full px-2 py-0.5 text-[11.5px] font-medium', RATING_STYLE[rating as QcRating])}>
       {QC_RATING_LABELS[rating as QcRating]}
+    </span>
+  )
+}
+
+const GRADE_STYLE = ['', 'text-[#30d158]', 'text-[#30d158]', 'text-[#d4d4d4]', 'text-[#ffd60a]', 'text-[#ff6961]', 'text-[#ff6961]']
+
+/** Schulnote 1–6; ohne Note nichts anzeigen. */
+export function GradeBadge({ grade, long = false }: { grade: number | null | undefined; long?: boolean }) {
+  if (!isQcGrade(grade)) return null
+  return (
+    <span
+      title={`Note ${grade} – ${QC_GRADE_LABELS[grade]}`}
+      className={cn('rounded-full bg-[#2c2c2e] px-2 py-0.5 font-mono text-[11.5px] font-semibold', GRADE_STYLE[grade])}
+    >
+      Note {grade}
+      {long && <span className="font-sans font-medium"> · {QC_GRADE_LABELS[grade]}</span>}
     </span>
   )
 }

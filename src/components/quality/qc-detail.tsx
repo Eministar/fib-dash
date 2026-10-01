@@ -18,6 +18,8 @@ import { useFetch } from '@/hooks/use-fetch'
 import { hasPermission } from '@/lib/permissions'
 import {
   QC_ENTRY_KIND_LABELS,
+  QC_GRADES,
+  QC_GRADE_LABELS,
   QC_RATINGS,
   QC_RATING_LABELS,
   entryBalance,
@@ -26,7 +28,7 @@ import {
   type QcRating,
 } from '@/lib/quality-checks'
 import { cn, formatDateTime } from '@/lib/utils'
-import { BalanceChips, KIND_STYLE, QcEntryList, RatingBadge, type QcCheck, type QcEntry } from './qc-shared'
+import { BalanceChips, GradeBadge, KIND_STYLE, QcEntryList, RatingBadge, type QcCheck, type QcEntry } from './qc-shared'
 import { ShareDialog } from './qc-dialogs'
 
 export function QualityCheckDetail({ checkId }: { checkId: string }) {
@@ -77,10 +79,15 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <RatingBadge rating={check.rating} />
+            <div className="flex items-center gap-2">
+              <GradeBadge grade={check.grade} long />
+              <RatingBadge rating={check.rating} />
+            </div>
             <BalanceChips entries={check.entries} />
           </div>
         </div>
+
+        {running && canManage && <GradePicker checkId={check.id} grade={check.grade} onSaved={() => void refetch()} />}
 
         {check.summary && (
           <div className="mt-4 border-t border-[#2c2c2e] pt-3">
@@ -91,17 +98,16 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
 
         {canManage && (
           <div className="mt-4 flex flex-wrap gap-2 border-t border-[#2c2c2e] pt-3">
-            {running ? (
+            {running && (
               <Button onClick={() => setCompleteOpen(true)}>
                 <CheckCircle2 className="h-4 w-4" />
                 Kontrolle abschließen
               </Button>
-            ) : (
-              <Button variant="outline" onClick={() => setShareOpen(true)}>
-                <Link2 className="h-4 w-4" />
-                Freigabelink erstellen
-              </Button>
             )}
+            <Button variant="outline" onClick={() => setShareOpen(true)}>
+              <Link2 className="h-4 w-4" />
+              Freigabelink erstellen
+            </Button>
           </div>
         )}
       </Card>
@@ -133,6 +139,53 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
         checkId={check.id}
         defaultTitle={`${check.number} · ${check.officerName}`}
       />
+    </div>
+  )
+}
+
+/** Note 1–6 schon während der Mitfahrt setzen; nochmal tippen nimmt sie zurück. */
+function GradePicker({ checkId, grade, onSaved }: { checkId: string; grade: number | null; onSaved: () => void }) {
+  const { addToast } = useToast()
+  const { execute, loading } = useApi()
+
+  const save = async (next: number | null) => {
+    try {
+      await execute(`/api/quality-checks/${checkId}/grade`, { method: 'PUT', body: JSON.stringify({ grade: next }) })
+      onSaved()
+    } catch (cause) {
+      addToast({ type: 'error', title: 'Note nicht gespeichert', message: cause instanceof Error ? cause.message : '' })
+    }
+  }
+
+  return (
+    <div className="mt-4 border-t border-[#2c2c2e] pt-3">
+      <p className="mb-1.5 text-[11px] uppercase tracking-wide text-[#8e8e93]">Note</p>
+      <GradeButtons value={grade} disabled={loading} onChange={(next) => void save(next === grade ? null : next)} />
+    </div>
+  )
+}
+
+function GradeButtons({ value, disabled, onChange }: { value: number | null; disabled?: boolean; onChange: (grade: number) => void }) {
+  return (
+    <div className="grid grid-cols-6 gap-1.5" role="radiogroup" aria-label="Note">
+      {QC_GRADES.map((grade) => (
+        <button
+          key={grade}
+          type="button"
+          role="radio"
+          aria-checked={value === grade}
+          title={QC_GRADE_LABELS[grade]}
+          disabled={disabled}
+          onClick={() => onChange(grade)}
+          className={cn(
+            'flex h-11 flex-col items-center justify-center rounded-[10px] border font-semibold leading-tight disabled:opacity-60',
+            value === grade ? 'border-white/60 bg-[#2c2c2e] text-white' : 'border-[#38383a] text-[#8e8e93] hover:bg-[#1c1c1e]',
+          )}
+        >
+          <span className="text-[15px]">{grade}</span>
+          <span className="hidden text-[10px] font-normal sm:block">{QC_GRADE_LABELS[grade]}</span>
+        </button>
+      ))}
     </div>
   )
 }
@@ -245,13 +298,14 @@ function CompleteDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: 
   const suggestion = suggestRating(entryBalance(check.entries))
   const { execute, loading } = useApi()
   const [rating, setRating] = useState<QcRating>(suggestion)
+  const [grade, setGrade] = useState<number | null>(check.grade)
   const [summary, setSummary] = useState('')
   const [failure, setFailure] = useState('')
 
   const save = async () => {
     setFailure('')
     try {
-      await execute(`/api/quality-checks/${check.id}`, { method: 'PATCH', body: JSON.stringify({ rating, summary }) })
+      await execute(`/api/quality-checks/${check.id}`, { method: 'PATCH', body: JSON.stringify({ rating, grade, summary }) })
       onSaved()
     } catch (cause) {
       setFailure(cause instanceof Error ? cause.message : 'Abschließen fehlgeschlagen')
@@ -282,6 +336,12 @@ function CompleteDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: 
               </button>
             ))}
           </div>
+        </div>
+        <div>
+          <p className="mb-1.5 text-[12.5px] font-medium text-[#c7c7cc]">
+            Note <span className="font-normal text-[#8e8e93]">(optional)</span>
+          </p>
+          <GradeButtons value={grade} onChange={(next) => setGrade(next === grade ? null : next)} />
         </div>
         <Textarea label="Fazit" rows={5} maxLength={20000} value={summary} onChange={(event) => setSummary(event.target.value)} required />
         {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}

@@ -2749,6 +2749,8 @@ model QualityCheck {
   status        String    @default("RUNNING") @db.VarChar(20)
   /// POSITIVE | NEUTRAL | NEGATIVE – erst beim Abschluss gesetzt.
   rating        String?   @db.VarChar(20)
+  /// Schulnote 1–6; lässt sich schon während der laufenden Kontrolle setzen.
+  grade         Int?      @db.TinyInt
   startedAt     DateTime
   endedAt       DateTime?
   location      String?   @db.VarChar(200)

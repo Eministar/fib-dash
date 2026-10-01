@@ -24,6 +24,20 @@ export const QC_RATING_LABELS: Record<QcRating, string> = {
   NEGATIVE: 'Negativ',
 }
 
+export const QC_GRADES = [1, 2, 3, 4, 5, 6] as const
+export type QcGrade = (typeof QC_GRADES)[number]
+export const QC_GRADE_LABELS: Record<QcGrade, string> = {
+  1: 'Sehr gut',
+  2: 'Gut',
+  3: 'Befriedigend',
+  4: 'Ausreichend',
+  5: 'Mangelhaft',
+  6: 'Ungenügend',
+}
+export const isQcGrade = (value: unknown): value is QcGrade => QC_GRADES.includes(value as QcGrade)
+
+const gradeSchema = z.number().int().min(1, 'Note 1 bis 6').max(6, 'Note 1 bis 6')
+
 export const QC_STATUS_LABELS: Record<string, string> = {
   RUNNING: 'Läuft',
   COMPLETED: 'Abgeschlossen',
@@ -61,11 +75,15 @@ export const qcEntrySchema = z
 export const qcCompleteSchema = z
   .object({
     rating: z.enum(QC_RATINGS),
+    grade: gradeSchema.nullable().optional(),
     summary: z.string().trim().min(1, 'Bitte ein Fazit schreiben').max(20000),
     endedAt: isoDate.refine(notInFuture, 'Das Ende darf nicht in der Zukunft liegen').optional(),
     location: z.string().trim().max(200).optional(),
   })
   .strict()
+
+/** Note einer laufenden Kontrolle setzen oder zurücknehmen (`null`). */
+export const qcGradeSchema = z.object({ grade: gradeSchema.nullable() }).strict()
 
 export const qcShareSchema = z
   .object({

@@ -8,7 +8,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import type { LspdOfficerFile } from '@/lib/lspd-officers'
 import type { QcOfficerStats } from '@/lib/quality-checks'
 import { formatDate, formatDateTime } from '@/lib/utils'
-import { BalanceChips, QcEntryList, RatingBadge, type QcEntry } from './qc-shared'
+import { BalanceChips, GradeBadge, QcEntryList, RatingBadge, type QcEntry } from './qc-shared'
 
 type Overview = { title: string; scope: string; expiresAt: string | null; officers: QcOfficerStats[] }
 type OfficerDetail = {
@@ -20,7 +20,9 @@ type OfficerDetail = {
     officerName: string
     officerBadge: string
     officerRank: string
+    status: string
     rating: string | null
+    grade: number | null
     startedAt: string
     endedAt: string | null
     location: string | null
@@ -92,7 +94,7 @@ export function QualitySharedView({ token }: { token: string }) {
                 <p className="font-mono text-xs text-[#c4b5fd]">DN {officer.badgeNumber}</p>
                 <h2 className="mt-1 font-semibold text-white">{officer.name}</h2>
                 <p className="mt-1 text-xs text-[#98989d]">
-                  {officer.rank} · {officer.total} Kontrollen · zuletzt {formatDate(officer.lastCheckAt)}
+                  {officer.rank} · {officer.total} Kontrollen{officer.running ? ` (${officer.running} laufend)` : ''} · zuletzt {formatDate(officer.lastCheckAt)}
                 </p>
                 <p className="mt-2 flex gap-3 font-mono text-xs">
                   <span className="text-[#30d158]">{officer.ratings.POSITIVE} positiv</span>
@@ -138,6 +140,7 @@ function SharedOfficer({ url }: { url: string }) {
             </div>
             <div className="flex items-center gap-3">
               <BalanceChips entries={check.entries} />
+              <GradeBadge grade={check.grade} long />
               <RatingBadge rating={check.rating} />
             </div>
           </div>

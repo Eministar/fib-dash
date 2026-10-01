@@ -6,6 +6,7 @@ import {
   entryBalance,
   qcCompleteSchema,
   qcEntrySchema,
+  qcGradeSchema,
   qcShareCovers,
   qcShareIsActive,
   qcShareSchema,
@@ -41,6 +42,14 @@ test('Eingaben werden geprüft', () => {
   assert.equal(qcEntrySchema.safeParse({ kind: 'NOTE', text: 'x', occurredAt: new Date(Date.now() + 3_600_000).toISOString() }).success, false)
   assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', summary: '' }).success, false)
   assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', summary: 'Gut' }).success, true)
+  assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', grade: 2, summary: 'Gut' }).success, true)
+  assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', grade: 7, summary: 'Gut' }).success, false)
+})
+
+test('Note: nur ganze Zahlen 1–6 oder null', () => {
+  for (const grade of [1, 6, null]) assert.equal(qcGradeSchema.safeParse({ grade }).success, true)
+  for (const grade of [0, 7, 2.5, '3']) assert.equal(qcGradeSchema.safeParse({ grade }).success, false)
+  assert.equal(qcGradeSchema.safeParse({}).success, false)
 })
 
 test('Freigabe: Bereich braucht passendes Ziel, Ablauf in der Zukunft', () => {

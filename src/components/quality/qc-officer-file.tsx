@@ -16,7 +16,7 @@ import { officialNumber } from '@/lib/corruption-validation'
 import { lspdOfficerName, type LspdOfficerFile } from '@/lib/lspd-officers'
 import { hasPermission } from '@/lib/permissions'
 import { formatDateTime } from '@/lib/utils'
-import { BalanceChips, RatingBadge, type QcCheck } from './qc-shared'
+import { BalanceChips, GradeBadge, RatingBadge, type QcCheck } from './qc-shared'
 import { ShareDialog, StartCheckDialog } from './qc-dialogs'
 
 type OfficerQuality = {
@@ -39,7 +39,7 @@ export function QualityOfficerFile({ lspdOfficerId }: { lspdOfficerId: string })
 
   const latest = data?.checks[0]
   const name = lspd.data ? lspdOfficerName(lspd.data) : latest?.officerName ?? 'LSPD-Beamter'
-  const hasCompleted = Boolean(data?.checks.some((check) => check.status === 'COMPLETED'))
+  const hasChecks = Boolean(data?.checks.length)
 
   return (
     <div className="mx-auto max-w-4xl pb-6">
@@ -49,7 +49,7 @@ export function QualityOfficerFile({ lspdOfficerId }: { lspdOfficerId: string })
         <h1 className="text-[20px] font-semibold text-white">{name}</h1>
         {canManage && (
           <div className="flex flex-wrap gap-2">
-            {hasCompleted && (
+            {hasChecks && (
               <Button variant="outline" onClick={() => setShareOpen(true)}>
                 <Link2 className="h-4 w-4" />
                 Akte freigeben
@@ -81,6 +81,7 @@ export function QualityOfficerFile({ lspdOfficerId }: { lspdOfficerId: string })
                     {check.summary && <span className="block truncate text-[12px] text-[#98989d]">{check.summary}</span>}
                   </span>
                   <BalanceChips entries={check.entries} />
+                  <GradeBadge grade={check.grade} />
                   <RatingBadge rating={check.rating} />
                   <ChevronRight className="h-4 w-4 shrink-0 text-[#636366]" />
                 </Link>

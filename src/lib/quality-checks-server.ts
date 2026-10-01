@@ -20,6 +20,7 @@ import {
   type qcCompleteSchema,
   type qcCreateSchema,
   type qcEntrySchema,
+  type qcGradeSchema,
   type qcShareSchema,
   type qcShareUpdateSchema,
 } from '@/lib/quality-checks'
@@ -153,6 +154,22 @@ export async function addQualityEntry(user: CurrentUser, checkId: string, input:
   })
 }
 
+export async function gradeQualityCheck(user: CurrentUser, id: string, input: z.infer<typeof qcGradeSchema>) {
+  return prisma.$transaction(async (tx) => {
+    const check = await lockRunningCheck(tx, id)
+    const updated = await tx.qualityCheck.update({ where: { id }, data: { grade: input.grade }, include: qcDetailInclude })
+    await createAuditLog(
+      {
+        action: 'QUALITY_CHECK_GRADED',
+        userId: user.id,
+        details: `Qualitätskontrolle ${check.number}: Note ${input.grade ?? 'entfernt'}`,
+      },
+      tx,
+    )
+    return updated
+  })
+}
+
 export async function completeQualityCheck(user: CurrentUser, id: string, input: z.infer<typeof qcCompleteSchema>) {
   return prisma.$transaction(async (tx) => {
     const check = await lockRunningCheck(tx, id)
@@ -161,6 +178,7 @@ export async function completeQualityCheck(user: CurrentUser, id: string, input:
       data: {
         status: 'COMPLETED',
         rating: input.rating,
+        ...(input.grade !== undefined ? { grade: input.grade } : {}),
         summary: input.summary,
         endedAt: input.endedAt ? new Date(input.endedAt) : new Date(),
         ...(input.location !== undefined ? { location: input.location || null } : {}),
@@ -230,9 +248,8 @@ export function managedQcSharesWhere(user: CurrentUser): Prisma.QualityShareWher
 export async function createQcShare(user: CurrentUser, input: z.infer<typeof qcShareSchema>) {
   let lspdOfficerId = input.scope === 'OFFICER' ? input.lspdOfficerId : null
   if (input.scope === 'CHECK') {
-    const check = await prisma.qualityCheck.findUnique({ where: { id: input.checkId! }, select: { status: true, lspdOfficerId: true } })
+    const check = await prisma.qualityCheck.findUnique({ where: { id: input.checkId! }, select: { lspdOfficerId: true } })
     if (!check) throw new QcError('Qualitätskontrolle nicht gefunden', 404)
-    if (check.status !== 'COMPLETED') throw new QcError('Nur abgeschlossene Kontrollen lassen sich freigeben', 409)
     lspdOfficerId = check.lspdOfficerId
   }
   if (input.scope === 'OFFICER') {
@@ -301,10 +318,9 @@ export async function resolveQcShare(rawToken: string) {
 
 type ResolvedShare = Awaited<ReturnType<typeof resolveQcShare>>
 
-/** Nur abgeschlossene Kontrollen im Umfang der Freigabe. */
+/** Alle Kontrollen im Umfang der Freigabe – laufende eingeschlossen. */
 function sharedChecksWhere(share: ResolvedShare): Prisma.QualityCheckWhereInput {
   return {
-    status: 'COMPLETED',
     ...(share.scope === 'CHECK' ? { id: share.checkId ?? '__none__' } : {}),
     ...(share.scope === 'OFFICER' ? { lspdOfficerId: share.lspdOfficerId ?? '__none__' } : {}),
   }
@@ -349,7 +365,9 @@ export async function publicShareOfficer(share: ResolvedShare, lspdOfficerId: st
       officerName: true,
       officerBadge: true,
       officerRank: true,
+      status: true,
       rating: true,
+      grade: true,
       startedAt: true,
       endedAt: true,
       location: true,

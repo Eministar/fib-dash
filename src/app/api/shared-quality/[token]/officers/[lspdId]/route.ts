@@ -5,7 +5,7 @@ import { publicShareOfficer, qcRouteError, resolveQcShare } from '@/lib/quality-
 
 export const dynamic = 'force-dynamic'
 
-/** Beamtenakte innerhalb einer Freigabe: abgeschlossene Kontrollen, optional LSPD-Laufbahn. */
+/** Beamtenakte innerhalb einer Freigabe: alle Kontrollen (auch laufende), optional LSPD-Laufbahn. */
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string; lspdId: string }> }) {
   try {
     const { token, lspdId } = await params
