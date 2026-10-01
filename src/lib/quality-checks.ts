@@ -4,6 +4,8 @@
  */
 import { z } from 'zod'
 
+import { cleanLspdBadge, lspdOfficerName, lspdStatusLabel, type LspdOfficer } from '@/lib/lspd-officers'
+
 export const QUALITY_CHECK_PREFIX = 'QK-'
 
 export const QC_ENTRY_KINDS = ['POSITIVE', 'NEGATIVE', 'NOTE'] as const
@@ -218,4 +220,69 @@ export function aggregateOfficerStats(rows: readonly QcCheckRow[]): QcOfficerSta
     }
   }
   return [...byOfficer.values()].sort((a, b) => b.lastCheckAt.localeCompare(a.lastCheckAt))
+}
+
+export interface QcDirectoryRow {
+  id: string
+  name: string
+  badge: string
+  rank: string
+  rankColor: string
+  /** Leer, wenn der Beamte im Panel gerade nicht gefunden wurde. */
+  status: string
+  terminated: boolean
+  stats: QcOfficerStats | null
+}
+
+/**
+ * Beamtenliste der Qualitätskontrollen: alle aktiven Beamten aus dem Panel,
+ * Gekündigte nur, wenn es zu ihnen schon eine Kontrolle gibt. Kontrollierte,
+ * die das Panel (gerade) nicht liefert, erscheinen mit ihrer Momentaufnahme.
+ */
+export function buildOfficerDirectory(input: {
+  active: readonly LspdOfficer[] | null
+  terminated: readonly LspdOfficer[] | null
+  stats: readonly QcOfficerStats[]
+  term: string
+}): QcDirectoryRow[] {
+  const statsById = new Map(input.stats.map((row) => [row.lspdOfficerId, row]))
+  const rows: QcDirectoryRow[] = []
+  const seen = new Set<string>()
+
+  const fromPanel = (officer: LspdOfficer, terminated: boolean) => {
+    seen.add(officer.id)
+    rows.push({
+      id: officer.id,
+      name: lspdOfficerName(officer),
+      badge: cleanLspdBadge(officer.badgeNumber),
+      rank: officer.rank.name,
+      rankColor: officer.rank.color,
+      status: lspdStatusLabel(officer.status),
+      terminated,
+      stats: statsById.get(officer.id) ?? null,
+    })
+  }
+
+  for (const officer of input.active ?? []) fromPanel(officer, false)
+  for (const officer of input.terminated ?? []) {
+    if (statsById.has(officer.id) && !seen.has(officer.id)) fromPanel(officer, true)
+  }
+
+  const term = input.term.trim().toLowerCase()
+  for (const stats of input.stats) {
+    if (seen.has(stats.lspdOfficerId)) continue
+    const badge = cleanLspdBadge(stats.badgeNumber)
+    if (term && !`${stats.name} ${badge}`.toLowerCase().includes(term)) continue
+    rows.push({
+      id: stats.lspdOfficerId,
+      name: stats.name,
+      badge,
+      rank: stats.rank,
+      rankColor: '#8e8e93',
+      status: '',
+      terminated: false,
+      stats,
+    })
+  }
+  return rows
 }

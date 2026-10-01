@@ -88,3 +88,26 @@ test('LSPD-Konfiguration und Momentaufnahmen', () => {
   assert.equal(readLspdSnapshot({ name: 'x' }), null)
   assert.deepEqual(readLspdSnapshot({ id: 'o1', name: 'Max', badgeNumber: 12 }), { id: 'o1', name: 'Max', badgeNumber: '', rank: '' })
 })
+
+test('Beamtenliste: Gekündigte nur mit Kontrolle, Dienstnummer ohne interne Markierung', async () => {
+  const { buildOfficerDirectory } = await import('../src/lib/quality-checks')
+  const officer = (id: string, status: string, badgeNumber: string) => ({
+    id, firstName: 'Max', lastName: id, badgeNumber, discordId: null, status,
+    rank: { name: 'Officer', color: '#fff', sortOrder: 1 }, units: [], hireDate: '2026-01-01T00:00:00.000Z',
+  })
+  const stat = (id: string, badgeNumber: string) => ({
+    lspdOfficerId: id, name: `Max ${id}`, badgeNumber, rank: 'Officer', total: 1, running: 0,
+    ratings: { POSITIVE: 1, NEUTRAL: 0, NEGATIVE: 0 }, lastCheckAt: '2026-09-01T00:00:00.000Z',
+  })
+  const rows = buildOfficerDirectory({
+    active: [officer('a', 'ACTIVE', '12')],
+    terminated: [officer('t1', 'TERMINATED', '01__terminated__t1'), officer('t2', 'TERMINATED', '02__terminated__t2')],
+    stats: [stat('t1', '01'), stat('weg', '07__terminated__weg')],
+    term: '',
+  })
+  assert.deepEqual(rows.map((row) => [row.id, row.badge, row.status, row.terminated]), [
+    ['a', '12', 'Aktiv', false],
+    ['t1', '01', 'Gekündigt', true],
+    ['weg', '07', '', false],
+  ])
+})

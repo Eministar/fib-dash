@@ -34,7 +34,38 @@ export const LSPD_STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Aktiv',
   AWAY: 'Abgemeldet',
   INACTIVE: 'Inaktiv',
-  TERMINATED: 'Ausgeschieden',
+  TERMINATED: 'Gekündigt',
+}
+
+/** Status, die in Auswahl und Beamtenliste standardmäßig erscheinen (ohne Gekündigte). */
+export const LSPD_ACTIVE_STATUSES = ['ACTIVE', 'AWAY', 'INACTIVE'] as const
+
+/**
+ * Das Panel markiert Dienstnummern Gekündigter intern als
+ * „<DN>__terminated__<id>“. Angezeigt wird nur die eigentliche Dienstnummer.
+ */
+export function cleanLspdBadge(badgeNumber: string | null | undefined) {
+  const value = (badgeNumber ?? '').trim()
+  const index = value.indexOf('__terminated__')
+  return index >= 0 ? value.slice(0, index).trim() : value
+}
+
+/** Bereinigt eine Antwort des Panels – auch falls dort noch eine ältere Version läuft. */
+export function normalizeLspdOfficer<T extends LspdOfficer>(officer: T): T {
+  const file = officer as T & Partial<Pick<LspdOfficerFile, 'promotions'>>
+  return {
+    ...officer,
+    badgeNumber: cleanLspdBadge(officer.badgeNumber),
+    ...(file.promotions
+      ? {
+          promotions: file.promotions.map((item) => ({
+            ...item,
+            fromBadge: item.fromBadge ? cleanLspdBadge(item.fromBadge) : null,
+            toBadge: item.toBadge ? cleanLspdBadge(item.toBadge) : null,
+          })),
+        }
+      : {}),
+  }
 }
 
 export const LSPD_AGENCY = 'LSPD'

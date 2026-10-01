@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { lspdConfig } from '@/lib/lspd-hr-client-config'
-import type { LspdOfficer, LspdOfficerFile } from '@/lib/lspd-officers'
+import { normalizeLspdOfficer, type LspdOfficer, type LspdOfficerFile } from '@/lib/lspd-officers'
 
 export { lspdConfig }
 
@@ -84,11 +84,11 @@ export function searchLspdOfficers(options: { q?: string; status?: string[]; lim
   if (options.q?.trim()) params.set('q', options.q.trim().slice(0, 100))
   if (options.status?.length) params.set('status', options.status.join(','))
   params.set('limit', String(Math.min(Math.max(options.limit ?? 25, 1), 100)))
-  return request<LspdOfficer[]>(`/api/external/officers?${params}`)
+  return request<LspdOfficer[]>(`/api/external/officers?${params}`).then((list) => list.map(normalizeLspdOfficer))
 }
 
 export function getLspdOfficerFile(id: string) {
-  return request<LspdOfficerFile>(`/api/external/officers/${encodeURIComponent(id)}`)
+  return request<LspdOfficerFile>(`/api/external/officers/${encodeURIComponent(id)}`).then(normalizeLspdOfficer)
 }
 
 /** Wie `getLspdOfficerFile`, aber `null` statt Fehler – für optionale Anzeige. */

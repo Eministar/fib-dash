@@ -5,7 +5,7 @@ import { Search, ShieldUser, X } from 'lucide-react'
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useFetch } from '@/hooks/use-fetch'
-import { lspdOfficerName, lspdStatusLabel, type LspdOfficer } from '@/lib/lspd-officers'
+import { LSPD_ACTIVE_STATUSES, lspdOfficerName, lspdStatusLabel, type LspdOfficer } from '@/lib/lspd-officers'
 import { cn } from '@/lib/utils'
 
 /**
@@ -28,7 +28,10 @@ export function LspdOfficerPicker({
   const [open, setOpen] = useState(false)
   const debounced = useDebouncedValue(term.trim(), 250)
   const { data, loading, error } = useFetch<LspdOfficer[]>(
-    open && !value ? `/api/lspd/officers?limit=20&q=${encodeURIComponent(debounced)}` : null,
+    // Gekündigte lassen sich nicht mehr kontrollieren – sie stehen hier nicht zur Wahl.
+    open && !value
+      ? `/api/lspd/officers?limit=20&status=${LSPD_ACTIVE_STATUSES.join(',')}&q=${encodeURIComponent(debounced)}`
+      : null,
   )
   const officers = data ?? []
 

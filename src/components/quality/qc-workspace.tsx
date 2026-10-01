@@ -18,9 +18,9 @@ import { useApi } from '@/hooks/use-api'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useFetch } from '@/hooks/use-fetch'
 import { useUrlState } from '@/hooks/use-url-state'
-import { lspdOfficerName, lspdStatusLabel, type LspdOfficer } from '@/lib/lspd-officers'
+import { LSPD_ACTIVE_STATUSES, type LspdOfficer } from '@/lib/lspd-officers'
 import { hasPermission } from '@/lib/permissions'
-import { QC_SHARE_SCOPE_LABELS, type QcOfficerStats, type QcShareScope } from '@/lib/quality-checks'
+import { QC_SHARE_SCOPE_LABELS, buildOfficerDirectory, type QcOfficerStats, type QcShareScope } from '@/lib/quality-checks'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
 import { BalanceChips, RatingBadge, type QcCheck } from './qc-shared'
 import { ShareDialog, StartCheckDialog } from './qc-dialogs'
@@ -77,27 +77,16 @@ export function QualityChecksWorkspace() {
 function OfficersTab() {
   const [search, setSearch] = useState('')
   const debounced = useDebouncedValue(search.trim(), 250)
-  const lspd = useFetch<LspdOfficer[]>(`/api/lspd/officers?limit=100&q=${encodeURIComponent(debounced)}`)
+  const query = `limit=100&q=${encodeURIComponent(debounced)}`
+  const lspd = useFetch<LspdOfficer[]>(`/api/lspd/officers?${query}&status=${LSPD_ACTIVE_STATUSES.join(',')}`)
+  // Gekündigte nur laden, um kontrollierte unter ihnen anzeigen zu können.
+  const terminated = useFetch<LspdOfficer[]>(`/api/lspd/officers?${query}&status=TERMINATED`)
   const stats = useFetch<QcOfficerStats[]>('/api/quality-checks/officers')
-  const statsById = useMemo(() => new Map((stats.data ?? []).map((row) => [row.lspdOfficerId, row])), [stats.data])
 
-  const rows = useMemo(() => {
-    if (lspd.data) {
-      return lspd.data.map((officer) => ({
-        id: officer.id,
-        name: lspdOfficerName(officer),
-        badge: officer.badgeNumber,
-        rank: officer.rank.name,
-        rankColor: officer.rank.color,
-        status: lspdStatusLabel(officer.status),
-        stats: statsById.get(officer.id) ?? null,
-      }))
-    }
-    const term = debounced.toLowerCase()
-    return (stats.data ?? [])
-      .filter((row) => !term || `${row.name} ${row.badgeNumber}`.toLowerCase().includes(term))
-      .map((row) => ({ id: row.lspdOfficerId, name: row.name, badge: row.badgeNumber, rank: row.rank, rankColor: '#8e8e93', status: '', stats: row }))
-  }, [debounced, lspd.data, stats.data, statsById])
+  const rows = useMemo(
+    () => buildOfficerDirectory({ active: lspd.data, terminated: terminated.data, stats: stats.data ?? [], term: debounced }),
+    [debounced, lspd.data, stats.data, terminated.data],
+  )
 
   return (
     <div className="space-y-3">
@@ -125,7 +114,7 @@ function OfficersTab() {
                     </span>
                     <span className="block text-[12px] text-[#8e8e93]">
                       {row.rank}
-                      {row.status ? ` · ${row.status}` : ''}
+                      {row.status && <span className={cn(row.terminated && 'text-[#ff6961]')}> · {row.status}</span>}
                     </span>
                   </span>
                   {row.stats ? (
