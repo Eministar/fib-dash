@@ -192,6 +192,8 @@ export interface QcOfficerStats {
   total: number
   running: number
   ratings: Record<QcRating, number>
+  /** Durchschnitt der vergebenen Noten, eine Nachkommastelle; `null` ohne Note. */
+  gradeAverage: number | null
   lastCheckAt: string
 }
 
@@ -202,6 +204,7 @@ export interface QcCheckRow {
   officerRank: string
   status: string
   rating: string | null
+  grade?: number | null
   startedAt: Date
 }
 
@@ -209,6 +212,7 @@ export interface QcCheckRow {
 export function aggregateOfficerStats(rows: readonly QcCheckRow[]): QcOfficerStats[] {
   const byOfficer = new Map<string, QcOfficerStats>()
   const latest = new Map<string, number>()
+  const grades = new Map<string, number[]>()
   for (const row of rows) {
     const time = row.startedAt.getTime()
     let stats = byOfficer.get(row.lspdOfficerId)
@@ -221,6 +225,7 @@ export function aggregateOfficerStats(rows: readonly QcCheckRow[]): QcOfficerSta
         total: 0,
         running: 0,
         ratings: { POSITIVE: 0, NEUTRAL: 0, NEGATIVE: 0 },
+        gradeAverage: null,
         lastCheckAt: row.startedAt.toISOString(),
       }
       byOfficer.set(row.lspdOfficerId, stats)
@@ -229,6 +234,7 @@ export function aggregateOfficerStats(rows: readonly QcCheckRow[]): QcOfficerSta
     stats.total += 1
     if (row.status === 'RUNNING') stats.running += 1
     if (row.rating && row.rating in stats.ratings) stats.ratings[row.rating as QcRating] += 1
+    if (isQcGrade(row.grade)) grades.set(row.lspdOfficerId, [...(grades.get(row.lspdOfficerId) ?? []), row.grade])
     if (time >= (latest.get(row.lspdOfficerId) ?? 0)) {
       latest.set(row.lspdOfficerId, time)
       stats.name = row.officerName
@@ -236,6 +242,9 @@ export function aggregateOfficerStats(rows: readonly QcCheckRow[]): QcOfficerSta
       stats.rank = row.officerRank
       stats.lastCheckAt = row.startedAt.toISOString()
     }
+  }
+  for (const [id, list] of grades) {
+    byOfficer.get(id)!.gradeAverage = Math.round((list.reduce((sum, grade) => sum + grade, 0) / list.length) * 10) / 10
   }
   return [...byOfficer.values()].sort((a, b) => b.lastCheckAt.localeCompare(a.lastCheckAt))
 }

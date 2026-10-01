@@ -73,9 +73,9 @@ test('Freigabe deckt nur ihren Umfang ab und respektiert Ablauf/Deaktivierung', 
 
 test('Kennzahlen je Beamtem: Name aus der jüngsten Kontrolle', () => {
   const stats = aggregateOfficerStats([
-    { lspdOfficerId: 'o1', officerName: 'Alt', officerBadge: '1', officerRank: 'Cadet', status: 'COMPLETED', rating: 'NEGATIVE', startedAt: new Date('2026-09-01') },
-    { lspdOfficerId: 'o1', officerName: 'Neu', officerBadge: '1', officerRank: 'Officer', status: 'COMPLETED', rating: 'POSITIVE', startedAt: new Date('2026-09-10') },
-    { lspdOfficerId: 'o1', officerName: 'Neu', officerBadge: '1', officerRank: 'Officer', status: 'RUNNING', rating: null, startedAt: new Date('2026-09-05') },
+    { lspdOfficerId: 'o1', officerName: 'Alt', officerBadge: '1', officerRank: 'Cadet', status: 'COMPLETED', rating: 'NEGATIVE', grade: 4, startedAt: new Date('2026-09-01') },
+    { lspdOfficerId: 'o1', officerName: 'Neu', officerBadge: '1', officerRank: 'Officer', status: 'COMPLETED', rating: 'POSITIVE', grade: 1, startedAt: new Date('2026-09-10') },
+    { lspdOfficerId: 'o1', officerName: 'Neu', officerBadge: '1', officerRank: 'Officer', status: 'RUNNING', rating: null, grade: 2, startedAt: new Date('2026-09-05') },
     { lspdOfficerId: 'o2', officerName: 'B', officerBadge: '2', officerRank: 'Officer', status: 'COMPLETED', rating: 'NEUTRAL', startedAt: new Date('2026-08-01') },
   ])
   assert.equal(stats.length, 2)
@@ -85,6 +85,8 @@ test('Kennzahlen je Beamtem: Name aus der jüngsten Kontrolle', () => {
   assert.equal(stats[0].total, 3)
   assert.equal(stats[0].running, 1)
   assert.deepEqual(stats[0].ratings, { POSITIVE: 1, NEUTRAL: 0, NEGATIVE: 1 })
+  assert.equal(stats[0].gradeAverage, 2.3)
+  assert.equal(stats[1].gradeAverage, null)
   assert.equal('latest' in stats[0], false)
 })
 
@@ -106,7 +108,7 @@ test('Beamtenliste: Gekündigte nur mit Kontrolle, Dienstnummer ohne interne Mar
   })
   const stat = (id: string, badgeNumber: string) => ({
     lspdOfficerId: id, name: `Max ${id}`, badgeNumber, rank: 'Officer', total: 1, running: 0,
-    ratings: { POSITIVE: 1, NEUTRAL: 0, NEGATIVE: 0 }, lastCheckAt: '2026-09-01T00:00:00.000Z',
+    ratings: { POSITIVE: 1, NEUTRAL: 0, NEGATIVE: 0 }, gradeAverage: null, lastCheckAt: '2026-09-01T00:00:00.000Z',
   })
   const rows = buildOfficerDirectory({
     active: [officer('a', 'ACTIVE', '12')],
