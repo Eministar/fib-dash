@@ -4,7 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
 import { useAuth } from '@/context/auth-context'
 
-export type RecentItemKind = 'agent' | 'investigation' | 'dossier' | 'person' | 'rank-change' | 'ordnung' | 'publication'
+export type RecentItemKind = 'agent' | 'investigation' | 'dossier' | 'person' | 'rank-change' | 'ordnung' | 'publication' | 'quality-check' | 'lspd-officer'
 
 export type RecentItem = {
   href: string
@@ -23,6 +23,8 @@ export const RECENT_KIND_LABELS: Record<RecentItemKind, string> = {
   'rank-change': 'Rangänderung',
   ordnung: 'Ordnung',
   publication: 'Aushang',
+  'quality-check': 'Qualitätskontrolle',
+  'lspd-officer': 'Beamtenakte',
 }
 
 const MAX_ITEMS = 8

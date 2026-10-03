@@ -55,6 +55,7 @@ import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { CodenameHistory } from '@/components/codenames/codename-history'
 import { AgentRecordsPanel } from '@/components/agents/agent-records-panel'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
+import { AgentAchievements } from '@/components/agents/agent-achievements'
 import { usePageAction } from '@/hooks/use-page-action'
 
 interface Rank { id: string; name: string; sortOrder: number; internalNumber: number | null; color: string }
@@ -1334,6 +1335,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
         {/* Right column: actions + notes */}
         <div className="space-y-4">
+          {!editing && <AgentAchievements agentId={id} />}
           {/* Quick actions */}
           {!editing && (
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}

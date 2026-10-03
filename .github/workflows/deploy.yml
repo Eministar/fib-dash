@@ -23,7 +23,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Typen, Lint und Tests (ohne Datenbank) müssen grün sein, bevor deployt wird.
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # prisma generate braucht nur eine syntaktisch gültige URL, keine echte Datenbank.
+      DATABASE_URL: mysql://ci:ci@localhost:3306/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+
   deploy:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (für aktuelles Deploy-Skript)

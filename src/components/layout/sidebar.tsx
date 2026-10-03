@@ -10,7 +10,7 @@ import {
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Download,
   FileText, FileSignature, Gavel, FolderSearch, Map,
-  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck,
+  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -19,6 +19,7 @@ import { useAuth } from '@/context/auth-context'
 import { hasAnyPermission, hasPermission, type Permission } from '@/lib/permissions'
 import Image from 'next/image'
 import { useFetch } from '@/hooks/use-fetch'
+import { useNavFavorites } from '@/hooks/use-nav-favorites'
 import { unitIconComponent } from '@/components/units/unit-icon'
 import type { NavigationUnit } from '@/lib/unit-navigation'
 
@@ -101,7 +102,9 @@ function SavedSection({ name, compact, children }: { name: string; compact?: boo
   </section>
 }
 
-function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem; pathname: string; onNavigate: () => void; compact?: boolean; badge?: number }) {
+type PinControl = { pinned: boolean; toggle: (href: string) => void }
+
+function NavLink({ item, pathname, onNavigate, compact, badge, pin }: { item: NavItem; pathname: string; onNavigate: () => void; compact?: boolean; badge?: number; pin?: PinControl }) {
   const active = isActivePath(pathname, item.href)
   const Icon = item.icon
   const badgeLabel = badge ? (badge > 99 ? '99+' : String(badge)) : null
@@ -133,7 +136,27 @@ function NavLink({ item, pathname, onNavigate, compact, badge }: { item: NavItem
       ))}
     </Link>
   )
-  if (!compact) return link
+  if (!compact) {
+    if (!pin) return link
+    // Stern liegt neben dem Link (nicht darin), weil Buttons in Links ungültig sind.
+    return <div className="group/pin relative">
+      {link}
+      <button
+        type="button"
+        onClick={() => pin.toggle(item.href)}
+        aria-pressed={pin.pinned}
+        aria-label={pin.pinned ? `${item.name} von Favoriten lösen` : `${item.name} zu Favoriten`}
+        title={pin.pinned ? 'Von Favoriten lösen' : 'Zu Favoriten'}
+        className={cn(
+          'absolute top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-[6px] text-[#8e8e93] transition-opacity hover:bg-[#3a3a3c] hover:text-[#f5f5f7]',
+          'opacity-0 focus-visible:opacity-100 group-hover/pin:opacity-100',
+          badgeLabel ? 'right-11' : 'right-1.5',
+        )}
+      >
+        <Star size={13} strokeWidth={1.75} className={cn(pin.pinned && 'fill-current text-[#f5f5f7]')} aria-hidden />
+      </button>
+    </div>
+  }
   return <Tooltip side="right" content={badgeLabel ? `${item.name} · ${badgeLabel} offen` : item.name}>{link}</Tooltip>
 }
 
@@ -148,6 +171,21 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
     icon: unitIconComponent(unit.icon),
     color: unit.color,
   }))
+  const { favorites, toggle } = useNavFavorites()
+  const pinFor = (href: string): PinControl => ({ pinned: favorites.includes(href), toggle })
+  const allowed = (item: NavItem) => !item.permission || hasPermission(user, item.permission)
+  const leadershipItem: NavItem = { name: 'Ermittlungsgruppen', href: '/leadership/groups', icon: Users }
+  const bodycamItem: NavItem = { name: 'Bodycams', href: '/investigations/clips', icon: FolderSearch }
+  const reachable: NavItem[] = [
+    ...mainNav.filter(allowed),
+    ...(!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed ? [bodycamItem] : []),
+    ...unitNav,
+    ...(leadershipAccess?.allowed ? [leadershipItem] : []),
+    ...adminNav.filter(allowed),
+    ...accountNav,
+  ]
+  // Nur Favoriten, auf die der Nutzer (noch) Zugriff hat – in Anheft-Reihenfolge.
+  const favoriteItems = favorites.flatMap((href) => reachable.find((item) => item.href === href) ?? [])
   const showAdmin = hasAnyPermission(user, [
     'logs:view',
     'ranks:manage',
@@ -178,6 +216,11 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
       )}
 
       <nav aria-label="Hauptnavigation" className={cn('flex-1 overflow-y-auto pb-4', compact ? 'px-1.5' : 'px-2.5')}>
+        {favoriteItems.length > 0 && (
+          <SavedSection name="Favoriten" compact={compact}>
+            {favoriteItems.map((item) => <NavLink key={`fav:${item.href}`} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} badge={navBadges?.[item.href]} pin={pinFor(item.href)} />)}
+          </SavedSection>
+        )}
         {[
           { label: 'Arbeitsplatz', paths: ['/dashboard', '/duty-times', '/notes'] },
           { label: 'Personal', paths: ['/agents', '/codenames', '/promotions', '/terminations', '/vertraege'] },
@@ -186,20 +229,20 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
         ].map(group => {
           const items = mainNav.filter(item => group.paths.includes(item.href) && (!item.permission || hasPermission(user, item.permission)))
           return items.length > 0 && <SavedSection key={group.label} name={group.label} compact={compact}>
-            {items.map(item => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} badge={navBadges?.[item.href]} />)}
+            {items.map(item => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} badge={navBadges?.[item.href]} pin={pinFor(item.href)} />)}
           </SavedSection>
         })}
-        {!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed && <NavLink item={{ name: 'Bodycams', href: '/investigations/clips', icon: FolderSearch }} pathname={pathname} onNavigate={onNavigate} compact={compact} />}
+        {!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed && <NavLink item={bodycamItem} pathname={pathname} onNavigate={onNavigate} compact={compact} pin={pinFor(bodycamItem.href)} />}
 
         {unitNav.length > 0 && (
           <SavedSection name="Units" compact={compact}>
-            {unitNav.map((item) => <NavLink key={`${item.href}:${item.name}`} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} />)}
+            {unitNav.map((item) => <NavLink key={`${item.href}:${item.name}`} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} pin={pinFor(item.href)} />)}
           </SavedSection>
         )}
 
         {leadershipAccess?.allowed && (
           <SavedSection name="Leadership" compact={compact}>
-            <NavLink item={{ name: 'Ermittlungsgruppen', href: '/leadership/groups', icon: Users }} pathname={pathname} onNavigate={onNavigate} compact={compact} />
+            <NavLink item={leadershipItem} pathname={pathname} onNavigate={onNavigate} compact={compact} pin={pinFor(leadershipItem.href)} />
           </SavedSection>
         )}
 
@@ -207,12 +250,12 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
           <SavedSection name="Administration" compact={compact}>
             {adminNav
               .filter((item) => !item.permission || hasPermission(user, item.permission))
-              .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} />)}
+              .map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} pin={pinFor(item.href)} />)}
           </SavedSection>
         )}
 
         <SavedSection name="Konto" compact={compact}>
-          {accountNav.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} />)}
+          {accountNav.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} pin={pinFor(item.href)} />)}
         </SavedSection>
       </nav>
 

@@ -44,6 +44,7 @@ import { hasPermission, type Permission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { notifyLiveUpdate } from '@/lib/live-updates'
 import { RecentItemsCard } from '@/components/dashboard/recent-items-card'
+import { AgentOfMonthCard } from '@/components/dashboard/agent-of-month-card'
 import { LiveNumber } from '@/components/ui/live-number'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -512,6 +513,8 @@ export default function DashboardPage() {
         </section>
 
         <RecentItemsCard />
+
+        <AgentOfMonthCard />
 
         {/* ===== KPI CARDS ===== */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

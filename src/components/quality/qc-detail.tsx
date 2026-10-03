@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/context/auth-context'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
+import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { hasPermission } from '@/lib/permissions'
 import {
   QC_BASE_GRADES,
@@ -47,6 +48,7 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
   const confirm = useConfirm()
   const { addToast } = useToast()
   const { execute } = useApi()
+  useTrackRecentItem(check ? { href: `/quality-checks/${checkId}`, title: check.officerName, subtitle: check.number, kind: 'quality-check' } : null)
 
   const deleteEntry = async (entry: QcEntry) => {
     const ok = await confirm({

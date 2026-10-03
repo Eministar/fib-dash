@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Activity, AlertTriangle, BarChart3, Clock3, Crown, Database, LogOut, RefreshCw, Signal, Timer, Trophy, Users, Wifi } from 'lucide-react'
+import { Activity, AlertTriangle, BarChart3, Clock3, Database, LogOut, RefreshCw, Signal, Timer, Trophy, Users, Wifi } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageLoader } from '@/components/ui/loading'
@@ -18,6 +18,7 @@ import { hasPermission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/badge-number'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
 import { DutyClockCard } from '@/components/duty/duty-clock-card'
+import { DutyLeaderboard } from '@/components/duty/duty-leaderboard'
 
 type ApiStatus = 'online' | 'offline' | 'ignored-job' | 'not-linked' | 'not-configured' | 'error'
 
@@ -160,9 +161,6 @@ export default function DutyTimesPage() {
     )
   }
 
-  const topMax = Math.max(...data.topRows.map((row) => row.weekDurationMs), 1)
-  const podium = data.topRows.slice(0, 3)
-
   return (
       <div className="max-w-6xl mx-auto space-y-5">
         <PageHeader
@@ -242,84 +240,15 @@ export default function DutyTimesPage() {
           <KpiCard icon={Database} label="Längste Session" value={formatDuration(data.longestSessionMs)} />
         </div>
 
-        {/* Podium */}
-        {podium.length > 0 && (
-            <section className="glass-panel-elevated rounded-[14px] p-5">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <Trophy size={16} className="text-[#d4d4d4]" />
-                  <h3 className="text-[13.5px] font-semibold text-[#fafafa]">Top-Spielzeit diese Woche</h3>
-                </div>
-                <span className="text-[11.5px] text-[#8e8e93]">Sync {formatRelativeTime(data.sync.checkedAt)}</span>
-              </div>
-
-              {podium.length >= 1 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                    {[podium[1], podium[0], podium[2]].filter(Boolean).map((agent) => {
-                      // visual order: 2nd, 1st, 3rd
-                      const rank = agent === podium[0] ? 1 : agent === podium[1] ? 2 : 3
-                      const colors = rank === 1
-                          ? { ring: 'ring-[#d4d4d4]/40', text: 'text-[#d4d4d4]', label: 'bg-[#d4d4d4] text-[#1c1c1e]', icon: <Crown size={14} /> }
-                          : rank === 2
-                              ? { ring: 'ring-[#c7c7c7]/30', text: 'text-[#c7c7c7]', label: 'bg-[#c7c7c7] text-[#1c1c1e]', icon: null }
-                              : { ring: 'ring-[#b08968]/30', text: 'text-[#b08968]', label: 'bg-[#b08968] text-[#1c1c1e]', icon: null }
-                      return (
-                          <Link
-                              key={agent.id}
-                              href={`/agents/${agent.id}`}
-                              className={cn(
-                                  'rounded-[12px] border border-[#38383a]/55 bg-[#1c1c1e]/75 p-4 ring-1 transition-transform hover:-translate-y-0.5',
-                                  colors.ring,
-                                  rank === 1 && 'md:order-2 md:scale-[1.03]',
-                                  rank === 2 && 'md:order-1',
-                                  rank === 3 && 'md:order-3',
-                              )}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <AgentAvatar agent={agent} />
-                                <div className="min-w-0">
-                                  <p className="truncate text-[13px] font-semibold text-white">{agentName(agent)}</p>
-                                  <p className="text-[11px] text-[#8e8e93] font-mono">#{displayBadgeNumber(agent.badgeNumber)} · {agent.rank.name}</p>
-                                </div>
-                              </div>
-                              <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', colors.label)}>
-                        {colors.icon} {rank}
-                      </span>
-                            </div>
-                            <p className={cn('mt-3 text-[20px] font-semibold tabular-nums', colors.text)}>{formatDuration(agent.weekDurationMs)}</p>
-                            <p className="text-[11px] text-[#8e8e93]">{agent.sessionCount} Sessions</p>
-                          </Link>
-                      )
-                    })}
-                  </div>
-              )}
-
-              {data.topRows.length > 3 && (
-                  <div className="space-y-2">
-                    {data.topRows.slice(3).map((agent) => (
-                        <Link key={agent.id} href={`/agents/${agent.id}`} className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-3 rounded-[10px] border border-[#38383a]/40 bg-[#1c1c1e]/55 px-3 py-2.5 transition-colors hover:border-[#d4d4d4]/25">
-                          <div className="min-w-0">
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="truncate text-[12.5px] font-medium text-white">
-                                {agentName(agent)} <span className="font-mono text-[#d4d4d4]">#{displayBadgeNumber(agent.badgeNumber)}</span>
-                              </p>
-                              <span className="shrink-0 text-[12px] font-semibold tabular-nums text-[#d4d4d4]">{formatDuration(agent.weekDurationMs)}</span>
-                            </div>
-                            <div className="mt-2 h-[6px] overflow-hidden rounded-full bg-[#000000]/80">
-                              <div
-                                  className="h-full rounded-full bg-[#0a84ff]"
-                                  style={{ width: `${Math.max(4, (agent.weekDurationMs / topMax) * 100)}%` }}
-                              />
-                            </div>
-                          </div>
-                          <StatusPill status={agent.apiStatus} />
-                        </Link>
-                    ))}
-                  </div>
-              )}
-            </section>
-        )}
+        <DutyLeaderboard
+            note={`Sync ${formatRelativeTime(data.sync.checkedAt)}`}
+            weekRows={data.topRows.map((agent) => ({
+              ...agent,
+              durationMs: agent.weekDurationMs,
+              detail: `${agent.sessionCount} Sessions`,
+              aside: <StatusPill status={agent.apiStatus} />,
+            }))}
+        />
 
         <section className="glass-panel-elevated rounded-[14px] p-5">
           <div className="flex items-center justify-between gap-3 mb-4">

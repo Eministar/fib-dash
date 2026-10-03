@@ -295,6 +295,7 @@ model User {
   formResponsesSubmitted     FormResponse[]            @relation("FormResponseRespondent")
   formResponsesReviewed      FormResponse[]            @relation("FormResponseReviewer")
   formTestSessions           FormTestSession[]         @relation("FormTestSessionUser")
+  agentOfMonthVotes          AgentOfMonthVote[]        @relation("AgentOfMonthVoter")
   jobApplicationsSubmitted   JobApplication[]          @relation("JobApplicationApplicant")
   jobApplicationsReviewed    JobApplication[]          @relation("JobApplicationReviewer")
   pressReleasesCreated       PressRelease[]            @relation("PressReleaseCreator")
@@ -743,6 +744,7 @@ model Agent {
   investigationAssignments InvestigationAssignee[] @relation("InvestigationAssigneeAgent")
   bodycamClips             BodycamClip[]           @relation("BodycamClipRecorder")
   evidenceSeized           Evidence[]              @relation("EvidenceSeizedBy")
+  agentOfMonthVotes        AgentOfMonthVote[]      @relation("AgentOfMonthNominee")
 
   @@index([badgeNumber])
 }
@@ -2812,4 +2814,23 @@ model QualityShare {
   updatedAt     DateTime  @updatedAt
 
   @@index([createdById, createdAt])
+}
+
+/// Stimme für den „Agent des Monats“. Eine Stimme je Nutzer und Monat, bis
+/// Monatsende änderbar. Sieger ist, wer im abgeschlossenen Monat die meisten
+/// Stimmen hat (bei Gleichstand alle Gleichplatzierten).
+model AgentOfMonthVote {
+  id        String   @id @default(cuid())
+  /// Monat im Format "YYYY-MM" (Europe/Berlin).
+  month     String   @db.VarChar(7)
+  voterId   String
+  voter     User     @relation("AgentOfMonthVoter", fields: [voterId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     Agent    @relation("AgentOfMonthNominee", fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([month, voterId])
+  @@index([month, agentId])
+  @@index([agentId])
 }

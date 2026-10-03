@@ -177,7 +177,7 @@ async function getAllTimePlaytimeTotals(now: Date) {
   return totals
 }
 
-async function getAgentAllTimePlaytimeMs(agentId: string, now: Date) {
+export async function getAgentAllTimePlaytimeMs(agentId: string, now: Date) {
   const rows = await prisma.$queryRaw<AllTimeTotalRow[]>`
     SELECT agentId,
            CAST(SUM(GREATEST(0, TIMESTAMPDIFF(SECOND, startedAt, COALESCE(endedAt, ${now})))) AS SIGNED) AS totalSeconds
@@ -373,6 +373,63 @@ export async function getDutyTimesSnapshot(now = new Date(), options?: { sync?: 
     activeRows,
     topRows,
   }
+}
+
+export const LEADERBOARD_PERIODS = ['week', 'month', 'last-month'] as const
+export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number]
+
+export function isLeaderboardPeriod(value: unknown): value is LeaderboardPeriod {
+  return typeof value === 'string' && (LEADERBOARD_PERIODS as readonly string[]).includes(value)
+}
+
+/** Kalendermonat (Server-Zeitzone wie die Wochenwertung); `offset` -1 = Vormonat. */
+export function monthRange(now = new Date(), offset = 0) {
+  const start = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+  const end = new Date(now.getFullYear(), now.getMonth() + offset + 1, 1)
+  return { start, end }
+}
+
+export function leaderboardRange(period: LeaderboardPeriod, now = new Date()) {
+  if (period === 'week') {
+    const start = startOfCurrentWeek(now)
+    return { start, end: endOfWeek(start) }
+  }
+  return monthRange(now, period === 'last-month' ? -1 : 0)
+}
+
+/**
+ * Dienstzeit-Rangliste eines Zeitraums aus Spielzeit- und Stempelsitzungen.
+ * Liest nur gespeicherte Sitzungen – kein Abgleich mit der Player-API.
+ */
+export async function getDutyLeaderboard(period: LeaderboardPeriod, now = new Date(), limit = 10) {
+  const { start, end } = leaderboardRange(period, now)
+  const where = sessionRangeWhere(start, end)
+  const agents = await prisma.agent.findMany({
+    where: { status: { not: 'TERMINATED' } },
+    select: {
+      id: true,
+      badgeNumber: true,
+      firstName: true,
+      lastName: true,
+      discordId: true,
+      rank: { select: { name: true, color: true } },
+      playtimeSessions: { where: where.playtime, select: { startedAt: true, endedAt: true } },
+      dutySessions: { where: where.manual, select: { clockInAt: true, clockOutAt: true } },
+    },
+  })
+
+  const rows = agents
+    .map(({ playtimeSessions, dutySessions, ...agent }) => {
+      const durationMs = playtimeSessions.reduce(
+        (total, session) => total + clippedSessionDurationMs({ clockInAt: session.startedAt, clockOutAt: session.endedAt }, start, end, now),
+        0,
+      ) + dutySessions.reduce((total, session) => total + clippedSessionDurationMs(session, start, end, now), 0)
+      return { ...agent, durationMs }
+    })
+    .filter((row) => row.durationMs > 0)
+    .sort((a, b) => b.durationMs - a.durationMs)
+
+  return { period, start, end, rows: rows.slice(0, limit), participantCount: rows.length }
 }
 
 export async function getAgentDutyTime(agentId: string, options?: { now?: Date; sync?: boolean }) {

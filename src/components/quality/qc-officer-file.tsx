@@ -12,6 +12,7 @@ import { PageLoader } from '@/components/ui/loading'
 import { LspdOfficerFilePanel } from '@/components/lspd/lspd-officer-file'
 import { useAuth } from '@/context/auth-context'
 import { useFetch } from '@/hooks/use-fetch'
+import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { officialNumber } from '@/lib/corruption-validation'
 import { lspdOfficerName, type LspdOfficerFile } from '@/lib/lspd-officers'
 import { hasPermission } from '@/lib/permissions'
@@ -33,6 +34,8 @@ export function QualityOfficerFile({ lspdOfficerId }: { lspdOfficerId: string })
   const lspd = useFetch<LspdOfficerFile>(canView ? `/api/lspd/officers/${lspdOfficerId}` : null)
   const [startOpen, setStartOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const officerName = lspd.data ? lspdOfficerName(lspd.data) : data?.checks[0]?.officerName
+  useTrackRecentItem(officerName ? { href: `/quality-checks/officers/${lspdOfficerId}`, title: officerName, kind: 'lspd-officer' } : null)
 
   if (!canView) return <UnauthorizedContent />
   if (loading && !data) return <PageLoader withHeader />
