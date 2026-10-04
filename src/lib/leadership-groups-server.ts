@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { prisma } from './prisma'
 import { getConfidentialUser } from './auth'
 import { getDiscordConfig } from './discord-integration'
-import { canManageLeadershipGroups, leadershipGroupVisibility, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, type LeadershipGroupFamily, type LeadershipGroupInput } from './leadership-groups'
+import { canManageLeadershipGroups, groupCandidates, memberDiscordId, leadershipGroupVisibility, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, type LeadershipGroupFamily, type LeadershipGroupInput } from './leadership-groups'
 
 class GroupError extends Error {
   constructor(message: string, public status = 400) { super(message) }
@@ -51,11 +51,21 @@ export async function listGroups(user: Awaited<ReturnType<typeof groupUser>>) {
   }))
 }
 
+export async function listGroupCandidates() {
+  const [accounts, unlinkedAgents, blocked] = await Promise.all([
+    prisma.user.findMany({ select: { id: true, displayName: true, discordId: true, agentProfile: { select: { discordId: true } } } }),
+    prisma.agent.findMany({ where: { userId: null, status: { not: 'TERMINATED' } }, select: { id: true, firstName: true, lastName: true, discordId: true } }),
+    terminatedGroupUserIds(prisma),
+  ])
+  return groupCandidates(accounts, unlinkedAgents, blocked)
+}
+
 export async function saveGroup(id: string | undefined, input: LeadershipGroupInput, actor: Awaited<ReturnType<typeof groupUser>>) {
   // Check independently of the route, so future callers cannot bypass authorization.
   if (!canManageLeadershipGroups(actor)) throw new GroupError('Keine Berechtigung.', 403)
-  const members = await prisma.user.findMany({ where: { id: { in: input.memberIds } }, select: { id: true, discordId: true, displayName: true } })
-  if (members.length !== input.memberIds.length || members.some(m => !m.discordId || !/^\d{17,22}$/.test(m.discordId)))
+  const accounts = await prisma.user.findMany({ where: { id: { in: input.memberIds } }, select: { id: true, discordId: true, displayName: true, agentProfile: { select: { discordId: true } } } })
+  const members = accounts.map(account => ({ id: account.id, displayName: account.displayName, discordId: memberDiscordId(account) }))
+  if (members.length !== input.memberIds.length || members.some(m => !m.discordId))
     throw new GroupError('Alle Mitglieder benötigen ein verknüpftes Discord-Konto.')
   if (new Set(members.map(m => m.discordId)).size !== members.length)
     throw new GroupError('Ein Discord-Konto darf nur einmal in einer Gruppe vorkommen.')
@@ -186,10 +196,10 @@ export async function syncGroup(id: string) {
     }
     guildId = guildId || (await getDiscordConfig()).guildId
     if (!guildId) throw new GroupError('Discord-Server fehlt.')
-    const members = await prisma.user.findMany({
+    const members = (await prisma.user.findMany({
       where: { id: { in: group.members.map(m => m.userId) } },
-      select: { id: true, displayName: true, discordId: true }, orderBy: { displayName: 'asc' },
-    })
+      select: { id: true, displayName: true, discordId: true, agentProfile: { select: { discordId: true } } }, orderBy: { displayName: 'asc' },
+    })).map(m => ({ id: m.id, displayName: m.displayName, discordId: memberDiscordId(m) }))
     const overwrites = privateChannelOverwrites(guildId, bot.id, members.flatMap(m => m.discordId ? [m.discordId] : []))
     if (!channelId) {
       // A private marker lets retries recover a channel after a lost create response.

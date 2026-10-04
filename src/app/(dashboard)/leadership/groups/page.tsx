@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Users, Plus, ShieldCheck, ExternalLink, Pencil, Trash2, X } from 'lucide-react'
 import { useFetch } from '@/hooks/use-fetch'
 import { Button } from '@/components/ui/button'
-import { leadershipGroupSchema, type LeadershipGroupInput } from '@/lib/leadership-groups'
+import { leadershipGroupSchema, type GroupCandidate, type LeadershipGroupInput } from '@/lib/leadership-groups'
 import { useUrlState } from '@/hooks/use-url-state'
 import { ListSkeleton } from '@/components/ui/loading'
 
@@ -13,7 +13,7 @@ type Group = {
   id: string; name: string; version: number; syncPending: boolean; discordUrl: string | null; channelId: string
   members: Member[]; families: LeadershipGroupInput['families']
 }
-type Data = { manage: boolean; groups: Group[]; members: Member[] }
+type Data = { manage: boolean; groups: Group[]; members: GroupCandidate[] }
 const field = 'w-full rounded-lg border border-white/15 bg-[#171717] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40'
 const PENDING = 'Discord-Abgleich ausstehend: Entfernte Mitglieder können dort bis zum erfolgreichen Abgleich noch Zugriff haben. Der Abgleich wird automatisch wiederholt.'
 
@@ -92,10 +92,14 @@ export default function LeadershipGroupsPage() {
         <div className="space-y-2"><h3 className="text-sm font-medium">Mitglieder ({editing.input.memberIds.length})</h3>
           <input aria-label="Mitglieder suchen" className={field} placeholder="Mitglieder suchen …" value={search} onChange={e => setSearch(e.target.value)} />
           <div className="grid max-h-56 gap-2 overflow-y-auto rounded-lg border border-white/10 p-3 sm:grid-cols-2">
-            {data.members.filter(m => m.displayName.toLowerCase().includes(search.toLowerCase())).map(m => <label key={m.id} className="flex items-center gap-2 py-1 text-sm"><input type="checkbox" checked={editing.input.memberIds.includes(m.id)} onChange={e => {
-              update({ memberIds: e.target.checked ? [...editing.input.memberIds, m.id] : editing.input.memberIds.filter(id => id !== m.id), families: editing.input.families.map(f => ({ ...f, leadIds: e.target.checked ? f.leadIds : f.leadIds.filter(id => id !== m.id) })) })
-            }} />{m.displayName}</label>)}
-          </div><p className="text-xs text-neutral-500">Auswählbar sind Konten mit Discord-Verknüpfung. Eine Person kann mehrere Familien leiten.</p>
+            {data.members.filter(m => m.displayName.toLowerCase().includes(search.toLowerCase())).map(m => {
+              const checked = editing.input.memberIds.includes(m.id)
+              // Bereits zugeordnete Mitglieder bleiben abwählbar, auch wenn ihnen die Verknüpfung fehlt.
+              return <label key={m.id} className={`flex items-center gap-2 py-1 text-sm ${m.hint && !checked ? 'text-neutral-500' : ''}`}><input type="checkbox" disabled={!!m.hint && !checked} checked={checked} onChange={e => {
+                update({ memberIds: e.target.checked ? [...editing.input.memberIds, m.id] : editing.input.memberIds.filter(id => id !== m.id), families: editing.input.families.map(f => ({ ...f, leadIds: e.target.checked ? f.leadIds : f.leadIds.filter(id => id !== m.id) })) })
+              }} />{m.displayName}{m.hint && <span className="text-xs text-neutral-500">· {m.hint}</span>}</label>
+            })}
+          </div><p className="text-xs text-neutral-500">Auswählbar sind Agents mit Dashboard-Konto und Discord-Verknüpfung (Konto oder Personalakte). Eine Person kann mehrere Familien leiten.</p>
         </div>
         <div className="space-y-3"><h3 className="text-sm font-medium">Familien & Leitungen ({editing.input.families.length})</h3>
           {editing.input.families.map((family, index) => <div key={index} className="grid items-end gap-3 rounded-lg border border-white/10 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">

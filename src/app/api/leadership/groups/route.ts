@@ -1,7 +1,5 @@
-import { terminatedGroupUserIds } from '@/lib/terminated-memberships'
-import { prisma } from '@/lib/prisma'
 import { canManageLeadershipGroups, leadershipGroupSchema } from '@/lib/leadership-groups'
-import { groupError, groupResponse, groupUser, listGroups, saveGroup } from '@/lib/leadership-groups-server'
+import { groupError, groupResponse, groupUser, listGroupCandidates, listGroups, saveGroup } from '@/lib/leadership-groups-server'
 
 export const maxDuration = 120
 
@@ -10,9 +8,7 @@ export async function GET() {
     const user = await groupUser()
     const groups = await listGroups(user)
     const manage = canManageLeadershipGroups(user)
-    const members = manage
-      ? await prisma.user.findMany({ where: { discordId: { not: null }, id: { notIn: await terminatedGroupUserIds(prisma) } }, select: { id: true, displayName: true }, orderBy: { displayName: 'asc' } })
-      : []
+    const members = manage ? await listGroupCandidates() : []
     return groupResponse({ manage, groups, members })
   } catch (error) { return groupError(error) }
 }

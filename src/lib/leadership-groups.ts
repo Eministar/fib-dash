@@ -37,6 +37,38 @@ export const leadershipGroupSchema = z.object({
 export type LeadershipGroupInput = z.infer<typeof leadershipGroupSchema>
 export type LeadershipGroupFamily = LeadershipGroupInput['families'][number]
 
+const SNOWFLAKE = /^\d{17,22}$/
+
+type GroupAccount = { id: string; displayName: string; discordId: string | null; agentProfile?: { discordId: string | null } | null }
+
+/** Das Konto hat Vorrang; fehlt dort die Verknüpfung, gilt die Discord-ID aus der Personalakte. */
+export function memberDiscordId(user: Pick<GroupAccount, 'discordId' | 'agentProfile'>) {
+  return [user.discordId, user.agentProfile?.discordId].find(id => !!id && SNOWFLAKE.test(id)) ?? null
+}
+
+/** `hint` markiert Agents, die sichtbar, aber (noch) nicht auswählbar sind. */
+export type GroupCandidate = { id: string; displayName: string; hint?: string }
+
+export function groupCandidates(
+  accounts: GroupAccount[],
+  unlinkedAgents: { id: string; firstName: string; lastName: string; discordId: string | null }[],
+  blockedUserIds: string[],
+): GroupCandidate[] {
+  const blocked = new Set(blockedUserIds)
+  const accountDiscordIds = new Set(accounts.flatMap(account => account.discordId ? [account.discordId] : []))
+  const candidates: GroupCandidate[] = accounts.flatMap(account => {
+    if (blocked.has(account.id)) return []
+    if (memberDiscordId(account)) return [{ id: account.id, displayName: account.displayName }]
+    return account.agentProfile ? [{ id: account.id, displayName: account.displayName, hint: 'Keine Discord-Verknüpfung' }] : []
+  })
+  // Agents ohne Dashboard-Konto bleiben sichtbar, damit klar ist, warum sie fehlen.
+  for (const agent of unlinkedAgents) {
+    if (agent.discordId && accountDiscordIds.has(agent.discordId)) continue
+    candidates.push({ id: `agent:${agent.id}`, displayName: `${agent.firstName} ${agent.lastName}`.trim(), hint: 'Kein Dashboard-Konto' })
+  }
+  return candidates.sort((a, b) => a.displayName.localeCompare(b.displayName, 'de'))
+}
+
 export function privateChannelOverwrites(guildId: string, botId: string, memberIds: string[]) {
   return [
     { id: guildId, type: 0, allow: '0', deny: '1024' },

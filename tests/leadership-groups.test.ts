@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventMessage, groupOverviewMessage } from '../src/lib/leadership-groups'
+import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, groupCandidates, memberDiscordId } from '../src/lib/leadership-groups'
 import { DISCORD_COMPONENTS_V2_FLAG } from '../src/lib/discord-components'
 import { activateChangeTracking } from '../src/lib/change-history-context'
 import { prepareMutationCapture, type SnapshotClient } from '../src/lib/change-history-tracking'
@@ -123,4 +123,29 @@ test('confidential models never enter automatic history even with active trackin
       assert.equal(await prepareMutationCapture({ client, model, operation, args: {} }), null)
     }
   }
+})
+
+test('member discord id falls back to the linked personnel record', () => {
+  assert.equal(memberDiscordId({ discordId: '111111111111111111', agentProfile: { discordId: '222222222222222222' } }), '111111111111111111')
+  assert.equal(memberDiscordId({ discordId: null, agentProfile: { discordId: '222222222222222222' } }), '222222222222222222')
+  assert.equal(memberDiscordId({ discordId: 'kaputt', agentProfile: null }), null)
+})
+
+test('group candidates list every agent and explain missing links', () => {
+  const candidates = groupCandidates([
+    { id: 'u1', displayName: 'Bea', discordId: '111111111111111111', agentProfile: null },
+    { id: 'u2', displayName: 'Anna', discordId: null, agentProfile: { discordId: '222222222222222222' } },
+    { id: 'u3', displayName: 'Carl', discordId: null, agentProfile: { discordId: null } },
+    { id: 'u4', displayName: 'Admin', discordId: null, agentProfile: null },
+    { id: 'u5', displayName: 'Gekündigt', discordId: '555555555555555555', agentProfile: null },
+  ], [
+    { id: 'a1', firstName: 'Dora', lastName: 'Neu', discordId: null },
+    { id: 'a2', firstName: 'Bea', lastName: 'Legacy', discordId: '111111111111111111' },
+  ], ['u5'])
+  assert.deepEqual(candidates, [
+    { id: 'u2', displayName: 'Anna' },
+    { id: 'u1', displayName: 'Bea' },
+    { id: 'u3', displayName: 'Carl', hint: 'Keine Discord-Verknüpfung' },
+    { id: 'agent:a1', displayName: 'Dora Neu', hint: 'Kein Dashboard-Konto' },
+  ])
 })
