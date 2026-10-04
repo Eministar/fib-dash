@@ -206,4 +206,6 @@ export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assign
   linksTo: InvestigationCrossLink[]
   /** Nur im GET der Akte: weitere Akten je beteiligter Person / Fahrzeug. */
   crossHits?: CaseCrossHits
+  /** Nur für Verwalter: Lesezugriff über Ermittlungsgruppen an Dauerakten. */
+  accessVia?: { dossierId: string; dossierTitle: string; groupId: string; groupName: string }[]
 }

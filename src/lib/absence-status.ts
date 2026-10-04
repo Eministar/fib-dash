@@ -321,12 +321,11 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
         take: 1,
         select: { createdAt: true },
       },
+      // Laufende oder zuletzt beendete Abmeldung: ihr Ende zählt wie Aktivität.
       absenceNotices: {
-        where: {
-          startsAt: { lte: now },
-          endsAt: { gte: now },
-        },
-        select: { id: true },
+        where: { startsAt: { lte: now } },
+        orderBy: { endsAt: 'desc' },
+        select: { endsAt: true },
         take: 1,
       },
     },
@@ -340,13 +339,16 @@ async function runAgentStatusAutomationPass(options?: { force?: boolean }): Prom
 
   for (const agent of agents) {
     // Eine Beurlaubung gilt wie eine (unbefristete) Abmeldung.
-    const hasActiveAbsence = agent.onLeave || agent.absenceNotices.length > 0
+    const latestAbsence = agent.absenceNotices[0]
+    const hasActiveAbsence = agent.onLeave || (!!latestAbsence && latestAbsence.endsAt >= now)
+    // Abgemeldete Tage sind keine Fehlzeit: die Frist beginnt erst mit dem Ende der Abmeldung.
+    const absenceEnd = latestAbsence ? (latestAbsence.endsAt < now ? latestAbsence.endsAt : now) : null
     const latestPlaytime = agent.playtimeSessions[0]
     const latestManual = agent.dutySessions[0]
     const manualActivity = latestManual ? latestManual.clockOutAt ?? now : null
     // Eine zurückgesetzte Fehlzeit zählt wie Aktivität: die Frist beginnt ab dort neu.
     const lastReset = agent.auditLogs[0]?.createdAt ?? null
-    const lastActivity = latestDate(latestPlaytime?.lastSeenAt ?? agent.lastOnline ?? null, manualActivity, lastReset)
+    const lastActivity = latestDate(latestPlaytime?.lastSeenAt ?? agent.lastOnline ?? null, manualActivity, lastReset, absenceEnd)
       ?? latestDate(agent.hireDate, agent.createdAt) ?? agent.createdAt
     const tier = inactivityTier(lastActivity, now)
     const isInactive = tier === 'inactive'

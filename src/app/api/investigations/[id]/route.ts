@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
+import { hasPermission } from '@/lib/permissions'
 import { createAuditLog } from '@/lib/audit'
 import { deleteClipFile } from '@/lib/clips'
 import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
@@ -14,6 +15,7 @@ import {
   canAccessInvestigation,
   investigationAccessInclude,
   investigationDetailInclude,
+  investigationGroupAccessInclude,
   isInvestigationPriority,
   isInvestigationStatus,
   serializeBigInts,
@@ -34,12 +36,26 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const user = await requirePermission('investigations:view')
     const { id } = await params
 
-    const investigation = await prisma.investigation.findUnique({
+    const loaded = await prisma.investigation.findUnique({
       where: { id },
-      include: investigationDetailInclude,
+      include: {
+        ...investigationDetailInclude,
+        dossiers: { select: { id: true, title: true, accessGroups: { select: { group: { select: {
+          id: true, name: true, ...investigationGroupAccessInclude.dossiers.select.accessGroups.select.group.select,
+        } } } } } },
+      },
     })
-    if (!investigation) return notFound('Ermittlungsakte')
-    if (!canAccessInvestigation(user, investigation)) return forbidden()
+    if (!loaded) return notFound('Ermittlungsakte')
+    if (!canAccessInvestigation(user, loaded)) return forbidden()
+
+    // Gruppenmitglieder sind vertraulich und verlassen den Server nie. Woher ein
+    // Zugriff kommt, sehen nur Verwalter (Dauerakte → Ermittlungsgruppe).
+    const { dossiers, ...investigation } = loaded
+    const accessVia = hasPermission(user, 'investigations:manage')
+      ? dossiers.flatMap((dossier) => dossier.accessGroups.map((access) => ({
+          dossierId: dossier.id, dossierTitle: dossier.title, groupId: access.group.id, groupName: access.group.name,
+        })))
+      : []
 
     const crossHits = await caseCrossHits(
       user,
@@ -48,7 +64,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       investigation.vehicles.map((link) => link.vehicleId),
     )
 
-    return success(serializeBigInts({ ...investigation, crossHits }))
+    return success(serializeBigInts({ ...investigation, crossHits, accessVia }))
   } catch (cause: unknown) {
     return routeError(cause)
   }

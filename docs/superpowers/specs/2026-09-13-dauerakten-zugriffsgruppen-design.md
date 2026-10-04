@@ -2,6 +2,13 @@
 
 Datum: 2026-09-13
 
+> **Umgesetzt am 2026-10-04 mit Abweichung:** Mitglieder sind seitdem Personalakten
+> (`LeadershipGroupAgent` mit Relation zu `Agent`). Die Prüfung läuft deshalb
+> komplett in der Datenbank über `dossiers → accessGroups → group → agents → agent`
+> (verknüpftes Konto oder gleiche Discord-ID, nicht gekündigt).
+> `investigationVisibilityWhere` und `canAccessInvestigation` bleiben synchron;
+> das unten beschriebene `async`-Umbauen aller Aufrufstellen entfällt.
+
 ## Problem
 
 Zugriff auf eine Verschlusssache hat heute nur, wer sie angelegt hat, sie führt,

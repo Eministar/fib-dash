@@ -5,6 +5,7 @@ import { bodycamAccess, canAccessBodycamClip } from '@/lib/bodycam-access'
 import { clipFileResponse } from '@/lib/clips'
 import { prisma } from '@/lib/prisma'
 import { routeError } from '@/lib/investigations-server'
+import { investigationAccessInclude } from '@/lib/investigations'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,8 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           select: {
             classified: true,
             createdById: true,
-            leadAgent: { select: { discordId: true } },
-            assignees: { select: { agent: { select: { discordId: true } } } },
+            ...investigationAccessInclude,
           },
         },
       },

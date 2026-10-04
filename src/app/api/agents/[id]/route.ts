@@ -241,6 +241,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (dup) return error('Discord-ID bereits vergeben')
     }
 
+    // Wer abgemeldet oder beurlaubt ist, fehlt entschuldigt und darf nicht als inaktiv gelten.
+    if (parsed.data.status === 'INACTIVE' && existing.status !== 'INACTIVE') {
+      const now = new Date()
+      const absent = existing.onLeave || !!await prisma.absenceNotice.findFirst({
+        where: { agentId: id, startsAt: { lte: now }, endsAt: { gte: now } },
+        select: { id: true },
+      })
+      if (absent) return error('Der Agent ist abgemeldet und kann nicht als inaktiv markiert werden. Bitte zuerst die Abmeldung beenden.', 409)
+    }
+
     const unitKeys = 'units' in parsed.data
       ? normalizeUnitKeys(parsed.data.units)
       : ('unit' in parsed.data && parsed.data.unit ? normalizeUnitKeys([parsed.data.unit]) : undefined)

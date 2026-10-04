@@ -1,10 +1,10 @@
 # Ermittlungsgruppen
 
-Unter **Leadership → Ermittlungsgruppen** können berechtigte Nutzer benannte Gruppen erstellen, bearbeiten und löschen. Mitglieder werden über ihre Dashboard-Konten mit Discord-Verknüpfung ausgewählt. Familien werden je Gruppe frei eingetippt (ein Name pro Zeile, keine Verknüpfung zu Familienakten). Jede Familie benötigt ein oder zwei unterschiedliche Gruppenmitglieder als Leitung; dieselbe Person kann mehrere Familien leiten.
+Unter **Leadership → Ermittlungsgruppen** können berechtigte Nutzer benannte Gruppen erstellen, bearbeiten und löschen. Mitglieder sind **Personalakten (Agents)**, nicht Dashboard-Konten: Auswählbar ist jeder aktive Agent mit Discord-ID in der Akte – auch ohne Dashboard-Konto. Die Discord-Kanalrechte kommen ausschließlich aus der Discord-ID der Akte. Im Dashboard sieht ein Nutzer seine Gruppen, wenn seine Personalakte mit dem Konto verknüpft ist oder dieselbe Discord-ID trägt. Familien werden je Gruppe frei eingetippt (ein Name pro Zeile, keine Verknüpfung zu Familienakten). Jede Familie benötigt ein oder zwei unterschiedliche Gruppenmitglieder als Leitung; dieselbe Person kann mehrere Familien leiten.
 
 ## Einrichtung
 
-1. Das additive Prisma-Schema mit dem üblichen, gesicherten Projektworkflow anwenden: `npm run db:push`. Anschließend `npm run db:generate` und Anwendung neu starten.
+1. Das additive Prisma-Schema mit dem üblichen, gesicherten Projektworkflow anwenden: `npm run db:push`. Anschließend `npm run db:generate` und Anwendung neu starten. Ältere kontobasierte Mitgliedschaften (`LeadershipGroupMember`) werden beim Start automatisch in `LeadershipGroupAgent` übernommen (verknüpfte Akte, sonst gleiche Discord-ID); Konten ohne Personalakte entfallen dabei, ebenso deren Familienleitungen.
 2. Der Leadership-Benutzergruppe unter Administration → Benutzergruppen das Recht **Leadership – Ermittlungsgruppen verwalten (vertraulich)** (`leadership-groups:manage`) geben. Bestehende Administratoren mit Vollzugriff erhalten dieses Recht automatisch. Andere Unit-Leitungsrechte gewähren keinen Zugriff.
 3. Vorhandenen Discord-Bot und Server konfigurieren (`DISCORD_BOT_TOKEN` / `FIB_DISCORD_BOT_TOKEN`, bestehende Server-Einstellung). Der Bot benötigt Kanalverwaltung, Rechteverwaltung, Kanalansicht, Nachrichten senden, Nachrichtenverlauf lesen und Nachrichten verwalten (zum Anpinnen der Übersicht). Mitglieder müssen dem Server bereits angehören.
 

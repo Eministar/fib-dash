@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { prisma } from './prisma'
 import { getConfidentialUser } from './auth'
 import { getDiscordConfig } from './discord-integration'
-import { canManageLeadershipGroups, groupCandidates, memberDiscordId, leadershipGroupVisibility, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, type LeadershipGroupFamily, type LeadershipGroupInput } from './leadership-groups'
+import { agentDiscordId, agentDisplayName, canManageLeadershipGroups, groupCandidates, leadershipGroupVisibility, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, remapFamilyLeads, type LeadershipGroupFamily, type LeadershipGroupInput } from './leadership-groups'
 
 class GroupError extends Error {
   constructor(message: string, public status = 400) { super(message) }
@@ -26,49 +26,54 @@ export function groupError(error: unknown) {
   })
 }
 
+const agentSelect = { id: true, firstName: true, lastName: true, badgeNumber: true, discordId: true } as const
+
 export async function groupUser(manage = false) {
   const user = await getConfidentialUser()
   if (!user) throw new GroupError('Nicht angemeldet.', 401)
   if ((await terminatedGroupUserIds(prisma)).includes(user.id)) throw new GroupError('Gekündigte Agents haben keinen Zugriff auf Ermittlungsgruppen.', 403)
   if (manage && !canManageLeadershipGroups(user)) throw new GroupError('Keine Berechtigung.', 403)
+  await ensureAgentMemberships()
   return user
+}
+
+/** Personalakten des Nutzers: die mit dem Konto verknüpfte Akte oder die Akte mit seiner Discord-ID. */
+export async function viewerAgentIds(user: { id: string; discordId: string | null }) {
+  const agents = await prisma.agent.findMany({
+    where: { status: { not: 'TERMINATED' }, OR: [{ userId: user.id }, ...(user.discordId ? [{ discordId: user.discordId }] : [])] },
+    select: { id: true },
+  })
+  return agents.map(agent => agent.id)
 }
 
 export async function listGroups(user: Awaited<ReturnType<typeof groupUser>>) {
   const groups = await prisma.leadershipGroup.findMany({
-    where: leadershipGroupVisibility(user), include: { members: true }, orderBy: { name: 'asc' },
+    where: leadershipGroupVisibility(user, await viewerAgentIds(user)), include: { agents: true }, orderBy: { name: 'asc' },
   })
-  const users = await prisma.user.findMany({
-    where: { id: { in: groups.flatMap(g => g.members.map(m => m.userId)) } },
-    select: { id: true, displayName: true },
-  })
+  const agents = await prisma.agent.findMany({ where: { id: { in: groups.flatMap(g => g.agents.map(m => m.agentId)) } }, select: agentSelect })
   return groups.map(g => ({
     id: g.id, name: g.name, version: g.version, syncPending: g.syncPending,
     channelId: g.channelManaged ? '' : g.channelId ?? '',
     discordUrl: g.channelId && g.guildId ? `https://discord.com/channels/${g.guildId}/${g.channelId}` : null,
-    members: g.members.map(m => ({ id: m.userId, displayName: users.find(u => u.id === m.userId)?.displayName ?? 'Gelöschtes Konto' })),
+    members: g.agents.map(m => {
+      const agent = agents.find(a => a.id === m.agentId)
+      return { id: m.agentId, displayName: agent ? agentDisplayName(agent) : 'Gelöschte Personalakte' }
+    }),
     families: g.families as LeadershipGroupFamily[],
   }))
 }
 
 export async function listGroupCandidates() {
-  const [accounts, unlinkedAgents, blocked] = await Promise.all([
-    prisma.user.findMany({ select: { id: true, displayName: true, discordId: true, agentProfile: { select: { discordId: true } } } }),
-    prisma.agent.findMany({ where: { userId: null, status: { not: 'TERMINATED' } }, select: { id: true, firstName: true, lastName: true, discordId: true } }),
-    terminatedGroupUserIds(prisma),
-  ])
-  return groupCandidates(accounts, unlinkedAgents, blocked)
+  return groupCandidates(await prisma.agent.findMany({ where: { status: { not: 'TERMINATED' } }, select: agentSelect }))
 }
 
 export async function saveGroup(id: string | undefined, input: LeadershipGroupInput, actor: Awaited<ReturnType<typeof groupUser>>) {
   // Check independently of the route, so future callers cannot bypass authorization.
   if (!canManageLeadershipGroups(actor)) throw new GroupError('Keine Berechtigung.', 403)
-  const accounts = await prisma.user.findMany({ where: { id: { in: input.memberIds } }, select: { id: true, discordId: true, displayName: true, agentProfile: { select: { discordId: true } } } })
-  const members = accounts.map(account => ({ id: account.id, displayName: account.displayName, discordId: memberDiscordId(account) }))
-  if (members.length !== input.memberIds.length || members.some(m => !m.discordId))
-    throw new GroupError('Alle Mitglieder benötigen ein verknüpftes Discord-Konto.')
-  if (new Set(members.map(m => m.discordId)).size !== members.length)
-    throw new GroupError('Ein Discord-Konto darf nur einmal in einer Gruppe vorkommen.')
+  const members = await prisma.agent.findMany({ where: { id: { in: input.memberIds } }, select: agentSelect })
+  if (members.length !== input.memberIds.length) throw new GroupError('Mindestens eine Personalakte wurde nicht gefunden. Bitte neu laden.', 409)
+  if (members.some(m => !agentDiscordId(m)))
+    throw new GroupError('Alle Mitglieder benötigen eine Discord-ID in der Personalakte.')
   const adopted = input.channelId?.trim() || null
   if (adopted) {
     const taken = await prisma.leadershipGroup.findFirst({ where: { channelId: adopted, ...(id ? { NOT: { id } } : {}) }, select: { id: true } })
@@ -76,14 +81,14 @@ export async function saveGroup(id: string | undefined, input: LeadershipGroupIn
   }
 
   const group = await prisma.$transaction(async tx => {
-    const blocked = await terminatedGroupUserIds(tx)
-    if (input.memberIds.some(id => blocked.includes(id))) throw new GroupError('Gekündigte Agents können keiner Ermittlungsgruppe zugeordnet werden.', 409)
-    const old = id ? await tx.leadershipGroup.findUnique({ where: { id }, include: { members: true } }) : null
+    if (await tx.agent.count({ where: { id: { in: input.memberIds }, status: 'TERMINATED' } }))
+      throw new GroupError('Gekündigte Agents können keiner Ermittlungsgruppe zugeordnet werden.', 409)
+    const old = id ? await tx.leadershipGroup.findUnique({ where: { id }, include: { agents: true } }) : null
     if (id && !old) throw new GroupError('Gruppe nicht gefunden.', 404)
     if (old && (old.version !== input.version || (old.syncLeaseUntil && old.syncLeaseUntil > new Date())))
       throw new GroupError('Gruppe wurde geändert oder wird synchronisiert. Bitte neu laden.', 409)
-    const oldIds = old?.members.map(m => m.userId) ?? []
-    const removed = await tx.user.findMany({ where: { id: { in: oldIds.filter(memberId => !input.memberIds.includes(memberId)) } }, select: { displayName: true } })
+    const oldIds = old?.agents.map(m => m.agentId) ?? []
+    const removed = await tx.agent.findMany({ where: { id: { in: oldIds.filter(memberId => !input.memberIds.includes(memberId)) } }, select: agentSelect })
     // An adopted channel replaces the current one; clearing the field creates an own private channel again.
     const resetOverview = { overviewMessageId: null, overviewPinned: false }
     const channel = adopted
@@ -92,8 +97,8 @@ export async function saveGroup(id: string | undefined, input: LeadershipGroupIn
     const events: { kind: string; text: string }[] = [
       ...(!old ? [{ kind: 'created', text: `${actor.displayName} hat die Gruppe „${input.name}“ erstellt.` }]
         : old.name !== input.name ? [{ kind: 'renamed', text: `${actor.displayName} hat die Gruppe „${old.name}“ in „${input.name}“ umbenannt.` }] : []),
-      ...members.filter(m => !oldIds.includes(m.id)).map(m => ({ kind: 'added', text: `${actor.displayName} hat ${m.displayName} zur Gruppe hinzugefügt.` })),
-      ...removed.map(m => ({ kind: 'removed', text: `${actor.displayName} hat ${m.displayName} aus der Gruppe entfernt.` })),
+      ...members.filter(m => !oldIds.includes(m.id)).map(m => ({ kind: 'added', text: `${actor.displayName} hat ${agentDisplayName(m)} zur Gruppe hinzugefügt.` })),
+      ...removed.map(m => ({ kind: 'removed', text: `${actor.displayName} hat ${agentDisplayName(m)} aus der Gruppe entfernt.` })),
       ...(old && JSON.stringify(old.families) !== JSON.stringify(input.families)
         ? [{ kind: 'families', text: `${actor.displayName} hat die Familienzuordnungen und Leitungen aktualisiert.` }] : []),
     ]
@@ -103,15 +108,15 @@ export async function saveGroup(id: string | undefined, input: LeadershipGroupIn
         data: { name: input.name, families: input.families, ...channel, version: { increment: 1 }, syncPending: true, nextSyncAt: new Date() },
       })
       if (!changed.count) throw new GroupError('Gruppe wurde zwischenzeitlich geändert. Bitte neu laden.', 409)
-      await tx.leadershipGroupMember.deleteMany({ where: { groupId: old.id } })
-      await tx.leadershipGroupMember.createMany({ data: input.memberIds.map(userId => ({ groupId: old.id, userId })) })
+      await tx.leadershipGroupAgent.deleteMany({ where: { groupId: old.id } })
+      await tx.leadershipGroupAgent.createMany({ data: input.memberIds.map(agentId => ({ groupId: old.id, agentId })) })
       await tx.leadershipGroupEvent.createMany({ data: events.map(event => ({ ...event, groupId: old.id })) })
       return { id: old.id }
     }
     return tx.leadershipGroup.create({ data: {
       name: input.name, families: input.families,
       ...(adopted ? { channelId: adopted, channelManaged: false } : {}),
-      members: { create: input.memberIds.map(userId => ({ userId })) },
+      agents: { create: input.memberIds.map(agentId => ({ agentId })) },
       events: { create: events },
     } })
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
@@ -162,6 +167,7 @@ async function discord<T>(path: string, method = 'GET', body?: unknown): Promise
 }
 
 export async function syncGroup(id: string) {
+  await ensureAgentMemberships()
   const lease = new Date(Date.now() + 300_000)
   const claimed = await prisma.leadershipGroup.updateMany({
     where: { id, OR: [{ syncLeaseUntil: null }, { syncLeaseUntil: { lte: new Date() } }] },
@@ -176,14 +182,9 @@ export async function syncGroup(id: string) {
   }
   try {
     // Reconcile older memberships too; retries cannot restore a terminated agent.
-    const oldMembers = await prisma.leadershipGroupMember.findMany({ where: { groupId: id }, select: { userId: true } })
-    const accounts = await prisma.user.findMany({ where: { id: { in: oldMembers.map(member => member.userId) } }, select: { id: true, discordId: true } })
-    const terminated = await prisma.agent.findMany({ where: { status: 'TERMINATED', OR: [
-      { userId: { in: accounts.map(account => account.id) } },
-      { discordId: { in: accounts.flatMap(account => account.discordId ? [account.discordId] : []) } },
-    ] }, select: { id: true } })
+    const terminated = await prisma.agent.findMany({ where: { status: 'TERMINATED', id: { in: (await prisma.leadershipGroupAgent.findMany({ where: { groupId: id }, select: { agentId: true } })).map(m => m.agentId) } }, select: { id: true } })
     for (const agent of terminated) await prisma.$transaction(tx => detachTerminatedAgent(tx, agent.id))
-    const group = await prisma.leadershipGroup.findUniqueOrThrow({ where: { id }, include: { members: true } })
+    const group = await prisma.leadershipGroup.findUniqueOrThrow({ where: { id }, include: { agents: true } })
     const bot = await send<{ id: string }>('/users/@me')
     let channelId = group.channelId
     let guildId = group.guildId
@@ -196,10 +197,10 @@ export async function syncGroup(id: string) {
     }
     guildId = guildId || (await getDiscordConfig()).guildId
     if (!guildId) throw new GroupError('Discord-Server fehlt.')
-    const members = (await prisma.user.findMany({
-      where: { id: { in: group.members.map(m => m.userId) } },
-      select: { id: true, displayName: true, discordId: true, agentProfile: { select: { discordId: true } } }, orderBy: { displayName: 'asc' },
-    })).map(m => ({ id: m.id, displayName: m.displayName, discordId: memberDiscordId(m) }))
+    // Discord-Zugriff kommt ausschließlich aus der Personalakte.
+    const members = (await prisma.agent.findMany({ where: { id: { in: group.agents.map(m => m.agentId) } }, select: agentSelect }))
+      .map(agent => ({ id: agent.id, displayName: agentDisplayName(agent), discordId: agentDiscordId(agent) }))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName, 'de'))
     const overwrites = privateChannelOverwrites(guildId, bot.id, members.flatMap(m => m.discordId ? [m.discordId] : []))
     if (!channelId) {
       // A private marker lets retries recover a channel after a lost create response.
@@ -251,7 +252,48 @@ export async function syncGroup(id: string) {
   }
 }
 
-const runtime = globalThis as typeof globalThis & { leadershipGroupTimer?: ReturnType<typeof setInterval> }
+/**
+ * Übernimmt kontobasierte Altmitgliedschaften einmalig in Personalakten
+ * (verknüpfte Akte, sonst Akte mit gleicher Discord-ID). Konten ohne Akte entfallen.
+ */
+async function migrateLegacyMembers() {
+  const legacy = await prisma.leadershipGroupMember.findMany()
+  if (!legacy.length) return
+  const users = await prisma.user.findMany({ where: { id: { in: legacy.map(m => m.userId) } }, select: { id: true, discordId: true } })
+  const agents = await prisma.agent.findMany({
+    where: { OR: [{ userId: { in: users.map(u => u.id) } }, { discordId: { in: users.flatMap(u => u.discordId ? [u.discordId] : []) } }] },
+    select: { id: true, userId: true, discordId: true, status: true },
+  })
+  const agentFor = (userId: string) => {
+    const discordId = users.find(u => u.id === userId)?.discordId
+    const agent = agents.find(a => a.userId === userId) ?? (discordId ? agents.find(a => a.discordId === discordId) : undefined)
+    return agent && agent.status !== 'TERMINATED' ? agent.id : null
+  }
+  for (const groupId of new Set(legacy.map(m => m.groupId))) {
+    await prisma.$transaction(async tx => {
+      const group = await tx.leadershipGroup.findUnique({ where: { id: groupId } })
+      const rows = await tx.leadershipGroupMember.findMany({ where: { groupId } })
+      if (!group || !rows.length) return
+      const agentIds = [...new Set(rows.flatMap(row => agentFor(row.userId) ?? []))]
+      await tx.leadershipGroupAgent.createMany({ data: agentIds.map(agentId => ({ groupId, agentId })), skipDuplicates: true })
+      await tx.leadershipGroup.update({ where: { id: groupId }, data: {
+        families: remapFamilyLeads(group.families, agentFor), version: { increment: 1 }, syncPending: true, nextSyncAt: new Date(),
+      } })
+      await tx.leadershipGroupMember.deleteMany({ where: { groupId } })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+  }
+}
+
+const runtime = globalThis as typeof globalThis & { leadershipGroupTimer?: ReturnType<typeof setInterval>; leadershipAgentMigration?: Promise<void> }
+
+/** Einmal pro Prozess; ein Fehlschlag wird beim nächsten Aufruf wiederholt. */
+function ensureAgentMemberships() {
+  runtime.leadershipAgentMigration ??= migrateLegacyMembers().catch(error => {
+    runtime.leadershipAgentMigration = undefined
+    throw error
+  })
+  return runtime.leadershipAgentMigration
+}
 
 export function ensureLeadershipGroupSync() {
   if (runtime.leadershipGroupTimer) return

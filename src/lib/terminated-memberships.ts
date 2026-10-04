@@ -1,38 +1,21 @@
 import type { Prisma } from '@/generated/prisma'
+import { remapFamilyLeads } from './leadership-groups'
 
 /** Remove access inside the same transaction that terminates the personnel record. */
 export async function detachTerminatedAgent(tx: Prisma.TransactionClient, agentId: string) {
-  const agent = await tx.agent.findUnique({ where: { id: agentId }, select: { id: true, userId: true, discordId: true, status: true } })
+  const agent = await tx.agent.findUnique({ where: { id: agentId }, select: { status: true } })
   if (!agent || agent.status !== 'TERMINATED') return
-  const accounts = await tx.user.findMany({
-    where: { OR: [
-      { agentProfile: { is: { id: agentId } } },
-      ...(agent.discordId ? [{ discordId: agent.discordId }] : []),
-    ] }, select: { id: true },
-  })
-  const ids = accounts.map(account => account.id)
-  if (!ids.length) return
-  const groups = await tx.leadershipGroup.findMany({ where: { members: { some: { userId: { in: ids } } } } })
+  const groups = await tx.leadershipGroup.findMany({ where: { agents: { some: { agentId } } } })
   for (const group of groups) {
-    const families = removeFamilyLeads(group.families, ids)
+    const families = remapFamilyLeads(group.families, id => id === agentId ? null : id)
     await tx.leadershipGroup.update({ where: { id: group.id }, data: {
       families, version: { increment: 1 }, syncPending: true, nextSyncAt: new Date(),
     } })
-    await tx.leadershipGroupMember.deleteMany({ where: { groupId: group.id, userId: { in: ids } } })
+    await tx.leadershipGroupAgent.deleteMany({ where: { groupId: group.id, agentId } })
     await tx.leadershipGroupEvent.create({ data: {
       groupId: group.id, kind: 'removed', text: 'Die Mitgliedschaft eines gekündigten Agents wurde beendet. Freie Leitungen müssen neu besetzt werden.',
     } })
   }
-}
-
-export function removeFamilyLeads(value: Prisma.JsonValue, removedIds: string[]) {
-  if (!Array.isArray(value)) return []
-  const removed = new Set(removedIds)
-  return value.flatMap(entry => {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry) || typeof entry.name !== 'string') return []
-    const leadIds = Array.isArray(entry.leadIds) ? entry.leadIds.filter((id): id is string => typeof id === 'string' && !removed.has(id)) : []
-    return [{ name: entry.name, leadIds }]
-  })
 }
 
 /** Match both explicit account links and legacy Discord-only links. */

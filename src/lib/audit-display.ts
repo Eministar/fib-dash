@@ -8,6 +8,8 @@ export const auditActionLabels: Record<string, string> = {
   DOSSIER_CREATED: 'Dauerakte angelegt',
   DOSSIER_UPDATED: 'Dauerakte bearbeitet',
   DOSSIER_DELETED: 'Dauerakte gelöscht',
+  DOSSIER_ACCESS_GRANTED: 'Dauerakte für Ermittlungsgruppe freigegeben',
+  DOSSIER_ACCESS_REVOKED: 'Ermittlungsgruppe von Dauerakte entfernt',
   INVESTIGATION_CREATED: 'Einsatzakte angelegt',
   INVESTIGATION_UPDATED: 'Einsatzakte bearbeitet',
   INVESTIGATION_CHECKLIST_UPDATED: 'Aktencheckliste bearbeitet',

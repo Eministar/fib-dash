@@ -1,13 +1,15 @@
 import { z } from 'zod'
 import { hasPermission } from './permissions'
+import { displayBadgeNumber } from './badge-number'
 import { componentMessage, markdownHeader, markdownMeta, markdownQuote, markdownTextDisplays } from './discord-components'
 
 export function canManageLeadershipGroups(user: { permissions?: string[] | null } | null) {
   return hasPermission(user, 'leadership-groups:manage')
 }
 
-export function leadershipGroupVisibility(user: { id: string; permissions?: string[] | null }) {
-  return canManageLeadershipGroups(user) ? {} : { members: { some: { userId: user.id } } }
+/** `agentIds`: die Personalakten des angemeldeten Nutzers. */
+export function leadershipGroupVisibility(user: { permissions?: string[] | null }, agentIds: string[]) {
+  return canManageLeadershipGroups(user) ? {} : { agents: { some: { agentId: { in: agentIds } } } }
 }
 
 const discordId = z.string().regex(/^\d{17,22}$/, 'Bitte eine gültige Discord-Kanal-ID (17–22 Ziffern) eingeben.')
@@ -39,34 +41,37 @@ export type LeadershipGroupFamily = LeadershipGroupInput['families'][number]
 
 const SNOWFLAKE = /^\d{17,22}$/
 
-type GroupAccount = { id: string; displayName: string; discordId: string | null; agentProfile?: { discordId: string | null } | null }
+export type GroupAgent = { id: string; firstName: string; lastName: string; badgeNumber: string; discordId: string | null }
 
-/** Das Konto hat Vorrang; fehlt dort die Verknüpfung, gilt die Discord-ID aus der Personalakte. */
-export function memberDiscordId(user: Pick<GroupAccount, 'discordId' | 'agentProfile'>) {
-  return [user.discordId, user.agentProfile?.discordId].find(id => !!id && SNOWFLAKE.test(id)) ?? null
+/** Mitglieder sind Personalakten; Discord-Zugriff kommt ausschließlich aus der Akte. */
+export function agentDiscordId(agent: Pick<GroupAgent, 'discordId'>) {
+  return agent.discordId && SNOWFLAKE.test(agent.discordId) ? agent.discordId : null
+}
+
+export function agentDisplayName(agent: GroupAgent) {
+  return `${agent.firstName} ${agent.lastName} (${displayBadgeNumber(agent.badgeNumber)})`.trim()
 }
 
 /** `hint` markiert Agents, die sichtbar, aber (noch) nicht auswählbar sind. */
 export type GroupCandidate = { id: string; displayName: string; hint?: string }
 
-export function groupCandidates(
-  accounts: GroupAccount[],
-  unlinkedAgents: { id: string; firstName: string; lastName: string; discordId: string | null }[],
-  blockedUserIds: string[],
-): GroupCandidate[] {
-  const blocked = new Set(blockedUserIds)
-  const accountDiscordIds = new Set(accounts.flatMap(account => account.discordId ? [account.discordId] : []))
-  const candidates: GroupCandidate[] = accounts.flatMap(account => {
-    if (blocked.has(account.id)) return []
-    if (memberDiscordId(account)) return [{ id: account.id, displayName: account.displayName }]
-    return account.agentProfile ? [{ id: account.id, displayName: account.displayName, hint: 'Keine Discord-Verknüpfung' }] : []
+export function groupCandidates(agents: GroupAgent[]): GroupCandidate[] {
+  return agents
+    .map(agent => ({ id: agent.id, displayName: agentDisplayName(agent), ...(agentDiscordId(agent) ? {} : { hint: 'Keine Discord-ID in der Personalakte' }) }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName, 'de'))
+}
+
+/** Tauscht Leitungs-IDs aus; nicht zuordenbare Leitungen entfallen und müssen neu besetzt werden. */
+export function remapFamilyLeads(value: unknown, map: (id: string) => string | null): LeadershipGroupFamily[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap(entry => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry) || typeof entry.name !== 'string') return []
+    const leadIds = Array.isArray(entry.leadIds) ? entry.leadIds.flatMap((id: unknown) => {
+      const next = typeof id === 'string' ? map(id) : null
+      return next ? [next] : []
+    }) : []
+    return [{ name: entry.name, leadIds: [...new Set<string>(leadIds)] }]
   })
-  // Agents ohne Dashboard-Konto bleiben sichtbar, damit klar ist, warum sie fehlen.
-  for (const agent of unlinkedAgents) {
-    if (agent.discordId && accountDiscordIds.has(agent.discordId)) continue
-    candidates.push({ id: `agent:${agent.id}`, displayName: `${agent.firstName} ${agent.lastName}`.trim(), hint: 'Kein Dashboard-Konto' })
-  }
-  return candidates.sort((a, b) => a.displayName.localeCompare(b.displayName, 'de'))
 }
 
 export function privateChannelOverwrites(guildId: string, botId: string, memberIds: string[]) {

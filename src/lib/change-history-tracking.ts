@@ -40,6 +40,7 @@ const MUTATION_OPERATIONS = new Set([
 const EXCLUDED_MODELS = new Set([
   'LeadershipGroup',
   'LeadershipGroupMember',
+  'LeadershipGroupAgent',
   'LeadershipGroupEvent',
   'AuditLog',
   'ChangeSet',

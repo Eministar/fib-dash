@@ -27,9 +27,15 @@ model LeadershipGroup {
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
   members           LeadershipGroupMember[]
+  agents            LeadershipGroupAgent[]
   events            LeadershipGroupEvent[]
+  /// Dauerakten, deren Einsatzakten die Mitglieder lesen dürfen.
+  dossierAccess     DossierAccessGroup[]
 }
 
+/// Altbestand: kontobasierte Mitgliedschaft. Wird beim Start einmalig nach
+/// `LeadershipGroupAgent` übernommen und bleibt nur bestehen, damit `db push`
+/// ohne Datenverlust durchläuft.
 model LeadershipGroupMember {
   groupId String
   userId  String
@@ -37,6 +43,18 @@ model LeadershipGroupMember {
 
   @@id([groupId, userId])
   @@index([userId])
+}
+
+/// Mitgliedschaft über die Personalakte. Die Relation zu `Agent` erlaubt der
+/// Aktensichtbarkeit, die Mitgliedschaft direkt in der Datenbank zu prüfen.
+model LeadershipGroupAgent {
+  groupId String
+  agentId String
+  group   LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  agent   Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, agentId])
+  @@index([agentId])
 }
 
 model LeadershipGroupEvent {
@@ -718,6 +736,7 @@ model Agent {
   updatedAt        DateTime               @updatedAt
 
   codename            Codename?            @relation("CodenameCurrentHolder")
+  leadershipGroups    LeadershipGroupAgent[]
   codenameAssignments CodenameAssignment[] @relation("CodenameAssignments")
 
   trainings                AgentTraining[]
@@ -2220,12 +2239,29 @@ model Dossier {
   investigations Investigation[]      @relation("DossierInvestigations")
   vehicles       Vehicle[]            @relation("DossierVehicles")
   mapSpots       MapSpot[]            @relation("DossierMapSpots")
+  /// Ermittlungsgruppen, deren Mitglieder alle Einsatzakten dieser Dauerakte lesen.
+  accessGroups   DossierAccessGroup[]
   createdById    String?
   createdBy      User?                @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
   @@index([kind, updatedAt])
+}
+
+/// Lesezugriff einer Ermittlungsgruppe auf alle Einsatzakten einer Dauerakte,
+/// Verschlusssachen eingeschlossen. Die Mitgliedschaft wird bei jeder Prüfung
+/// frisch gelesen, ein Gruppenaustritt wirkt also sofort.
+model DossierAccessGroup {
+  dossierId String
+  groupId   String
+  addedById String?
+  createdAt DateTime        @default(now())
+  dossier   Dossier         @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  group     LeadershipGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([dossierId, groupId])
+  @@index([groupId])
 }
 
 /// Eigenständige Staatsbeamtenakte; öffentliche Nummer wird als BEA-000001 dargestellt.

@@ -99,7 +99,7 @@ export default function LeadershipGroupsPage() {
                 update({ memberIds: e.target.checked ? [...editing.input.memberIds, m.id] : editing.input.memberIds.filter(id => id !== m.id), families: editing.input.families.map(f => ({ ...f, leadIds: e.target.checked ? f.leadIds : f.leadIds.filter(id => id !== m.id) })) })
               }} />{m.displayName}{m.hint && <span className="text-xs text-neutral-500">· {m.hint}</span>}</label>
             })}
-          </div><p className="text-xs text-neutral-500">Auswählbar sind Agents mit Dashboard-Konto und Discord-Verknüpfung (Konto oder Personalakte). Eine Person kann mehrere Familien leiten.</p>
+          </div><p className="text-xs text-neutral-500">Auswählbar sind alle aktiven Agents mit Discord-ID in der Personalakte. Eine Person kann mehrere Familien leiten.</p>
         </div>
         <div className="space-y-3"><h3 className="text-sm font-medium">Familien & Leitungen ({editing.input.families.length})</h3>
           {editing.input.families.map((family, index) => <div key={index} className="grid items-end gap-3 rounded-lg border border-white/10 p-3 sm:grid-cols-[1fr_1fr_1fr_auto]">

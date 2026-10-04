@@ -382,6 +382,20 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             </div>
           ))}
         </dl>
+        {/* Rechte, die nicht an der Akte selbst stehen, müssen hier sichtbar sein –
+            sonst kann niemand beantworten, wer die Akte lesen darf. */}
+        {(investigation.accessVia?.length ?? 0) > 0 && (
+          <p className="mt-3 text-[12px] text-[#98989d]">
+            Zugriff auch über{' '}
+            {investigation.accessVia!.map((via, index) => (
+              <span key={`${via.dossierId}-${via.groupId}`}>
+                {index > 0 && ', '}
+                <Link href={`/investigations/dossiers?id=${encodeURIComponent(via.dossierId)}&tab=gruppen`} className="text-[#c4b5fd] hover:underline">{via.dossierTitle}</Link>
+                {' → '}{via.groupName}
+              </span>
+            ))}
+          </p>
+        )}
       </div>
 
       <TabBar tabs={tabs} active={activeTab} onSelect={selectTab} label="Bereiche der Akte" />

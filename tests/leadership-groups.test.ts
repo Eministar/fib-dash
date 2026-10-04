@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, groupCandidates, memberDiscordId } from '../src/lib/leadership-groups'
+import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, groupCandidates, agentDiscordId, remapFamilyLeads } from '../src/lib/leadership-groups'
 import { DISCORD_COMPONENTS_V2_FLAG } from '../src/lib/discord-components'
 import { activateChangeTracking } from '../src/lib/change-history-context'
 import { prepareMutationCapture, type SnapshotClient } from '../src/lib/change-history-tracking'
@@ -22,9 +22,9 @@ function renderComponents(message: { components: unknown[] }): string {
 test('ordinary agents and other department managers only query their own memberships', () => {
   for (const permissions of [[], ['agents:view', 'logs:view'], ['unit-leadership:manage'], ['investigations:manage']]) {
     assert.equal(canManageLeadershipGroups({ permissions }), false)
-    assert.deepEqual(leadershipGroupVisibility({ id: 'self', permissions }), { members: { some: { userId: 'self' } } })
+    assert.deepEqual(leadershipGroupVisibility({ permissions }, ['agent-self']), { agents: { some: { agentId: { in: ['agent-self'] } } } })
   }
-  assert.deepEqual(leadershipGroupVisibility({ id: 'leader', permissions: ['leadership-groups:manage'] }), {})
+  assert.deepEqual(leadershipGroupVisibility({ permissions: ['leadership-groups:manage'] }, []), {})
 })
 
 test('two members may each lead multiple manually named families, including joint leadership', () => {
@@ -118,34 +118,32 @@ test('an empty overview stays valid so the pinned message can always be written'
 test('confidential models never enter automatic history even with active tracking', async () => {
   activateChangeTracking({ changeSetId: 'test-secret', userId: 'leader' })
   const client = new Proxy({}, { get() { throw new Error('History must not read confidential snapshots') } }) as SnapshotClient
-  for (const model of ['LeadershipGroup', 'LeadershipGroupMember', 'LeadershipGroupEvent']) {
+  for (const model of ['LeadershipGroup', 'LeadershipGroupMember', 'LeadershipGroupAgent', 'LeadershipGroupEvent']) {
     for (const operation of ['create', 'update', 'delete', 'createMany', 'deleteMany']) {
       assert.equal(await prepareMutationCapture({ client, model, operation, args: {} }), null)
     }
   }
 })
 
-test('member discord id falls back to the linked personnel record', () => {
-  assert.equal(memberDiscordId({ discordId: '111111111111111111', agentProfile: { discordId: '222222222222222222' } }), '111111111111111111')
-  assert.equal(memberDiscordId({ discordId: null, agentProfile: { discordId: '222222222222222222' } }), '222222222222222222')
-  assert.equal(memberDiscordId({ discordId: 'kaputt', agentProfile: null }), null)
+test('discord access comes only from the personnel record', () => {
+  assert.equal(agentDiscordId({ discordId: '222222222222222222' }), '222222222222222222')
+  assert.equal(agentDiscordId({ discordId: 'kaputt' }), null)
+  assert.equal(agentDiscordId({ discordId: null }), null)
 })
 
-test('group candidates list every agent and explain missing links', () => {
-  const candidates = groupCandidates([
-    { id: 'u1', displayName: 'Bea', discordId: '111111111111111111', agentProfile: null },
-    { id: 'u2', displayName: 'Anna', discordId: null, agentProfile: { discordId: '222222222222222222' } },
-    { id: 'u3', displayName: 'Carl', discordId: null, agentProfile: { discordId: null } },
-    { id: 'u4', displayName: 'Admin', discordId: null, agentProfile: null },
-    { id: 'u5', displayName: 'Gekündigt', discordId: '555555555555555555', agentProfile: null },
-  ], [
-    { id: 'a1', firstName: 'Dora', lastName: 'Neu', discordId: null },
-    { id: 'a2', firstName: 'Bea', lastName: 'Legacy', discordId: '111111111111111111' },
-  ], ['u5'])
-  assert.deepEqual(candidates, [
-    { id: 'u2', displayName: 'Anna' },
-    { id: 'u1', displayName: 'Bea' },
-    { id: 'u3', displayName: 'Carl', hint: 'Keine Discord-Verknüpfung' },
-    { id: 'agent:a1', displayName: 'Dora Neu', hint: 'Kein Dashboard-Konto' },
+test('every active agent is a candidate; missing discord ids are explained', () => {
+  const agent = (id: string, firstName: string, discordId: string | null) => ({ id, firstName, lastName: 'Agent', badgeNumber: '82', discordId })
+  const candidates = groupCandidates([agent('a2', 'Bea', '111111111111111111'), agent('a1', 'Anbu', '222222222222222222'), agent('a3', 'Carl', null)])
+  assert.deepEqual(candidates.map(c => c.id), ['a1', 'a2', 'a3'])
+  assert.equal(candidates[0].hint, undefined)
+  assert.equal(candidates[2].hint, 'Keine Discord-ID in der Personalakte')
+  assert.match(candidates[0].displayName, /^Anbu Agent \(.*82.*\)$/)
+})
+
+test('family leads are remapped and unmapped leads dropped', () => {
+  const families = [{ name: 'Cabrera', leadIds: ['u1', 'u2'] }, { name: 'Vagos', leadIds: ['u3'] }, { bogus: true }]
+  assert.deepEqual(remapFamilyLeads(families, id => ({ u1: 'a1', u2: 'a1' } as Record<string, string>)[id] ?? null), [
+    { name: 'Cabrera', leadIds: ['a1'] },
+    { name: 'Vagos', leadIds: [] },
   ])
 })

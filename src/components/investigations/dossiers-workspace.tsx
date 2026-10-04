@@ -46,6 +46,7 @@ type Dossier = {
   investigations?: { id: string; title: string; caseNumber: string; status: InvestigationStatusKey; priority: InvestigationPriorityKey; classified: boolean; updatedAt: string; createdBy?: { displayName: string } | null }[];
   vehicles?: { id: string; vehicleNumber: string; plate: string | null; model: string | null }[];
   mapSpots?: PickedSpot[];
+  accessGroups?: { group: { id: string; name: string } }[];
   _count?: { persons: number; investigations: number; vehicles: number; mapSpots: number };
 }
 
@@ -105,6 +106,7 @@ function DossierView({ id }: { id: string | null }) {
     { id: 'personen', label: 'Personenakten', count: current?.persons?.length ?? 0 },
     { id: 'fahrzeuge', label: 'Fahrzeugakten', count: current?.vehicles?.length ?? 0 },
     { id: 'medien', label: 'Medien & Orte', count: (current?.photos?.length ?? 0) + (current?.mapSpots?.length ?? 0) },
+    { id: 'gruppen', label: 'Ermittlungsgruppen', count: current?.accessGroups?.length ?? 0 },
   ]
   const activeTab = resolveTab(params.get('tab'), tabs)
   const selectTab = (tab: string) => {
@@ -201,6 +203,8 @@ function DossierView({ id }: { id: string | null }) {
           </ul>
         </SectionCard>
       </>}
+
+      {activeTab === 'gruppen' && current && <DossierAccessGroups dossier={current} manage={manage} onChanged={() => void detail.refetch()} />}
     </> : <>
       <FilterBar>
         <SearchInput value={search} onChange={value => { setSearch(value); setPage(1) }} label="Dauerakte suchen" placeholder="Akte nach Titel oder Adresse suchen …" />
@@ -235,6 +239,46 @@ function DossierView({ id }: { id: string | null }) {
     <ImageLightbox images={galleryImages} startId={lightboxId} onClose={() => setLightboxId(null)} />
     <Modal open={deleting} onClose={() => setDeleting(false)} title="Akte löschen"><p className="mb-4 text-sm text-[#98989d]">„{current?.title}“ löschen? Verknüpfte Personen-, Einsatz- und Fahrzeugakten bleiben bestehen.</p><Button variant="danger" loading={saving} onClick={async () => { try { await execute(`/api/investigations/dossiers/${id}`, { method: 'DELETE' }); router.push('/investigations/dossiers') } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Löschen fehlgeschlagen'); setDeleting(false) } }}>Löschen</Button></Modal>
   </div>
+}
+
+/**
+ * Ermittlungsgruppen an der Dauerakte: ihre Mitglieder lesen alle Einsatzakten
+ * dieser Akte, auch Verschlusssachen. Mitglieder selbst bleiben vertraulich.
+ */
+function DossierAccessGroups({ dossier, manage, onChanged }: { dossier: Dossier; manage: boolean; onChanged: () => void }) {
+  const options = useFetch<{ id: string; name: string }[]>(manage ? '/api/leadership/groups/options' : null)
+  const { execute, loading } = useApi()
+  const [failure, setFailure] = useState('')
+  const assigned = dossier.accessGroups ?? []
+  const available = (options.data ?? []).filter(group => !assigned.some(access => access.group.id === group.id))
+
+  async function change(method: 'POST' | 'DELETE', groupId: string) {
+    setFailure('')
+    try {
+      const base = `/api/investigations/dossiers/${dossier.id}/access-groups`
+      await execute(method === 'POST' ? base : `${base}?groupId=${encodeURIComponent(groupId)}`, method === 'POST'
+        ? { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId }) }
+        : { method })
+      onChanged()
+    } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Änderung fehlgeschlagen') }
+  }
+
+  // Ohne `empty`, damit der Hinweis zur Tragweite auch vor der ersten Zuweisung steht.
+  return <SectionCard title="Ermittlungsgruppen" count={assigned.length}
+    action={manage && available.length > 0
+      ? <Select value="" disabled={loading} onValueChange={groupId => { if (groupId) void change('POST', groupId) }}
+          options={[{ value: '', label: 'Gruppe hinzufügen …' }, ...available.map(group => ({ value: group.id, label: group.name }))]} />
+      : null}>
+    <p className="mb-3 flex items-start gap-2 text-[12px] text-[#d4a017]"><EyeOff size={14} className="mt-[1px] shrink-0" />Mitglieder dieser Gruppen lesen alle Einsatzakten dieser Akte – auch Verschlusssachen und Akten, die später verknüpft werden.</p>
+    {failure && <p role="alert" className="mb-3 text-sm text-red-300">{failure}</p>}
+    {!assigned.length && <p className="py-1 text-[12.5px] text-[#8e8e93]">Keine Ermittlungsgruppe zugewiesen. Zugriff haben nur die an den einzelnen Einsatzakten eingetragenen Ermittler.</p>}
+    <ul className="space-y-1.5">
+      {assigned.map(({ group }) => <li key={group.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#38383a] px-3 py-2 text-sm text-[#d4d4d4]">
+        <span className="truncate">{group.name}</span>
+        {manage && <Button size="sm" variant="ghost" disabled={loading} aria-label={`${group.name} entfernen`} onClick={() => void change('DELETE', group.id)}><Trash2 size={13} />Entfernen</Button>}
+      </li>)}
+    </ul>
+  </SectionCard>
 }
 
 type RegisterCardData = {

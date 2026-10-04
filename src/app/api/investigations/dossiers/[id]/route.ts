@@ -16,6 +16,8 @@ export async function GET(_req: Request, { params }: Context) {
       investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, classified: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
       vehicles: { select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' } },
       mapSpots: { select: { id: true, title: true, category: true, icon: true, x: true, y: true }, orderBy: { title: 'asc' } },
+      // Nur Namen: Mitglieder der Gruppen bleiben vertraulich.
+      accessGroups: { select: { group: { select: { id: true, name: true } } }, orderBy: { createdAt: 'asc' } },
     } })
     return item ? success(item) : notFound('Akte')
   } catch (cause) { return dossierRouteError(cause) }
