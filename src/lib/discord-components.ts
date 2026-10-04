@@ -54,7 +54,7 @@ export function componentMessage(
 }
 
 export function markdownHeader(icon: string, title: string, subject?: string | null) {
-  return `## ${icon} ${title}${subject ? ` · ${subject}` : ''}`
+  return `## \`${icon}\` ${title}${subject ? ` · ${subject}` : ''}`
 }
 
 const ROW_ICONS: Record<string, string> = {

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
-import { requireAuth, requirePermission } from '@/lib/auth'
+import { requirePermission, requirePortalAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { isUniqueConstraintError } from '@/lib/prisma-errors'
 import {
@@ -36,7 +36,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth()
+    const user = await requirePortalAuth()
     if (!user.discordId) return error('Für eine Bewerbung ist ein Discord-Konto erforderlich', 403)
 
     const body = await req.json()

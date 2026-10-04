@@ -40,10 +40,12 @@ function parseReferenceDefinition(value: string) {
   const href = reference[2]
   if (!isSafeLinkHref(href) && !isSafeImageSrc(href)) return null
 
+  // Definitionen kommen aus dem Rohtext und landen direkt in Attributen – also escapen.
+  const title = reference[3] ?? reference[4] ?? reference[5]
   return {
     id: normalizeReferenceId(reference[1]),
-    href,
-    title: reference[3] ?? reference[4] ?? reference[5],
+    href: escapeHtml(href),
+    title: title === undefined ? undefined : escapeHtml(title),
   }
 }
 
@@ -77,7 +79,8 @@ function renderInline(value: string, references: Map<string, LinkReference> = ne
   html = html.replace(/\+\+([^+]+)\+\+/g, '<ins>$1</ins>')
   html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>')
   html = html.replace(/(?<!\*)~([^~\s][^~]*[^~\s]|[^~\s])~/g, '<sub>$1</sub>')
-  html = html.replace(/\^([^^\s][^^]*[^^\s]|[^^\s])\^/g, '<sup>$1</sup>')
+  // `[^id]` sind Fußnotenverweise, kein Hochstellen.
+  html = html.replace(/(?<!\[)\^([^^\s][^^]*[^^\s[]|[^^\s[])\^/g, '<sup>$1</sup>')
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>')
   html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>')
@@ -241,7 +244,8 @@ export function renderMarkdownDocument(markdown: string): { html: string; headin
 
     const footnote = /^\[\^([^\]]+)]:\s+(.+)$/.exec(trimmed)
     if (footnote) {
-      footnotes.set(footnote[1], footnote[2])
+      // Escapte ID: landet in Attributen und muss zu den (escapten) Verweisen im Text passen.
+      footnotes.set(escapeHtml(footnote[1]), footnote[2])
       index += 1
       continue
     }

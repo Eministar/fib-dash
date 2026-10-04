@@ -23,6 +23,8 @@ const runtimeEventSchema = z.object({
  */
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX_EVENTS = 5
+const GLOBAL_KEY = '\u0000global'
+const GLOBAL_MAX_EVENTS = 30
 const recentEvents = new Map<string, number[]>()
 
 function clientKey(req: NextRequest) {
@@ -34,7 +36,7 @@ function isRateLimited(key: string, now = Date.now()) {
   const windowStart = now - RATE_LIMIT_WINDOW_MS
   const hits = (recentEvents.get(key) ?? []).filter((timestamp) => timestamp > windowStart)
 
-  if (hits.length >= RATE_LIMIT_MAX_EVENTS) {
+  if (hits.length >= (key === GLOBAL_KEY ? GLOBAL_MAX_EVENTS : RATE_LIMIT_MAX_EVENTS)) {
     recentEvents.set(key, hits)
     return true
   }
@@ -54,7 +56,8 @@ function isRateLimited(key: string, now = Date.now()) {
 
 export async function POST(req: NextRequest) {
   try {
-    if (isRateLimited(clientKey(req))) {
+    // X-Forwarded-For ist fälschbar – das globale Fenster begrenzt auch rotierende Absender.
+    if (isRateLimited(clientKey(req)) || isRateLimited(GLOBAL_KEY)) {
       // 202 statt 429: der Client meldet nur Fehler und soll deswegen nicht
       // selbst in eine Fehlerbehandlung laufen.
       return success({ ok: true, throttled: true }, 202)

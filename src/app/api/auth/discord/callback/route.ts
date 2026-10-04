@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { signToken } from '@/lib/auth'
+import { REMEMBER_SESSION_SECONDS, signToken } from '@/lib/auth'
 import {
   exchangeDiscordCode,
   fetchDiscordCurrentUser,
+  hasDashboardLoginRole,
   syncDiscordApplicantProfile,
   syncDiscordContractSignerProfile,
   syncDiscordUserProfile,
@@ -17,7 +18,8 @@ function isLoginMode(value: string | undefined): value is LoginMode {
 
 function safeRedirectPath(value: string | undefined) {
   if (!value) return ''
-  if (!value.startsWith('/') || value.startsWith('//')) return ''
+  // Browser lesen `/\host` wie `//host` – Backslashes und Steuerzeichen führen sonst zu einer offenen Weiterleitung.
+  if (!value.startsWith('/') || value.startsWith('//') || /[\\\u0000-\u001f]/.test(value)) return ''
   return value.slice(0, 300)
 }
 
@@ -76,7 +78,10 @@ export async function GET(req: NextRequest) {
       : mode === 'contract'
         ? await syncDiscordContractSignerProfile(discordUser)
         : await syncDiscordUserProfile(discordUser)
-    const jwt = signToken({ userId: user.id, username: user.username })
+    // Bewerber-/Vertrags-Logins brauchen keine Dashboard-Rolle. Nur wer die
+    // trotzdem hat, bekommt eine volle Sitzung – alle anderen eine Portal-Sitzung.
+    const portal = mode !== 'dashboard' && !(await hasDashboardLoginRole(discordUser))
+    const jwt = signToken({ userId: user.id, username: user.username, ...(portal ? { portal: true } : {}) }, { remember })
     const response = NextResponse.redirect(
       new URL(redirectPath || defaultPathForMode(mode), baseUrl(req)),
     )
@@ -86,7 +91,7 @@ export async function GET(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      ...(remember ? { maxAge: 60 * 60 * 24 * 30 } : {}),
+      ...(remember ? { maxAge: REMEMBER_SESSION_SECONDS } : {}),
     })
 
     return response

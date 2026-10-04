@@ -130,9 +130,9 @@ export function groupOverviewMessage(group: { name: string; families: Leadership
     : '-# Noch keine Mitglieder.'
   return componentMessage(markdownTextDisplays([
     markdownHeader('🗂️', 'Ermittlungsgruppe', group.name),
-    '### Familien & Leitungen',
+    '### `👥` Familien & Leitungen',
     families,
-    '### Mitglieder',
+    '### `🧑‍🤝‍🧑` Mitglieder',
     members,
     markdownMeta([
       `${group.families.length} Familien`,

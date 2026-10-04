@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth'
-import { error, success, unauthorized } from '@/lib/api-response'
+import { error, success, unauthorized, forbidden } from '@/lib/api-response'
 import { discardChangeSet } from '@/lib/change-history'
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,6 +11,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Serverfehler'
     if (message === 'Unauthorized') return unauthorized()
+    if (message === 'Forbidden') return forbidden()
     return error(message, 500)
   }
 }

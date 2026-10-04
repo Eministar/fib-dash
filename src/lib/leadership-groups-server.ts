@@ -1,4 +1,4 @@
-import { detachTerminatedAgent, terminatedGroupUserIds } from './terminated-memberships'
+import { detachTerminatedAgent, isTerminatedGroupUser } from './terminated-memberships'
 import { Prisma } from '@/generated/prisma'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -31,7 +31,7 @@ const agentSelect = { id: true, firstName: true, lastName: true, badgeNumber: tr
 export async function groupUser(manage = false) {
   const user = await getConfidentialUser()
   if (!user) throw new GroupError('Nicht angemeldet.', 401)
-  if ((await terminatedGroupUserIds(prisma)).includes(user.id)) throw new GroupError('Gekündigte Agents haben keinen Zugriff auf Ermittlungsgruppen.', 403)
+  if (await isTerminatedGroupUser(prisma, user)) throw new GroupError('Gekündigte Agents haben keinen Zugriff auf Ermittlungsgruppen.', 403)
   if (manage && !canManageLeadershipGroups(user)) throw new GroupError('Keine Berechtigung.', 403)
   await ensureAgentMemberships()
   return user

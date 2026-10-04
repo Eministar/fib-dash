@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth'
-import { error, success, unauthorized } from '@/lib/api-response'
+import { error, success, unauthorized, forbidden } from '@/lib/api-response'
 import { applyChangeHistory, ChangeHistoryConflictError } from '@/lib/change-history'
 
 export async function POST() {
@@ -13,6 +13,7 @@ export async function POST() {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Serverfehler'
     if (message === 'Unauthorized') return unauthorized()
+    if (message === 'Forbidden') return forbidden()
     if (e instanceof ChangeHistoryConflictError) return error(message, 409)
     return error(message, 500)
   }

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth'
+import { requirePortalAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { getApplicationFormConfig } from '@/lib/job-application-settings'
 
@@ -26,7 +26,7 @@ const applicationSelect = {
 
 export async function GET() {
   try {
-    const user = await requireAuth()
+    const user = await requirePortalAuth()
     if (!user.discordId) return error('Für das Bewerberportal ist ein Discord-Konto erforderlich', 403)
     const formConfig = await getApplicationFormConfig()
 

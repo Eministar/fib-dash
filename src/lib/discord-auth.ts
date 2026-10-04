@@ -236,6 +236,13 @@ export async function syncDiscordContractSignerProfile(user: DiscordApiUser) {
   })
 }
 
+/** Ob der Discord-User die Rolle für einen normalen Dashboard-Login hat (gleiche Regel wie {@link upsertDiscordUser}). */
+export async function hasDashboardLoginRole(user: DiscordApiUser) {
+  const [config, member] = await Promise.all([getDiscordConfig(), getDiscordGuildMember(user.id)])
+  if (!member) return false
+  return hasLoginRole(member.roles ?? [], config.authLoginRoleIds, config.authGroupRoleMap, config.authRolePermissionMap, config.bodycamViewerRoleId)
+}
+
 export async function upsertDiscordContractSigner(profile: DiscordMemberProfile) {
   const existing = await prisma.user.findFirst({ where: { discordId: profile.user.id }, select: { id: true } })
   const username = await uniqueUsername(profile, existing?.id)

@@ -60,6 +60,8 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Frame-Options', value: 'ALLOWALL' },
           { key: 'Content-Security-Policy', value: "frame-ancestors *" },
+          // Browser dürfen den deklarierten Content-Type nicht „erraten“ (z. B. Upload als Skript).
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
       },
       {

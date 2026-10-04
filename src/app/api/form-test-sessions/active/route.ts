@@ -1,11 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requirePortalAuth } from '@/lib/auth'
 import { activeSessionWhere, closeStaleFormTestSessions } from '@/lib/form-links'
 
 export async function GET() {
   try {
-    const user = await requireAuth()
+    const user = await requirePortalAuth()
     const now = new Date()
 
     // Zuerst aufräumen: abgelaufene und verwaiste Sitzungen dürfen niemanden

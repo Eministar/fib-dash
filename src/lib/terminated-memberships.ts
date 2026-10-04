@@ -18,12 +18,11 @@ export async function detachTerminatedAgent(tx: Prisma.TransactionClient, agentI
   }
 }
 
-/** Match both explicit account links and legacy Discord-only links. */
-export async function terminatedGroupUserIds(tx: Prisma.TransactionClient): Promise<string[]> {
-  const agents = await tx.agent.findMany({ where: { status: 'TERMINATED' }, select: { userId: true, discordId: true } })
-  const users = await tx.user.findMany({ where: { OR: [
-    { id: { in: agents.flatMap(agent => agent.userId ? [agent.userId] : []) } },
-    { discordId: { in: agents.flatMap(agent => agent.discordId ? [agent.discordId] : []) } },
-  ] }, select: { id: true } })
-  return users.map(user => user.id)
+/** Match both explicit account links and legacy Discord-only links – gezielt für einen Nutzer, statt alle Gekündigten zu laden. */
+export async function isTerminatedGroupUser(tx: Prisma.TransactionClient, user: { id: string; discordId: string | null }) {
+  const agent = await tx.agent.findFirst({
+    where: { status: 'TERMINATED', OR: [{ userId: user.id }, ...(user.discordId ? [{ discordId: user.discordId }] : [])] },
+    select: { id: true },
+  })
+  return Boolean(agent)
 }

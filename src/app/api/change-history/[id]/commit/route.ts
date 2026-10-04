@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth'
-import { error, success, unauthorized } from '@/lib/api-response'
+import { error, success, unauthorized, forbidden } from '@/lib/api-response'
 import { commitChangeSet } from '@/lib/change-history'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -10,6 +10,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Serverfehler'
     if (message === 'Unauthorized') return unauthorized()
+    if (message === 'Forbidden') return forbidden()
     return error(message, 500)
   }
 }

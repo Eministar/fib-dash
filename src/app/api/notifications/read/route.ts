@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 
 import { error, success, unauthorized } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requirePortalAuth } from '@/lib/auth'
 import { markNotificationsRead } from '@/lib/notifications-server'
 
 export const dynamic = 'force-dynamic'
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 /** Markiert `{ ids: string[] }` oder `{ all: true }` als gelesen. */
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth()
+    const user = await requirePortalAuth()
     const body: unknown = await req.json().catch(() => null)
     const raw = body && typeof body === 'object' ? (body as Record<string, unknown>) : {}
 

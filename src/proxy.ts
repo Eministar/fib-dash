@@ -12,16 +12,16 @@ import type { NextRequest } from 'next/server'
  * vertrauenswürdiger Kontext. Wer ein gültiges Token hat, darf von überall
  * aus zugreifen — genau wie bei GitHub-PATs, Stripe-Keys etc.
  *
- * Bei Cookie-Authentifizierung greift der Same-Origin-Schutz des Browsers
- * weiterhin (`Access-Control-Allow-Credentials: true` + reflektierter Origin
- * verhindert fremde Origins vom Mitlesen der Session).
+ * Cookies werden fremden Origins bewusst NICHT freigegeben (kein
+ * `Access-Control-Allow-Credentials`): Ein reflektierter Origin zusammen mit
+ * Credentials würde jeder Website erlauben, im Namen eingeloggter Nutzer
+ * Antworten mitzulesen. Cross-Origin-Clients nutzen Bearer-Tokens.
  */
 function applyCors(req: NextRequest, res: NextResponse): NextResponse {
   const origin = req.headers.get('origin')
   if (origin) {
     res.headers.set('Access-Control-Allow-Origin', origin)
     res.headers.set('Vary', 'Origin')
-    res.headers.set('Access-Control-Allow-Credentials', 'true')
     res.headers.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS')
     res.headers.set(
       'Access-Control-Allow-Headers',

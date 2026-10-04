@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 
-import { error, success, unauthorized } from '@/lib/api-response'
+import { error, success, unauthorized, forbidden } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
 import { LspdUnavailableError, searchLspdOfficers } from '@/lib/lspd-hr-client'
 
@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     if (cause instanceof LspdUnavailableError) return error(cause.message, cause.status)
     const message = cause instanceof Error ? cause.message : 'Serverfehler'
     if (message === 'Unauthorized') return unauthorized()
+    if (message === 'Forbidden') return forbidden()
     return error(message, 500)
   }
 }

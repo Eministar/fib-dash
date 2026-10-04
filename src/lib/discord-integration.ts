@@ -1559,9 +1559,9 @@ export async function sendDiscordUpdateAnnouncement(input: DiscordUpdateAnnounce
   if (!title) throw new Error('Titel ist erforderlich')
 
   const blocks = [
-    updateAnnouncementBlock('✨ Neue Funktionen', input.added ?? []),
-    updateAnnouncementBlock('🔧 Verbesserungen', input.changed ?? []),
-    updateAnnouncementBlock('🗑️ Nicht mehr enthalten', input.removed ?? []),
+    updateAnnouncementBlock('`✨` Neue Funktionen', input.added ?? []),
+    updateAnnouncementBlock('`🔧` Verbesserungen', input.changed ?? []),
+    updateAnnouncementBlock('`🗑️` Nicht mehr enthalten', input.removed ?? []),
   ].filter((block): block is string => Boolean(block))
 
   if (blocks.length === 0) {
@@ -1667,7 +1667,7 @@ async function unitChangeBlock(change: DiscordUnitChange, config: DiscordConfig)
     `\`🛡️\` **Aktuelle Zuordnung:** ${change.current.length ? list(change.current) : '`keine Unit`'}`,
   ].filter((line): line is string => Boolean(line))
 
-  return `### 🏢 Organisatorische Zuordnung\n${details.join('\n')}`
+  return details.join('\n')
 }
 
 function polishedEventDescription(value: string | undefined) {
@@ -1722,7 +1722,7 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
   }
 
   const trainingBlock = event.type === 'training' && event.trainingChanges?.length
-    ? `### 🎓 Ausbildung\n${event.trainingChanges.map((change) => trainingChangeLine(change, config)).join('\n')}`
+    ? `${event.trainingChanges.map((change) => trainingChangeLine(change, config)).join('\n')}`
     : null
   const unitsBlock = event.unitChange
     ? await unitChangeBlock(event.unitChange, config)
@@ -1736,7 +1736,7 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
   const description = markdownQuote(polishedEventDescription(event.description))
   const details = [description, rows.length ? markdownRows(rows) : null, trainingBlock, unitsBlock].filter(Boolean)
   return componentMessage([
-    textDisplay(`## ${meta.icon} ${customHeading}${headingSubject && !agentLine ? ` · ${headingSubject}` : ''}${agentLine ? `\n${agentLine}` : ''}`),
+    textDisplay(`## \`${meta.icon}\` ${customHeading}${headingSubject && !agentLine ? ` · ${headingSubject}` : ''}${agentLine ? `\n${agentLine}` : ''}`),
     ...(details.length ? [separator(), ...markdownTextDisplays(details)] : []),
     textDisplay(markdownMeta([`Erfasst von ${actorLabel}`, discordTimestamp(now, 'f')])),
   ], { allowedMentions })
@@ -1987,7 +1987,7 @@ async function dutyStatusPayload() {
   const text = markdownTextDisplays([
     markdownHeader('🚓', 'Dienststatus'),
     summary,
-    '### 🟢 Aktuell im Dienst',
+    '### `🟢` Aktuell im Dienst',
     ...listParts,
     markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
   ])
@@ -2030,7 +2030,7 @@ export async function announceDutyModeChange(mode: DutyMode, actorName: string) 
         '- Startest du FiveM bzw. NERO-V Roleplay, ohne eingestempelt zu sein, erinnert dich der Bot per Direktnachricht – dort kannst du dich direkt einstempeln.',
       ]
     : [
-        '## ✅ Dienstzeiten wieder automatisch',
+        '## `✅` Dienstzeiten wieder automatisch',
         'Die Dienstzeit wird wieder automatisch über die Player-Online-API erfasst. Manuelles Ein- und Ausstempeln ist nicht mehr nötig; offene Stempelungen wurden beendet.',
       ]
   await postChannelMessage(channelId, componentMessage(markdownTextDisplays([
@@ -2050,7 +2050,7 @@ export async function sendDutyActivityCheck(input: { sessionId: string; discordI
   const payload = (withMention: boolean) => componentMessage([
     ...markdownTextDisplays([
       withMention && input.discordId ? mention(input.discordId) : null,
-      markdownHeader('`⏱️`', 'Bist du noch im Dienst?'),
+      markdownHeader('⏱️', 'Bist du noch im Dienst?'),
       `Du bist seit ${discordTimestamp(input.clockInAt, 'R')} eingestempelt. Bitte bestätige ${discordTimestamp(deadline, 'R')}, sonst wirst du automatisch ausgestempelt.`,
     ]),
     actionRow([{ type: 2, style: 3, custom_id: `fib_duty_activity_confirm:${input.sessionId}`, label: 'Ja, ich bin noch im Dienst' }]),
@@ -2232,14 +2232,14 @@ async function absenceStatusPayload() {
         agent.onLeaveReason ? `> \`📝\` \`${truncate(agent.onLeaveReason.replace(/\s+/g, ' ').replace(/`/g, "'"), 180)}\`` : null,
       ].filter(Boolean).join('\n')
     })
-    leaveParts.push(`### 🌴 Beurlaubt\n-# \`${onLeaveAgents.length}\` aktuell beurlaubt`, ...chunkLines(leaveLines, 3000))
+    leaveParts.push(`### \`🌴\` Beurlaubt\n-# \`${onLeaveAgents.length}\` aktuell beurlaubt`, ...chunkLines(leaveLines, 3000))
     const leaveOverflow = onLeaveAgents.length - visibleLeave.length
     if (leaveOverflow > 0) leaveParts.push(`-# … und ${leaveOverflow} weitere`)
   }
 
   return componentMessage([
     ...markdownTextDisplays([
-      `## 📋 Abmeldungen\n-# \`${absences.length}\` aktuell abgemeldet`,
+      `## \`📋\` Abmeldungen\n-# \`${absences.length}\` aktuell abgemeldet`,
       ...listParts,
       ...leaveParts,
       markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
@@ -2385,7 +2385,7 @@ export async function sendDiscordInvestigationEvent(event: DiscordInvestigationE
     markdownTextDisplays([
       markdownHeader(meta.icon, meta.label, event.title),
       event.note ? markdownQuote(event.note) : null,
-      rows.length ? `### 📋 Details\n${markdownRows(rows)}` : null,
+      rows.length ? markdownRows(rows) : null,
       markdownMeta([discordTimestamp(new Date(), 'f')]),
     ]),
   )

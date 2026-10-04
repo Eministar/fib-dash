@@ -214,11 +214,23 @@ function hasAdminPermission(permissions: string | undefined) {
   }
 }
 
+// Der Endpunkt ist öffentlich: Ohne Drossel könnte jeder mit unsignierten
+// Requests den Alarm-Channel fluten. Ein Alarm pro Viertelstunde genügt.
+const REJECTED_ALERT_INTERVAL_MS = 15 * 60 * 1000
+let lastRejectedAlertAt = 0
+
+function reportRejectedInteraction(event: Parameters<typeof queueDiscordWebhookEvent>[0]) {
+  const now = Date.now()
+  if (now - lastRejectedAlertAt < REJECTED_ALERT_INTERVAL_MS) return
+  lastRejectedAlertAt = now
+  queueDiscordWebhookEvent(event)
+}
+
 async function verifySignature(req: NextRequest, rawBody: string) {
   const publicKey = process.env.DISCORD_PUBLIC_KEY?.trim() || process.env.FIB_DISCORD_PUBLIC_KEY?.trim() || ''
   if (!publicKey) {
     logConsole('error', 'DISCORD_PUBLIC_KEY ist nicht gesetzt — alle Interaktionen werden abgelehnt. Setze die Env-Variable in der .env.')
-    queueDiscordWebhookEvent({
+    reportRejectedInteraction({
       title: 'Discord-Interaktion abgelehnt',
       description: 'DISCORD_PUBLIC_KEY ist nicht gesetzt.',
       severity: 'error',
@@ -231,7 +243,7 @@ async function verifySignature(req: NextRequest, rawBody: string) {
   const timestamp = req.headers.get('x-signature-timestamp')
   if (!signature || !timestamp) {
     logConsole('error', 'Signatur-Header fehlen (x-signature-ed25519 / x-signature-timestamp).')
-    queueDiscordWebhookEvent({
+    reportRejectedInteraction({
       title: 'Discord-Interaktion abgelehnt',
       description: 'Signatur-Header fehlen.',
       severity: 'error',
@@ -249,7 +261,7 @@ async function verifySignature(req: NextRequest, rawBody: string) {
     const valid = crypto.verify(null, Buffer.from(`${timestamp}${rawBody}`), key, Buffer.from(signature, 'hex'))
     if (!valid) {
       logConsole('error', 'Signatur-Verifizierung fehlgeschlagen — DISCORD_PUBLIC_KEY passt vermutlich nicht zum Bot.')
-      queueDiscordWebhookEvent({
+      reportRejectedInteraction({
         title: 'Discord-Interaktion abgelehnt',
         description: 'Signatur-Verifizierung fehlgeschlagen. Der Public Key passt wahrscheinlich nicht zur Discord-App.',
         severity: 'error',
@@ -259,7 +271,7 @@ async function verifySignature(req: NextRequest, rawBody: string) {
     return valid
   } catch (e) {
     logConsole('error', 'Signatur-Verifizierung warf Exception (vermutlich Public-Key-Format falsch).', e)
-    queueDiscordWebhookEvent({
+    reportRejectedInteraction({
       title: 'Discord-Interaktion abgelehnt',
       description: 'Signatur-Verifizierung ist mit einem Fehler abgebrochen.',
       severity: 'error',

@@ -18,7 +18,7 @@ export async function resolveBodycamAccess(auth: CurrentAuth | null, hasViewerRo
   const full = hasPermission(auth.user, 'investigations:view')
   if (full) return { user: auth.user, full, roleOnly: false, where: investigationVisibilityWhere(auth.user) }
   // Role access is session-only: it must not bypass API-token scopes.
-  if (auth.kind === 'cookie' && auth.user.discordId) {
+  if (auth.kind === 'cookie' && !auth.portal && auth.user.discordId) {
     // Die Leserolle gibt den kompletten Katalog frei — auch Clips aus
     // Verschlusssachen. Sie ist damit bewusst breiter als die Aktenrechte des
     // Nutzers, aber sie gilt ausschliesslich fuer Clips, nicht fuer die Akten.

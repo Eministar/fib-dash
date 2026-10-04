@@ -1,14 +1,14 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requirePortalAuth } from '@/lib/auth'
 import { cleanFormText } from '@/lib/form-tests'
 import { isFormTestSessionWriteConflict, recordFormTestSessionSecurityEvent } from '@/lib/form-test-sessions'
 import { findFormTestByToken } from '@/lib/form-links'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
-    const user = await requireAuth()
+    const user = await requirePortalAuth()
     const { token } = await params
     let body: unknown = {}
     try {

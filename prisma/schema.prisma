@@ -356,6 +356,9 @@ model User {
   qualityChecks         QualityCheck[]         @relation("QualityCheckConductor")
   qualityCheckEntries   QualityCheckEntry[]    @relation("QualityCheckEntryAuthor")
   qualityShares         QualityShare[]         @relation("QualityShareCreator")
+
+  // Login, Impersonation und Rollen-Sync suchen Konten über die Discord-ID.
+  @@index([discordId])
 }
 
 model UserGroupMembership {

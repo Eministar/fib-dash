@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requirePortalAuth } from '@/lib/auth'
 import { buildFormSubmitterHash, stripCorrectAnswersFromQuestion } from '@/lib/form-tests'
 import {
   completeOpenFormTestSessions,
@@ -19,7 +19,7 @@ const sessionSelect = {
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
-    const user = await requireAuth()
+    const user = await requirePortalAuth()
     const { token } = await params
 
     const lookup = await resolveFormLink(token)

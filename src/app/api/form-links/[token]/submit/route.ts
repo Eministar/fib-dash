@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma/client'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requirePortalAuth } from '@/lib/auth'
 import { buildFormSubmitterHash, calculateResponseScore, normalizeSubmittedAnswers } from '@/lib/form-tests'
 import { completeFormTestSessionById, isFormTestSessionWriteConflict } from '@/lib/form-test-sessions'
 import { FORM_LINK_ERRORS, resolveFormLink } from '@/lib/form-links'
@@ -10,7 +10,7 @@ import { isUniqueConstraintError } from '@/lib/prisma-errors'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
-    const user = await requireAuth()
+    const user = await requirePortalAuth()
     const { token } = await params
     const body = await req.json()
 

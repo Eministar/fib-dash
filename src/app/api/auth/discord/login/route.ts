@@ -24,7 +24,8 @@ const LOGIN_MODES = ['application', 'contract'] as const
  */
 function safeRedirectPath(value: string | null) {
   if (!value) return ''
-  if (!value.startsWith('/') || value.startsWith('//')) return ''
+  // Browser lesen `/\host` wie `//host` – Backslashes und Steuerzeichen führen sonst zu einer offenen Weiterleitung.
+  if (!value.startsWith('/') || value.startsWith('//') || /[\\\u0000-\u001f]/.test(value)) return ''
   return value.slice(0, 300)
 }
 

@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/auth'
-import { success, error, unauthorized } from '@/lib/api-response'
+import { success, error, unauthorized, forbidden } from '@/lib/api-response'
 import { listAgentRecords } from '@/lib/agent-records'
 import { findAgentForUser } from '@/lib/manual-duty'
 
@@ -13,6 +13,7 @@ export async function GET() {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Serverfehler'
     if (msg === 'Unauthorized') return unauthorized()
+    if (msg === 'Forbidden') return forbidden()
     return error(msg, 500)
   }
 }

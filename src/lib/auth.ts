@@ -11,11 +11,36 @@ import { agentUnitKeys } from './agent-units'
 import { activateChangeTracking } from './change-history-context'
 import { describeTrackedChange, pathHasExternalSideEffects } from './change-history-tracking'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
+/**
+ * Wird bei jedem Aufruf gelesen: Das Setup schreibt JWT_SECRET erst zur
+ * Laufzeit in process.env. Fehlt es, wird aus den Discord-Secrets abgeleitet
+ * statt auf einen öffentlich bekannten Wert zurückzufallen – sonst könnte
+ * jeder gültige Sitzungen fälschen.
+ */
+function jwtSecret(): string {
+  const configured = process.env.JWT_SECRET?.trim()
+  if (configured) return configured
+  const material = [
+    process.env.DISCORD_CLIENT_SECRET,
+    process.env.FIB_DISCORD_CLIENT_SECRET,
+    process.env.DISCORD_BOT_TOKEN,
+    process.env.FIB_DISCORD_BOT_TOKEN,
+  ].map((value) => value?.trim()).filter(Boolean).join('|')
+  if (material) return createHash('sha256').update(`fib-dash:jwt:${material}`).digest('hex')
+  if (process.env.NODE_ENV === 'production') throw new Error('JWT_SECRET ist nicht gesetzt.')
+  return 'fib-dash-dev-only-secret'
+}
+
+export const REMEMBER_SESSION_SECONDS = 60 * 60 * 24 * 30
 
 export interface JWTPayload {
   userId: string
   username: string
+  /**
+   * Portal-Sitzung (Bewerber-/Vertrags-Login ohne Dashboard-Rolle). Solche
+   * Konten dürfen nur ihre eigene Bewerbung, Tests und Verträge sehen.
+   */
+  portal?: boolean
 }
 
 export interface CurrentUser {
@@ -33,6 +58,8 @@ export type AuthKind = 'cookie' | 'api'
 export interface CurrentAuth {
   kind: AuthKind
   user: CurrentUser
+  /** Siehe {@link JWTPayload.portal}. */
+  portal?: boolean
   /** Nur gesetzt, wenn kind === 'api'. */
   api?: {
     tokenId: string
@@ -61,13 +88,16 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
-export function signToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
+export function signToken(payload: JWTPayload, options?: { remember?: boolean }): string {
+  return jwt.sign(payload, jwtSecret(), {
+    algorithm: 'HS256',
+    expiresIn: options?.remember ? REMEMBER_SESSION_SECONDS : '7d',
+  })
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload
+    return jwt.verify(token, jwtSecret(), { algorithms: ['HS256'] }) as JWTPayload
   } catch {
     return null
   }
@@ -127,6 +157,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 /** Confidential modules authenticate without creating general change-history entries. */
 export async function getConfidentialUser(): Promise<CurrentUser | null> {
   const auth = await getCurrentAuth(false)
+  if (auth?.portal) return null
   return auth?.user ?? null
 }
 
@@ -198,7 +229,10 @@ export async function getCurrentAuth(trackChanges = true): Promise<CurrentAuth |
     const payload = verifyToken(cookieToken)
     if (payload) {
       const user = await loadUserForAuth(payload.userId)
-      if (user) return trackChanges ? attachRequestedChangeTracking({ kind: 'cookie', user }, headerStore) : { kind: 'cookie', user }
+      if (user) {
+        const auth: CurrentAuth = { kind: 'cookie', user, ...(payload.portal ? { portal: true } : {}) }
+        return trackChanges ? attachRequestedChangeTracking(auth, headerStore) : auth
+      }
     }
   }
 
@@ -469,9 +503,22 @@ function buildApiUser(
   }
 }
 
+/**
+ * Für Bewerber-, Test- und Benachrichtigungs-Routen: akzeptiert auch
+ * Portal-Sitzungen. Alles andere nutzt {@link requireAuth}.
+ */
+export async function requirePortalAuth() {
+  const auth = await getCurrentAuth()
+  if (!auth) throw new Error('Unauthorized')
+  return auth.user
+}
+
 export async function requireAuth(allowedRoles?: string[], allowedPermissions?: Permission[]) {
   const auth = await getCurrentAuth()
   if (!auth) throw new Error('Unauthorized')
+  // Portal-Konten (jedes Discord-Mitglied kann sich per Vertragslink anmelden)
+  // dürfen nicht in Dashboard-Routen, die nur „eingeloggt“ voraussetzen.
+  if (auth.portal) throw new Error('Forbidden')
   const user = auth.user
 
   const hasRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
