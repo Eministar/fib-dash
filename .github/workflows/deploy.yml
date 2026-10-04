@@ -36,6 +36,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # Die Clip-Tests komprimieren echte Videos (AV1) und brauchen dafür ffmpeg/ffprobe.
+      - name: ffmpeg installieren
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg
+          ffmpeg -hide_banner -encoders > /tmp/encoders.txt
+          grep -q libsvtav1 /tmp/encoders.txt && grep -q libopus /tmp/encoders.txt
       - name: TypeScript
         run: npx tsc --noEmit
       - name: Lint
