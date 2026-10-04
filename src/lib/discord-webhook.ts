@@ -76,7 +76,7 @@ export async function sendDiscordWebhookEvent(event: WebhookEvent) {
     event.fields?.length
       ? markdownRows(event.fields.map((field) => ({ label: field.name, value: field.value })))
       : '',
-    errorText ? `### Fehlerdetails\n\`\`\`\n${truncate(errorText, 3500)}\n\`\`\`` : '',
+    errorText ? `### 🧾 Fehlerdetails\n\`\`\`\n${truncate(errorText, 3500)}\n\`\`\`` : '',
     markdownMeta([
       severityMeta.label,
       `Quelle: \`${event.source ?? 'server'}\``,

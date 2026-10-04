@@ -234,16 +234,6 @@ export const DISCORD_SETTING_KEYS = {
   unitRoleMap: 'discord.unitRoleMap',
 } as const
 
-const EVENT_ACCENT: Record<keyof typeof EVENT_META, number> = {
-  hire: 0x4caf7a,
-  promotion: 0x5b8def,
-  training: 0x9b7be0,
-  units: 0x4bb3c4,
-  sanction: 0xe0a34a,
-  termination: 0xcf6666,
-  update: 0x879baa,
-}
-
 const EVENT_META = {
   hire:        { icon: '✅', label: 'Neueinstellung' },
   promotion:   { icon: '🔼', label: 'Rangänderung' },
@@ -1569,9 +1559,9 @@ export async function sendDiscordUpdateAnnouncement(input: DiscordUpdateAnnounce
   if (!title) throw new Error('Titel ist erforderlich')
 
   const blocks = [
-    updateAnnouncementBlock('Neue Funktionen', input.added ?? []),
-    updateAnnouncementBlock('Verbesserungen', input.changed ?? []),
-    updateAnnouncementBlock('Nicht mehr enthalten', input.removed ?? []),
+    updateAnnouncementBlock('✨ Neue Funktionen', input.added ?? []),
+    updateAnnouncementBlock('🔧 Verbesserungen', input.changed ?? []),
+    updateAnnouncementBlock('🗑️ Nicht mehr enthalten', input.removed ?? []),
   ].filter((block): block is string => Boolean(block))
 
   if (blocks.length === 0) {
@@ -1646,11 +1636,11 @@ function hrEventChannelId(config: DiscordConfig, type: keyof typeof EVENT_META) 
 
 function trainingRoleValue(config: DiscordConfig, change: DiscordTrainingChange) {
   const roleId = snowflake(config.trainingRoleMap[change.trainingId])
-  return roleId ? `<@&${roleId}>` : change.label
+  return roleId ? `<@&${roleId}>` : `\`${change.label}\``
 }
 
 function trainingChangeLine(change: DiscordTrainingChange, config: DiscordConfig) {
-  return `- ${trainingRoleValue(config, change)}: **${change.completed ? 'abgeschlossen' : 'nicht abgeschlossen'}**`
+  return `${change.completed ? '`✅`' : '`❌`'} ${trainingRoleValue(config, change)} · \`${change.completed ? 'abgeschlossen' : 'nicht abgeschlossen'}\``
 }
 
 async function unitChangeBlock(change: DiscordUnitChange, config: DiscordConfig) {
@@ -1668,16 +1658,16 @@ async function unitChangeBlock(change: DiscordUnitChange, config: DiscordConfig)
   const namesByKey = new Map(units.map((unit) => [unit.key, unit.name]))
   const unitLabel = (key: string) => {
     const roleId = snowflake(config.unitRoleMap[key])
-    return roleId ? `<@&${roleId}>` : `**${namesByKey.get(key) ?? key}**`
+    return roleId ? `<@&${roleId}>` : `\`${namesByKey.get(key) ?? key}\``
   }
   const list = (unitKeys: string[]) => unitKeys.map(unitLabel).join(', ')
   const details = [
-    added.length ? `- **Neu zugeordnet:** ${list(added)}` : null,
-    removed.length ? `- **Nicht mehr zugeordnet:** ${list(removed)}` : null,
-    `- **Aktuelle Zuordnung:** ${change.current.length ? list(change.current) : 'keine Unit'}`,
+    added.length ? `\`➕\` **Neu zugeordnet:** ${list(added)}` : null,
+    removed.length ? `\`➖\` **Nicht mehr zugeordnet:** ${list(removed)}` : null,
+    `\`🛡️\` **Aktuelle Zuordnung:** ${change.current.length ? list(change.current) : '`keine Unit`'}`,
   ].filter((line): line is string => Boolean(line))
 
-  return `### Organisatorische Zuordnung\n${details.join('\n')}`
+  return `### 🏢 Organisatorische Zuordnung\n${details.join('\n')}`
 }
 
 function polishedEventDescription(value: string | undefined) {
@@ -1719,9 +1709,9 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
   if (agent) {
     const dn = bracketedServiceNumber(agent.badgeNumber, prefix)
     const rankRoleSnow = snowflake(agent.rankId ? config.rankRoleMap[agent.rankId] : '')
-    const rankValue = rankRoleSnow ? `<@&${rankRoleSnow}>` : agent.rank?.name ?? null
+    const rankValue = rankRoleSnow ? `<@&${rankRoleSnow}>` : agent.rank?.name ? `\`${agent.rank.name}\`` : null
     const who = snowflake(agent.discordId) ? `<@${snowflake(agent.discordId)}>` : `**${agentDisplayName}**`
-    agentLine = [who, `\`${dn}\``, rankValue].filter(Boolean).join('  ·  ')
+    agentLine = [`\`👤\` ${who}`, `\`🪪\` \`${dn}\``, rankValue ? `\`🎖️\` ${rankValue}` : null].filter(Boolean).join('  ·  ')
     if (event.type === 'hire') {
       rows.push({ label: 'Eintrittsdatum', value: discordTimestamp(agent.hireDate ?? now, 'D') })
     }
@@ -1732,7 +1722,7 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
   }
 
   const trainingBlock = event.type === 'training' && event.trainingChanges?.length
-    ? `**Ausbildung**\n${event.trainingChanges.map((change) => trainingChangeLine(change, config)).join('\n')}`
+    ? `### 🎓 Ausbildung\n${event.trainingChanges.map((change) => trainingChangeLine(change, config)).join('\n')}`
     : null
   const unitsBlock = event.unitChange
     ? await unitChangeBlock(event.unitChange, config)
@@ -1743,16 +1733,13 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
     new Set([agent?.discordId, ...(event.mentionUserIds ?? [])].map((id) => snowflake(id)).filter((id): id is string => Boolean(id))),
   )
   const allowedMentions = { parse: [], users: mentionIds, roles: [] }
-  const description = polishedEventDescription(event.description)
+  const description = markdownQuote(polishedEventDescription(event.description))
   const details = [description, rows.length ? markdownRows(rows) : null, trainingBlock, unitsBlock].filter(Boolean)
   return componentMessage([
     textDisplay(`## ${meta.icon} ${customHeading}${headingSubject && !agentLine ? ` · ${headingSubject}` : ''}${agentLine ? `\n${agentLine}` : ''}`),
     ...(details.length ? [separator(), ...markdownTextDisplays(details)] : []),
     textDisplay(markdownMeta([`Erfasst von ${actorLabel}`, discordTimestamp(now, 'f')])),
-  ], {
-    allowedMentions,
-    accentColor: EVENT_ACCENT[event.type],
-  })
+  ], { allowedMentions })
 }
 
 export async function sendDiscordHrEvent(event: DiscordHrEventInput): Promise<DiscordHrEventMessage | null> {
@@ -1974,13 +1961,13 @@ async function dutyStatusPayload() {
   const manual = snapshot.mode === 'manual'
   const summary = markdownRows([
     { label: 'Erfassung', value: manual ? 'Manuell – bitte selbst ein- und ausstempeln' : 'Automatisch über die Player-Online-API' },
-    { label: 'Im Dienst', value: `\`${snapshot.activeCount}\`` },
-    { label: 'Dienstzeit dieser Woche', value: `\`${formatDuration(snapshot.totalWeekDurationMs)}\`` },
+    { label: 'Im Dienst', value: String(snapshot.activeCount) },
+    { label: 'Dienstzeit dieser Woche', value: formatDuration(snapshot.totalWeekDurationMs) },
   ])
   const listParts: string[] = []
 
   if (visible.length === 0) {
-    listParts.push('> Derzeit ist niemand im Dienst.')
+    listParts.push('> `💤` Derzeit ist niemand im Dienst.')
   } else {
     const lines = visible.map((row, index) => {
       const num = String(index + 1).padStart(2, '0')
@@ -1989,8 +1976,8 @@ async function dutyStatusPayload() {
       const current = formatDuration(active?.currentDurationMs ?? 0)
       const dn = bracketedServiceNumber(agentBadge(row), prefix)
       return [
-        `\`${num}\`  **${agentName(row)}**  ·  ${row.rank.name}  ·  **${current}**`,
-        `> \`${dn}\`  ·  ${mention(row.discordId)}  ·  seit ${since}`,
+        `\`${num}\`  \`👤\` **${agentName(row)}**  ·  \`🎖️\` \`${row.rank.name}\`  ·  \`⏱️\` \`${current}\``,
+        `> \`🪪\` \`${dn}\`  ·  ${mention(row.discordId)}  ·  \`🕒\` seit ${since}`,
       ].join('\n')
     })
     listParts.push(...chunkLines(lines, 3000))
@@ -2000,7 +1987,7 @@ async function dutyStatusPayload() {
   const text = markdownTextDisplays([
     markdownHeader('🚓', 'Dienststatus'),
     summary,
-    '### Aktuell im Dienst',
+    '### 🟢 Aktuell im Dienst',
     ...listParts,
     markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
   ])
@@ -2036,7 +2023,7 @@ export async function announceDutyModeChange(mode: DutyMode, actorName: string) 
 
   const body = mode === 'manual'
     ? [
-        '## ⏱️ Ab sofort manuell einstempeln',
+        '## `⏱️` Ab sofort manuell einstempeln',
         'Die automatische Erfassung über die Dienstzeiten-API ist pausiert.',
         '- Zu Dienstbeginn **Einstempeln** klicken, zum Dienstende **Ausstempeln** – hier im Channel oder im Dashboard unter „Dienstzeiten“.',
         '- Alle 2,5 Stunden fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
@@ -2046,10 +2033,9 @@ export async function announceDutyModeChange(mode: DutyMode, actorName: string) 
         '## ✅ Dienstzeiten wieder automatisch',
         'Die Dienstzeit wird wieder automatisch über die Player-Online-API erfasst. Manuelles Ein- und Ausstempeln ist nicht mehr nötig; offene Stempelungen wurden beendet.',
       ]
-  await postChannelMessage(channelId, {
-    content: [...body, `-# Umgestellt von ${actorName}`].join('\n'),
-    allowed_mentions: { parse: [] },
-  })
+  await postChannelMessage(channelId, componentMessage(markdownTextDisplays([
+    [...body, markdownMeta([`👤 Umgestellt von ${actorName}`])].join('\n'),
+  ])))
 
   if (config.dutyStatusMessageId) {
     await discordFetch<void>(`/channels/${channelId}/messages/${config.dutyStatusMessageId}`, { method: 'DELETE' }).catch(() => undefined)
@@ -2064,7 +2050,7 @@ export async function sendDutyActivityCheck(input: { sessionId: string; discordI
   const payload = (withMention: boolean) => componentMessage([
     ...markdownTextDisplays([
       withMention && input.discordId ? mention(input.discordId) : null,
-      markdownHeader('⏱️', 'Bist du noch im Dienst?'),
+      markdownHeader('`⏱️`', 'Bist du noch im Dienst?'),
       `Du bist seit ${discordTimestamp(input.clockInAt, 'R')} eingestempelt. Bitte bestätige ${discordTimestamp(deadline, 'R')}, sonst wirst du automatisch ausgestempelt.`,
     ]),
     actionRow([{ type: 2, style: 3, custom_id: `fib_duty_activity_confirm:${input.sessionId}`, label: 'Ja, ich bin noch im Dienst' }]),
@@ -2163,7 +2149,10 @@ export async function postDutyAdminLog(text: string) {
   const config = await getDiscordConfig()
   const channelId = config.dutyAdminLogChannelId || config.announcementsChannelId
   if (!channelId || !botToken()) return
-  await postChannelMessage(channelId, { content: text, allowed_mentions: { parse: [] } }).catch(() => undefined)
+  await postChannelMessage(channelId, componentMessage(markdownTextDisplays([
+    text,
+    markdownMeta([discordTimestamp(new Date(), 'f')]),
+  ]))).catch(() => undefined)
 }
 
 async function saveDutyStatusMessageId(messageId: string) {
@@ -2214,16 +2203,16 @@ async function absenceStatusPayload() {
   const listParts: string[] = []
 
   if (visible.length === 0) {
-    listParts.push('> Aktuell ist niemand abgemeldet.')
+    listParts.push('> `✅` Aktuell ist niemand abgemeldet.')
   } else {
     const lines = visible.map((notice) => {
       const agent = notice.agent
-      const reason = truncate(notice.reason.replace(/\s+/g, ' '), 180)
+      const reason = truncate(notice.reason.replace(/\s+/g, ' ').replace(/`/g, "'"), 180)
       const dn = bracketedServiceNumber(agentBadge(agent), prefix)
       return [
-        `**${agentName(agent)}** · \`${dn}\``,
-        `${mention(agent.discordId)} · Rückkehr ${discordTimestamp(notice.endsAt, 'D')} (${discordTimestamp(notice.endsAt, 'R')})`,
-        `Grund: ${reason}`,
+        `\`👤\` **${agentName(agent)}**  ·  \`🪪\` \`${dn}\`  ·  ${mention(agent.discordId)}`,
+        `> \`🏁\` Rückkehr ${discordTimestamp(notice.endsAt, 'D')} (${discordTimestamp(notice.endsAt, 'R')})`,
+        `> \`📝\` \`${reason}\``,
       ].join('\n')
     })
     listParts.push(...chunkLines(lines, 3000))
@@ -2236,21 +2225,21 @@ async function absenceStatusPayload() {
     const visibleLeave = onLeaveAgents.slice(0, ABSENCE_LIST_LIMIT)
     const leaveLines = visibleLeave.map((agent) => {
       const dn = bracketedServiceNumber(agentBadge(agent), prefix)
-      const since = agent.onLeaveSince ? ` · seit ${discordTimestamp(agent.onLeaveSince, 'D')}` : ''
+      const since = agent.onLeaveSince ? `\`🕒\` seit ${discordTimestamp(agent.onLeaveSince, 'D')} · ` : ''
       return [
-        `**${agentName(agent)}** · \`${dn}\``,
-        `${mention(agent.discordId)}${since} · bis auf Weiteres`,
-        agent.onLeaveReason ? `Grund: ${truncate(agent.onLeaveReason.replace(/\s+/g, ' '), 180)}` : null,
+        `\`👤\` **${agentName(agent)}**  ·  \`🪪\` \`${dn}\`  ·  ${mention(agent.discordId)}`,
+        `> ${since}\`bis auf Weiteres\``,
+        agent.onLeaveReason ? `> \`📝\` \`${truncate(agent.onLeaveReason.replace(/\s+/g, ' ').replace(/`/g, "'"), 180)}\`` : null,
       ].filter(Boolean).join('\n')
     })
-    leaveParts.push(`### Beurlaubt\n${onLeaveAgents.length} aktuell beurlaubt`, ...chunkLines(leaveLines, 3000))
+    leaveParts.push(`### 🌴 Beurlaubt\n-# \`${onLeaveAgents.length}\` aktuell beurlaubt`, ...chunkLines(leaveLines, 3000))
     const leaveOverflow = onLeaveAgents.length - visibleLeave.length
     if (leaveOverflow > 0) leaveParts.push(`-# … und ${leaveOverflow} weitere`)
   }
 
   return componentMessage([
     ...markdownTextDisplays([
-      `## Abmeldungen\n${absences.length} aktuell abgemeldet`,
+      `## 📋 Abmeldungen\n-# \`${absences.length}\` aktuell abgemeldet`,
       ...listParts,
       ...leaveParts,
       markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
@@ -2396,7 +2385,7 @@ export async function sendDiscordInvestigationEvent(event: DiscordInvestigationE
     markdownTextDisplays([
       markdownHeader(meta.icon, meta.label, event.title),
       event.note ? markdownQuote(event.note) : null,
-      rows.length ? `### Details\n${markdownRows(rows)}` : null,
+      rows.length ? `### 📋 Details\n${markdownRows(rows)}` : null,
       markdownMeta([discordTimestamp(new Date(), 'f')]),
     ]),
   )
