@@ -150,7 +150,7 @@ interface Stats {
   }>
 }
 
-type StatKey = 'activeAgents' | 'awayAgents' | 'inactiveAgents' | 'totalAgents' | 'recentPromotions' | 'recentTerminations'
+type StatKey = 'activeAgents' | 'awayAgents' | 'inactiveAgents' | 'currentAgents' | 'recentPromotions' | 'recentTerminations'
 
 type AccentKey = 'emerald' | 'sky' | 'amber' | 'gold' | 'mint' | 'rose'
 
@@ -176,10 +176,10 @@ const panelClass = 'rounded-xl border border-[#38383a] bg-[#1c1c1e]'
 const surfaceClass = 'rounded-[12px] border border-white/[0.05] bg-[#1c1c1e]/55'
 
 const statCards: { key: StatKey; label: string; icon: LucideIcon; href: string; permission: Permission; accent: AccentKey; hint: string }[] = [
-  { key: 'activeAgents', label: 'Aktive Agents', icon: UserCheck, href: '/agents', permission: 'agents:view', accent: 'emerald', hint: 'Im aktiven Dienst' },
-  { key: 'awayAgents', label: 'Abgemeldet', icon: Clock, href: '/agents', permission: 'agents:view', accent: 'sky', hint: 'Mit Abmeldung' },
-  { key: 'inactiveAgents', label: 'Inaktiv', icon: AlertTriangle, href: '/agents', permission: 'agents:view', accent: 'amber', hint: 'Beobachtung empfohlen' },
-  { key: 'totalAgents', label: 'Gesamtbestand', icon: Users, href: '/agents', permission: 'agents:view', accent: 'gold', hint: 'Alle Agents' },
+  { key: 'activeAgents', label: 'Aktive Agents', icon: UserCheck, href: '/agents?status=ACTIVE', permission: 'agents:view', accent: 'emerald', hint: 'Personalstatus: aktiv' },
+  { key: 'awayAgents', label: 'Abwesend', icon: Clock, href: '/agents?status=ABSENT', permission: 'agents:view', accent: 'sky', hint: 'Abgemeldet & beurlaubt' },
+  { key: 'inactiveAgents', label: 'Inaktiv', icon: AlertTriangle, href: '/agents?status=INACTIVE', permission: 'agents:view', accent: 'amber', hint: 'Personalstatus: inaktiv' },
+  { key: 'currentAgents', label: 'Personalbestand', icon: Users, href: '/agents', permission: 'agents:view', accent: 'gold', hint: 'Ohne ausgeschiedene Agents' },
   { key: 'recentPromotions', label: 'Rangänderungen', icon: TrendingUp, href: '/promotions', permission: 'rank-changes:view', accent: 'mint', hint: 'Letzte Tage' },
   { key: 'recentTerminations', label: 'Kündigungen', icon: UserMinus, href: '/terminations', permission: 'terminations:view', accent: 'rose', hint: 'Letzte Tage' },
 ]
@@ -229,27 +229,6 @@ function SectionHeader({
   )
 }
 
-function ProgressRow({ label, value, detail, color = '#d4d4d4' }: { label: string; value: number; detail: string; color?: string }) {
-  const width = Math.min(Math.max(value, 0), 100)
-  return (
-      <div>
-        <div className="flex items-center justify-between gap-3 mb-1.5">
-          <span className="text-[12.5px] text-[#c7c7cc] truncate">{label}</span>
-          <span className="text-[11.5px] text-[#98989d] tabular-nums font-medium shrink-0">{detail}</span>
-        </div>
-        <div className="h-[6px] bg-[#161617]/90 rounded-full overflow-hidden ring-1 ring-inset ring-white/[0.03]">
-          <div
-
-              className="h-full rounded-full"
-              style={{
-                width: `${width}%`,
-                backgroundColor: color,
-              }}
-          />
-        </div>
-      </div>
-  )
-}
 
 
 function notificationClass(severity: 'info' | 'warning' | 'error') {
@@ -454,9 +433,6 @@ export default function DashboardPage() {
   const trainingSummary = stats.totalTrainingAssignments > 0
       ? `${stats.completedTrainingAssignments} von ${stats.totalTrainingAssignments} erledigt`
       : 'Keine Ausbildungen zugewiesen'
-  const activeSummary = stats.currentAgents > 0
-      ? `${stats.activeAgents} von ${stats.currentAgents} einsatzbereit`
-      : 'Keine laufenden Agents'
 
   return (
       <div className="max-w-7xl mx-auto space-y-6 pb-4">
@@ -480,9 +456,6 @@ export default function DashboardPage() {
                 <h1 className="text-[26px] sm:text-[30px] font-semibold text-white tracking-[-0.025em] leading-tight">
                   {greeting}{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}.
                 </h1>
-                <p className="text-[13.5px] text-[#98989d] mt-1.5 max-w-xl leading-relaxed">
-                  {stats.currentAgents > 0 ? `${stats.activeAgents} von ${stats.currentAgents} Agents sind aktuell einsatzbereit.` : 'Aktuell sind keine Agents im System.'}
-                </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-[10px] border border-emerald-400/15 bg-emerald-400/[0.05]">
@@ -491,7 +464,7 @@ export default function DashboardPage() {
                   <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
                 </span>
                   <span className="text-[12px] text-emerald-300 font-medium tabular-nums">
-                  {stats.dutyTimes?.activeCount ?? 0} im Dienst
+                  {stats.dutyTimes?.activeCount ?? 0} aktuell im Dienst
                 </span>
                 </div>
                 <Button variant="outline" size="sm" onClick={refetch} className="shrink-0">
@@ -505,7 +478,7 @@ export default function DashboardPage() {
                     title={!user?.discordId && !canManageAbsences ? 'Dein Dashboard-User braucht eine Discord-ID.' : undefined}
                 >
                   <CalendarPlus size={13} strokeWidth={2} />
-                  Abmelden
+                   Abwesenheit melden
                 </Button>
               </div>
             </div>
@@ -651,19 +624,10 @@ export default function DashboardPage() {
           >
             <SectionHeader
                 icon={Activity}
-                title="Operative Übersicht"
-                description={`Aktuelle Lage für ${stats.currentAgents} aktive Agents`}
+                title="Ausbildung & Rangänderungen"
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-              <div className={cn(surfaceClass, 'p-4 flex items-center gap-4')}>
-                <RingProgress value={stats.readinessRate} color="#34d399" />
-                <div className="min-w-0">
-                  <p className="text-[11.5px] font-medium text-[#98989d] uppercase tracking-[0.08em]">Dienstbereit</p>
-                  <p className="text-[20px] font-semibold text-white tabular-nums leading-tight mt-0.5">{stats.activeAgents}</p>
-                  <p className="text-[11px] text-[#8e8e93] mt-0.5">{activeSummary}</p>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
               <div className={cn(surfaceClass, 'p-4 flex items-center gap-4')}>
                 <RingProgress value={stats.trainingCompletionRate} color="#d4d4d4" />
                 <div className="min-w-0">
@@ -705,21 +669,6 @@ export default function DashboardPage() {
                 </Link>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-              {stats.statusDistribution.map((status) => {
-                const percentage = stats.totalAgents > 0 ? Math.round((status.count / stats.totalAgents) * 100) : 0
-                const color = status.status === 'ACTIVE' ? '#34d399' : status.status === 'AWAY' ? '#38bdf8' : status.status === 'ON_LEAVE' ? '#a78bfa' : status.status === 'INACTIVE' ? '#fbbf24' : '#f87171'
-                return (
-                    <ProgressRow
-                        key={status.status}
-                        label={status.label}
-                        value={percentage}
-                        detail={`${status.count} · ${percentage}%`}
-                        color={color}
-                    />
-                )
-              })}
-            </div>
           </section>
 
           <section
@@ -757,10 +706,10 @@ export default function DashboardPage() {
 
               className={cn(panelClass, 'p-5 xl:col-span-5')}
           >
-            <SectionHeader icon={AlertTriangle} title="HR-Fokus" description="Abgemeldete und inaktive Agents" />
-            {stats.attentionAgents.length > 0 ? (
+            <SectionHeader icon={AlertTriangle} title="Inaktive Agents" action={<Link href="/agents?status=INACTIVE" className="text-[12px] text-[#c7c7cc] hover:text-white">Alle ansehen</Link>} />
+            {stats.attentionAgents.some((agent) => agent.status === 'INACTIVE') ? (
                 <div className="space-y-2">
-                  {stats.attentionAgents.map((agent) => (
+                  {stats.attentionAgents.filter((agent) => agent.status === 'INACTIVE').map((agent) => (
                       <Link
                           key={agent.id}
                           href={`/agents/${agent.id}`}
@@ -785,7 +734,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
             ) : (
-                <EmptyState inline icon={UserCheck} title="Keine abgemeldeten oder inaktiven Agents" />
+                <EmptyState inline icon={UserCheck} title="Keine inaktiven Agents" />
             )}
           </section>
         </div>

@@ -449,7 +449,7 @@ function MobileAgentCard({
           <span className={cn('h-[6px] w-[6px] rounded-full shrink-0', getStatusDot(agent.status))} />
           <span className="text-[11.5px] text-[#98989d]">{getStatusLabel(agent.status)}</span>
         </span>
-        <div className="col-span-2 flex items-center gap-2">
+        <div className="col-span-2 flex flex-wrap items-center gap-2">
           <DiscordMemberBadge agent={agent} compact />
           <span className="text-[11.5px] text-[#98989d]">
             Zuletzt online: {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
@@ -516,6 +516,8 @@ export default function AgentsPage() {
   const [rankFilter, setRankFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
   const [flagFilter, setFlagFilter] = useState('')
+  const [view, setView] = useUrlState('view', 'personnel', ['personnel', 'trainings'])
+  const [showEmptyRanks, setShowEmptyRanks] = useState(false)
   const [collapsedRanks, setCollapsedRanks] = useState<Set<string>>(new Set())
   const [movePending, setMovePending] = useState(false)
   const [pendingTrainingOverride, setPendingTrainingOverride] = useState<{
@@ -532,7 +534,9 @@ export default function AgentsPage() {
     if (!agents) return []
     return agents.filter((o) => {
       if (search && !matchesAgent(search, o)) return false
-      if (statusFilter && o.status !== statusFilter) return false
+      if (statusFilter === 'ABSENT') {
+        if (o.status !== 'AWAY' && o.status !== 'ON_LEAVE') return false
+      } else if (statusFilter && o.status !== statusFilter) return false
       if (rankFilter && o.rankId !== rankFilter) return false
       if (unitFilter) {
         const agentUnits = agentUnitKeys(o)
@@ -549,8 +553,7 @@ export default function AgentsPage() {
 
   const groupedByRank = useMemo(() => {
     const groups: Map<string, { rank: Rank; agents: Agent[] }> = new Map()
-    const showEmptyRanks = !search.trim() && !statusFilter && !unitFilter && !flagFilter
-    if (showEmptyRanks) {
+    if (showEmptyRanks && !search.trim() && !statusFilter && !unitFilter && !flagFilter) {
       for (const rank of ranks ?? []) {
         if (rankFilter && rank.id !== rankFilter) continue
         groups.set(rank.id, { rank, agents: [] })
@@ -570,7 +573,7 @@ export default function AgentsPage() {
       group.agents.sort((a, b) => compareBadgeNumbers(a.badgeNumber, b.badgeNumber))
     }
     return result
-  }, [filteredAgents, ranks, rankFilter, search, statusFilter, unitFilter, flagFilter])
+  }, [filteredAgents, ranks, rankFilter, search, statusFilter, unitFilter, flagFilter, showEmptyRanks])
 
   const allTrainings = useMemo(() => {
     if (!agents || agents.length === 0) return []
@@ -733,19 +736,20 @@ export default function AgentsPage() {
 
   const filterClass =
     'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1c1c1e] text-[#c7c7cc] border border-[#38383a]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
-  const totalActive = agents?.filter((o) => o.status === 'ACTIVE').length || 0
-  const totalAway = agents?.filter((o) => o.status === 'AWAY' || o.status === 'ON_LEAVE').length || 0
-  const totalFlagged = agents?.filter((o) => o.flag).length || 0
+  const filtersActive = Boolean(search || statusFilter || rankFilter || unitFilter || flagFilter)
+  const visibleTrainings = view === 'trainings' ? allTrainings : []
+  const resetFilters = () => {
+    setSearch('')
+    setStatusFilter('')
+    setRankFilter('')
+    setUnitFilter('')
+    setFlagFilter('')
+  }
 
   return (
     <div className="w-full min-w-0">
       <PageHeader
         title="Agents"
-        description={
-          canMove
-            ? `${filteredAgents.length} Mitarbeiter · ${totalActive} aktiv · ${totalAway} abgemeldet${totalFlagged ? ` · ${totalFlagged} markiert` : ''} · Ziehen: Rang wechseln`
-            : `${filteredAgents.length} Mitarbeiter · ${totalActive} aktiv · ${totalAway} abgemeldet${totalFlagged ? ` · ${totalFlagged} markiert` : ''}`
-        }
         action={canEdit ? (
           <Link href="/agents/new" className="block sm:inline-block">
             <Button size="sm" disabled={movePending} className="w-full sm:w-auto">
@@ -756,6 +760,21 @@ export default function AgentsPage() {
         ) : undefined}
       />
 
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div role="group" aria-label="Agent-Ansicht" className="inline-flex rounded-[8px] bg-[#1c1c1e] p-1">
+          {[{ value: 'personnel', label: 'Personal' }, { value: 'trainings', label: 'Ausbildungen' }].map((item) => (
+            <button key={item.value} type="button" aria-pressed={view === item.value} onClick={() => setView(item.value)}
+              className={cn('rounded-[6px] px-3 py-1.5 text-[13px] focus-visible:outline-2 focus-visible:outline-[#0a84ff]', view === item.value ? 'bg-[#48484a] text-white' : 'text-[#98989d] hover:text-white')}>
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <label className="flex items-center gap-2 text-[12px] text-[#98989d]">
+          <input type="checkbox" checked={showEmptyRanks} onChange={(event) => setShowEmptyRanks(event.target.checked)} className="accent-[#0a84ff]" />
+          Leere Ränge anzeigen
+        </label>
+      </div>
+
       <div className="flex flex-col gap-2 mb-5 sm:mb-6">
         <div className="relative">
           <Search
@@ -764,6 +783,7 @@ export default function AgentsPage() {
             strokeWidth={1.75}
           />
           <input
+            aria-label="Agents suchen"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Suche nach Name, Dienstnummer oder Discord-ID..."
@@ -779,6 +799,7 @@ export default function AgentsPage() {
             options={[
               { value: '', label: 'Alle Status' },
               { value: 'ACTIVE', label: 'Aktiv' },
+              { value: 'ABSENT', label: 'Abgemeldet & beurlaubt' },
               { value: 'AWAY', label: 'Abgemeldet' },
               { value: 'ON_LEAVE', label: 'Beurlaubt' },
               { value: 'INACTIVE', label: 'Inaktiv' },
@@ -819,6 +840,11 @@ export default function AgentsPage() {
         </div>
       </div>
 
+      <div className="mb-3 flex min-h-8 flex-wrap items-center justify-between gap-2 text-[12px] text-[#98989d]">
+        <span role="status">{filteredAgents.length} von {agents?.length ?? 0} Agents</span>
+        {filtersActive && <Button variant="secondary" size="sm" onClick={resetFilters}>Filter zurücksetzen</Button>}
+      </div>
+
       <DndContext
         sensors={sensors}
         onDragEnd={canMove ? handleDragEnd : () => {}}
@@ -828,7 +854,7 @@ export default function AgentsPage() {
           {groupedByRank.length === 0 && (
             <div className="text-center py-24">
               <Users size={28} className="mx-auto text-[#8e8e93] mb-3" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#98989d]">Keine Ränge gefunden</p>
+              <p className="text-[13px] text-[#98989d]">{filtersActive ? 'Keine Agents passen zu den Filtern' : 'Noch keine Agents vorhanden'}</p>
             </div>
           )}
 
@@ -840,6 +866,7 @@ export default function AgentsPage() {
                   <button
                     type="button"
                     onClick={() => toggleRankCollapse(rank.id)}
+                    aria-expanded={!isCollapsed}
                     className="w-full flex items-center gap-2.5 px-3 sm:px-4 py-2 rounded-[8px] hover:bg-[#2c2c2e] transition-colors group"
                   >
                     <ChevronDown
@@ -868,15 +895,15 @@ export default function AgentsPage() {
                         className="overflow-hidden"
                       >
                         {/* Desktop / tablet: table view */}
-                        <div className="hidden lg:block glass-panel rounded-[10px] overflow-hidden mt-1 mb-2">
-                          <table className="w-full table-fixed">
+                        <div className="hidden lg:block glass-panel rounded-[8px] overflow-x-auto mt-1 mb-2">
+                          <table className="w-full table-fixed" style={{ minWidth: 900 + visibleTrainings.length * 72 }}>
                             <thead>
                               <tr>
                                 <th className="w-[3px] p-0" />
                                 <th className="w-[28px] px-1 py-2.5" />
                                 <th className="w-[58px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">DN</th>
-                                <th className="w-[170px] px-3 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Name</th>
-                                {allTrainings.map((t) => (
+                                <th className="w-[220px] px-3 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Name</th>
+                                {visibleTrainings.map((t) => (
                                   <th
                                     key={t.id}
                                     className="px-1.5 py-2.5 text-center text-[11px] font-medium text-[#8e8e93]"
@@ -888,7 +915,7 @@ export default function AgentsPage() {
                                   </th>
                                 ))}
                                 <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Unit</th>
-                                <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Status</th>
+                                <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Personalstatus</th>
                                 <th className="w-[112px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Discord</th>
                                 <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Zuletzt Online</th>
                                 <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Einstellung</th>
@@ -906,7 +933,7 @@ export default function AgentsPage() {
                                     canDrag={canMove}
                                     canEdit={canEdit}
                                     canEditTrainings={canEditTrainings}
-                                    allTrainings={allTrainings}
+                                    allTrainings={visibleTrainings}
                                     unitsByKey={unitsByKey}
                                     rowIndex={i}
                                     onTrainToggle={handleTrainingToggle}
@@ -915,7 +942,7 @@ export default function AgentsPage() {
                                 ))
                               ) : (
                                 <tr>
-                                  <td colSpan={10 + allTrainings.length} className="px-4 py-4 text-center text-[12.5px] text-[#8e8e93]">
+                                  <td colSpan={10 + visibleTrainings.length} className="px-4 py-4 text-center text-[12.5px] text-[#8e8e93]">
                                     — Kein Agent hat diesen Rang
                                   </td>
                                 </tr>
@@ -931,7 +958,7 @@ export default function AgentsPage() {
                               <MobileAgentCard
                                 key={agent.id}
                                 agent={agent}
-                                allTrainings={allTrainings}
+                                allTrainings={visibleTrainings}
                                 unitsByKey={unitsByKey}
                                 canEdit={canEdit}
                                 canEditTrainings={canEditTrainings}

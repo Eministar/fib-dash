@@ -204,7 +204,7 @@ export async function GET() {
   })
 
   const attentionAgents = agents
-    .filter((agent) => agent.status === 'AWAY' || agent.status === 'INACTIVE')
+    .filter((agent) => agent.status === 'INACTIVE')
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
     .slice(0, 6)
     .map((agent) => ({
