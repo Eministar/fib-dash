@@ -254,6 +254,7 @@ function DraggableAgentRow({
   allTrainings,
   unitsByKey,
   rowIndex,
+  showActivity,
   onTrainToggle,
   onFlagChange,
 }: {
@@ -264,6 +265,7 @@ function DraggableAgentRow({
   allTrainings: Training[]
   unitsByKey: Map<string, Unit>
   rowIndex: number
+  showActivity: boolean
   onTrainToggle: (id: string, trainingId: string, done: boolean) => void
   onFlagChange: (id: string, flag: string | null) => void
 }) {
@@ -359,13 +361,13 @@ function DraggableAgentRow({
           <span className="text-[12px] text-[#98989d]">{getStatusLabel(agent.status)}</span>
         </span>
       </td>
-      <td className="px-2 py-2.5 whitespace-nowrap">
+      {showActivity && <><td className="px-2 py-2.5 whitespace-nowrap">
         <DiscordMemberBadge agent={agent} compact />
       </td>
       <td className="px-2 py-2.5 text-[12px] text-[#98989d]" title={agent.lastOnline ? formatDateTime(agent.lastOnline) : 'Nie online gewesen'}>
         {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
       </td>
-      <td className="px-2 py-2.5 text-[12px] text-[#98989d]">{formatDate(agent.hireDate)}</td>
+      <td className="px-2 py-2.5 text-[12px] text-[#98989d]">{formatDate(agent.hireDate)}</td></>}
       <td className="px-1.5 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1.5">
           <FlagButton
@@ -382,6 +384,7 @@ function DraggableAgentRow({
 
 function MobileAgentCard({
   agent,
+  showActivity,
   allTrainings,
   unitsByKey,
   canEdit,
@@ -390,6 +393,7 @@ function MobileAgentCard({
   onFlagChange,
 }: {
   agent: Agent
+  showActivity: boolean
   allTrainings: Training[]
   unitsByKey: Map<string, Unit>
   canEdit: boolean
@@ -449,14 +453,14 @@ function MobileAgentCard({
           <span className={cn('h-[6px] w-[6px] rounded-full shrink-0', getStatusDot(agent.status))} />
           <span className="text-[11.5px] text-[#98989d]">{getStatusLabel(agent.status)}</span>
         </span>
-        <div className="col-span-2 flex flex-wrap items-center gap-2">
+        {showActivity && <div className="col-span-2 flex flex-wrap items-center gap-2">
           <DiscordMemberBadge agent={agent} compact />
           <span className="text-[11.5px] text-[#98989d]">
             Zuletzt online: {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
           </span>
           <span className="text-[11.5px] text-[#98989d]">{formatDate(agent.hireDate)}</span>
           {agent.notes && <StickyNote size={11} className="text-[#8e8e93]" strokeWidth={1.75} />}
-        </div>
+        </div>}
       </div>
 
       {allTrainings.length > 0 && (
@@ -516,8 +520,7 @@ export default function AgentsPage() {
   const [rankFilter, setRankFilter] = useState('')
   const [unitFilter, setUnitFilter] = useState('')
   const [flagFilter, setFlagFilter] = useState('')
-  const [view, setView] = useUrlState('view', 'personnel', ['personnel', 'trainings'])
-  const [showEmptyRanks, setShowEmptyRanks] = useState(false)
+  const [view, setView] = useUrlState('view', 'personnel', ['personnel', 'trainings', 'activity', 'all'])
   const [collapsedRanks, setCollapsedRanks] = useState<Set<string>>(new Set())
   const [movePending, setMovePending] = useState(false)
   const [pendingTrainingOverride, setPendingTrainingOverride] = useState<{
@@ -553,7 +556,7 @@ export default function AgentsPage() {
 
   const groupedByRank = useMemo(() => {
     const groups: Map<string, { rank: Rank; agents: Agent[] }> = new Map()
-    if (showEmptyRanks && !search.trim() && !statusFilter && !unitFilter && !flagFilter) {
+    if (!search.trim() && !statusFilter && !unitFilter && !flagFilter) {
       for (const rank of ranks ?? []) {
         if (rankFilter && rank.id !== rankFilter) continue
         groups.set(rank.id, { rank, agents: [] })
@@ -573,7 +576,7 @@ export default function AgentsPage() {
       group.agents.sort((a, b) => compareBadgeNumbers(a.badgeNumber, b.badgeNumber))
     }
     return result
-  }, [filteredAgents, ranks, rankFilter, search, statusFilter, unitFilter, flagFilter, showEmptyRanks])
+  }, [filteredAgents, ranks, rankFilter, search, statusFilter, unitFilter, flagFilter])
 
   const allTrainings = useMemo(() => {
     if (!agents || agents.length === 0) return []
@@ -737,14 +740,8 @@ export default function AgentsPage() {
   const filterClass =
     'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1c1c1e] text-[#c7c7cc] border border-[#38383a]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
   const filtersActive = Boolean(search || statusFilter || rankFilter || unitFilter || flagFilter)
-  const visibleTrainings = view === 'trainings' ? allTrainings : []
-  const resetFilters = () => {
-    setSearch('')
-    setStatusFilter('')
-    setRankFilter('')
-    setUnitFilter('')
-    setFlagFilter('')
-  }
+  const visibleTrainings = view === 'trainings' || view === 'all' ? allTrainings : []
+  const showActivity = view === 'activity' || view === 'all'
 
   return (
     <div className="w-full min-w-0">
@@ -761,18 +758,14 @@ export default function AgentsPage() {
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div role="group" aria-label="Agent-Ansicht" className="inline-flex rounded-[8px] bg-[#1c1c1e] p-1">
-          {[{ value: 'personnel', label: 'Personal' }, { value: 'trainings', label: 'Ausbildungen' }].map((item) => (
+        <div role="group" aria-label="Agent-Ansicht" className="inline-flex max-w-full flex-wrap rounded-[8px] bg-[#1c1c1e] p-1">
+          {[{ value: 'personnel', label: 'Personal' }, { value: 'trainings', label: 'Ausbildungen' }, { value: 'activity', label: 'Aktivität & Discord' }, { value: 'all', label: 'Gesamtansicht' }].map((item) => (
             <button key={item.value} type="button" aria-pressed={view === item.value} onClick={() => setView(item.value)}
               className={cn('rounded-[6px] px-3 py-1.5 text-[13px] focus-visible:outline-2 focus-visible:outline-[#0a84ff]', view === item.value ? 'bg-[#48484a] text-white' : 'text-[#98989d] hover:text-white')}>
               {item.label}
             </button>
           ))}
         </div>
-        <label className="flex items-center gap-2 text-[12px] text-[#98989d]">
-          <input type="checkbox" checked={showEmptyRanks} onChange={(event) => setShowEmptyRanks(event.target.checked)} className="accent-[#0a84ff]" />
-          Leere Ränge anzeigen
-        </label>
       </div>
 
       <div className="flex flex-col gap-2 mb-5 sm:mb-6">
@@ -842,7 +835,6 @@ export default function AgentsPage() {
 
       <div className="mb-3 flex min-h-8 flex-wrap items-center justify-between gap-2 text-[12px] text-[#98989d]">
         <span role="status">{filteredAgents.length} von {agents?.length ?? 0} Agents</span>
-        {filtersActive && <Button variant="secondary" size="sm" onClick={resetFilters}>Filter zurücksetzen</Button>}
       </div>
 
       <DndContext
@@ -896,7 +888,7 @@ export default function AgentsPage() {
                       >
                         {/* Desktop / tablet: table view */}
                         <div className="hidden lg:block glass-panel rounded-[8px] overflow-x-auto mt-1 mb-2">
-                          <table className="w-full table-fixed" style={{ minWidth: 900 + visibleTrainings.length * 72 }}>
+                          <table className="w-full table-fixed" style={{ minWidth: (showActivity ? 920 : 600) + visibleTrainings.length * 72 }}>
                             <thead>
                               <tr>
                                 <th className="w-[3px] p-0" />
@@ -916,9 +908,9 @@ export default function AgentsPage() {
                                 ))}
                                 <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Unit</th>
                                 <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Personalstatus</th>
-                                <th className="w-[112px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Discord</th>
+                                {showActivity && <><th className="w-[112px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Discord</th>
                                 <th className="w-[104px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Zuletzt Online</th>
-                                <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Einstellung</th>
+                                <th className="w-[96px] px-2 py-2.5 text-left text-[11px] font-medium text-[#8e8e93]">Einstellung</th></>}
                                 <th className="w-[44px] px-1.5 py-2.5 text-center text-[11px] font-medium text-[#8e8e93]">
                                   <Flag size={11} className="inline" strokeWidth={1.75} />
                                 </th>
@@ -936,13 +928,14 @@ export default function AgentsPage() {
                                     allTrainings={visibleTrainings}
                                     unitsByKey={unitsByKey}
                                     rowIndex={i}
+                                    showActivity={showActivity}
                                     onTrainToggle={handleTrainingToggle}
                                     onFlagChange={handleFlagChange}
                                   />
                                 ))
                               ) : (
                                 <tr>
-                                  <td colSpan={10 + visibleTrainings.length} className="px-4 py-4 text-center text-[12.5px] text-[#8e8e93]">
+                                  <td colSpan={7 + (showActivity ? 3 : 0) + visibleTrainings.length} className="px-4 py-4 text-center text-[12.5px] text-[#8e8e93]">
                                     — Kein Agent hat diesen Rang
                                   </td>
                                 </tr>
@@ -956,6 +949,7 @@ export default function AgentsPage() {
                           {groupAgents.length > 0 ? (
                             groupAgents.map((agent) => (
                               <MobileAgentCard
+                                showActivity={showActivity}
                                 key={agent.id}
                                 agent={agent}
                                 allTrainings={visibleTrainings}
