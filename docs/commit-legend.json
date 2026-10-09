@@ -1,7 +1,34 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-10-04T19:11:28.244Z",
+  "generatedAt": "2026-10-09T21:25:08.119Z",
   "entries": [
+    {
+      "buildId": "build-21821094fc",
+      "commit": "21821094fc58d02beadc98c1143c26d890b5df5a",
+      "shortCommit": "21821094fc",
+      "subject": "Merge remote-tracking branch 'origin/main'",
+      "author": "Eministar",
+      "date": "2026-10-09T21:24:23Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/21821094fc58d02beadc98c1143c26d890b5df5a"
+    },
+    {
+      "buildId": "build-64a7ea3186",
+      "commit": "64a7ea31868a41b7dfdeda5935661d654fb6a599",
+      "shortCommit": "64a7ea3186",
+      "subject": "feat: improve JWT secret handling and enhance portal session management",
+      "author": "Eministar",
+      "date": "2026-10-09T21:23:38Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/64a7ea31868a41b7dfdeda5935661d654fb6a599"
+    },
+    {
+      "buildId": "build-aaffe03466",
+      "commit": "aaffe034669547fc99f2d11106b5d8b1fb767e1c",
+      "shortCommit": "aaffe03466",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-10-04T19:11:28Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/aaffe034669547fc99f2d11106b5d8b1fb767e1c"
+    },
     {
       "buildId": "build-647121abea",
       "commit": "647121abead2c875a63c4fb2da2ee9aaa8bee4db",
