@@ -57,6 +57,7 @@ import { AgentRecordsPanel } from '@/components/agents/agent-records-panel'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { AgentAchievements } from '@/components/agents/agent-achievements'
 import { usePageAction } from '@/hooks/use-page-action'
+import { TabBar } from '@/components/ui/tab-bar'
 
 interface Rank { id: string; name: string; sortOrder: number; internalNumber: number | null; color: string }
 interface Unit { id: string; key: string; name: string; color: string; active: boolean }
@@ -359,6 +360,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const openRankChangeLists = rankChangeLists?.filter(l => l.status === 'DRAFT' && !l.submissionsClosed) ?? []
 
   const [editingMode, setEditingMode] = useState<'full' | 'units' | null>(null)
+  const [detailTab, setDetailTab] = useState('profile')
   const [deleteModal, setDeleteModal] = useState(false)
   const [terminateModal, setTerminateModal] = useState(false)
   const [sanctionModal, setSanctionModal] = useState(false)
@@ -404,6 +406,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const unitOnlyEditing = editingMode === 'units'
 
   const startEditing = (mode: 'full' | 'units' = 'full') => {
+    setDetailTab('profile')
     if (!agent) return
     setForm({
       badgeNumber: agent.badgeNumber,
@@ -919,13 +922,21 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <TabBar label="Agent-Bereiche" active={detailTab} onSelect={setDetailTab} tabs={[
+        { id: 'profile', label: 'Profil' },
+        { id: 'activity', label: 'Dienst & Abwesenheit' },
+        { id: 'career', label: 'Ausbildung & Laufbahn' },
+        { id: 'records', label: 'Dokumente & Notizen' },
+        { id: 'management', label: 'Verwaltung', count: openSanctions.length || undefined },
+      ]} />
+
+      <div className="space-y-4">
         {/* Left column: main info */}
-        <div className="lg:col-span-2 space-y-4">
-          {hasPermission(user, 'codenames:view') && <div className="glass-panel-elevated rounded-[14px] p-5"><CodenameHistory agentId={id} /></div>}
+        <div className="contents">
+          {hasPermission(user, 'codenames:view') && <div hidden={detailTab !== 'profile'} className="border-b border-[#38383a] py-5"><CodenameHistory agentId={id} /></div>}
           {/* Personal data */}
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-            className="glass-panel-elevated rounded-[14px] p-5">
+          <motion.div hidden={detailTab !== 'profile'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+            className="border-b border-[#38383a] py-5">
             <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Persönliche Daten</h3>
             {editing ? (
               <div className="space-y-4">
@@ -1060,8 +1071,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             )}
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
-            className="glass-panel-elevated rounded-[14px] p-5">
+          <motion.div hidden={detailTab !== 'activity'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
+            className="border-b border-[#38383a] py-5">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee]">Dienstzeiten</h3>
               <Link href="/duty-times" className="text-[12px] text-[#d4d4d4] hover:text-white transition-colors">Übersicht</Link>
@@ -1118,8 +1129,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             )}
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.04 }}
-            className="glass-panel-elevated rounded-[14px] p-5">
+          <motion.div hidden={detailTab !== 'activity'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.04 }}
+            className="border-b border-[#38383a] py-5">
             <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Spielzeit</h3>
             <PlaytimeChart daily={agent.playtime?.daily ?? []} />
             <div className="silver-line my-4" />
@@ -1162,8 +1173,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
-            className="glass-panel-elevated rounded-[14px] p-5">
+          <motion.div hidden={detailTab !== 'activity'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
+            className="border-b border-[#38383a] py-5">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee]">Abmeldungen</h3>
               {canEditAgent && agent.status !== 'TERMINATED' && (
@@ -1208,8 +1219,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           </motion.div>
 
           {/* Trainings -- toggleable directly */}
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
-            className="glass-panel-elevated rounded-[14px] p-5">
+          <motion.div hidden={detailTab !== 'career'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
+            className="border-b border-[#38383a] py-5">
             <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Ausbildungen</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {agent.trainings?.map((t) => (
@@ -1245,8 +1256,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
           {/* Promotion history */}
           {agent.promotionLogs?.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
-              className="glass-panel-elevated rounded-[14px] p-5">
+            <motion.div hidden={detailTab !== 'career'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
+              className="border-b border-[#38383a] py-5">
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Ranghistorie</h3>
               <div className="space-y-3">
                 {agent.promotionLogs.map((log) => (
@@ -1276,8 +1287,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           )}
 
           {canViewContracts && (
-            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.105 }}
-              className="glass-panel-elevated rounded-[14px] p-5">
+            <motion.div hidden={detailTab !== 'records'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.105 }}
+              className="border-b border-[#38383a] py-5">
               <ContractSection
                 contracts={agent.contracts ?? []}
                 application={agent.jobApplication ?? null}
@@ -1292,8 +1303,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           )}
 
           {openSanctions.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.11 }}
-              className="glass-panel-elevated rounded-[14px] p-5">
+            <motion.div hidden={detailTab !== 'management'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.11 }}
+              className="border-b border-[#38383a] py-5">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h3 className="text-[13.5px] font-semibold text-[#eee]">Laufende Sanktionen</h3>
                 <span className="rounded-full border border-[#b45309]/40 bg-[#1d1608]/70 px-2.5 py-1 text-[11px] font-medium text-[#fbbf24]">
@@ -1317,8 +1328,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           )}
 
           {agent.sanctions?.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }}
-              className="glass-panel-elevated rounded-[14px] p-5">
+            <motion.div hidden={detailTab !== 'management'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }}
+              className="border-b border-[#38383a] py-5">
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Sanktionshistorie</h3>
               <div className="space-y-2.5">
                 {agent.sanctions.map((sanction) => (
@@ -1334,12 +1345,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* Right column: actions + notes */}
-        <div className="space-y-4">
-          {!editing && <AgentAchievements agentId={id} />}
+        <div className="contents">
+          {!editing && <div hidden={detailTab !== 'career'}><AgentAchievements agentId={id} /></div>}
           {/* Quick actions */}
           {!editing && (
-            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
-              className="glass-panel-elevated rounded-[14px] p-5">
+            <motion.div hidden={detailTab !== 'management'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
+              className="border-b border-[#38383a] py-5">
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-3">Markierung</h3>
               <div className="mb-4">
                 {canEditAgent ? (
@@ -1432,11 +1443,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             </motion.div>
           )}
 
-          <AgentRecordsPanel agentId={agent.id} canManage={canEditAgent} />
+          <div hidden={detailTab !== 'records'}><AgentRecordsPanel agentId={agent.id} canManage={canEditAgent} /></div>
 
           {/* Notes */}
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
-            className="glass-panel-elevated rounded-[14px] p-5">
+          <motion.div hidden={detailTab !== 'records'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
+            className="border-b border-[#38383a] py-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-[13.5px] font-semibold text-[#eee]">Notizen</h3>
               {canManageNotes && (
