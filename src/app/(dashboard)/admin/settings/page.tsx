@@ -62,6 +62,8 @@ interface DiscordConfigResponse {
     absenceStatusChannelId: string
     absenceStatusMessageId: string
     humanResourcesRoleId: string
+    clipsCategoryId: string
+    clipsAnalystRoleId: string
     bodycamViewerRoleId: string
     hirePingChannelId: string
     promotionBlockRoleId: string
@@ -79,6 +81,7 @@ interface DiscordConfigResponse {
   }
   roles: DiscordRole[]
   channels: DiscordChannel[]
+  categories: DiscordChannel[]
   ranks: DiscordRank[]
   trainings: DiscordTraining[]
   units: DiscordUnit[]
@@ -151,6 +154,8 @@ export default function SettingsPage() {
     absenceStatusChannelId: '',
     absenceStatusMessageId: '',
     humanResourcesRoleId: '',
+    clipsCategoryId: '',
+    clipsAnalystRoleId: '',
     bodycamViewerRoleId: '',
     hirePingChannelId: '',
     promotionBlockRoleId: '',
@@ -756,6 +761,27 @@ export default function SettingsPage() {
                     options={channelOptions}
                 />
                 <p className="mt-1.5 text-[11px] text-[#8e8e93]">Bei einem neu angelegten Agent wird er selbst einmal kurz erwähnt; die Nachricht wird nach etwa einer Sekunde wieder gelöscht. Ohne hinterlegte Discord-ID des Agents passiert nichts. Leer bedeutet deaktiviert.</p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Clips-Channels: Kategorie"
+                    value={discordForm.clipsCategoryId}
+                    onValueChange={(clipsCategoryId) => setDiscordForm({ ...discordForm, clipsCategoryId })}
+                    options={[
+                      { value: '', label: 'Kategorie auswählen' },
+                      ...(discordData?.categories?.map(category => ({ value: category.id, label: category.name || category.id })) || []),
+                    ]}
+                />
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Neue Clips-Channels werden in dieser Kategorie erstellt. Beim Speichern werden auch bestehende Clips-Channels dorthin verschoben. Discord erlaubt maximal 50 Channels pro Kategorie.</p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Clips-Channels: Analysten-Rolle"
+                    value={discordForm.clipsAnalystRoleId}
+                    onValueChange={(clipsAnalystRoleId) => setDiscordForm({ ...discordForm, clipsAnalystRoleId })}
+                    options={roleOptions}
+                />
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Der Agent-Sync erstellt für jeden Agent mit Discord-Verknüpfung einen privaten 🔍│nachname-clips Channel. Der Agent und diese Rolle dürfen Videos hochladen und den Verlauf lesen. Alle Channels liegen in der oben ausgewählten Kategorie. Der Bot benötigt „Kanäle verwalten“ und „Rollen verwalten“. Speichern startet den Sync für alle Agents; neue Agents werden automatisch berücksichtigt. Leer pausiert die Channel-Synchronisierung; vorhandene Rechte bleiben bestehen.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select

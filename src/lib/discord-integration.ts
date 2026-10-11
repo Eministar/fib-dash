@@ -1,3 +1,4 @@
+import { syncAgentClipChannel } from './discord-clips'
 ﻿import { prisma } from './prisma'
 import { agentUnitKeys } from './agent-units'
 import { formatDuration, getDutyTimesSnapshot } from './duty-times'
@@ -69,6 +70,8 @@ type DiscordGuildMember = {
 
 export type DiscordConfig = {
   hirePingChannelId: string
+  clipsCategoryId: string
+  clipsAnalystRoleId: string
   bodycamViewerRoleId: string
   photoCatalogChannelId: string
   codenameBoardChannelId: string
@@ -201,6 +204,8 @@ const API_BASE = 'https://discord.com/api/v10'
 
 export const DISCORD_SETTING_KEYS = {
   hirePingChannelId: 'discord.hirePingChannelId',
+  clipsCategoryId: 'discord.clipsCategoryId',
+  clipsAnalystRoleId: 'discord.clipsAnalystRoleId',
   bodycamViewerRoleId: 'discord.bodycamViewerRoleId',
   photoCatalogChannelId: 'discord.photoCatalogChannelId',
   codenameBoardChannelId: 'discord.codenameBoardChannelId',
@@ -859,6 +864,8 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
       envInvestigationsChannelId(),
       map[DISCORD_SETTING_KEYS.investigationsChannelId],
     ),
+    clipsCategoryId: map[DISCORD_SETTING_KEYS.clipsCategoryId] || '',
+    clipsAnalystRoleId: envFirst(process.env.DISCORD_CLIPS_ANALYST_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.clipsAnalystRoleId]),
     bodycamViewerRoleId: envFirst(process.env.DISCORD_BODYCAM_VIEWER_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.bodycamViewerRoleId]),
     hirePingChannelId: envFirst(process.env.DISCORD_HIRE_PING_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.hirePingChannelId]),
     photoCatalogChannelId: envFirst(process.env.DISCORD_PHOTO_CATALOG_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.photoCatalogChannelId]),
@@ -894,6 +901,8 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
 
   if (input.codenameBoardChannelId !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardChannelId] = input.codenameBoardChannelId.trim()
   if (input.photoCatalogChannelId !== undefined) data[DISCORD_SETTING_KEYS.photoCatalogChannelId] = input.photoCatalogChannelId.trim()
+  if (input.clipsCategoryId !== undefined) data[DISCORD_SETTING_KEYS.clipsCategoryId] = input.clipsCategoryId.trim()
+  if (input.clipsAnalystRoleId !== undefined) data[DISCORD_SETTING_KEYS.clipsAnalystRoleId] = input.clipsAnalystRoleId.trim()
   if (input.bodycamViewerRoleId !== undefined) data[DISCORD_SETTING_KEYS.bodycamViewerRoleId] = input.bodycamViewerRoleId.trim()
   if (input.hirePingChannelId !== undefined) data[DISCORD_SETTING_KEYS.hirePingChannelId] = input.hirePingChannelId.trim()
   if (input.codenameBoardMessageIds !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardMessageIds] = JSON.stringify(cleanRoleIds(input.codenameBoardMessageIds))
@@ -1378,6 +1387,7 @@ export async function syncAgentDiscordRoles(agentId: string, mode: 'sync' | 'rem
   if (mode === 'sync' && !member) return
 
   await syncAgentDiscordMember(agent, config, mode, mode === 'remove-all' ? undefined : member)
+  await syncAgentClipChannel(discordFetch, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
 }
 
 export async function syncFormerAgentDiscordMember(agent: AgentForDiscord) {
@@ -1387,6 +1397,7 @@ export async function syncFormerAgentDiscordMember(agent: AgentForDiscord) {
   if (!config.guildId || !botToken()) return
 
   await syncAgentDiscordMember(agent, config, 'remove-all')
+  await syncAgentClipChannel(discordFetch, config.guildId, config.clipsAnalystRoleId, agent, true, config.clipsCategoryId)
 }
 
 export async function syncAllAgentDiscordRoles(options?: {
@@ -1471,6 +1482,7 @@ export async function syncAllAgentDiscordRoles(options?: {
           mode === 'remove-all' ? undefined : member,
           options?.extraManagedRoleIds,
         )
+        await syncAgentClipChannel(discordFetch, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
       }
       synced++
       await emitProgress('syncing', agentLabel, `Fertig: ${agentLabel}`)
@@ -2529,4 +2541,10 @@ export async function postDiscordChannelMessage(channelId: string, content: stri
 export async function getDiscordPhotoMessages(channelId: string, before?: string) {
   if (!/^\d{17,22}$/.test(channelId) || (before && !/^\d{17,22}$/.test(before))) throw new Error('Ungültige Discord-Channel-ID')
   return discordFetch<DiscordPhotoMessage[]>(`/channels/${channelId}/messages?limit=100${before ? `&before=${before}` : ''}`)
+}
+
+export async function getDiscordGuildCategories() {
+  const config = await getDiscordConfig()
+  if (!config.guildId || !botToken()) return []
+  return (await discordFetch<DiscordChannel[]>(`/guilds/${config.guildId}/channels`)).filter(channel => channel.type === 4)
 }

@@ -5,6 +5,7 @@ import { success, error, unauthorized } from '@/lib/api-response'
 import { hasPermission } from '@/lib/permissions'
 import {
   getDiscordConfig,
+  getDiscordGuildCategories,
   getDiscordGuildChannels,
   getDiscordGuildRoles,
   invalidateDiscordCache,
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
     await requireAuth(['ADMIN'], ['settings:manage', 'ranks:manage', 'trainings:manage', 'units:manage'])
 
     const config = await getDiscordConfig()
-    const [rolesResult, channelsResult, ranks, trainings, units, userGroups] = await Promise.all([
+    const [rolesResult, channelsResult, ranks, trainings, units, userGroups, categoriesResult] = await Promise.all([
       getDiscordGuildRoles(config.guildId).then((roles) => ({ data: roles, error: null as string | null })).catch((e: unknown) => ({
         data: [],
         error: e instanceof Error ? e.message : 'Discord-Rollen konnten nicht geladen werden',
@@ -59,6 +60,7 @@ export async function GET(req: NextRequest) {
         select: { key: true, name: true },
       }),
       prisma.userGroup.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+      getDiscordGuildCategories().then(data => ({ data, error: null as string | null })).catch((cause: unknown) => ({ data: [], error: cause instanceof Error ? cause.message : 'Kategorien konnten nicht geladen werden' })),
     ])
 
     return success({
@@ -66,6 +68,7 @@ export async function GET(req: NextRequest) {
       botConfigured: !!(process.env.DISCORD_BOT_TOKEN || process.env.FIB_DISCORD_BOT_TOKEN),
       roles: rolesResult.data,
       channels: channelsResult.data,
+      categories: categoriesResult.data,
       ranks,
       trainings,
       units,
@@ -81,7 +84,7 @@ export async function GET(req: NextRequest) {
         dutyAdminLogConfigured: !!config.dutyAdminLogChannelId,
         absenceStatusChannelConfigured: !!config.absenceStatusChannelId,
         rolesError: rolesResult.error,
-        channelsError: channelsResult.error,
+        channelsError: channelsResult.error || categoriesResult.error,
       },
     })
   } catch (e: unknown) {
@@ -102,6 +105,8 @@ export async function POST(req: NextRequest) {
     invalidateDiscordCache()
     await saveDiscordConfig({
       hirePingChannelId: canManageSettings && typeof body.hirePingChannelId === 'string' ? body.hirePingChannelId : undefined,
+      clipsCategoryId: canManageSettings && typeof body.clipsCategoryId === 'string' ? body.clipsCategoryId : undefined,
+      clipsAnalystRoleId: canManageSettings && typeof body.clipsAnalystRoleId === 'string' ? body.clipsAnalystRoleId : undefined,
       bodycamViewerRoleId: canManageSettings && typeof body.bodycamViewerRoleId === 'string' ? body.bodycamViewerRoleId : undefined,
       photoCatalogChannelId: canManageSettings && typeof body.photoCatalogChannelId === 'string' ? body.photoCatalogChannelId : undefined,
       codenameBoardChannelId: canManageSettings && typeof body.codenameBoardChannelId === 'string' ? body.codenameBoardChannelId : undefined,
