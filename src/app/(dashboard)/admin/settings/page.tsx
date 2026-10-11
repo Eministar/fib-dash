@@ -781,7 +781,7 @@ export default function SettingsPage() {
                     onValueChange={(clipsAnalystRoleId) => setDiscordForm({ ...discordForm, clipsAnalystRoleId })}
                     options={roleOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Der Agent-Sync erstellt für jeden Agent mit Discord-Verknüpfung einen privaten 🔍│nachname-clips Channel. Der Agent und diese Rolle dürfen Videos hochladen und den Verlauf lesen. Alle Channels liegen in der oben ausgewählten Kategorie. Der Bot benötigt „Kanäle verwalten“ und „Rollen verwalten“. Speichern startet den Sync für alle Agents; neue Agents werden automatisch berücksichtigt. Leer pausiert die Channel-Synchronisierung; vorhandene Rechte bleiben bestehen.</p>
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Der Agent-Sync erstellt für jeden Agent mit Discord-Verknüpfung einen privaten 🔍│nachname-clips Channel. Der Agent und diese Rolle dürfen Videos hochladen und den Verlauf lesen. Alle Channels liegen in der oben ausgewählten Kategorie. Der Bot benötigt „Kanäle verwalten“ und „Rollen verwalten“. Speichern startet den Sync für alle Agents; neue Agents werden automatisch berücksichtigt. Namensänderungen aktualisieren den Channelnamen. Bei Kündigung wird der Channel samt Videos endgültig gelöscht. Ohne Analysten-Rolle werden keine Channels angelegt oder aktualisiert; Kündigungen löschen bestehende Channels weiterhin.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select

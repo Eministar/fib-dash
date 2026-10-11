@@ -1375,6 +1375,7 @@ export async function syncAgentDiscordRoles(agentId: string, mode: 'sync' | 'rem
   const config = await getDiscordConfig()
   const agent = await getAgentForDiscord(agentId)
   if (!agent) return
+  if (agent.status === 'TERMINATED') mode = 'remove-all'
   if (mode === 'sync') await syncLinkedUserDisplayNameForAgent(agent)
 
   // Fetch the member once and share it between group- and role-sync to avoid
@@ -1453,7 +1454,7 @@ export async function syncAllAgentDiscordRoles(options?: {
     await emitProgress('checking', agentLabel, `Prüfe ${agentLabel}`)
     await syncLinkedUserDisplayNameForAgent(agent)
 
-    if (!agent.discordId) {
+    if (!agent.discordId && agent.status !== 'TERMINATED') {
       skipped++
       await emitProgress('syncing', agentLabel, `Übersprungen: ${agentLabel} hat keine Discord-ID`)
       continue

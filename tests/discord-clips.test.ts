@@ -7,6 +7,13 @@ function fixture() {
   const writes: Record<string, unknown>[] = []
   const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
     if (init) {
+      if (init.method === 'DELETE') {
+        const index = channels.findIndex(channel => path === `/channels/${channel.id}`)
+        assert.notEqual(index, -1)
+        channels.splice(index, 1)
+        writes.push({ method: 'DELETE', path })
+        return undefined as T
+      }
       const payload = JSON.parse(String(init.body))
       writes.push(payload)
       if (init.method === 'POST') channels.push({ id: String(channels.length), ...payload })
@@ -58,4 +65,15 @@ test('rejects invalid or full categories and unsafe analyst roles without creati
   for (let i = 0; i < 50; i++) f.channels.push({ id: `filler-${i}`, type: 0, parent_id: 'category' })
   await assert.rejects(f.sync(), /voll/)
   assert.equal(f.writes.length, 0)
+})
+
+test('termination deletes only the agent channel even without role/category configuration, and is repeatable', async () => {
+  const f = fixture()
+  await f.sync()
+  f.channels.push({ id: 'unrelated', type: 0, name: '🔍│müller-clips', topic: 'fib-agent-clips:someone-else' })
+  f.agent.status = 'TERMINATED'
+  await f.sync(true, '', '')
+  await f.sync(true, '', '')
+  assert.deepEqual(f.channels.map(channel => channel.id), ['category', 'other', 'unrelated'])
+  assert.equal(f.writes.filter(write => write.method === 'DELETE').length, 1)
 })

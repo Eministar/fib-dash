@@ -15,12 +15,20 @@ export function syncAgentClipChannel(request: Request, guildId: string, analystR
 }
 
 async function reconcile(request: Request, guildId: string, analystRoleId: string, agent: Agent, remove: boolean, categoryId: string) {
+  const topic = `fib-agent-clips:${agent.id}`
+  // Termination cleanup must also work if the role/category was removed meanwhile.
+  if (agent.status === 'TERMINATED') {
+    const channels = await request<Channel[]>(`/guilds/${guildId}/channels`)
+    for (const channel of channels.filter(channel => channel.type === 0 && channel.topic === topic)) {
+      await request(`/channels/${channel.id}`, { method: 'DELETE' })
+    }
+    return
+  }
   if (!analystRoleId) return
   if (analystRoleId === guildId) throw new Error('Die Analysten-Rolle darf nicht @everyone sein.')
   const roles = await request<{ id: string }[]>(`/guilds/${guildId}/roles`)
   if (!roles.some(role => role.id === analystRoleId)) throw new Error('Die konfigurierte Clips-Analysten-Rolle existiert nicht.')
   const channels = await request<Channel[]>(`/guilds/${guildId}/channels`)
-  const topic = `fib-agent-clips:${agent.id}`
   const existing = channels.filter(channel => channel.type === 0 && channel.topic === topic)
   const active = !remove && agent.status !== 'TERMINATED' && !!agent.discordId
   if (!active && existing.length === 0) return
@@ -43,7 +51,7 @@ async function reconcile(request: Request, guildId: string, analystRoleId: strin
   if (!existing.length) {
     await request(`/guilds/${guildId}/channels`, { method: 'POST', body: JSON.stringify({ ...payload, type: 0 }) })
   } else {
-    // Retain uploaded evidence when an agent leaves; remove their personal access.
+    // Changing the linked Discord account preserves the channel and its uploads.
     for (const channel of existing) {
       const normalize = (items: Overwrite[]) => JSON.stringify(items.map(item => `${item.type}:${item.id}:${item.allow}:${item.deny}`).sort())
       if (channel.name !== payload.name || channel.parent_id !== parent.id || normalize(channel.permission_overwrites ?? []) !== normalize(overwrites)) {
