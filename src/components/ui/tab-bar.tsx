@@ -9,10 +9,7 @@ export type TabItem = {
   count?: number
 }
 
-/**
- * Reiter im Stil der Bereichsnavigation. Bewusst dieselbe Chip-Optik: zwei
- * verschiedene Umschalt-Sprachen auf einer Seite lernt niemand gern.
- */
+/** Flache Bereichsnavigation mit einer Zeile und Tastatursteuerung. */
 export function TabBar({
   tabs,
   active,
@@ -25,7 +22,7 @@ export function TabBar({
   label: string
 }) {
   return (
-    <div className="mb-5 inline-flex max-w-full flex-wrap gap-[2px] rounded-[9px] bg-[#1c1c1e] p-[3px]" role="tablist" aria-label={label}>
+    <div className="mb-4 flex max-w-full gap-5 overflow-x-auto border-b border-[#38383a]/70" role="tablist" aria-label={label}>
       {tabs.map((tab) => {
         const isActive = tab.id === active
         return (
@@ -34,20 +31,33 @@ export function TabBar({
             type="button"
             role="tab"
             aria-selected={isActive}
+            tabIndex={isActive ? 0 : -1}
             onClick={() => onSelect(tab.id)}
+            onKeyDown={(event) => {
+              const index = tabs.findIndex((item) => item.id === tab.id)
+              const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length
+                : event.key === 'ArrowLeft' ? (index - 1 + tabs.length) % tabs.length
+                  : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
+              if (next === null) return
+              event.preventDefault()
+              onSelect(tabs[next].id)
+              const target = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]
+              target?.focus({ preventScroll: true })
+              target?.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' })
+            }}
             className={cn(
-              'inline-flex h-8 items-center gap-2 rounded-[7px] px-3.5 text-[12.5px] font-medium transition-colors',
-              'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#0a84ff]/50',
+              'inline-flex min-h-10 shrink-0 items-center gap-2 border-b-2 px-1 text-[13px] font-medium active:text-white',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0a84ff]',
               isActive
-                ? 'bg-[#636366] text-white shadow-[0_1px_3px_rgba(0,0,0,0.3)]'
-                : 'text-[#98989d] hover:text-white',
+                ? 'border-[#d4d4d4] text-white'
+                : 'border-transparent text-[#98989d] hover:text-white',
             )}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span
                 className={cn(
-                  'rounded-full px-1.5 font-mono text-[11px]',
+                  'rounded px-1.5 tabular-nums text-[11px]',
                   isActive ? 'bg-white/15 text-white' : 'bg-[#2c2c2e] text-[#8e8e93]',
                 )}
               >

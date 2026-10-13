@@ -60,17 +60,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         data-variant={variant}
         onClick={handleClick}
         className={cn(
-          'inline-flex items-center justify-center font-medium transition-colors duration-100',
+          'ui-press relative inline-flex items-center justify-center font-medium transition-colors duration-100 motion-reduce:transition-none focus-visible:transition-none',
           'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#0a84ff]/50',
           'disabled:opacity-40 disabled:pointer-events-none',
+          busy && 'disabled:opacity-100',
           variants[variant],
           sizes[size],
           className
         )}
         {...props}
       >
-        {busy && <Spinner size="sm" className="text-current" />}
-        {children}
+        {busy && <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true"><Spinner size="sm" className="text-current" /></span>}
+        <span className={cn('inline-flex items-center justify-center gap-[inherit]', busy && 'opacity-0')}>{children}</span>
       </button>
     )
   }

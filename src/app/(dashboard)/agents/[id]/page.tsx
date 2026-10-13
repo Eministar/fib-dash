@@ -3,8 +3,7 @@
 import { useState, useCallback, use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { CalendarPlus, Edit, Trash2, UserX, UserCheck, Save, X, Check, TrendingUp, TrendingDown, Plus, StickyNote, Timer, Send, Gavel, ListPlus, ChevronDown, ChevronUp, History, Download, MessageCircle, CircleSlash, Plane } from 'lucide-react'
+import { CalendarPlus, Edit, Trash2, UserX, UserCheck, Save, X, Check, TrendingUp, TrendingDown, Plus, StickyNote, Send, Gavel, ListPlus, ChevronDown, ChevronUp, History, Download, MessageCircle, CircleSlash, Plane } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DateField } from '@/components/ui/date-field'
@@ -12,7 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Modal } from '@/components/ui/modal'
 import { PageHeader } from '@/components/layout/page-header'
-import { PageLoader } from '@/components/ui/loading'
+import { AgentProfileSkeleton } from '@/components/ui/loading'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { UnitMultiSelect } from '@/components/agents/unit-multi-select'
 import { UnitBadges } from '@/components/agents/unit-badges'
@@ -872,7 +871,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   }, [canEditTrainings, agent, id, setAgent, setPendingTrainingOverride, addToast])
 
   if (!canViewAgent) return <UnauthorizedContent />
-  if (loading) return <PageLoader withHeader />
+  if (loading && !agent) return <AgentProfileSkeleton />
   if (!agent) return <div className="text-center py-16 text-[#8e8e93]">Agent nicht gefunden</div>
 
   const higherRanks = ranks?.filter(r => r.sortOrder < agent.rank?.sortOrder) || []
@@ -889,7 +888,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     : playtimeSessions.slice(0, PLAYTIME_HISTORY_COLLAPSE_LIMIT)
 
   return (
-    <div>
+    <div className="mx-auto w-full max-w-[1200px] min-w-0">
       <PageHeader
         breadcrumbs={[{ label: 'Agents', href: '/agents' }, { label: `${agent.firstName} ${agent.lastName}` }]}
         title={`${agent.onLeave ? '[X] ' : ''}${agent.firstName} ${agent.lastName}`}
@@ -930,13 +929,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         { id: 'management', label: 'Verwaltung', count: openSanctions.length || undefined },
       ]} />
 
-      <div className="space-y-4">
-        {/* Left column: main info */}
+      <div>
+        {/* Agent sections */}
         <div className="contents">
-          {hasPermission(user, 'codenames:view') && <div hidden={detailTab !== 'profile'} className="border-b border-[#38383a] py-5"><CodenameHistory agentId={id} /></div>}
           {/* Personal data */}
-          <motion.div hidden={detailTab !== 'profile'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-            className="border-b border-[#38383a] py-5">
+          <div hidden={detailTab !== 'profile'}
+            className="border-b border-[#38383a]/60 py-4">
             <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Persönliche Daten</h3>
             {editing ? (
               <div className="space-y-4">
@@ -995,7 +993,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-5 gap-x-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
                 <InfoRow label="Dienstnummer" value={displayBadgeNumber(agent.badgeNumber)} mono />
                 <InfoRow label="Discord-ID" value={agent.discordId ?? undefined} mono />
                 <InfoRow label="Discord-Server">
@@ -1069,10 +1067,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 )}
               </div>
             )}
-          </motion.div>
+          </div>
 
-          <motion.div hidden={detailTab !== 'activity'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
-            className="border-b border-[#38383a] py-5">
+          {hasPermission(user, 'codenames:view') && <div hidden={detailTab !== 'profile'} className="border-b border-[#38383a] py-4"><CodenameHistory agentId={id} /></div>}
+
+          <div hidden={detailTab !== 'activity'}
+            className="border-b border-[#38383a]/60 py-4">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee]">Dienstzeiten</h3>
               <Link href="/duty-times" className="text-[12px] text-[#d4d4d4] hover:text-white transition-colors">Übersicht</Link>
@@ -1127,10 +1127,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 {agent.dutyTime.activePlaySession.license ? ` · ${agent.dutyTime.activePlaySession.license}` : ''}
               </p>
             )}
-          </motion.div>
+          </div>
 
-          <motion.div hidden={detailTab !== 'activity'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.04 }}
-            className="border-b border-[#38383a] py-5">
+          <div hidden={detailTab !== 'activity'}
+            className="border-b border-[#38383a]/60 py-4">
             <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Spielzeit</h3>
             <PlaytimeChart daily={agent.playtime?.daily ?? []} />
             <div className="silver-line my-4" />
@@ -1171,10 +1171,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 <p className="text-[12.5px] text-[#8e8e93]">Noch keine Spielzeit empfangen</p>
               )}
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div hidden={detailTab !== 'activity'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
-            className="border-b border-[#38383a] py-5">
+          <div hidden={detailTab !== 'activity'}
+            className="border-b border-[#38383a]/60 py-4">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee]">Abmeldungen</h3>
               {canEditAgent && agent.status !== 'TERMINATED' && (
@@ -1216,11 +1216,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             ) : (
               <p className="text-[12.5px] text-[#8e8e93]">Keine Abmeldungen vorhanden</p>
             )}
-          </motion.div>
+          </div>
 
           {/* Trainings -- toggleable directly */}
-          <motion.div hidden={detailTab !== 'career'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
-            className="border-b border-[#38383a] py-5">
+          <div hidden={detailTab !== 'career'}
+            className="border-b border-[#38383a]/60 py-4">
             <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Ausbildungen</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {agent.trainings?.map((t) => (
@@ -1230,7 +1230,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   onClick={() => canEditTrainings && handleTrainingToggle(t.trainingId, !t.completed)}
                   title={!trainingAvailableForAgent(t.training, agent) ? `${t.training.label} ist erst ab ${t.training.minRank?.name ?? 'Mindestrang'} vorgesehen` : t.training.label}
                   className={cn(
-                    'flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] transition-all duration-150 text-left',
+                    'flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] transition-colors duration-100 motion-reduce:transition-none focus-visible:transition-none text-left',
                     t.completed
                       ? 'bg-[#2c2c2e] hover:bg-[#3a3a3c]'
                       : trainingAvailableForAgent(t.training, agent)
@@ -1252,12 +1252,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 </button>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Promotion history */}
           {agent.promotionLogs?.length > 0 && (
-            <motion.div hidden={detailTab !== 'career'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
-              className="border-b border-[#38383a] py-5">
+            <div hidden={detailTab !== 'career'}
+              className="border-b border-[#38383a]/60 py-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Ranghistorie</h3>
               <div className="space-y-3">
                 {agent.promotionLogs.map((log) => (
@@ -1283,12 +1283,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {canViewContracts && (
-            <motion.div hidden={detailTab !== 'records'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.105 }}
-              className="border-b border-[#38383a] py-5">
+            <div hidden={detailTab !== 'records'}
+              className="border-b border-[#38383a]/60 py-4">
               <ContractSection
                 contracts={agent.contracts ?? []}
                 application={agent.jobApplication ?? null}
@@ -1299,12 +1299,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 onSend={handleSendContractMessage}
                 onCopyLink={handleCopyContractLink}
               />
-            </motion.div>
+            </div>
           )}
 
           {openSanctions.length > 0 && (
-            <motion.div hidden={detailTab !== 'management'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.11 }}
-              className="border-b border-[#38383a] py-5">
+            <div hidden={detailTab !== 'management'}
+              className="border-b border-[#38383a]/60 py-4">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h3 className="text-[13.5px] font-semibold text-[#eee]">Laufende Sanktionen</h3>
                 <span className="rounded-full border border-[#b45309]/40 bg-[#1d1608]/70 px-2.5 py-1 text-[11px] font-medium text-[#fbbf24]">
@@ -1324,12 +1324,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   />
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {agent.sanctions?.length > 0 && (
-            <motion.div hidden={detailTab !== 'management'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }}
-              className="border-b border-[#38383a] py-5">
+            <div hidden={detailTab !== 'management'}
+              className="border-b border-[#38383a]/60 py-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Sanktionshistorie</h3>
               <div className="space-y-2.5">
                 {agent.sanctions.map((sanction) => (
@@ -1340,7 +1340,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   />
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
 
@@ -1349,8 +1349,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           {!editing && <div hidden={detailTab !== 'career'}><AgentAchievements agentId={id} /></div>}
           {/* Quick actions */}
           {!editing && (
-            <motion.div hidden={detailTab !== 'management'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
-              className="border-b border-[#38383a] py-5">
+            <div hidden={detailTab !== 'management'}
+              className="border-b border-[#38383a]/60 py-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-3">Markierung</h3>
               <div className="mb-4">
                 {canEditAgent ? (
@@ -1361,7 +1361,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               </div>
               <div className="silver-line my-3" />
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-3">Aktionen</h3>
-              <div className="space-y-1.5">
+              <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                 {canRankChange && agent.status !== 'TERMINATED' && higherRanks.length > 0 && (
                   <button onClick={() => { setNewRankId(''); setNewBadgeNumber(''); setRankChangeNote(''); setPromoteModal(true) }}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#8e8e93] hover:bg-[#2c2c2e] transition-colors text-left">
@@ -1440,19 +1440,19 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                   </button>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
 
-          <div hidden={detailTab !== 'records'}><AgentRecordsPanel agentId={agent.id} canManage={canEditAgent} /></div>
+          <div hidden={detailTab !== 'records'}><AgentRecordsPanel agentId={agent.id} canManage={canEditAgent} flat /></div>
 
           {/* Notes */}
-          <motion.div hidden={detailTab !== 'records'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
-            className="border-b border-[#38383a] py-5">
+          <div hidden={detailTab !== 'records'}
+            className="border-b border-[#38383a]/60 py-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-[13.5px] font-semibold text-[#eee]">Notizen</h3>
               {canManageNotes && (
                 <button onClick={() => { setNoteForm({ title: '', content: '' }); setNoteModal(true) }}
-                  className="p-1 rounded-[6px] hover:bg-[#2c2c2e] transition-colors">
+                  aria-label="Notiz hinzufügen" className="ui-press inline-flex h-8 w-8 items-center justify-center rounded-[6px] hover:bg-[#2c2c2e]">
                   <Plus size={14} className="text-[#8e8e93]" />
                 </button>
               )}
@@ -1470,7 +1470,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                         <button
                           type="button"
                           onClick={() => handleDeleteNote(note.id)}
-                          className="shrink-0 rounded-[6px] p-1 text-[#8e8e93] transition-colors hover:bg-[#1c1111] hover:text-[#f87171]"
+                          className="ui-press inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] text-[#8e8e93] hover:bg-[#1c1111] hover:text-[#f87171]"
                           aria-label="Notiz löschen"
                           title="Notiz löschen"
                         >
@@ -1485,7 +1485,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             ) : (
               <p className="text-[12.5px] text-[#8e8e93]">Keine Notizen vorhanden</p>
             )}
-          </motion.div>
+          </div>
 
         </div>
       </div>
@@ -2075,8 +2075,8 @@ function ContractSection({
 
 function InfoRow({ label, value, mono, children }: { label: string; value?: string; mono?: boolean; children?: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-[11.5px] text-[#8e8e93] mb-1">{label}</p>
+    <div className="min-w-0 break-words">
+      <p className="text-[12px] text-[#98989d] mb-1">{label}</p>
       {children || <p className={cn('text-[13.5px] text-[#eee]', mono && 'font-mono')}>{value || '—'}</p>}
     </div>
   )
@@ -2084,10 +2084,9 @@ function InfoRow({ label, value, mono, children }: { label: string; value?: stri
 
 function DutyMetric({ label, value, active }: { label: string; value: string; active?: boolean }) {
   return (
-    <div className="rounded-[9px] border border-[#38383a]/50 bg-[#1c1c1e]/65 px-3.5 py-3">
+    <div className="border-l border-[#38383a] pl-3 py-1">
       <div className="flex items-center gap-2">
-        <Timer size={13} className={active ? 'text-[#22c55e]' : 'text-[#d4d4d4]'} strokeWidth={1.75} />
-        <p className="text-[11px] font-medium uppercase text-[#8e8e93]">{label}</p>
+        <p className="text-[12px] text-[#98989d]">{label}</p>
       </div>
       <p className={cn('mt-2 text-[13px] font-semibold tabular-nums', active ? 'text-[#86efac]' : 'text-[#f5f5f7]')}>{value}</p>
     </div>
@@ -2108,7 +2107,7 @@ function PlaytimeChart({
           <div key={day.label} className="flex h-full min-w-0 flex-col items-center justify-end gap-2">
             <div className="flex h-[122px] w-full items-end justify-center rounded-[7px] bg-[#000000]/55 px-1">
               <div
-                className="w-full max-w-[28px] rounded-t-[6px] bg-[#1d4ed8] shadow-[0_0_12px_rgba(56,189,248,0.18)]"
+                className="w-full max-w-[28px] rounded-t-[6px] bg-[#1d4ed8] "
                 style={{ height }}
                 title={day.durationLabel}
               />
@@ -2149,7 +2148,7 @@ function FlagPicker({
             type="button"
             onClick={() => onChange(b.id)}
             className={cn(
-              'inline-flex items-center gap-2 h-[34px] px-3 rounded-[8px] text-[12.5px] font-medium border transition-all',
+              'inline-flex items-center gap-2 h-[34px] px-3 rounded-[8px] text-[12.5px] font-medium border transition-colors duration-100 motion-reduce:transition-none focus-visible:transition-none',
               active ? `${b.ring} ring-2 ring-inset border-transparent text-white` : 'border-[#38383a]/60 text-[#98989d] hover:text-white hover:border-[#48484a]'
             )}
           >

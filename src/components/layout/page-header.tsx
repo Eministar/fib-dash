@@ -12,8 +12,8 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, eyebrow, action, breadcrumbs }: PageHeaderProps) {
     return (
-        <div className="mb-7">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     {breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
                     {eyebrow && (
@@ -28,7 +28,6 @@ export function PageHeader({ title, description, eyebrow, action, breadcrumbs }:
                 </div>
                 {action && <div className="shrink-0 flex flex-wrap gap-2">{action}</div>}
             </div>
-            <div className="mt-5 h-px w-full bg-[#38383a]" />
         </div>
     )
 }

@@ -3,6 +3,8 @@
 import { Award, CalendarClock, Crown, FolderCheck, GraduationCap, Timer } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+import { ListSkeleton } from '@/components/ui/loading'
+
 import { useFetch } from '@/hooks/use-fetch'
 import type { Achievement, AchievementCategory } from '@/lib/achievements'
 import { cn } from '@/lib/utils'
@@ -28,13 +30,13 @@ export function AgentAchievements({ agentId }: { agentId: string }) {
   const { data } = useFetch<Achievement[]>(`/api/agents/${agentId}/achievements`)
 
   return (
-    <div className="glass-panel-elevated rounded-[14px] p-5">
+    <div className="border-b border-[#38383a]/60 py-4">
       <h3 className="mb-3 flex items-center gap-2 text-[13.5px] font-semibold text-[#eee]">
         <Award size={15} className="text-[#8e8e93]" />
         Abzeichen
       </h3>
       {!data ? (
-        <div className="h-16 animate-pulse rounded-[10px] bg-[#1c1c1e]/60" aria-hidden />
+        <ListSkeleton rows={2} />
       ) : data.length === 0 ? (
         <p className="text-[12.5px] text-[#8e8e93]">Noch keine Abzeichen.</p>
       ) : (

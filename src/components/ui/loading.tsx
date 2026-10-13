@@ -17,7 +17,7 @@ export function Spinner({ className, size = 'md' }: { className?: string; size?:
 }
 
 export function SkeletonBlock({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={cn('skeleton rounded-[8px]', className)} style={style} />
+  return <div aria-hidden="true" className={cn('skeleton max-w-full rounded-[5px]', className)} style={style} />
 }
 
 /**
@@ -86,9 +86,9 @@ export function DocumentSkeleton() {
  */
 export function ListSkeleton({ rows = 4, compact = false }: { rows?: number; compact?: boolean }) {
   return (
-      <div role="status" aria-busy="true" aria-label="Wird geladen" className={cn('space-y-3', compact ? 'py-2' : 'py-4')}>
+      <div role="status" aria-busy="true" aria-label="Wird geladen" className={cn('skeleton-enter space-y-3', compact ? 'py-2' : 'py-4')}>
         {Array.from({ length: rows }, (_, i) => (
-            <div key={i} className="flex items-center gap-3" style={{ opacity: 1 - i * 0.15 }}>
+            <div key={i} className="flex items-center gap-3">
               {!compact && <SkeletonBlock className="h-8 w-8 shrink-0 rounded-[8px]" />}
               <div className="min-w-0 flex-1 space-y-1.5">
                 <SkeletonBlock className="h-3.5" style={{ width: `${70 - (i % 3) * 15}%` }} />
@@ -110,22 +110,21 @@ export function ListSkeleton({ rows = 4, compact = false }: { rows?: number; com
  */
 export function PageLoader({ withHeader = false }: { withHeader?: boolean }) {
   return (
-      <div role="status" aria-busy="true" aria-label="Inhalte werden geladen" className="animate-[fade-in_300ms_ease-out_120ms_both]">
+      <div role="status" aria-busy="true" aria-label="Inhalte werden geladen" className="skeleton-enter">
         {withHeader && (
-            <div className="mb-7">
+            <div className="mb-5">
               <SkeletonBlock className="h-7 w-56" />
               <SkeletonBlock className="mt-3 h-4 w-80 max-w-full" />
-              <div className="mt-5 h-px w-full bg-[#38383a]" />
             </div>
         )}
         <div className="mb-5 flex flex-wrap gap-3">
-          <SkeletonBlock className="h-9 min-w-[240px] flex-1 rounded-[9px]" />
+          <SkeletonBlock className="h-9 min-w-0 flex-1 basis-48 rounded-[7px]" />
           <SkeletonBlock className="h-9 w-32 rounded-[9px]" />
         </div>
-        <div className="rounded-[12px] bg-[#1c1c1e] p-5">
-          <div className="space-y-4">
+        <div className="border-y border-[#38383a]/60">
+          <div className="divide-y divide-[#38383a]/40">
             {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="flex items-center gap-3" style={{ opacity: 1 - i * 0.12 }}>
+                <div key={i} className="flex items-center gap-3 py-3.5">
                   <SkeletonBlock className="h-9 w-9 shrink-0 rounded-[10px]" />
                   <div className="min-w-0 flex-1 space-y-2">
                     <SkeletonBlock className="h-3.5" style={{ width: `${62 - (i % 3) * 14}%` }} />
@@ -138,6 +137,44 @@ export function PageLoader({ withHeader = false }: { withHeader?: boolean }) {
         </div>
         <span className="sr-only">Lädt…</span>
       </div>
+  )
+}
+
+/** Entspricht dem kompakten Agentenprofil, damit die Stammdaten nicht springen. */
+export function AgentProfileSkeleton() {
+  return (
+    <div className="skeleton-enter mx-auto w-full max-w-[1200px] min-w-0" role="status" aria-busy="true" aria-label="Agentenprofil wird geladen">
+      <SkeletonBlock className="mb-4 h-3 w-32" />
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-2">
+          <SkeletonBlock className="h-7 w-44" />
+          <SkeletonBlock className="h-3.5 w-64" />
+        </div>
+        <div className="flex gap-2">
+          <SkeletonBlock className="h-[30px] w-24" />
+          <SkeletonBlock className="h-[30px] w-24" />
+        </div>
+      </div>
+      <div className="mb-4 flex gap-5 overflow-hidden border-b border-[#38383a]/70 py-3">
+        {[40, 128, 144, 132, 80].map((width, index) => <SkeletonBlock key={index} className="h-3.5 shrink-0" style={{ width }} />)}
+      </div>
+      <div className="border-b border-[#38383a]/60 py-4">
+        <SkeletonBlock className="mb-4 h-4 w-32" />
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 12 }, (_, index) => (
+            <div key={index} className="space-y-2">
+              <SkeletonBlock className="h-3 w-24" />
+              <SkeletonBlock className="h-4" style={{ width: `${38 + (index % 3) * 12}%` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-3 py-4">
+        <SkeletonBlock className="h-4 w-52" />
+        <SkeletonBlock className="h-3 w-36" />
+      </div>
+      <span className="sr-only">Lädt…</span>
+    </div>
   )
 }
 
@@ -197,11 +234,11 @@ export function PdCloudLoader({ className }: { className?: string }) {
 
 export function TableSkeleton({ rows = 5, cols = 6 }: { rows?: number; cols?: number }) {
   return (
-      <div className="space-y-2" role="status" aria-busy="true" aria-label="Tabelle wird geladen">
+      <div className="skeleton-enter divide-y divide-[#38383a]/40" role="status" aria-busy="true" aria-label="Tabelle wird geladen">
         {Array.from({ length: rows }).map((_, i) => (
-            <div key={i} className="flex gap-3">
+            <div key={i} className="flex gap-4 py-3.5">
               {Array.from({ length: cols }).map((_, j) => (
-                  <SkeletonBlock key={j} className="h-9 flex-1" />
+                  <div key={j} className="min-w-0 flex-1"><SkeletonBlock className="h-3.5" style={{ width: `${55 + ((i + j) % 3) * 15}%` }} /></div>
               ))}
             </div>
         ))}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Bot, Plus, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,14 +41,14 @@ const KIND_META: Record<RecordKind, { label: string; icon: typeof ThumbsUp; text
  * können Einträge angelegt und gelöscht werden; ohne ist die Liste nur lesbar
  * (z. B. „Meine Einträge“ auf der Konto-Seite).
  */
-export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträge', delay = 0.1 }: {
+export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträge', flat = false }: {
   agentId?: string
   canManage?: boolean
   title?: string
-  delay?: number
+  flat?: boolean
 }) {
   const url = agentId ? `/api/agents/${agentId}/records` : '/api/account/records'
-  const { data, setData } = useFetch<AgentRecordList>(url)
+  const { data, setData, error, refetch } = useFetch<AgentRecordList>(url)
   const { execute, loading } = useApi<AgentRecordList>()
   const { addToast } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
@@ -85,9 +84,9 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay }}
-      className="glass-panel-elevated rounded-[14px] p-5">
-      <div className="flex items-center justify-between gap-3 mb-3">
+    <div
+      className={flat ? "border-b border-[#38383a]/60 py-4" : "glass-panel rounded-[10px] p-4"}>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <h3 className="text-[13.5px] font-semibold text-[#eee]">{title}</h3>
         <div className="flex items-center gap-1.5">
           <span className="inline-flex items-center gap-1 rounded-full bg-[#4ade80]/10 px-2 py-0.5 text-[11.5px] font-medium tabular-nums text-[#4ade80]" title="Positive Einträge">
@@ -97,7 +96,7 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
             <ThumbsDown size={11} strokeWidth={2} /> {data?.negative ?? 0}
           </span>
           {manage && (
-            <button onClick={() => openModal('POSITIVE')} className="ml-1 p-1 rounded-[6px] hover:bg-[#2c2c2e] transition-colors" aria-label="Eintrag hinzufügen" title="Eintrag hinzufügen">
+            <button onClick={() => openModal('POSITIVE')} className="ui-press ml-1 inline-flex h-8 w-8 items-center justify-center rounded-[6px] hover:bg-[#2c2c2e]" aria-label="Eintrag hinzufügen" title="Eintrag hinzufügen">
               <Plus size={14} className="text-[#8e8e93]" />
             </button>
           )}
@@ -128,7 +127,7 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
                       type="button"
                       onClick={() => remove(entry)}
                       disabled={loading}
-                      className="shrink-0 rounded-[6px] p-1 text-[#8e8e93] transition-colors hover:bg-[#1c1111] hover:text-[#f87171]"
+                      className="ui-press inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] text-[#8e8e93] hover:bg-[#1c1111] hover:text-[#f87171]"
                       aria-label="Eintrag löschen"
                       title="Eintrag löschen"
                     >
@@ -141,7 +140,7 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
           })}
         </div>
       ) : (
-        data ? <p className="text-[12.5px] text-[#8e8e93]">Keine Einträge vorhanden</p> : <ListSkeleton rows={3} compact />
+        data ? <p className="text-[12.5px] text-[#8e8e93]">Keine Einträge vorhanden</p> : error ? <div className="space-y-2"><p role="alert" className="text-[13px] text-[#f87171]">{error}</p><Button size="sm" variant="outline" onClick={refetch}>Erneut versuchen</Button></div> : <ListSkeleton rows={3} compact />
       )}
 
       {manage && (
@@ -178,6 +177,6 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
           </div>
         </Modal>
       )}
-    </motion.div>
+    </div>
   )
 }
