@@ -3,7 +3,35 @@ import { test } from 'node:test'
 import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { transcodeClip, probeClip, runMediaTool, compressionOptions, validCompressedDuration } from '../src/lib/clip-transcode'
+import { transcodeClip, probeClip, runMediaTool, compressionOptions, validCompressedDuration, transcodeArgs, verificationArgs } from '../src/lib/clip-transcode'
+
+test('Encoding and verification bound decoder, filter and output thread pools', () => {
+  const options = { ...compressionOptions(), threads: 1 }
+  for (const args of [transcodeArgs('source.mp4', 'out.webm', options), verificationArgs('out.webm', 1)]) {
+    const input = args.indexOf('-i')
+    assert.equal(args[args.indexOf('-threads') + 1], '1')
+    assert.ok(args.indexOf('-threads') < input, 'Decoder must be bounded before the input')
+    assert.ok(args.lastIndexOf('-threads') > input, 'Output encoder needs its own thread limit')
+    assert.equal(args[args.lastIndexOf('-threads') + 1], '1')
+    assert.equal(args[args.indexOf('-filter_threads') + 1], '1')
+    assert.equal(args[args.indexOf('-filter_complex_threads') + 1], '1')
+  }
+})
+
+test('VP9 fallback preserves sound and duration with the faster preset', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'fib-clip-vp9-'))
+  try {
+    const source = path.join(dir, 'source.mp4')
+    const output = path.join(dir, 'compact.webm')
+    await runMediaTool('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=30:duration=1', '-f', 'lavfi', '-i', 'sine=frequency=500:duration=1', '-c:v', 'libx264', '-threads', '1', '-preset', 'ultrafast', '-crf', '0', '-c:a', 'aac', '-shortest', source], 30_000)
+    assert.equal((await transcodeClip(source, output, { ...compressionOptions(), codec: 'vp9', threads: 1, timeoutMs: 60_000 })).skipped, false)
+    const info = await probeClip(output)
+    assert.equal(info.video.codec_name, 'vp9')
+    assert.equal(info.audioCount, 1)
+    assert.ok(validCompressedDuration(1, info.duration))
+    assert.ok((await stat(source)).size > 0)
+  } finally { await rm(dir, { recursive: true, force: true }) }
+})
 
 test('real AV1 conversion reduces size, preserves audio/duration and does not upscale', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'fib-clip-test-'))

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { prisma } from './prisma'
 import { getConfidentialUser } from './auth'
 import { getDiscordConfig } from './discord-integration'
+import { hasPermission } from './permissions'
 import { agentDiscordId, agentDisplayName, canManageLeadershipGroups, groupCandidates, leadershipGroupVisibility, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, remapFamilyLeads, type LeadershipGroupFamily, type LeadershipGroupInput } from './leadership-groups'
 
 class GroupError extends Error {
@@ -87,6 +88,13 @@ export async function saveGroup(id: string | undefined, input: LeadershipGroupIn
     if (id && !old) throw new GroupError('Gruppe nicht gefunden.', 404)
     if (old && (old.version !== input.version || (old.syncLeaseUntil && old.syncLeaseUntil > new Date())))
       throw new GroupError('Gruppe wurde geändert oder wird synchronisiert. Bitte neu laden.', 409)
+    const previousFamilies = (old?.families ?? []) as LeadershipGroupFamily[]
+    const changedLinks = input.families.some(f => f.dossierId && !previousFamilies.some(previous => previous.name === f.name && previous.dossierId === f.dossierId))
+    if (changedLinks && !hasPermission(actor, 'investigations:view'))
+      throw new GroupError('Zum Verknüpfen einer Dauerakte ist Aktenzugriff erforderlich.', 403)
+    const dossierIds = input.families.flatMap(f => f.dossierId ? [f.dossierId] : [])
+    if (dossierIds.length && await tx.dossier.count({ where: { id: { in: dossierIds }, kind: 'FAMILY' } }) !== dossierIds.length)
+      throw new GroupError('Eine Familienakte ist nicht mehr verfügbar. Bitte die Verknüpfung ändern oder entfernen.', 409)
     const oldIds = old?.agents.map(m => m.agentId) ?? []
     const removed = await tx.agent.findMany({ where: { id: { in: oldIds.filter(memberId => !input.memberIds.includes(memberId)) } }, select: agentSelect })
     // An adopted channel replaces the current one; clearing the field creates an own private channel again.

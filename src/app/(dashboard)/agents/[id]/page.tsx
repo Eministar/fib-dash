@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Modal } from '@/components/ui/modal'
 import { PageHeader } from '@/components/layout/page-header'
+import { AgentOpenTasks } from '@/components/agents/agent-open-tasks'
 import { AgentProfileSkeleton } from '@/components/ui/loading'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { UnitMultiSelect } from '@/components/agents/unit-multi-select'
@@ -1069,6 +1070,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             )}
           </div>
 
+          <div hidden={detailTab !== 'profile'}><AgentOpenTasks agentId={id} onNavigate={setDetailTab} /></div>
           {hasPermission(user, 'codenames:view') && <div hidden={detailTab !== 'profile'} className="border-b border-[#38383a] py-4"><CodenameHistory agentId={id} /></div>}
 
           <div hidden={detailTab !== 'activity'}

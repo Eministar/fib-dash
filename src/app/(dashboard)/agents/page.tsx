@@ -49,6 +49,8 @@ import { AgentAvatar } from '@/components/agents/agent-avatar'
 import { matchesAgent } from '@/lib/search-match'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { useUrlState } from '@/hooks/use-url-state'
+import { SavedAgentViews } from '@/components/agents/saved-agent-views'
+import type { AgentViewFilters } from '@/lib/agent-saved-views'
 
 interface Training {
   id: string
@@ -512,10 +514,10 @@ export default function AgentsPage() {
   const { data: units } = useFetch<Unit[]>(canView ? '/api/units?active=true' : null)
 
   const [search, setSearch] = useUrlState('q', '')
-  const [statusFilter, setStatusFilter] = useUrlState('status', '')
-  const [rankFilter, setRankFilter] = useState('')
-  const [unitFilter, setUnitFilter] = useState('')
-  const [flagFilter, setFlagFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useUrlState<AgentViewFilters['status']>('status', '', ['', 'ACTIVE', 'AWAY', 'ON_LEAVE', 'INACTIVE'])
+  const [rankFilter, setRankFilter] = useUrlState('rank', '')
+  const [unitFilter, setUnitFilter] = useUrlState('unit', '')
+  const [flagFilter, setFlagFilter] = useUrlState<AgentViewFilters['flag']>('flag', '', ['', '__any__', 'RED', 'ORANGE', 'YELLOW', 'BLUE', 'PURPLE'])
   const [collapsedRanks, setCollapsedRanks] = useState<Set<string>>(new Set())
   const [movePending, setMovePending] = useState(false)
   const [pendingTrainingOverride, setPendingTrainingOverride] = useState<{
@@ -756,6 +758,9 @@ export default function AgentsPage() {
         ) : undefined}
       />
 
+      {user && <SavedAgentViews key={user.id} userId={user.id} filters={{ search, status: statusFilter, rank: rankFilter, unit: unitFilter, flag: flagFilter }} onApply={filters => {
+        setSearch(filters.search); setStatusFilter(filters.status); setRankFilter(filters.rank); setUnitFilter(filters.unit); setFlagFilter(filters.flag)
+      }} />}
       <div className="flex flex-col gap-2 mb-5 sm:mb-6">
         <div className="relative">
           <Search
@@ -775,7 +780,7 @@ export default function AgentsPage() {
           <Select
             size="sm"
             value={statusFilter}
-            onValueChange={setStatusFilter}
+            onValueChange={value => setStatusFilter(value as AgentViewFilters['status'])}
             options={[
               { value: '', label: 'Alle Status' },
               { value: 'ACTIVE', label: 'Aktiv' },
@@ -809,7 +814,7 @@ export default function AgentsPage() {
           <Select
             size="sm"
             value={flagFilter}
-            onValueChange={setFlagFilter}
+            onValueChange={value => setFlagFilter(value as AgentViewFilters['flag'])}
             options={[
               { value: '', label: 'Alle Markierungen' },
               { value: '__any__', label: 'Markiert' },

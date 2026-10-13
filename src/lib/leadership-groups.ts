@@ -22,12 +22,16 @@ export const leadershipGroupSchema = z.object({
   families: z.array(z.object({
     name: z.string().trim().min(1, 'Bitte einen Familiennamen eingeben.').max(100),
     leadIds: z.array(z.string().min(1).max(191)).min(1).max(2),
+    dossierId: z.string().trim().min(1).max(191).nullable().optional(),
   })).max(100),
   version: z.number().int().positive().optional(),
 }).superRefine((data, ctx) => {
   if (new Set(data.memberIds).size !== data.memberIds.length)
     ctx.addIssue({ code: 'custom', message: 'Mitglieder dürfen nicht doppelt vorkommen.' })
   const names = data.families.map(f => f.name.trim().toLowerCase())
+  const dossiers = data.families.flatMap(f => f.dossierId ? [f.dossierId] : [])
+  if (new Set(dossiers).size !== dossiers.length)
+    ctx.addIssue({ code: 'custom', message: 'Eine Dauerakte darf pro Gruppe nur einer Familie zugeordnet sein.' })
   if (new Set(names).size !== names.length)
     ctx.addIssue({ code: 'custom', message: 'Jede Familie darf nur einmal zugeordnet sein.' })
   for (const family of data.families) {
@@ -70,7 +74,7 @@ export function remapFamilyLeads(value: unknown, map: (id: string) => string | n
       const next = typeof id === 'string' ? map(id) : null
       return next ? [next] : []
     }) : []
-    return [{ name: entry.name, leadIds: [...new Set<string>(leadIds)] }]
+    return [{ name: entry.name, leadIds: [...new Set<string>(leadIds)], ...(typeof entry.dossierId === 'string' ? { dossierId: entry.dossierId } : {}) }]
   })
 }
 

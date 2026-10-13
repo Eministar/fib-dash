@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
 import { stat, unlink } from 'node:fs/promises'
+import { setPriority } from 'node:os'
 
 export type CompressionOptions = {
   codec: 'av1' | 'vp9'
@@ -21,7 +22,7 @@ export function compressionOptions(): CompressionOptions {
     crf: integerEnv('CLIP_VIDEO_CRF', 36, 20, 50),
     maxWidth: integerEnv('CLIP_VIDEO_MAX_WIDTH', 1280, 320, 3840),
     maxHeight: integerEnv('CLIP_VIDEO_MAX_HEIGHT', 720, 240, 2160),
-    threads: integerEnv('CLIP_VIDEO_THREADS', 2, 1, 8),
+    threads: integerEnv('CLIP_VIDEO_THREADS', 1, 1, 8),
     timeoutMs: integerEnv('CLIP_TRANSCODE_TIMEOUT_MS', 7_200_000, 10_000, 14_400_000),
   }
 }
@@ -30,6 +31,13 @@ export function compressionOptions(): CompressionOptions {
 export function runMediaTool(executable: string, args: string[], timeoutMs: number) {
   return new Promise<string>((resolve, reject) => {
     const child = spawn(executable, args, { shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    child.once('spawn', () => {
+      if (!child.pid) return
+      // Lower only the media child, never the Next.js process. This is a
+      // scheduler preference, not a CPU quota; explicit thread limits remain essential.
+      try { setPriority(child.pid, 10) }
+      catch { /* Some hosts disallow priority changes; codec limits still apply. */ }
+    })
     let stdout = ''
     let stderr = ''
     let failure: Error | null = null
@@ -59,7 +67,7 @@ type Probe = {
 
 export async function probeClip(file: string) {
   const result = await runMediaTool(process.env.FFPROBE_PATH?.trim() || 'ffprobe', [
-    '-v', 'error', '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,webm', '-show_format', '-show_streams', '-of', 'json', file,
+    '-v', 'error', '-threads', '1', '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,webm', '-show_format', '-show_streams', '-of', 'json', file,
   ], 30_000)
   const info = JSON.parse(result) as Probe
   const video = info.streams?.find(stream => stream.codec_type === 'video' && !stream.disposition?.attached_pic)
@@ -72,16 +80,27 @@ export function transcodeArgs(input: string, output: string, options: Compressio
   const filter = `scale=w='min(iw,${options.maxWidth})':h='min(ih,${options.maxHeight})':force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1`
   return [
     '-hide_banner', '-loglevel', 'error', '-nostdin', '-n', '-xerror',
-    '-threads', String(options.threads), '-filter_threads', '1',
+    '-threads', String(options.threads), '-filter_threads', '1', '-filter_complex_threads', '1',
     '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,webm', '-i', input,
     '-map', '0:V:0', '-map', '0:a?', '-sn', '-dn', '-map_metadata', '-1', '-map_chapters', '-1',
     '-vf', filter, '-fpsmax', '30', '-pix_fmt', 'yuv420p',
     ...(options.codec === 'av1'
-      ? ['-c:v', 'libsvtav1', '-preset', '6', '-crf', String(options.crf), '-svtav1-params', `lp=${options.threads}`]
-      : ['-c:v', 'libvpx-vp9', '-deadline', 'good', '-cpu-used', '2', '-crf', String(options.crf), '-b:v', '0', '-row-mt', '1']),
+      ? ['-c:v', 'libsvtav1', '-preset', '10', '-crf', String(options.crf), '-svtav1-params', `lp=${options.threads}`]
+      : ['-c:v', 'libvpx-vp9', '-deadline', 'good', '-cpu-used', '5', '-crf', String(options.crf), '-b:v', '0', '-row-mt', '1']),
     '-threads', String(options.threads), '-g', '240',
     '-c:a', 'libopus', '-b:a', '64k', '-ac', '2', '-vbr', 'on',
     '-f', 'webm', output,
+  ]
+}
+
+/** The null output still decodes and filters every frame. Bound both sides of
+ * the input: FFmpeg options before -i do not configure the output encoder. */
+export function verificationArgs(input: string, threads: number) {
+  return [
+    '-hide_banner', '-loglevel', 'error', '-nostdin', '-xerror',
+    '-filter_threads', '1', '-filter_complex_threads', '1',
+    '-threads', String(threads), '-protocol_whitelist', 'file,pipe', '-i', input,
+    '-map', '0:v:0', '-map', '0:a?', '-threads', '1', '-f', 'null', '-',
   ]
 }
 
@@ -152,10 +171,7 @@ export async function transcodeClip(input: string, output: string, options = com
     if (!validCompressedDuration(source.duration, result.duration) || result.audioCount !== source.audioCount) throw new Error('Komprimiertes Video ist unvollständig')
     if (result.video.codec_name !== (options.codec === 'av1' ? 'av1' : 'vp9')) throw new Error('Unerwarteter Videocodec')
     // Probe metadata alone does not prove the media packets decode successfully.
-    await runMediaTool(process.env.FFMPEG_PATH?.trim() || 'ffmpeg', [
-      '-hide_banner', '-loglevel', 'error', '-nostdin', '-xerror', '-threads', String(options.threads),
-      '-protocol_whitelist', 'file,pipe', '-i', output, '-map', '0:v:0', '-map', '0:a?', '-f', 'null', '-',
-    ], options.timeoutMs)
+    await runMediaTool(process.env.FFMPEG_PATH?.trim() || 'ffmpeg', verificationArgs(output, options.threads), options.timeoutMs)
     const compressed = await stat(output)
     if (compressed.size >= original.size || compressed.size === 0) {
       await unlink(output)

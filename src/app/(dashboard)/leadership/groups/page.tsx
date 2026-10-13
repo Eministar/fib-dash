@@ -1,6 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { useAuth } from '@/context/auth-context'
+import { hasPermission } from '@/lib/permissions'
+import { FamilyDossierField } from '@/components/leadership/family-dossier-field'
 import { Users, Plus, ShieldCheck, ExternalLink, Pencil, Trash2, X } from 'lucide-react'
 import { useFetch } from '@/hooks/use-fetch'
 import { Button } from '@/components/ui/button'
@@ -18,6 +22,8 @@ const field = 'w-full rounded-lg border border-white/15 bg-[#171717] px-3 py-2 t
 const PENDING = 'Discord-Abgleich ausstehend: Entfernte Mitglieder können dort bis zum erfolgreichen Abgleich noch Zugriff haben. Der Abgleich wird automatisch wiederholt.'
 
 export default function LeadershipGroupsPage() {
+  const { user } = useAuth()
+  const canViewDossiers = hasPermission(user, 'investigations:view')
   const { data, error, loading, refetch } = useFetch<Data>('/api/leadership/groups')
   const [editing, setEditing] = useState<{ id?: string; input: LeadershipGroupInput } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -111,6 +117,7 @@ export default function LeadershipGroupsPage() {
               editFamilies(families => families.map((f, i) => i === index ? { ...f, leadIds: leads.filter(Boolean) } : f))
             }}><option value="">Bitte auswählen</option>{data.members.filter(m => editing.input.memberIds.includes(m.id) && (m.id === family.leadIds[slot] || !family.leadIds.includes(m.id))).map(m => <option key={m.id} value={m.id}>{m.displayName}</option>)}</select></label>)}
             <button type="button" className="p-2 text-neutral-400 hover:text-white" aria-label={`Familie ${index + 1} entfernen`} onClick={() => editFamilies(families => families.filter((_, i) => i !== index))}><X size={18} /></button>
+            {canViewDossiers && <FamilyDossierField dossierId={family.dossierId} disabled={busy} onChange={(dossierId, title) => editFamilies(families => families.map((f, i) => i === index ? { ...f, dossierId, name: f.name.trim() || title || '' } : f))} />}
           </div>)}
           <Button type="button" variant="outline" onClick={() => editFamilies(families => [...families, { name: '', leadIds: [] }])}><Plus size={15} /> Familie hinzufügen</Button>
           {!editing.input.memberIds.length && <p className="text-xs text-neutral-500">Wähle zuerst Mitglieder aus, um Leitungen vergeben zu können.</p>}
@@ -122,7 +129,7 @@ export default function LeadershipGroupsPage() {
     {!error && data && <div className="grid gap-4 lg:grid-cols-2">{data.groups.map(group => <article key={group.id} className="space-y-4 rounded-xl border border-white/10 bg-[#1c1c1e] p-5">
       <div className="flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-white">{group.name}</h2><p className="mt-1 text-xs text-neutral-500">{group.members.length} Mitglieder · {group.families.length} Familien</p></div>
         {data.manage && <div className="flex gap-1">
-          <button aria-label={`${group.name} bearbeiten`} className="rounded-lg p-2 hover:bg-white/10" onClick={() => { setEditing({ id: group.id, input: { name: group.name, channelId: group.channelId, version: group.version, memberIds: group.members.map(m => m.id), families: group.families.map(f => ({ name: f.name, leadIds: f.leadIds })) } }); setConfirmDelete(null); setMessage(''); setSearch(''); window.scrollTo({ top: 0, behavior: 'instant' }) }}><Pencil size={16} /></button>
+          <button aria-label={`${group.name} bearbeiten`} className="rounded-lg p-2 hover:bg-white/10" onClick={() => { setEditing({ id: group.id, input: { name: group.name, channelId: group.channelId, version: group.version, memberIds: group.members.map(m => m.id), families: group.families.map(f => ({ name: f.name, leadIds: f.leadIds, dossierId: f.dossierId })) } }); setConfirmDelete(null); setMessage(''); setSearch(''); window.scrollTo({ top: 0, behavior: 'instant' }) }}><Pencil size={16} /></button>
           <button aria-label={`${group.name} löschen`} className="rounded-lg p-2 text-neutral-400 hover:bg-white/10 hover:text-red-300" onClick={() => setConfirmDelete(group.id)}><Trash2 size={16} /></button>
         </div>}
       </div>
@@ -131,7 +138,7 @@ export default function LeadershipGroupsPage() {
         <div className="flex gap-2"><Button type="button" variant="danger" size="sm" disabled={busy} onClick={() => void remove(group)}>{busy ? 'Wird gelöscht …' : 'Endgültig löschen'}</Button><Button type="button" variant="secondary" size="sm" disabled={busy} onClick={() => setConfirmDelete(null)}>Abbrechen</Button></div>
       </div>}
       <div className="flex flex-wrap gap-2">{group.members.map(m => <span key={m.id} className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-sm text-neutral-300">{m.displayName}</span>)}</div>
-      <dl className="divide-y divide-white/5">{group.families.map((f, index) => <div key={index} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><dt className="text-neutral-200">{f.name}</dt><dd className="text-neutral-400">{f.leadIds.map(id => group.members.find(m => m.id === id)?.displayName ?? 'Nicht verfügbar').join(' & ')}</dd></div>)}</dl>
+      <dl className="divide-y divide-white/5">{group.families.map((f, index) => <div key={index} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><dt className="text-neutral-200">{f.name}{f.dossierId && canViewDossiers && <Link className="ml-3 text-xs text-neutral-400 underline underline-offset-4 hover:text-white" href={`/investigations/dossiers?id=${encodeURIComponent(f.dossierId)}`}>Dauerakte öffnen</Link>}</dt><dd className="text-neutral-400">{f.leadIds.map(id => group.members.find(m => m.id === id)?.displayName ?? 'Nicht verfügbar').join(' & ')}</dd></div>)}</dl>
       {!group.families.length && <p className="text-sm text-neutral-500">Noch keine Familien zugewiesen.</p>}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3 text-xs">{group.discordUrl && <a href={group.discordUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-neutral-300 hover:text-white">Discord-Kanal öffnen <ExternalLink size={13} /></a>}<span className={group.syncPending ? 'text-amber-400' : 'text-emerald-400'}>{group.syncPending ? 'Discord-Abgleich ausstehend – Kanalrechte ggf. noch nicht aktuell' : 'Discord synchronisiert'}</span></div>
     </article>)}{!data.groups.length && <p className="col-span-full rounded-xl border border-dashed border-white/15 p-10 text-center text-neutral-500">{data.manage ? 'Noch keine Ermittlungsgruppen. Erstelle die erste Gruppe.' : 'Du bist keiner Ermittlungsgruppe zugeordnet.'}</p>}</div>}

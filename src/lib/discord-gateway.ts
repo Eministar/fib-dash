@@ -1,3 +1,4 @@
+import { createPresenceRotation, loadPresenceStats } from '../../scripts/discord-presence.cjs'
 import { prisma } from '@/lib/prisma'
 import { getDutyMode } from '@/lib/duty-mode'
 import { getDiscordConfig, sendGameClockInReminder } from '@/lib/discord-integration'
@@ -22,6 +23,8 @@ type GatewayPayload = { op: number; d: unknown; s: number | null; t: string | nu
 type Presence = { user?: { id?: string }; guild_id?: string; status?: string; activities?: PresenceActivity[] }
 
 const LOG = '[DiscordGateway]'
+const ownsPresence = process.env.FIB_DISCORD_PRESENCE_OWNER !== 'launcher'
+const botPresence = createPresenceRotation(send, process.env, () => loadPresenceStats(prisma))
 const tracker = new GameReminderTracker(REMINDER_COOLDOWN_MS)
 
 let socket: WebSocket | null = null
@@ -116,6 +119,7 @@ function identify() {
   send({
     op: 2,
     d: {
+      ...(ownsPresence ? { presence: botPresence.current() } : {}),
       token: botToken(),
       intents: INTENT_GUILDS | INTENT_GUILD_PRESENCES,
       properties: { os: process.platform, browser: 'fib-dashboard', device: 'fib-dashboard' },
@@ -146,8 +150,10 @@ function onDispatch(type: string | null, data: unknown) {
     resumeUrl = ready.resume_gateway_url
     reconnectDelayMs = 1_000
     guildCheckedAt = 0
+    if (ownsPresence) botPresence.start()
     console.log(`${LOG} Verbunden`)
   } else if (type === 'RESUMED') {
+    if (ownsPresence) botPresence.start()
     reconnectDelayMs = 1_000
   } else if (type === 'GUILD_CREATE') {
     void handleGuildCreate(data as { id?: string; presences?: Presence[] }).catch((error) => {
@@ -195,6 +201,7 @@ function connect() {
   ws.addEventListener('close', (event) => {
     if (socket === ws) socket = null
     stopHeartbeat()
+    botPresence.stop()
     if (FATAL_CLOSE_CODES.has(event.code)) {
       console.error(`${LOG} Verbindung dauerhaft abgelehnt (${event.code} ${event.reason}). ` +
         (event.code === 4014 ? 'Bitte im Discord Developer Portal den „Presence Intent“ aktivieren.' : 'Bot-Token prüfen.'))

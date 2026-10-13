@@ -15,6 +15,7 @@ const fs = require('node:fs')
 const { spawnSync } = require('node:child_process')
 const { parse } = require('node:url')
 const dotenv = require('dotenv')
+const { createPresenceRotation, loadPresenceStats } = require('./scripts/discord-presence.cjs')
 
 const projectDir = path.resolve(__dirname)
 // Der Einrichtungsassistent schreibt bewusst in .env.local. Diese Datei muss
@@ -53,7 +54,9 @@ const discordBotToken =
 const discordGatewayEnabled = String(process.env.DISCORD_BOT_GATEWAY_ENABLED || 'true').toLowerCase() !== 'false'
 const discordMemberJoinSyncEnabled = String(process.env.DISCORD_MEMBER_JOIN_SYNC_ENABLED || 'true').toLowerCase() !== 'false'
 const discordRoleSyncOnReady = String(process.env.DISCORD_ROLE_SYNC_ON_READY || 'true').toLowerCase() !== 'false'
-const discordPresenceText = String(process.env.DISCORD_BOT_STATUS || 'FIB HR').trim() || 'FIB HR'
+if (discordGatewayEnabled && discordBotToken && typeof WebSocket === 'function') {
+  process.env.FIB_DISCORD_PRESENCE_OWNER = 'launcher'
+}
 
 const discordSettingKeys = {
   guildId: 'discord.guildId',
@@ -596,6 +599,7 @@ function startDiscordBotGateway() {
   let sequence = null
   let closedByReconnect = false
   let readyFullSyncStarted = false
+  const presence = createPresenceRotation(send, process.env, () => loadPresenceStats(getPrismaClient()))
 
   function clearHeartbeat() {
     if (heartbeatTimer) {
@@ -607,6 +611,7 @@ function startDiscordBotGateway() {
   function scheduleReconnect(reason) {
     if (reconnectTimer) return
     clearHeartbeat()
+    presence.stop()
     try {
       socket?.close()
     } catch {
@@ -639,17 +644,7 @@ function startDiscordBotGateway() {
           browser: 'fib-hr-dashboard',
           device: 'fib-hr-dashboard',
         },
-        presence: {
-          status: 'online',
-          since: null,
-          afk: false,
-          activities: [
-            {
-              name: discordPresenceText,
-              type: 3,
-            },
-          ],
-        },
+        presence: presence.current(),
       },
     })
   }
@@ -696,12 +691,13 @@ function startDiscordBotGateway() {
       }
 
       if (packet.t === 'READY') {
+        presence.start()
         const botUser = packet.d?.user
         queueWebhookEvent({
           title: 'Discord Bot online',
           description: botUser?.username ? `${botUser.username} ist mit dem Gateway verbunden.` : 'Der Discord Bot ist mit dem Gateway verbunden.',
           severity: 'success',
-          fields: [{ name: 'Status', value: discordPresenceText, inline: true }],
+          fields: [{ name: 'Status', value: presence.current().activities[0].name, inline: true }],
         })
 
         if (discordMemberJoinSyncEnabled && discordRoleSyncOnReady && !readyFullSyncStarted) {
@@ -760,6 +756,7 @@ function startDiscordBotGateway() {
 
     socket.addEventListener('close', (event) => {
       clearHeartbeat()
+      presence.stop()
       if (event.code === 4014) {
         queueWebhookEvent({
           title: 'Discord Bot Gateway abgelehnt',
