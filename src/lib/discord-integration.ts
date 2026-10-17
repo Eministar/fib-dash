@@ -2465,6 +2465,16 @@ export function queueDiscordDutyStatusUpdate() {
   })
 }
 
+/** Das Panel zeigt laufende Dienstzeiten – unabhängig vom Erfassungsmodus regelmäßig auffrischen. */
+const DUTY_PANEL_REFRESH_MS = 60_000
+let dutyPanelRefresherStarted = false
+
+export function ensureDutyStatusPanelRefresher() {
+  if (dutyPanelRefresherStarted || typeof setInterval !== 'function') return
+  dutyPanelRefresherStarted = true
+  setInterval(queueDiscordDutyStatusUpdate, DUTY_PANEL_REFRESH_MS).unref?.()
+}
+
 export function queueDiscordAbsenceStatusUpdate() {
   ensureAbsenceExpiryChecker()
   void syncDiscordAbsenceStatusMessage().catch((error) => {

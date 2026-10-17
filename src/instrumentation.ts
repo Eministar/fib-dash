@@ -12,6 +12,8 @@ export async function register() {
     ensureUploadCleanupWorker()
     const { ensureManualDutyWorker } = await import('./lib/manual-duty')
     ensureManualDutyWorker()
+    const { ensureDutyStatusPanelRefresher } = await import('./lib/discord-integration')
+    ensureDutyStatusPanelRefresher()
     const { ensureDiscordGateway } = await import('./lib/discord-gateway')
     ensureDiscordGateway()
     const { ensureAgentStatusAutomationWorker } = await import('./lib/absence-status')
