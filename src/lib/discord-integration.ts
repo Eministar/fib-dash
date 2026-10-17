@@ -287,7 +287,16 @@ interface CacheEntry<T> {
 }
 
 const guildRolesCache = new Map<string, CacheEntry<DiscordRole[]>>()
+// Ungefilterte Channel-Liste: Text-Channel und Kategorien kommen aus demselben
+// Discord-Endpunkt und teilen sich deshalb einen Abruf.
 const guildChannelsCache = new Map<string, CacheEntry<DiscordChannel[]>>()
+// Laufende Abrufe teilen, damit parallele Requests (z. B. mehrere offene Tabs
+// mit Einstellungsseite) nicht jeweils einen eigenen Discord-Call auslösen.
+const guildRequests = new Map<string, Promise<unknown>>()
+// Nach einem Fehlschlag (z. B. 429) kurz nicht erneut anfragen — sonst läuft
+// jeder 30-s-Poll der Einstellungsseite wieder in dasselbe Rate-Limit.
+const guildRequestBackoff = new Map<string, { until: number; error: Error }>()
+const GUILD_REQUEST_BACKOFF_MS = 60 * 1000
 const memberRolesCache = new Map<string, CacheEntry<string[]>>()
 const guildMembersCache = new Map<string, CacheEntry<DiscordGuildMember[]>>()
 const guildMembersRequests = new Map<string, Promise<DiscordGuildMember[]>>()
@@ -310,9 +319,40 @@ function setCache<T>(cache: Map<string, CacheEntry<T>>, key: string, data: T): v
   cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS })
 }
 
+async function cachedGuildRequest<T>(kind: string, cache: Map<string, CacheEntry<T>>, key: string, load: () => Promise<T>): Promise<T> {
+  const cached = getCached(cache, key)
+  if (cached) return cached
+
+  const requestKey = `${kind}:${key}`
+  const backoff = guildRequestBackoff.get(requestKey)
+  if (backoff && Date.now() < backoff.until) throw backoff.error
+
+  const existing = guildRequests.get(requestKey) as Promise<T> | undefined
+  if (existing) return existing
+
+  const request = load()
+    .then((data) => {
+      guildRequestBackoff.delete(requestKey)
+      setCache(cache, key, data)
+      return data
+    })
+    .catch((cause: unknown) => {
+      const error = cause instanceof Error ? cause : new Error(String(cause))
+      guildRequestBackoff.set(requestKey, { until: Date.now() + GUILD_REQUEST_BACKOFF_MS, error })
+      throw error
+    })
+    .finally(() => {
+      guildRequests.delete(requestKey)
+    })
+  guildRequests.set(requestKey, request)
+  return request
+}
+
 export function invalidateDiscordCache() {
   guildRolesCache.clear()
   guildChannelsCache.clear()
+  guildRequests.clear()
+  guildRequestBackoff.clear()
   memberRolesCache.clear()
   guildMembersCache.clear()
   guildMembersRequests.clear()
@@ -952,13 +992,10 @@ export async function getDiscordGuildRoles(guildId?: string) {
   const id = guildId || config.guildId
   if (!id || !botToken()) return []
 
-  const cached = getCached(guildRolesCache, id)
-  if (cached) return cached
-
-  const roles = await discordFetch<DiscordRole[]>(`/guilds/${id}/roles`)
+  const roles = await cachedGuildRequest('roles', guildRolesCache, id, () => discordFetch<DiscordRole[]>(`/guilds/${id}/roles`))
   const seenIds = new Set<string>()
 
-  const result = roles
+  return roles
     .filter((role) => !role.managed && role.name !== '@everyone')
     .sort((a, b) => b.position - a.position || a.name.localeCompare(b.name))
     .filter((role) => {
@@ -966,9 +1003,10 @@ export async function getDiscordGuildRoles(guildId?: string) {
       seenIds.add(role.id)
       return true
     })
+}
 
-  setCache(guildRolesCache, id, result)
-  return result
+function getAllDiscordGuildChannels(guildId: string) {
+  return cachedGuildRequest('channels', guildChannelsCache, guildId, () => discordFetch<DiscordChannel[]>(`/guilds/${guildId}/channels`))
 }
 
 export async function getDiscordGuildChannels(guildId?: string) {
@@ -976,16 +1014,10 @@ export async function getDiscordGuildChannels(guildId?: string) {
   const id = guildId || config.guildId
   if (!id || !botToken()) return []
 
-  const cached = getCached(guildChannelsCache, id)
-  if (cached) return cached
-
-  const channels = await discordFetch<DiscordChannel[]>(`/guilds/${id}/channels`)
-  const result = channels
+  const channels = await getAllDiscordGuildChannels(id)
+  return channels
     .filter((channel) => channel.type === 0 || channel.type === 5 || channel.type === 15)
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-
-  setCache(guildChannelsCache, id, result)
-  return result
 }
 
 export async function getDiscordGuildMember(discordId: string, guildId?: string) {
@@ -2547,5 +2579,5 @@ export async function getDiscordPhotoMessages(channelId: string, before?: string
 export async function getDiscordGuildCategories() {
   const config = await getDiscordConfig()
   if (!config.guildId || !botToken()) return []
-  return (await discordFetch<DiscordChannel[]>(`/guilds/${config.guildId}/channels`)).filter(channel => channel.type === 4)
+  return (await getAllDiscordGuildChannels(config.guildId)).filter(channel => channel.type === 4)
 }
