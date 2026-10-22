@@ -15,6 +15,7 @@ import {
   Trash2,
   Upload,
   UserPlus,
+  UserRoundCog,
   X,
 } from 'lucide-react'
 
@@ -74,6 +75,7 @@ import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { InvestigationTemplateProgress } from './investigation-template-progress'
 import { OtherCasesNote } from '@/components/investigations/cross-hits'
 import { InvestigationTimeline } from '@/components/investigations/investigation-timeline'
+import { HandoverDialog } from '@/components/investigations/handover-dialog'
 
 function localDateTimeValue(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
@@ -120,6 +122,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   const [uploadOpen, setUploadOpen] = useState(false)
   const [activeClip, setActiveClip] = useState<BodycamClip | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [handoverOpen, setHandoverOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState<'spots' | 'photos' | null>(null)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
 
@@ -321,6 +324,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
     { id: 'clip', label: 'Clip hochladen', icon: Upload, onSelect: () => setUploadOpen(true) },
     { id: 'person', label: 'Person verknüpfen', icon: UserPlus, onSelect: () => setPersonOpen(true) },
     { id: 'edit', label: 'Akte bearbeiten', icon: Pencil, onSelect: () => setSettingsOpen(true) },
+    { id: 'handover', label: 'Fallführung übergeben', icon: UserRoundCog, onSelect: () => setHandoverOpen(true) },
     ...(canDelete
       ? [{ id: 'delete', label: 'Akte löschen', icon: Trash2, danger: true, onSelect: handleDeleteInvestigation }]
       : []),
@@ -798,6 +802,20 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           </div>
         </div>
       </Modal>
+
+      {handoverOpen && (
+        <HandoverDialog
+          investigationId={investigation.id}
+          currentLead={investigation.leadAgent}
+          agents={agents ?? []}
+          onClose={() => setHandoverOpen(false)}
+          onDone={async () => {
+            setHandoverOpen(false)
+            toastSuccess('Fallführung übergeben', 'Die Übergabe steht in der Chronologie.')
+            await refetch()
+          }}
+        />
+      )}
 
       {/* Akte bearbeiten */}
       <Modal

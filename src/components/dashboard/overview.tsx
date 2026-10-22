@@ -27,6 +27,8 @@ import { notifyLiveUpdate } from '@/lib/live-updates'
 import { RecentItemsCard } from '@/components/dashboard/recent-items-card'
 import { AgentOfMonthCard } from '@/components/dashboard/agent-of-month-card'
 import { LiveNumber } from '@/components/ui/live-number'
+import { checklistProgress } from '@/lib/investigation-templates'
+import { INVESTIGATION_STATUS_LABELS } from '@/lib/investigations'
 
 interface RankSummary {
   name: string
@@ -128,6 +130,15 @@ interface Stats {
     description: string
     href: string
   }>
+}
+
+interface MyInvestigation {
+  id: string
+  caseNumber: string
+  title: string
+  status: keyof typeof INVESTIGATION_STATUS_LABELS
+  checklist: unknown
+  updatedAt: string
 }
 
 type StatKey = 'activeAgents' | 'awayAgents' | 'inactiveAgents' | 'currentAgents' | 'recentPromotions' | 'recentTerminations'
@@ -241,6 +252,10 @@ export default function DashboardPage() {
   const investigationsOnly = !canViewDashboard && hasPermission(user, 'investigations:view')
   const canManageAbsences = hasPermission(user, 'agents:write')
   const { data: stats, loading, error, refetch } = useFetch<Stats>(canViewDashboard ? '/api/stats' : null)
+  const canViewInvestigations = hasPermission(user, 'investigations:view')
+  const { data: myInvestigations } = useFetch<MyInvestigation[]>(
+      canViewDashboard && canViewInvestigations ? '/api/investigations?mine=1&status=OPEN_ONLY' : null,
+  )
   const [absenceModalOpen, setAbsenceModalOpen] = useState(false)
   const { data: absenceAgents } = useFetch<AgentPreview[]>(canManageAbsences && absenceModalOpen ? '/api/agents' : null)
   const [absenceAgentId, setAbsenceAgentId] = useState('')
@@ -542,6 +557,39 @@ export default function DashboardPage() {
 
           {/* Seitenspalte: kurze Vorschauen */}
           <div className="space-y-4">
+            {canViewInvestigations && (
+                <Panel
+                    title="Meine Akten"
+                    count={myInvestigations?.length}
+                    isEmpty={myInvestigations?.length === 0}
+                    href={myInvestigations && myInvestigations.length > 0 ? '/investigations?mine=1' : null}
+                    empty="Du führst gerade keine laufende Akte und bist keiner zugewiesen."
+                >
+                  <ul>
+                    {(myInvestigations ?? []).slice(0, PREVIEW_LIMIT).map((investigation) => {
+                      const progress = checklistProgress(investigation.checklist)
+                      return (
+                          <li key={investigation.id}>
+                            <Link href={`/investigations/${investigation.id}`} className={rowClass}>
+                              <span className="min-w-0">
+                                <span className="block truncate text-[13px] font-medium text-white">{investigation.title}</span>
+                                <span className="block truncate text-[11.5px] text-[#8e8e93]">
+                                  <span className="font-mono">{investigation.caseNumber}</span> · {INVESTIGATION_STATUS_LABELS[investigation.status]}
+                                </span>
+                              </span>
+                              {progress && (
+                                  <span className="shrink-0 text-[12px] text-[#98989d] tabular-nums" title="Arbeitsplan erledigt">
+                                    {progress.done}/{progress.total}
+                                  </span>
+                              )}
+                            </Link>
+                          </li>
+                      )
+                    })}
+                  </ul>
+                </Panel>
+            )}
+
             <Panel title="Stand">
               <ul>
                 {canViewRankChanges && (

@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { Select } from '@/components/ui/select'
 import { useToast } from '@/components/ui/toast'
 import { LspdOfficerPicker } from '@/components/lspd/lspd-officer-picker'
 import { useApi } from '@/hooks/use-api'
-import { QC_SHARE_SCOPE_LABELS, type QcShareScope } from '@/lib/quality-checks'
+import { QC_CHECK_TYPES, QC_CHECK_TYPE_LABELS, QC_SHARE_SCOPE_LABELS, type QcCheckType, type QcShareScope } from '@/lib/quality-checks'
 import type { LspdOfficer } from '@/lib/lspd-officers'
 
 /** Kontrolle beginnen: Beamten aus dem LSPD-Panel wählen, optional Ort. */
@@ -28,6 +29,7 @@ export function StartCheckDialog({
   const { execute, loading } = useApi<{ id: string }>()
   const [officer, setOfficer] = useState<LspdOfficer | null>(initialOfficer)
   const [location, setLocation] = useState('')
+  const [checkType, setCheckType] = useState<QcCheckType>('PATROL')
   const [failure, setFailure] = useState('')
 
   const start = async () => {
@@ -36,7 +38,7 @@ export function StartCheckDialog({
     try {
       const check = await execute('/api/quality-checks', {
         method: 'POST',
-        body: JSON.stringify({ lspdOfficerId: officer.id, location: location.trim() || undefined }),
+        body: JSON.stringify({ lspdOfficerId: officer.id, checkType, location: location.trim() || undefined }),
       })
       if (check) router.push(`/quality-checks/${check.id}`)
     } catch (cause) {
@@ -54,6 +56,12 @@ export function StartCheckDialog({
     >
       <div className="space-y-4">
         <LspdOfficerPicker value={officer} onChange={setOfficer} />
+        <Select
+          label="Kontrollart"
+          value={checkType}
+          onValueChange={(value) => setCheckType(value as QcCheckType)}
+          options={QC_CHECK_TYPES.map((type) => ({ value: type, label: QC_CHECK_TYPE_LABELS[type] }))}
+        />
         <Input label="Ort / Streifengebiet (optional)" maxLength={200} value={location} onChange={(event) => setLocation(event.target.value)} />
         {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}
         <div className="flex justify-end gap-2">

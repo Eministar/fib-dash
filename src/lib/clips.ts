@@ -5,7 +5,12 @@ import { Readable } from 'node:stream'
 
 import { uploadDir } from '@/lib/uploads'
 
-export const DEFAULT_CLIP_MAX_BYTES = 500 * 1024 * 1024
+/**
+ * 10 GiB: praktisch keine Grenze, schützt aber vor versehentlichen
+ * Riesendateien. Uploads laufen in Stücken und werden gestreamt, die Größe
+ * belastet also nur die Platte, nicht den Arbeitsspeicher.
+ */
+export const DEFAULT_CLIP_MAX_BYTES = 10 * 1024 * 1024 * 1024
 
 /// Erlaubte Videoformate mit der Endung, unter der die Datei abgelegt wird.
 export const ALLOWED_CLIP_TYPES: Record<string, string> = {

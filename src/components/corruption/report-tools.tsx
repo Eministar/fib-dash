@@ -179,9 +179,8 @@ function EvidencePanel({ report, onChanged }: { report: Report; onChanged: () =>
   return <section className="space-y-3 border-t border-[#38383a] pt-4"><h3 className="font-semibold text-white">Beweise</h3>
     {!report.evidence.length && <p className="text-sm text-[#8e8e93]">Noch keine Beweise angehängt.</p>}
     {report.evidence.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#38383a] p-3"><div><p className="text-sm text-[#c7c7cc]">{item.title}</p><p className="text-xs text-[#8e8e93]">{item.uploadedByName} · {formatDateTime(item.createdAt)}</p></div>{item.mimeType === 'application/pdf' ? <a href={fileUrl(item)} className="text-xs text-[#c4b5fd] underline">PDF herunterladen</a> : <Button size="sm" variant="outline" onClick={() => setPreview(item)}>Ansehen</Button>}</div>)}
-    <Input key={fileKey} label="Foto, PDF oder Bodycam-Datei (max. 500 MB)" type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/webm,video/quicktime" onChange={e => { const next = e.target.files?.[0] ?? null; setFile(next); setTitle(next?.name.slice(0,200) ?? '') }} />
+    <Input key={fileKey} label="Foto, PDF oder Bodycam-Datei" type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/webm,video/quicktime" onChange={e => { const next = e.target.files?.[0] ?? null; setFile(next); setTitle(next?.name.slice(0,200) ?? '') }} />
     {file && <><Input label="Bezeichnung" value={title} maxLength={200} onChange={e => setTitle(e.target.value)} /><Button loading={uploading} disabled={!title.trim()} onClick={async () => {
-      if (file.size > 500 * 1024 * 1024) { setMessage('Datei zu groß (max. 500 MB)'); return }
       setUploading(true); setMessage('')
       try {
         const ticket = await uploadInChunks(file, 'EVIDENCE', { onProgress: setProgress })

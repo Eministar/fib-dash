@@ -2786,6 +2786,8 @@ model QualityCheck {
   officerName   String    @db.VarChar(220)
   officerBadge  String    @db.VarChar(100)
   officerRank   String    @db.VarChar(120)
+  /// PATROL | TRAFFIC | OPERATION | OTHER – bestimmt die Berichtsgliederung.
+  checkType     String    @default("PATROL") @db.VarChar(20)
   /// RUNNING | COMPLETED
   status        String    @default("RUNNING") @db.VarChar(20)
   /// POSITIVE | NEUTRAL | NEGATIVE – erst beim Abschluss gesetzt.

@@ -196,6 +196,13 @@ export function readChecklist(value: unknown): ChecklistItem[] {
   })
 }
 
+/** Fortschritt für Listen: `null`, wenn die Akte keine Checkliste hat. */
+export function checklistProgress(value: unknown): { done: number; total: number } | null {
+  const items = readChecklist(value)
+  if (items.length === 0) return null
+  return { done: items.filter((item) => item.done).length, total: items.length }
+}
+
 export function readOpenRoles(value: unknown): OpenRole[] {
   if (!Array.isArray(value)) return []
   return value.flatMap((entry) => {

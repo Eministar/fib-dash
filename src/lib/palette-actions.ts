@@ -111,6 +111,19 @@ export function allowedPageActions(user: UserLike) {
   return PAGE_ACTIONS.filter((action) => hasPermission(user, action.permission))
 }
 
+/**
+ * Taste „N“: die Anlage-Aktion der aktuellen Seite, falls es eine gibt und
+ * der Nutzer sie ausführen darf.
+ */
+export function newActionForPath(user: UserLike, pathname: string) {
+  return allowedPageActions(user).find((action) => action.action === 'new' && action.path === pathname) ?? null
+}
+
+/** Kürzel ohne Modifier dürfen nie beim Tippen oder in offenen Dialogen greifen. */
+export function isPlainShortcut(event: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; repeat: boolean }, key: string) {
+  return event.key.toLowerCase() === key && !event.ctrlKey && !event.metaKey && !event.altKey && !event.repeat
+}
+
 export function allowedAgentActions(user: UserLike) {
   return AGENT_ACTIONS.filter((action) => hasPermission(user, action.permission))
 }

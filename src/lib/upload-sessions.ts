@@ -5,7 +5,7 @@ import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 
-import { ALLOWED_CLIP_TYPES, clipMaxBytes } from './clips'
+import { ALLOWED_CLIP_TYPES, clipMaxBytes, formatBytes } from './clips'
 import { evidenceTypes } from './corruption-evidence'
 import { MAX_IMAGE_BYTES } from './investigation-photos'
 import { prisma } from './prisma'
@@ -40,7 +40,8 @@ function withDots(types: Record<string, string>) {
  */
 export const uploadKindRules: Record<UploadKind, { maxBytes: () => number; types: Record<string, string> }> = {
   CLIP: { maxBytes: clipMaxBytes, types: ALLOWED_CLIP_TYPES },
-  EVIDENCE: { maxBytes: () => 500 * 1024 * 1024, types: withDots(evidenceTypes) },
+  // Asservate sind oft Bodycam-Videos – gleiche Grenze wie Clips.
+  EVIDENCE: { maxBytes: clipMaxBytes, types: withDots(evidenceTypes) },
   PHOTO: {
     maxBytes: () => MAX_IMAGE_BYTES,
     types: { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/gif': '.gif', 'image/webp': '.webp' },
@@ -187,7 +188,7 @@ export async function openUploadSession(input: OpenUploadSessionInput) {
   }
   if (input.totalBytes > rules.maxBytes()) {
     throw new UploadSessionError(
-      `Datei ist zu groß (max. ${Math.floor(rules.maxBytes() / (1024 * 1024))} MB)`,
+      `Datei ist zu groß (max. ${formatBytes(rules.maxBytes())})`,
       413,
     )
   }

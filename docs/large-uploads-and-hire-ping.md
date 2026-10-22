@@ -39,7 +39,7 @@ Größenlimit eines vorgeschalteten Proxys mehr im Weg — weder nginx noch ein 
 |---|---|---|
 | `UPLOAD_CHUNK_BYTES` | `8388608` (8 MiB) | Größe eines Stücks. Vom Server bestimmt, nicht vom Client. |
 | `NEXT_PUBLIC_UPLOAD_CONCURRENCY` | `3` | Gleichzeitige Verbindungen im Browser. |
-| `CLIP_MAX_BYTES` | `524288000` (500 MiB) | Obergrenze für Clips. |
+| `CLIP_MAX_BYTES` | `10737418240` (10 GiB) | Obergrenze für Clips und Asservate. Steht der Wert in der `.env` niedriger, gilt der. |
 
 ### nginx
 

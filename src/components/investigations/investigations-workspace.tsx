@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { usePageAction } from '@/hooks/use-page-action'
-import { FileVideo, FolderOpen, Plus, Users } from 'lucide-react'
+import { FileVideo, FolderOpen, ListChecks, Plus, Users } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -43,12 +43,25 @@ import { useInvestigationToast } from '@/components/investigations/use-investiga
 import type { AgentLite, InvestigationListItem } from '@/components/investigations/types'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigation-templates'
+import { checklistProgress, composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigation-templates'
+import { SavedViews } from '@/components/ui/saved-views'
+import {
+  defaultInvestigationFilters,
+  investigationSavedViewsSchema,
+  readInvestigationViews,
+  sameInvestigationFilters,
+  type InvestigationViewFilters,
+} from '@/lib/investigation-saved-views'
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'Alle Status' },
   { value: 'OPEN_ONLY', label: 'Nur laufende' },
   ...labelOptions(INVESTIGATION_STATUS_LABELS),
+]
+
+const SCOPE_FILTER_OPTIONS = [
+  { value: 'all', label: 'Alle Akten' },
+  { value: 'mine', label: 'Meine Akten' },
 ]
 
 const PRIORITY_FILTER_OPTIONS = [
@@ -101,9 +114,17 @@ export function InvestigationsWorkspace() {
   const canManage = hasPermission(user, 'investigations:manage')
   const canPlaceSpots = hasPermission(user, 'map:manage')
 
-  const [status, setStatus] = useState('OPEN_ONLY')
-  const [priority, setPriority] = useState('ALL')
+  const [status, setStatus] = useState<InvestigationViewFilters['status']>('OPEN_ONLY')
+  const [priority, setPriority] = useState<InvestigationViewFilters['priority']>('ALL')
+  const [mine, setMine] = useUrlState('mine', '')
   const [search, setSearch] = useUrlState('q', '')
+  const filters: InvestigationViewFilters = { search, status, priority, mine: mine === '1' }
+  const applyFilters = (next: InvestigationViewFilters) => {
+    setSearch(next.search)
+    setStatus(next.status)
+    setPriority(next.priority)
+    setMine(next.mine ? '1' : '')
+  }
   const debouncedSearch = useDebouncedValue(search)
   const [createOpen, setCreateOpen] = useState(false)
   const [chooseType, setChooseType] = useState(false)
@@ -115,10 +136,11 @@ export function InvestigationsWorkspace() {
     const params = new URLSearchParams()
     if (status !== 'ALL') params.set('status', status)
     if (priority !== 'ALL') params.set('priority', priority)
+    if (mine === '1') params.set('mine', '1')
     if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
     const suffix = params.toString()
     return `/api/investigations${suffix ? `?${suffix}` : ''}`
-  }, [status, priority, debouncedSearch])
+  }, [status, priority, mine, debouncedSearch])
 
   const { data, loading, refetch } = useFetch<InvestigationListItem[]>(canView ? query : null)
   const { data: agents } = useFetch<AgentLite[]>(canManage && createOpen ? '/api/investigations/agents' : null)
@@ -188,7 +210,7 @@ export function InvestigationsWorkspace() {
   const investigations = data ?? []
   // „Nur laufende“ ist die Voreinstellung und blendet abgeschlossene Akten
   // aus – der Leerzustand muss das erklären, sonst sucht man vergeblich.
-  const filtered = Boolean(search.trim()) || status !== 'ALL' || priority !== 'ALL'
+  const filtered = Boolean(search.trim()) || status !== 'ALL' || priority !== 'ALL' || mine === '1'
 
   const steps: WizardStep[] = [
     {
@@ -406,9 +428,10 @@ export function InvestigationsWorkspace() {
         description="Ermittlungsakten mit Einsatzchronologie, beteiligten Personen und Bodycam-Aufnahmen."
         action={
           canManage ? (
-            <Button onClick={() => setChooseType(true)}>
+            <Button onClick={() => setChooseType(true)} title="Neue Akte (Taste N)" aria-keyshortcuts="n">
               <Plus className="h-4 w-4" />
               Neue Akte
+              <kbd className="ml-1 hidden rounded border border-white/30 px-1 font-mono text-[11px] text-white/80 lg:inline">N</kbd>
             </Button>
           ) : null
         }
@@ -428,9 +451,25 @@ export function InvestigationsWorkspace() {
           label="Einsatzakte suchen"
           placeholder="Aktenzeichen, Titel, Person oder Fallführung"
         />
-        <Select options={STATUS_FILTER_OPTIONS} value={status} onValueChange={setStatus} />
-        <Select options={PRIORITY_FILTER_OPTIONS} value={priority} onValueChange={setPriority} />
+        <Select options={SCOPE_FILTER_OPTIONS} value={mine === '1' ? 'mine' : 'all'} onValueChange={(value) => setMine(value === 'mine' ? '1' : '')} />
+        <Select options={STATUS_FILTER_OPTIONS} value={status} onValueChange={(value) => setStatus(value as InvestigationViewFilters['status'])} />
+        <Select options={PRIORITY_FILTER_OPTIONS} value={priority} onValueChange={(value) => setPriority(value as InvestigationViewFilters['priority'])} />
       </FilterBar>
+
+      {user && (
+        <SavedViews
+          storageKey={`fib:investigation-views:${user.id}`}
+          filters={filters}
+          defaults={defaultInvestigationFilters}
+          onApply={applyFilters}
+          read={readInvestigationViews}
+          same={sameInvestigationFilters}
+          validate={(views) => investigationSavedViewsSchema.safeParse(views).success}
+          defaultLabel="Laufende Akten"
+          placeholder="Zum Beispiel Meine kritischen Fälle"
+          hint="Speichert Suche, Zuständigkeit, Status und Priorität für dein Konto in diesem Browser."
+        />
+      )}
 
       {loading && !data ? (
         <ListSkeleton rows={6} />
@@ -447,7 +486,7 @@ export function InvestigationsWorkspace() {
             filtered ? (
               <Button
                 variant="outline"
-                onClick={() => { setSearch(''); setStatus('ALL'); setPriority('ALL') }}
+                onClick={() => applyFilters({ ...defaultInvestigationFilters, status: 'ALL' })}
               >
                 Filter zurücksetzen
               </Button>
@@ -461,7 +500,9 @@ export function InvestigationsWorkspace() {
         />
       ) : (
         <div className="space-y-2.5">
-          {investigations.map((investigation) => (
+          {investigations.map((investigation) => {
+            const progress = checklistProgress(investigation.checklist)
+            return (
             <Link
               key={investigation.id}
               href={`/investigations/${investigation.id}`}
@@ -487,6 +528,18 @@ export function InvestigationsWorkspace() {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-4 text-[12px] text-[#8e8e93]">
+                  {progress && (
+                    <span
+                      className={cn('inline-flex items-center gap-1.5 tabular-nums', progress.done === progress.total && 'text-[#30d158]')}
+                      title={`Arbeitsplan: ${progress.done} von ${progress.total} Schritten erledigt`}
+                    >
+                      <ListChecks className="h-3.5 w-3.5" aria-hidden />
+                      {progress.done}/{progress.total}
+                      <span className="h-1 w-10 overflow-hidden rounded-full bg-[#2c2c2e]" aria-hidden>
+                        <span className="block h-full rounded-full bg-current" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+                      </span>
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1.5" title="Einträge">
                     <FolderOpen className="h-3.5 w-3.5" />
                     {investigation._count.entries}
@@ -512,7 +565,8 @@ export function InvestigationsWorkspace() {
                 <span>Aktualisiert {formatDateTime(investigation.updatedAt)}</span>
               </div>
             </Link>
-          ))}
+            )
+          })}
         </div>
       )}
 

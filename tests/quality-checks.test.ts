@@ -12,6 +12,8 @@ import {
   qcGradeSchema,
   qcReportSchema,
   QC_REPORT_TEMPLATE,
+  qcCreateSchema,
+  qcReportTemplate,
   qcShareCovers,
   qcShareIsActive,
   qcShareSchema,
@@ -145,4 +147,17 @@ test('Beamtenliste: Gekündigte nur mit Kontrolle, Dienstnummer ohne interne Mar
     ['t1', '01', 'Gekündigt', true],
     ['weg', '07', '', false],
   ])
+})
+
+test('Kontrollart: Voreinstellung Streife, unbekannte Arten abgelehnt', () => {
+  assert.equal(qcCreateSchema.parse({ lspdOfficerId: '1' }).checkType, 'PATROL')
+  assert.equal(qcCreateSchema.parse({ lspdOfficerId: '1', checkType: 'TRAFFIC' }).checkType, 'TRAFFIC')
+  assert.equal(qcCreateSchema.safeParse({ lspdOfficerId: '1', checkType: 'PARTY' }).success, false)
+})
+
+test('Berichtsgliederung je Kontrollart', () => {
+  assert.ok(qcReportTemplate('TRAFFIC').startsWith('Anlass & Ablauf der Kontrolle:\n\n'))
+  assert.ok(qcReportTemplate('OPERATION').includes('Taktik & Eigensicherung:'))
+  assert.equal(qcReportTemplate('UNBEKANNT'), qcReportTemplate('OTHER'))
+  assert.equal(QC_REPORT_TEMPLATE, qcReportTemplate('OTHER'))
 })

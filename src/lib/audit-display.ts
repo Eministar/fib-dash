@@ -12,6 +12,7 @@ export const auditActionLabels: Record<string, string> = {
   DOSSIER_ACCESS_REVOKED: 'Ermittlungsgruppe von Dauerakte entfernt',
   INVESTIGATION_CREATED: 'Einsatzakte angelegt',
   INVESTIGATION_UPDATED: 'Einsatzakte bearbeitet',
+  INVESTIGATION_HANDOVER: 'Fallführung übergeben',
   INVESTIGATION_CHECKLIST_UPDATED: 'Aktencheckliste bearbeitet',
   INVESTIGATION_TEMPLATE_CREATED: 'Aktenvorlage angelegt',
   INVESTIGATION_TEMPLATE_UPDATED: 'Aktenvorlage bearbeitet',

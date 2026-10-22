@@ -22,6 +22,7 @@ import {
   type PaletteTarget,
 } from '@/lib/palette-actions'
 import { startPageAction } from '@/hooks/use-page-action'
+import { useNewShortcut } from '@/hooks/use-new-shortcut'
 import { cn } from '@/lib/utils'
 
 /** Reihenfolge der Gruppen im Ergebnis – die häufigsten zuerst. */
@@ -66,6 +67,7 @@ export function GlobalSearch() {
   /** Gewählte Agent-Aktion („Sanktion ausstellen …“) – danach wird ein Agent gesucht. */
   const [agentAction, setAgentAction] = useState<AgentActionDef | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  useNewShortcut()
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

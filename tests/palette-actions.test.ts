@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { agentHitActions, allowedAgentActions, allowedPageActions } from '../src/lib/palette-actions'
+import { agentHitActions, allowedAgentActions, allowedPageActions, isPlainShortcut, newActionForPath } from '../src/lib/palette-actions'
 
 test('Aktionen erscheinen nur mit dem passenden Recht', () => {
   assert.deepEqual(allowedPageActions({ permissions: [] }), [])
@@ -22,4 +22,21 @@ test('Kontextaktionen zu einem Agent zeigen auf die richtige Seite', () => {
     { id: 'sanction:a1', title: 'Sanktion für Max Muster', icon: 'sanction', target: { path: '/agents/a1', action: 'sanction' } },
     { id: 'absence:a1', title: 'Abmeldung für Max Muster', icon: 'absence', target: { path: '/agents/a1', action: 'absence' } },
   ])
+})
+
+test('Taste N: nur auf Seiten mit Anlage-Aktion und mit Recht', () => {
+  const investigator = { permissions: ['investigations:manage'] }
+  assert.equal(newActionForPath(investigator, '/investigations')?.id, 'new-investigation')
+  assert.equal(newActionForPath(investigator, '/investigations/persons')?.id, 'new-person')
+  assert.equal(newActionForPath(investigator, '/dashboard'), null)
+  assert.equal(newActionForPath({ permissions: ['investigations:view'] }, '/investigations'), null)
+})
+
+test('Taste N: kein Treffer mit Modifier oder gehaltener Taste', () => {
+  const key = { key: 'n', ctrlKey: false, metaKey: false, altKey: false, repeat: false }
+  assert.equal(isPlainShortcut(key, 'n'), true)
+  assert.equal(isPlainShortcut({ ...key, key: 'N' }, 'n'), true)
+  assert.equal(isPlainShortcut({ ...key, ctrlKey: true }, 'n'), false)
+  assert.equal(isPlainShortcut({ ...key, metaKey: true }, 'n'), false)
+  assert.equal(isPlainShortcut({ ...key, repeat: true }, 'n'), false)
 })

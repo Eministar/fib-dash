@@ -13,6 +13,7 @@ import {
   investigationVisibilityWhere,
   isInvestigationPriority,
   isInvestigationStatus,
+  myInvestigationsWhere,
   serializeBigInts,
   validateIdList,
 } from '@/lib/investigations'
@@ -59,6 +60,8 @@ export async function GET(req: NextRequest) {
     if (personId) {
       filters.push({ persons: { some: { personId } } })
     }
+
+    if (searchParams.get('mine') === '1') filters.push(myInvestigationsWhere(user))
 
     const searchWhere = tokenizedWhere(search, (token) => [
       { title: { contains: token } },

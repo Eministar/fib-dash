@@ -91,6 +91,8 @@ export type DiscordConfig = {
   dutyStatusMessageId: string
   absenceStatusChannelId: string
   absenceStatusMessageId: string
+  /// Wöchentlicher Bericht an die Leitung (montags). Leer = kein Bericht.
+  weeklyReportChannelId: string
   humanResourcesRoleId: string
   promotionBlockRoleId: string
   leaveRoleId: string
@@ -222,6 +224,7 @@ export const DISCORD_SETTING_KEYS = {
   dutyStatusMessageId: 'discord.dutyStatusMessageId',
   absenceStatusChannelId: 'discord.absenceStatusChannelId',
   absenceStatusMessageId: 'discord.absenceStatusMessageId',
+  weeklyReportChannelId: 'discord.weeklyReportChannelId',
   humanResourcesRoleId: 'discord.humanResourcesRoleId',
   promotionBlockRoleId: 'discord.promotionBlockRoleId',
   leaveRoleId: 'discord.leaveRoleId',
@@ -914,6 +917,7 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
     dutyStatusMessageId: map[DISCORD_SETTING_KEYS.dutyStatusMessageId] || '',
     absenceStatusChannelId: envFirst(envAbsenceStatusChannelId(), map[DISCORD_SETTING_KEYS.absenceStatusChannelId]),
     absenceStatusMessageId: map[DISCORD_SETTING_KEYS.absenceStatusMessageId] || '',
+    weeklyReportChannelId: envFirst(process.env.DISCORD_WEEKLY_REPORT_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.weeklyReportChannelId]),
     humanResourcesRoleId: envFirst(envHumanResourcesRoleId(), map[DISCORD_SETTING_KEYS.humanResourcesRoleId]),
     promotionBlockRoleId: envFirst(envPromotionBlockRoleId(), map[DISCORD_SETTING_KEYS.promotionBlockRoleId]),
     leaveRoleId: envFirst(envLeaveRoleId(), map[DISCORD_SETTING_KEYS.leaveRoleId]),
@@ -957,6 +961,7 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.investigationsChannelId !== undefined) data[DISCORD_SETTING_KEYS.investigationsChannelId] = input.investigationsChannelId.trim()
   if (input.dutyStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.dutyStatusMessageId] = input.dutyStatusMessageId.trim()
   if (input.absenceStatusChannelId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusChannelId] = input.absenceStatusChannelId.trim()
+  if (input.weeklyReportChannelId !== undefined) data[DISCORD_SETTING_KEYS.weeklyReportChannelId] = input.weeklyReportChannelId.trim()
   if (input.absenceStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusMessageId] = input.absenceStatusMessageId.trim()
   if (input.humanResourcesRoleId !== undefined) data[DISCORD_SETTING_KEYS.humanResourcesRoleId] = input.humanResourcesRoleId.trim()
   if (input.promotionBlockRoleId !== undefined) data[DISCORD_SETTING_KEYS.promotionBlockRoleId] = input.promotionBlockRoleId.trim()
@@ -1574,7 +1579,7 @@ function bracketedServiceNumber(badgeNumber: string, prefix: string) {
   return `[${join}]`
 }
 
-async function postChannelMessage(channelId: string, payload: Record<string, unknown>) {
+export async function postChannelMessage(channelId: string, payload: Record<string, unknown>) {
   return discordFetch<{ id: string }>(`/channels/${channelId}/messages`, {
     method: 'POST',
     body: JSON.stringify(payload),

@@ -60,6 +60,7 @@ interface DiscordConfigResponse {
     dutyAdminLogChannelId: string
     dutyStatusMessageId: string
     absenceStatusChannelId: string
+    weeklyReportChannelId: string
     absenceStatusMessageId: string
     humanResourcesRoleId: string
     clipsCategoryId: string
@@ -152,6 +153,7 @@ export default function SettingsPage() {
     dutyAdminLogChannelId: '',
     dutyStatusMessageId: '',
     absenceStatusChannelId: '',
+    weeklyReportChannelId: '',
     absenceStatusMessageId: '',
     humanResourcesRoleId: '',
     clipsCategoryId: '',
@@ -842,6 +844,33 @@ export default function SettingsPage() {
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Öffentliches Panel mit allen aktuell abgemeldeten Agents. Leer lassen, um den Dienstzeiten- oder Ankündigungs-Channel zu nutzen.
                 </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Select
+                    label="Wochenbericht an die Leitung"
+                    value={discordForm.weeklyReportChannelId ?? ''}
+                    onValueChange={(weeklyReportChannelId) => setDiscordForm({ ...discordForm, weeklyReportChannelId })}
+                    options={channelOptions}
+                />
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
+                  Jeden Montag ab 8 Uhr: Einstellungen, Kündigungen, Rangänderungen, Sanktionen und Dienststunden der Vorwoche im Vergleich zur Woche davor. Leer lassen, um keinen Bericht zu senden.
+                </p>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-2"
+                    disabled={!discordForm.weeklyReportChannelId}
+                    onClick={async () => {
+                      try {
+                        await execute('/api/discord/weekly-report', { method: 'POST' })
+                        addToast({ type: 'success', title: 'Testbericht gesendet', message: 'Bericht der Vorwoche im eingestellten Channel.' })
+                      } catch (err) {
+                        addToast({ type: 'error', title: 'Wochenbericht fehlgeschlagen', message: err instanceof Error ? err.message : '' })
+                      }
+                    }}
+                >
+                  Testbericht jetzt senden
+                </Button>
               </div>
               <div className="sm:col-span-2">
                 <Select

@@ -34,6 +34,7 @@ export interface QcCheck {
   officerName: string
   officerBadge: string
   officerRank: string
+  checkType: string
   status: string
   rating: string | null
   grade: number | null

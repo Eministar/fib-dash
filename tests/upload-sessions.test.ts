@@ -63,8 +63,8 @@ test('Chunk-Aufteilung und Pfade', () => {
   // Die Grenzen der vier Arten - frueher in savePhotoUpload/saveEvidence/
   // saveUploadedFile verstreut, jetzt an einer Stelle.
   assert.equal(uploadKindRules.CLIP.types['video/x-matroska'], '.mkv')
-  assert.equal(uploadKindRules.CLIP.maxBytes(), 500 * 1024 * 1024)
-  assert.equal(uploadKindRules.EVIDENCE.maxBytes(), 500 * 1024 * 1024)
+  assert.equal(uploadKindRules.CLIP.maxBytes(), 10 * 1024 * 1024 * 1024)
+  assert.equal(uploadKindRules.EVIDENCE.maxBytes(), 10 * 1024 * 1024 * 1024)
   assert.equal(uploadKindRules.PHOTO.maxBytes(), 20 * 1024 * 1024)
   assert.equal(uploadKindRules.RESOURCE.maxBytes(), 10 * 1024 * 1024)
 

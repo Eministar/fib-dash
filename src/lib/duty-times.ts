@@ -403,6 +403,11 @@ export function leaderboardRange(period: LeaderboardPeriod, now = new Date()) {
  */
 export async function getDutyLeaderboard(period: LeaderboardPeriod, now = new Date(), limit = 10) {
   const { start, end } = leaderboardRange(period, now)
+  return { period, ...(await getDutyRanking(start, end, now, limit)) }
+}
+
+/** Dienstzeiten je Agent in einem beliebigen Zeitraum, z. B. für den Wochenbericht. */
+export async function getDutyRanking(start: Date, end: Date, now = new Date(), limit = 10) {
   const where = sessionRangeWhere(start, end)
   const agents = await prisma.agent.findMany({
     where: { status: { not: 'TERMINATED' } },
@@ -429,7 +434,13 @@ export async function getDutyLeaderboard(period: LeaderboardPeriod, now = new Da
     .filter((row) => row.durationMs > 0)
     .sort((a, b) => b.durationMs - a.durationMs)
 
-  return { period, start, end, rows: rows.slice(0, limit), participantCount: rows.length }
+  return {
+    start,
+    end,
+    rows: rows.slice(0, limit),
+    participantCount: rows.length,
+    totalDurationMs: rows.reduce((total, row) => total + row.durationMs, 0),
+  }
 }
 
 export async function getAgentDutyTime(agentId: string, options?: { now?: Date; sync?: boolean }) {

@@ -25,7 +25,9 @@ import {
   QC_GRADE_TENDENCY,
   QC_RATINGS,
   QC_RATING_LABELS,
-  QC_REPORT_TEMPLATE,
+  QC_CHECK_TYPE_LABELS,
+  isQcCheckType,
+  qcReportTemplate,
   entryBalance,
   formatQcGrade,
   qcBaseGrade,
@@ -89,7 +91,10 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
       <Card className="mb-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-mono text-[12px] text-[#d4af37]">{check.number}</p>
+            <p className="text-[12px]">
+              <span className="font-mono text-[#d4af37]">{check.number}</span>
+              {isQcCheckType(check.checkType) && <span className="text-[#98989d]"> · {QC_CHECK_TYPE_LABELS[check.checkType]}</span>}
+            </p>
             <h1 className="mt-0.5 text-[19px] font-semibold text-white">
               <Link href={`/quality-checks/officers/${check.lspdOfficerId}`} className="hover:underline">{check.officerName}</Link>
             </h1>
@@ -434,7 +439,7 @@ function EntryComposer({
 }
 
 /** Großes Textfeld für den Abschlussbericht; die Gliederung fügt man bei Bedarf ein. */
-function ReportField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function ReportField({ value, onChange, checkType }: { value: string; onChange: (value: string) => void; checkType: string }) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-3">
@@ -442,8 +447,8 @@ function ReportField({ value, onChange }: { value: string; onChange: (value: str
           Abschlussbericht <span className="text-[#ff6961]" aria-hidden>*</span>
         </label>
         {!value.trim() && (
-          <Button variant="ghost" size="sm" onClick={() => onChange(QC_REPORT_TEMPLATE)}>
-            Gliederung einfügen
+          <Button variant="ghost" size="sm" onClick={() => onChange(qcReportTemplate(checkType))}>
+            Gliederung einfügen{isQcCheckType(checkType) ? ` (${QC_CHECK_TYPE_LABELS[checkType]})` : ''}
           </Button>
         )}
       </div>
@@ -486,7 +491,7 @@ function ReportDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: ()
       size="lg"
     >
       <div className="space-y-4">
-        <ReportField value={summary} onChange={setSummary} />
+        <ReportField value={summary} onChange={setSummary} checkType={check.checkType} />
         {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose} disabled={loading}>Abbrechen</Button>
@@ -546,7 +551,7 @@ function CompleteDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: 
           </p>
           <GradeButtons value={grade} onChange={(next) => setGrade(sameGrade(next, grade) ? null : next)} />
         </div>
-        <ReportField value={summary} onChange={setSummary} />
+        <ReportField value={summary} onChange={setSummary} checkType={check.checkType} />
         {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose} disabled={loading}>Abbrechen</Button>

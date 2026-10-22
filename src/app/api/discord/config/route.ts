@@ -119,6 +119,7 @@ export async function POST(req: NextRequest) {
       dutyStatusChannelId: canManageSettings && typeof body.dutyStatusChannelId === 'string' ? body.dutyStatusChannelId : undefined,
       dutyAdminLogChannelId: canManageSettings && typeof body.dutyAdminLogChannelId === 'string' ? body.dutyAdminLogChannelId : undefined,
       absenceStatusChannelId: canManageSettings && typeof body.absenceStatusChannelId === 'string' ? body.absenceStatusChannelId : undefined,
+      weeklyReportChannelId: canManageSettings && typeof body.weeklyReportChannelId === 'string' ? body.weeklyReportChannelId : undefined,
       humanResourcesRoleId: canManageSettings && typeof body.humanResourcesRoleId === 'string' ? body.humanResourcesRoleId : undefined,
       promotionBlockRoleId: canManageSettings && typeof body.promotionBlockRoleId === 'string' ? body.promotionBlockRoleId : undefined,
       leaveRoleId: canManageSettings && typeof body.leaveRoleId === 'string' ? body.leaveRoleId : undefined,

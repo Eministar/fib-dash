@@ -187,12 +187,13 @@ export type InvestigationListItem = {
   leadAgent: AgentLite | null
   createdBy: UserLite | null
   assignees: { id: string; agent: AgentLite }[]
+  /** Arbeitsplan aus der Vorlage; für die Fortschrittsanzeige in der Liste. */
+  checklist: unknown
   _count: { entries: number; clips: number; persons: number }
 }
 
 export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assignees'> & {
   template: { id: string; name: string } | null
-  checklist: unknown
   openRoles: unknown
   assignees: InvestigationAssignee[]
   entries: InvestigationEntry[]

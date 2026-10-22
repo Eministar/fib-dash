@@ -8,7 +8,7 @@ import { TabBar } from '@/components/ui/tab-bar'
 import { LspdOfficerFileView } from '@/components/lspd/lspd-officer-file'
 import { useFetch } from '@/hooks/use-fetch'
 import type { LspdOfficerFile } from '@/lib/lspd-officers'
-import type { QcOfficerStats } from '@/lib/quality-checks'
+import { QC_CHECK_TYPE_LABELS, isQcCheckType, type QcOfficerStats } from '@/lib/quality-checks'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
 import { AverageGrade, BalanceChips, GradeBadge, QcEntryList, RatingBadge, type QcEntry } from './qc-shared'
 
@@ -19,6 +19,7 @@ type SharedCheck = {
   officerName: string
   officerBadge: string
   officerRank: string
+  checkType?: string
   status: string
   rating: string | null
   grade: number | null
@@ -296,6 +297,7 @@ function CheckRow({ check, open, onToggle }: { check: SharedCheck; open: boolean
         <ChevronDown className={cn('h-4 w-4 shrink-0 text-[#8e8e93] transition-transform', !open && '-rotate-90')} aria-hidden />
         <span className="w-[64px] shrink-0 font-mono text-xs text-[#d4af37]">{check.number}</span>
         <span className="min-w-0 flex-1 text-sm text-white">
+          {isQcCheckType(check.checkType) && <span className="mr-2 text-[#98989d]">{QC_CHECK_TYPE_LABELS[check.checkType]} ·</span>}
           {formatDateTime(check.startedAt)}
           {check.endedAt ? ` – ${formatDateTime(check.endedAt)}` : ''}
           {check.location && (

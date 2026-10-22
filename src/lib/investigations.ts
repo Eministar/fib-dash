@@ -299,6 +299,22 @@ export function investigationVisibilityWhere(user: CurrentUser): Prisma.Investig
 }
 
 /**
+ * „Meine Akten“: Fallführung oder Zuweisung über das eigene Agent-Profil
+ * (verknüpftes Konto oder gleiche Discord-ID). Ersetzt nicht die
+ * Sichtbarkeitsprüfung, sondern wird zusätzlich angehängt.
+ */
+export function myInvestigationsWhere(user: CurrentUser): Prisma.InvestigationWhereInput {
+  const self = viewerAgentWhere(user)
+  return { OR: [{ leadAgent: self }, { assignees: { some: { agent: self } } }] }
+}
+
+/** Text des Chronologie-Eintrags bei einer Übergabe der Fallführung. */
+export function handoverEntryContent(previous: string | null, next: string | null, note: string) {
+  const line = previous ? `Fallführung von ${previous} an ${next ?? '—'} übergeben.` : `Fallführung an ${next ?? '—'} übergeben.`
+  return `${line}\n\n${note.trim()}`
+}
+
+/**
  * `BodycamClip.sizeBytes` ist ein BigInt und damit nicht JSON-serialisierbar.
  * Alle API-Antworten laufen deshalb durch diese Normalisierung.
  */

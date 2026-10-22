@@ -16,6 +16,18 @@ export const QC_ENTRY_KIND_LABELS: Record<QcEntryKind, string> = {
   NOTE: 'Notiz',
 }
 
+/** Art der Kontrolle – bestimmt die Gliederung des Abschlussberichts. */
+export const QC_CHECK_TYPES = ['PATROL', 'TRAFFIC', 'OPERATION', 'OTHER'] as const
+export type QcCheckType = (typeof QC_CHECK_TYPES)[number]
+export const QC_CHECK_TYPE_LABELS: Record<QcCheckType, string> = {
+  PATROL: 'Streifenfahrt',
+  TRAFFIC: 'Verkehrskontrolle',
+  OPERATION: 'Einsatzbegleitung',
+  OTHER: 'Sonstige',
+}
+export const isQcCheckType = (value: unknown): value is QcCheckType =>
+  typeof value === 'string' && (QC_CHECK_TYPES as readonly string[]).includes(value)
+
 export const QC_RATINGS = ['POSITIVE', 'NEUTRAL', 'NEGATIVE'] as const
 export type QcRating = (typeof QC_RATINGS)[number]
 export const QC_RATING_LABELS: Record<QcRating, string> = {
@@ -86,6 +98,7 @@ const notInFuture = (value: string) => new Date(value).getTime() <= Date.now() +
 export const qcCreateSchema = z
   .object({
     lspdOfficerId: z.string().trim().min(1).max(191),
+    checkType: z.enum(QC_CHECK_TYPES).default('PATROL'),
     startedAt: isoDate.refine(notInFuture, 'Der Beginn darf nicht in der Zukunft liegen').optional(),
     location: z.string().trim().max(200).optional(),
   })
@@ -112,22 +125,24 @@ export const qcEntryUpdateSchema = z
   .refine((input) => Object.values(input).some((value) => value !== undefined), 'Keine Änderung angegeben')
 
 /**
- * Gliederung für den Abschlussbericht. Wird nur auf Wunsch eingefügt – ein
- * vorausgefülltes Feld würde die Pflichtprüfung mit leeren Überschriften bestehen.
+ * Gliederung für den Abschlussbericht je Kontrollart. Wird nur auf Wunsch
+ * eingefügt – ein vorausgefülltes Feld würde die Pflichtprüfung mit leeren
+ * Überschriften bestehen.
  */
-export const QC_REPORT_TEMPLATE = [
-  'Verlauf der Kontrolle:',
-  '',
-  '',
-  'Stärken:',
-  '',
-  '',
-  'Verbesserungsbedarf:',
-  '',
-  '',
-  'Empfehlung / Maßnahmen:',
-  '',
-].join('\n')
+const QC_REPORT_SECTIONS: Record<QcCheckType, string[]> = {
+  PATROL: ['Verlauf der Streife', 'Auftreten & Kommunikation', 'Eigensicherung & Funkdisziplin', 'Stärken', 'Verbesserungsbedarf', 'Empfehlung / Maßnahmen'],
+  TRAFFIC: ['Anlass & Ablauf der Kontrolle', 'Ansprache & Belehrung', 'Eigensicherung', 'Rechtliche Umsetzung (Bußgeld, Anzeige)', 'Verbesserungsbedarf', 'Empfehlung / Maßnahmen'],
+  OPERATION: ['Lage & Auftrag', 'Verhalten im Einsatz', 'Zusammenarbeit & Kommunikation', 'Taktik & Eigensicherung', 'Verbesserungsbedarf', 'Empfehlung / Maßnahmen'],
+  OTHER: ['Verlauf der Kontrolle', 'Stärken', 'Verbesserungsbedarf', 'Empfehlung / Maßnahmen'],
+}
+
+/** „Überschrift:“ gefolgt von zwei Leerzeilen zum Ausfüllen. */
+export function qcReportTemplate(type: string | null | undefined) {
+  return QC_REPORT_SECTIONS[isQcCheckType(type) ? type : 'OTHER'].map((section) => `${section}:\n\n`).join('\n')
+}
+
+/** Allgemeine Gliederung (Kontrollart „Sonstige“). */
+export const QC_REPORT_TEMPLATE = qcReportTemplate('OTHER')
 
 const reportText = z.string().trim().min(1, 'Bitte einen Abschlussbericht schreiben').max(20000)
 
