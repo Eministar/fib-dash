@@ -1,7 +1,34 @@
 {
   "repository": "Eministar/fib-dash",
-  "generatedAt": "2026-10-22T15:23:27.041Z",
+  "generatedAt": "2026-10-22T15:36:24.871Z",
   "entries": [
+    {
+      "buildId": "build-e4c8b45174",
+      "commit": "e4c8b451745390e43f64741522f654def3568241",
+      "shortCommit": "e4c8b45174",
+      "subject": "Merge remote-tracking branch 'origin/main'",
+      "author": "Eministar",
+      "date": "2026-10-22T15:35:35Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/e4c8b451745390e43f64741522f654def3568241"
+    },
+    {
+      "buildId": "build-9c75e60d15",
+      "commit": "9c75e60d15d3edde82942f0198f2d9489e0b6df5",
+      "shortCommit": "9c75e60d15",
+      "subject": "feat: update API endpoints for agent fetching and add external investigator permissions",
+      "author": "Eministar",
+      "date": "2026-10-22T15:35:25Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/9c75e60d15d3edde82942f0198f2d9489e0b6df5"
+    },
+    {
+      "buildId": "build-89cfd2c192",
+      "commit": "89cfd2c192cf38b378924f77e964cf843f9064d3",
+      "shortCommit": "89cfd2c192",
+      "subject": "chore: sync commit legend [skip ci]",
+      "author": "github-actions[bot]",
+      "date": "2026-10-22T15:23:27Z",
+      "url": "https://github.com/Eministar/fib-dash/commit/89cfd2c192cf38b378924f77e964cf843f9064d3"
+    },
     {
       "buildId": "build-cbaef26706",
       "commit": "cbaef26706b3714c71c97e458331b6d19a4c854b",
