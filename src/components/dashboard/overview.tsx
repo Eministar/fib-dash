@@ -4,6 +4,7 @@ import { auditActionLabel, auditDetails } from '@/lib/audit-display'
 import { DutyClockCard } from '@/components/duty/duty-clock-card'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useFetch } from '@/hooks/use-fetch'
 import { usePageAction } from '@/hooks/use-page-action'
 import { useApi } from '@/hooks/use-api'
@@ -234,7 +235,10 @@ export default function DashboardPage() {
   const { execute } = useApi()
   const { addToast } = useToast()
   const confirm = useConfirm()
+  const router = useRouter()
   const canViewDashboard = hasPermission(user, 'dashboard:view')
+  // Externe Ermittler haben keine Übersicht – Login und Logo führen sie direkt zu den Akten.
+  const investigationsOnly = !canViewDashboard && hasPermission(user, 'investigations:view')
   const canManageAbsences = hasPermission(user, 'agents:write')
   const { data: stats, loading, error, refetch } = useFetch<Stats>(canViewDashboard ? '/api/stats' : null)
   const [absenceModalOpen, setAbsenceModalOpen] = useState(false)
@@ -245,6 +249,10 @@ export default function DashboardPage() {
   const [absenceReason, setAbsenceReason] = useState('')
   const [absenceSubmitting, setAbsenceSubmitting] = useState(false)
   const [clock, setClock] = useState<Date | null>(null)
+
+  useEffect(() => {
+    if (investigationsOnly) router.replace('/investigations')
+  }, [investigationsOnly, router])
 
   useEffect(() => {
     setClock(new Date())
@@ -351,6 +359,7 @@ export default function DashboardPage() {
     }
   }
 
+  if (investigationsOnly) return <PageLoader />
   if (!canViewDashboard) return <UnauthorizedContent />
   if (loading) return <PageLoader />
 
@@ -561,8 +570,9 @@ export default function DashboardPage() {
 
             <Panel
                 title="Inaktive Agents"
-                count={inactiveAgents.length}
-                href={inactiveAgents.length > 0 ? '/agents?status=INACTIVE' : null}
+                count={stats.inactiveAgents}
+                isEmpty={inactiveAgents.length === 0}
+                href={stats.inactiveAgents > inactiveAgents.length ? '/agents?status=INACTIVE' : null}
                 empty="Keine inaktiven Agents."
             >
               <ul>

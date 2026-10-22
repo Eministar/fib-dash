@@ -52,6 +52,7 @@ export const PERMISSIONS = [
   'investigations:classified',
   'investigations:delete',
   'investigations:templates',
+  'investigations:external',
   'quality-checks:view',
   'quality-checks:manage',
   'map:view',
@@ -134,6 +135,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'investigations:classified': 'Verschlusssachen einsehen',
   'investigations:delete': 'Ermittlungsakten löschen',
   'investigations:templates': 'Aktenvorlagen verwalten',
+  'investigations:external': 'Externer Ermittlungszugriff (ohne Personalakten)',
   'quality-checks:view': 'Qualitätskontrollen und LSPD-Beamtenakten ansehen',
   'quality-checks:manage': 'Qualitätskontrollen durchführen und Freigabelinks verwalten',
   'map:view': 'Karte ansehen',
@@ -213,6 +215,11 @@ const IMPLIED_PERMISSIONS: Partial<Record<Permission, Permission[]>> = {
   'investigations:classified': ['investigations:view'],
   'investigations:delete': ['investigations:view'],
   'investigations:templates': ['investigations:view', 'agents:view'],
+  // Für Externe (z. B. LSPD) mit eigener Discord-Rolle: Akten inkl.
+  // Verschlusssachen sehen, anlegen und bearbeiten – aber kein `agents:view`.
+  // Das trägt nur, weil Implikationen eine Ebene tief aufgelöst werden: das
+  // `agents:view` von `investigations:manage` kommt hier nicht mit (Test sichert das ab).
+  'investigations:external': ['investigations:view', 'investigations:manage', 'investigations:classified'],
   'quality-checks:manage': ['quality-checks:view'],
   'map:manage': ['map:view'],
   'notes:manage': ['notes:view', 'agents:view'],

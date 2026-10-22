@@ -121,7 +121,7 @@ export function InvestigationsWorkspace() {
   }, [status, priority, debouncedSearch])
 
   const { data, loading, refetch } = useFetch<InvestigationListItem[]>(canView ? query : null)
-  const { data: agents } = useFetch<AgentLite[]>(canManage && createOpen ? '/api/agents' : null)
+  const { data: agents } = useFetch<AgentLite[]>(canManage && createOpen ? '/api/investigations/agents' : null)
   const { data: templates, loading: templatesLoading, error: templatesError } = useFetch<InvestigationTemplateData[]>(canManage && createOpen ? '/api/investigation-templates' : null)
   const selectedTemplate = templates?.find((template) => template.id === form.templateId) ?? null
   // Was die zuletzt gewählte Vorlage vorausgefüllt hat. Nur solange Titel und

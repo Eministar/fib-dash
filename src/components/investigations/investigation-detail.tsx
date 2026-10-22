@@ -107,7 +107,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   const { data, loading, error, refetch } = useFetch<InvestigationDetailData>(
     canView ? `/api/investigations/${investigationId}` : null,
   )
-  const { data: agents } = useFetch<AgentLite[]>(canManage ? '/api/agents' : null)
+  const { data: agents } = useFetch<AgentLite[]>(canManage ? '/api/investigations/agents' : null)
   useTrackRecentItem(data ? { href: `/investigations/${investigationId}`, title: data.title, subtitle: data.caseNumber, kind: 'investigation' } : null)
   const { data: persons } = useFetch<Person[]>(canManage ? '/api/persons' : null)
 
