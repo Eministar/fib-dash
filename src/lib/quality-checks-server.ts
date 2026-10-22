@@ -23,6 +23,7 @@ import {
   type qcEntrySchema,
   type qcEntryUpdateSchema,
   type qcGradeSchema,
+  type qcReportSchema,
   type qcShareSchema,
   type qcShareUpdateSchema,
 } from '@/lib/quality-checks'
@@ -245,6 +246,31 @@ export async function completeQualityCheck(user: CurrentUser, id: string, input:
         action: 'QUALITY_CHECK_COMPLETED',
         userId: user.id,
         details: `Qualitätskontrolle ${check.number} abgeschlossen: ${input.rating}`,
+        newValue: input.summary.slice(0, 2000),
+      },
+      tx,
+    )
+    return updated
+  })
+}
+
+/**
+ * Der Bericht entsteht oft erst nach der Mitfahrt. Das Protokoll bleibt
+ * geschlossen; nur der Text ist änderbar, die alte Fassung landet im Audit-Log.
+ */
+export async function updateQualityCheckReport(user: CurrentUser, id: string, input: z.infer<typeof qcReportSchema>) {
+  return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM QualityCheck WHERE id = ${id} FOR UPDATE`
+    const check = await tx.qualityCheck.findUnique({ where: { id }, select: { number: true, status: true, summary: true } })
+    if (!check) throw new QcError('Qualitätskontrolle nicht gefunden', 404)
+    if (check.status !== 'COMPLETED') throw new QcError('Der Abschlussbericht wird beim Abschließen der Kontrolle geschrieben', 409)
+    const updated = await tx.qualityCheck.update({ where: { id }, data: { summary: input.summary }, include: qcDetailInclude })
+    await createAuditLog(
+      {
+        action: 'QUALITY_CHECK_REPORT_UPDATED',
+        userId: user.id,
+        details: `Qualitätskontrolle ${check.number}: Abschlussbericht überarbeitet`,
+        oldValue: check.summary?.slice(0, 2000),
         newValue: input.summary.slice(0, 2000),
       },
       tx,

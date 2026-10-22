@@ -62,7 +62,7 @@ export function AgentOfMonthCard() {
   }
 
   return (
-    <section aria-labelledby="agent-of-month-heading" className="rounded-[14px] border border-[#38383a]/55 bg-[#1c1c1e]/70 p-4">
+    <section aria-labelledby="agent-of-month-heading" className="rounded-[12px] bg-[#1c1c1e] p-4">
       <div className="grid gap-4 md:grid-cols-2 md:gap-6">
         <div className="min-w-0">
           <h2 id="agent-of-month-heading" className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-white">

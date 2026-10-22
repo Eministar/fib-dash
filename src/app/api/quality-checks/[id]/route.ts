@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, { params }: Context) {
   }
 }
 
-/** Abschließen: Gesamtbewertung, Fazit, Ende. Danach ist das Protokoll geschlossen. */
+/** Abschließen: Gesamtbewertung, Abschlussbericht, Ende. Danach ist das Protokoll geschlossen. */
 export async function PATCH(req: NextRequest, { params }: Context) {
   try {
     const user = await requirePermission('quality-checks:manage')

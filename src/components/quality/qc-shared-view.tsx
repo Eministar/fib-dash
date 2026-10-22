@@ -315,7 +315,7 @@ function CheckRow({ check, open, onToggle }: { check: SharedCheck; open: boolean
         <div id={panelId} className="border-t border-[#2c2c2e] bg-[#111112] px-5 py-4">
           {check.summary && (
             <div className="mb-4">
-              <p className="mb-1 text-[11px] uppercase tracking-wide text-[#8e8e93]">Fazit</p>
+              <p className="mb-1 text-[11px] uppercase tracking-wide text-[#8e8e93]">Abschlussbericht</p>
               <p className="whitespace-pre-wrap text-sm text-[#e5e5ea]">{check.summary}</p>
             </div>
           )}

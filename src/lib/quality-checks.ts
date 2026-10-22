@@ -111,15 +111,38 @@ export const qcEntryUpdateSchema = z
   .strict()
   .refine((input) => Object.values(input).some((value) => value !== undefined), 'Keine Änderung angegeben')
 
+/**
+ * Gliederung für den Abschlussbericht. Wird nur auf Wunsch eingefügt – ein
+ * vorausgefülltes Feld würde die Pflichtprüfung mit leeren Überschriften bestehen.
+ */
+export const QC_REPORT_TEMPLATE = [
+  'Verlauf der Kontrolle:',
+  '',
+  '',
+  'Stärken:',
+  '',
+  '',
+  'Verbesserungsbedarf:',
+  '',
+  '',
+  'Empfehlung / Maßnahmen:',
+  '',
+].join('\n')
+
+const reportText = z.string().trim().min(1, 'Bitte einen Abschlussbericht schreiben').max(20000)
+
 export const qcCompleteSchema = z
   .object({
     rating: z.enum(QC_RATINGS),
     grade: gradeSchema.nullable().optional(),
-    summary: z.string().trim().min(1, 'Bitte ein Fazit schreiben').max(20000),
+    summary: reportText,
     endedAt: isoDate.refine(notInFuture, 'Das Ende darf nicht in der Zukunft liegen').optional(),
     location: z.string().trim().max(200).optional(),
   })
   .strict()
+
+/** Abschlussbericht einer abgeschlossenen Kontrolle überarbeiten. */
+export const qcReportSchema = z.object({ summary: reportText }).strict()
 
 /** Note einer laufenden Kontrolle setzen oder zurücknehmen (`null`). */
 export const qcGradeSchema = z.object({ grade: gradeSchema.nullable() }).strict()

@@ -10,6 +10,8 @@ import {
   qcEntrySchema,
   qcEntryUpdateSchema,
   qcGradeSchema,
+  qcReportSchema,
+  QC_REPORT_TEMPLATE,
   qcShareCovers,
   qcShareIsActive,
   qcShareSchema,
@@ -47,6 +49,14 @@ test('Eingaben werden geprüft', () => {
   assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', summary: 'Gut' }).success, true)
   assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', grade: 2, summary: 'Gut' }).success, true)
   assert.equal(qcCompleteSchema.safeParse({ rating: 'POSITIVE', grade: 7, summary: 'Gut' }).success, false)
+})
+
+test('Abschlussbericht: Pflichttext, Länge begrenzt, keine Fremdfelder', () => {
+  assert.equal(qcReportSchema.safeParse({ summary: '   ' }).success, false)
+  assert.equal(qcReportSchema.safeParse({ summary: 'x'.repeat(20001) }).success, false)
+  assert.equal(qcReportSchema.safeParse({ summary: 'Bericht', rating: 'POSITIVE' }).success, false)
+  assert.equal(qcReportSchema.safeParse({ summary: QC_REPORT_TEMPLATE }).success, true)
+  assert.equal(qcReportSchema.parse({ summary: '  Bericht  ' }).summary, 'Bericht')
 })
 
 test('Note: 1+ bis 6 mit Tendenzen oder null', () => {

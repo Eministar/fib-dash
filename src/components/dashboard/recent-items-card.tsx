@@ -17,7 +17,7 @@ export function RecentItemsCard() {
 
   return (
     <section aria-labelledby="recent-items-heading">
-      <h2 id="recent-items-heading" className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-white">
+      <h2 id="recent-items-heading" className="mb-2 flex items-center gap-2 text-[14px] font-semibold text-white">
         <Clock size={14} className="text-[#8e8e93]" />
         Zuletzt geöffnet
       </h2>
@@ -26,7 +26,7 @@ export function RecentItemsCard() {
           <li key={item.href} className="min-w-[220px] sm:min-w-0">
             <Link
               href={item.href}
-              className="group flex h-full items-start justify-between gap-3 rounded-[12px] border border-[#38383a]/55 bg-[#1c1c1e]/70 px-3.5 py-3 transition-colors hover:border-[#48484a] hover:bg-[#2c2c2e]"
+              className="group flex h-full items-start justify-between gap-3 rounded-[12px] bg-[#1c1c1e] px-3.5 py-3 transition-colors hover:bg-[#2c2c2e]"
             >
               <span className="min-w-0">
                 <span className="block text-[11px] font-medium text-[#8e8e93]">

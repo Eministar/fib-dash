@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { CheckCircle2, Link2, MapPin } from 'lucide-react'
+import { CheckCircle2, FileText, Link2, MapPin, Pencil } from 'lucide-react'
 
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -25,6 +25,7 @@ import {
   QC_GRADE_TENDENCY,
   QC_RATINGS,
   QC_RATING_LABELS,
+  QC_REPORT_TEMPLATE,
   entryBalance,
   formatQcGrade,
   qcBaseGrade,
@@ -42,6 +43,7 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
   const canManage = hasPermission(user, 'quality-checks:manage')
   const { data: check, loading, error, refetch } = useFetch<QcCheck>(canView ? `/api/quality-checks/${checkId}` : null)
   const [completeOpen, setCompleteOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [correcting, setCorrecting] = useState<QcEntry | null>(null)
   const [editing, setEditing] = useState<QcEntry | null>(null)
@@ -116,13 +118,6 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
 
         {running && canManage && <GradePicker checkId={check.id} grade={check.grade} onSaved={() => void refetch()} />}
 
-        {check.summary && (
-          <div className="mt-4 border-t border-[#2c2c2e] pt-3">
-            <p className="mb-1 text-[11px] uppercase tracking-wide text-[#8e8e93]">Fazit</p>
-            <p className="whitespace-pre-wrap text-[13px] text-[#e5e5ea]">{check.summary}</p>
-          </div>
-        )}
-
         {canManage && (
           <div className="mt-4 flex flex-wrap gap-2 border-t border-[#2c2c2e] pt-3">
             {running && (
@@ -138,6 +133,26 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
           </div>
         )}
       </Card>
+
+      {!running && (
+        <Card className="mb-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-[14px] font-semibold text-white">
+              <FileText className="h-4 w-4 text-[#8e8e93]" aria-hidden />
+              Abschlussbericht
+            </h2>
+            {canManage && (
+              <Button variant="ghost" size="sm" onClick={() => setReportOpen(true)}>
+                <Pencil className="h-3.5 w-3.5" />
+                {check.summary ? 'Bearbeiten' : 'Schreiben'}
+              </Button>
+            )}
+          </div>
+          {check.summary
+            ? <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#e5e5ea]">{check.summary}</p>
+            : <p className="text-[12.5px] text-[#8e8e93]">Noch kein Abschlussbericht vorhanden.</p>}
+        </Card>
+      )}
 
       {running && canManage && (
         <EntryComposer
@@ -173,6 +188,9 @@ export function QualityCheckDetail({ checkId }: { checkId: string }) {
         />
       )}
 
+      {reportOpen && (
+        <ReportDialog check={check} onClose={() => setReportOpen(false)} onSaved={() => { setReportOpen(false); void refetch() }} />
+      )}
       {completeOpen && (
         <CompleteDialog check={check} onClose={() => setCompleteOpen(false)} onSaved={() => { setCompleteOpen(false); void refetch() }} />
       )}
@@ -415,6 +433,70 @@ function EntryComposer({
   )
 }
 
+/** Großes Textfeld für den Abschlussbericht; die Gliederung fügt man bei Bedarf ein. */
+function ReportField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <label htmlFor="qc-report" className="text-[12.5px] font-medium text-[#c7c7cc]">
+          Abschlussbericht <span className="text-[#ff6961]" aria-hidden>*</span>
+        </label>
+        {!value.trim() && (
+          <Button variant="ghost" size="sm" onClick={() => onChange(QC_REPORT_TEMPLATE)}>
+            Gliederung einfügen
+          </Button>
+        )}
+      </div>
+      <Textarea
+        id="qc-report"
+        rows={12}
+        maxLength={20000}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Verlauf, Stärken, Verbesserungsbedarf und Empfehlung …"
+        required
+      />
+      <p className="mt-1 text-right text-[11.5px] text-[#8e8e93] tabular-nums">{value.length.toLocaleString('de-DE')} / 20.000</p>
+    </div>
+  )
+}
+
+function ReportDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: () => void; onSaved: () => void }) {
+  const { execute, loading } = useApi()
+  const [summary, setSummary] = useState(check.summary ?? '')
+  const [failure, setFailure] = useState('')
+  const changed = summary.trim() !== (check.summary ?? '').trim()
+
+  const save = async () => {
+    setFailure('')
+    try {
+      await execute(`/api/quality-checks/${check.id}/report`, { method: 'PUT', body: JSON.stringify({ summary }) })
+      onSaved()
+    } catch (cause) {
+      setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen')
+    }
+  }
+
+  return (
+    <Modal
+      open
+      onClose={loading ? () => {} : onClose}
+      title={`Abschlussbericht · ${check.number}`}
+      description="Das Protokoll bleibt geschlossen. Die vorherige Fassung wird im Audit-Log festgehalten."
+      size="lg"
+    >
+      <div className="space-y-4">
+        <ReportField value={summary} onChange={setSummary} />
+        {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose} disabled={loading}>Abbrechen</Button>
+          <Button onClick={() => void save()} loading={loading} disabled={!summary.trim() || !changed}>Speichern</Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 function CompleteDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: () => void; onSaved: () => void }) {
   const suggestion = suggestRating(entryBalance(check.entries))
   const { execute, loading } = useApi()
@@ -464,7 +546,7 @@ function CompleteDialog({ check, onClose, onSaved }: { check: QcCheck; onClose: 
           </p>
           <GradeButtons value={grade} onChange={(next) => setGrade(sameGrade(next, grade) ? null : next)} />
         </div>
-        <Textarea label="Fazit" rows={5} maxLength={20000} value={summary} onChange={(event) => setSummary(event.target.value)} required />
+        <ReportField value={summary} onChange={setSummary} />
         {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose} disabled={loading}>Abbrechen</Button>

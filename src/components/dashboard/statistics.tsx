@@ -2,24 +2,14 @@
 
 import { useMemo, useState } from 'react'
 import {
-  Activity,
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
-  BarChart3,
-  BookOpenCheck,
-  BriefcaseBusiness,
-  CheckCircle2,
-  ClipboardCheck,
   GraduationCap,
   RefreshCw,
   Search,
-  ShieldAlert,
-  Sparkles,
-  Trophy,
   UserMinus,
   UserPlus,
-  Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
@@ -39,26 +29,12 @@ import type {
 } from '@/lib/statistics'
 import { matchesSearch } from '@/lib/search-match'
 
-const panelClass = 'rounded-[16px] border border-[#38383a]/55 bg-[#1c1c1e]/72 shadow-[0_1px_2px_rgba(0,0,0,.14),0_14px_36px_rgba(0,0,0,.16),inset_0_1px_0_rgba(255,255,255,.025)]'
-const surfaceClass = 'rounded-[11px] border border-white/[0.055] bg-[#1c1c1e]/55'
-
 const rangeOptions: Array<{ value: StatisticsRange; label: string; shortLabel: string }> = [
   { value: 'week', label: 'Diese Woche', shortLabel: 'Woche' },
   { value: '30d', label: 'Letzte 30 Tage', shortLabel: '30 Tage' },
   { value: '90d', label: 'Letzte 90 Tage', shortLabel: '90 Tage' },
   { value: 'year', label: 'Dieses Jahr', shortLabel: 'Jahr' },
 ]
-
-type MetricTone = 'emerald' | 'sky' | 'gold' | 'rose' | 'amber' | 'violet'
-
-const tones: Record<MetricTone, { color: string; bg: string; border: string }> = {
-  emerald: { color: '#34d399', bg: 'rgba(52,211,153,.10)', border: 'rgba(52,211,153,.24)' },
-  sky: { color: '#38bdf8', bg: 'rgba(56,189,248,.10)', border: 'rgba(56,189,248,.24)' },
-  gold: { color: '#d4d4d4', bg: 'rgba(212,212,212,.11)', border: 'rgba(212,212,212,.26)' },
-  rose: { color: '#f87171', bg: 'rgba(248,113,113,.10)', border: 'rgba(248,113,113,.24)' },
-  amber: { color: '#fbbf24', bg: 'rgba(251,191,36,.10)', border: 'rgba(251,191,36,.24)' },
-  violet: { color: '#a78bfa', bg: 'rgba(167,139,250,.10)', border: 'rgba(167,139,250,.24)' },
-}
 
 const seriesLegend: Array<{
   field: keyof Pick<StatisticsSeriesPoint, 'hires' | 'trainingCompletions' | 'promotions' | 'demotions' | 'terminations'>
@@ -72,72 +48,54 @@ const seriesLegend: Array<{
   { field: 'terminations', label: 'Kündigungen', color: '#f87171' },
 ]
 
-const activityMeta: Record<StatisticsPayload['latestActivity'][number]['type'], { icon: LucideIcon; color: string; bg: string }> = {
-  HIRE: { icon: UserPlus, color: '#38bdf8', bg: 'rgba(56,189,248,.11)' },
-  TRAINING: { icon: GraduationCap, color: '#d4d4d4', bg: 'rgba(212,212,212,.11)' },
-  PROMOTION: { icon: ArrowUpRight, color: '#34d399', bg: 'rgba(52,211,153,.11)' },
-  DEMOTION: { icon: ArrowDownRight, color: '#f97316', bg: 'rgba(249,115,22,.11)' },
-  TERMINATION: { icon: UserMinus, color: '#f87171', bg: 'rgba(248,113,113,.11)' },
+const seriesColor = Object.fromEntries(seriesLegend.map((item) => [item.field, item.color])) as Record<string, string>
+
+const activityMeta: Record<StatisticsPayload['latestActivity'][number]['type'], { icon: LucideIcon; color: string }> = {
+  HIRE: { icon: UserPlus, color: seriesColor.hires },
+  TRAINING: { icon: GraduationCap, color: seriesColor.trainingCompletions },
+  PROMOTION: { icon: ArrowUpRight, color: seriesColor.promotions },
+  DEMOTION: { icon: ArrowDownRight, color: seriesColor.demotions },
+  TERMINATION: { icon: UserMinus, color: seriesColor.terminations },
 }
+
+const funnelColors = ['#38bdf8', '#60a5fa', '#a78bfa', '#34d399', '#f87171']
 
 function DeltaLabel({ metric }: { metric: StatisticsMetric }) {
   const delta = metric.current - metric.previous
-  if (delta === 0) return <span className="text-[#8e8e93]">wie zuvor</span>
+  if (delta === 0) return <span className="text-[#8e8e93]">wie Vorperiode</span>
   return (
     <span className={delta > 0 ? 'text-[#6ee7b7]' : 'text-[#fca5a5]'}>
-      {delta > 0 ? '+' : ''}{delta} zur Vorperiode
+      {delta > 0 ? '▲ +' : '▼ '}{delta} <span className="text-[#8e8e93]">zur Vorperiode</span>
     </span>
   )
 }
 
-function MetricCard({
-  label,
-  metric,
-  icon: Icon,
-  tone,
-  hint,
-}: {
-  label: string
-  metric: StatisticsMetric
-  icon: LucideIcon
-  tone: MetricTone
-  hint: string
-}) {
-  const color = tones[tone]
+// Kennzahl ohne Symbolkachel; der Farbpunkt entspricht der Reihe im Diagramm.
+function MetricTile({ label, metric, color }: { label: string; metric: StatisticsMetric; color?: string }) {
   return (
-    <article className={cn(panelClass, 'group relative overflow-hidden p-4 transition-colors hover:border-[#48484a]')}>
-      <span className="absolute inset-x-0 top-0 h-px opacity-80" style={{ background: `linear-gradient(90deg, transparent, ${color.color}, transparent)` }} />
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8e8e93]">{label}</p>
-          <p className="mt-2 text-[27px] font-semibold leading-none tracking-[-0.035em] text-white tabular-nums">{metric.current}</p>
-        </div>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border" style={{ color: color.color, backgroundColor: color.bg, borderColor: color.border }}>
-          <Icon size={17} strokeWidth={1.9} />
-        </span>
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2 text-[11px]">
-        <DeltaLabel metric={metric} />
-        <span className="truncate text-[#8e8e93]" title={hint}>{hint}</span>
-      </div>
+    <article className="rounded-[12px] bg-[#1c1c1e] px-4 py-3">
+      <p className="flex items-center gap-1.5 text-[12px] font-medium text-[#98989d]">
+        {color && <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ backgroundColor: color }} aria-hidden />}
+        {label}
+      </p>
+      <p className="mt-1 text-[24px] font-semibold leading-none tracking-tight text-white tabular-nums">{metric.current}</p>
+      <p className="mt-1.5 truncate text-[11.5px]"><DeltaLabel metric={metric} /></p>
     </article>
   )
 }
 
-function SectionHeading({ icon: Icon, title, description, aside }: { icon: LucideIcon; title: string; description: string; aside?: React.ReactNode }) {
+function Panel({ title, description, aside, className, children }: { title: string; description?: string; aside?: React.ReactNode; className?: string; children: React.ReactNode }) {
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-      <div className="flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] border border-[#d4d4d4]/18 bg-[#d4d4d4]/9 text-[#d4d4d4]">
-          <Icon size={15} strokeWidth={1.9} />
-        </span>
-        <div>
-          <h2 className="text-[13.5px] font-semibold text-white">{title}</h2>
-          <p className="mt-0.5 text-[11px] leading-4 text-[#838383]">{description}</p>
+    <section className={cn('rounded-[12px] bg-[#1c1c1e] p-4 sm:p-5', className)}>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[14px] font-semibold text-white">{title}</h2>
+          {description && <p className="mt-0.5 text-[12px] leading-relaxed text-[#98989d]">{description}</p>}
         </div>
+        {aside}
       </div>
-      {aside}
-    </div>
+      {children}
+    </section>
   )
 }
 
@@ -179,9 +137,9 @@ function ActivityChart({ points }: { points: StatisticsSeriesPoint[] }) {
                       />
                     )
                   })}
-                  {total > 0 && <span className="absolute inset-x-0 top-1 text-center text-[10px] font-semibold text-white/75 tabular-nums">{total}</span>}
+                  {total > 0 && <span className="absolute inset-x-0 top-1 text-center text-[11px] font-semibold text-white/80 tabular-nums">{total}</span>}
                 </div>
-                <span className={cn('mt-2 truncate text-center text-[10px] text-[#8e8e93]', !showLabel && 'invisible')}>{point.shortLabel}</span>
+                <span className={cn('mt-2 truncate text-center text-[11px] text-[#8e8e93]', !showLabel && 'invisible')}>{point.shortLabel}</span>
               </div>
             )
           })}
@@ -202,17 +160,30 @@ function StaffAvatar({ row }: { row: StatisticsStaffRow }) {
   )
 }
 
-function LeaderCard({ label, row, value, icon: Icon }: { label: string; row: StatisticsStaffRow | undefined; value: number; icon: LucideIcon }) {
+function Leader({ label, row, value }: { label: string; row: StatisticsStaffRow | undefined; value: number }) {
   return (
-    <div className={cn(surfaceClass, 'flex min-w-0 items-center gap-3 px-3 py-2.5')}>
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#d4d4d4]/10 text-[#d4d4d4]"><Icon size={14} /></span>
-      <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-[#8e8e93]">{label}</p>
-        <p className="mt-0.5 truncate text-[11.5px] font-medium text-[#e5e5e5]">{row ? `${row.displayName} · ${value}` : 'Noch keine Daten'}</p>
-      </div>
+    <div className="min-w-0">
+      <dt className="text-[12px] text-[#8e8e93]">{label}</dt>
+      <dd className="mt-0.5 truncate text-[13px] font-medium text-white">
+        {row ? <>{row.displayName} <span className="text-[#98989d] tabular-nums">· {value}</span></> : <span className="text-[#8e8e93]">–</span>}
+      </dd>
     </div>
   )
 }
+
+// Nullen treten zurück, damit die tatsächlichen Leistungen in der Tabelle auffallen.
+function Count({ value, strong = false }: { value: number; strong?: boolean }) {
+  return <td className={cn('px-3 py-2 text-right tabular-nums', strong ? 'pr-4 font-semibold text-white sm:pr-5' : value === 0 ? 'text-[#636366]' : 'text-[#e5e5e5]')}>{value}</td>
+}
+
+const staffColumns: Array<{ field: keyof Pick<StatisticsStaffRow, 'hires' | 'trainingCompletions' | 'promotions' | 'demotions' | 'terminations' | 'sanctions'>; label: string }> = [
+  { field: 'hires', label: 'Einstellungen' },
+  { field: 'trainingCompletions', label: 'Ausbildungen' },
+  { field: 'promotions', label: 'Up-Ranks' },
+  { field: 'demotions', label: 'D-Ranks' },
+  { field: 'terminations', label: 'Kündigungen' },
+  { field: 'sanctions', label: 'Sanktionen' },
+]
 
 export default function StatisticsPage() {
   const { user } = useAuth()
@@ -230,9 +201,9 @@ export default function StatisticsPage() {
   if (error || !data) {
     return (
       <div className="mx-auto max-w-6xl">
-        <div className={cn(panelClass, 'mt-6 px-6 py-16 text-center')}>
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#f87171]/25 bg-[#f87171]/10 text-[#f87171]"><AlertTriangle size={22} /></span>
-          <h1 className="mt-4 text-[16px] font-semibold text-white">Statistik nicht verfügbar</h1>
+        <div className="mt-6 rounded-[12px] bg-[#1c1c1e] px-6 py-16 text-center">
+          <AlertTriangle size={22} className="mx-auto text-[#ff6961]" aria-hidden />
+          <h1 className="mt-3 text-[16px] font-semibold text-white">Statistik nicht verfügbar</h1>
           <p className="mx-auto mt-1.5 max-w-md text-[12.5px] text-[#98989d]">{error ?? 'Die Statistikdaten konnten nicht geladen werden.'}</p>
           <Button size="sm" className="mt-5" onClick={refetch}><RefreshCw size={13} /> Erneut laden</Button>
         </div>
@@ -240,21 +211,22 @@ export default function StatisticsPage() {
     )
   }
 
-  const periodText = `${new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(data.period.start))} – ${new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(data.period.end))}`
+  const dateFormat = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })
+  const periodText = `${dateFormat.format(new Date(data.period.start))} – ${dateFormat.format(new Date(data.period.end))}`
   const rankMax = Math.max(...data.rankDistribution.map((rank) => rank.count), 1)
   const recruiter = [...data.staff].sort((a, b) => b.hires - a.hires)[0]
   const trainer = [...data.staff].sort((a, b) => b.trainingCompletions - a.trainingCompletions)[0]
   const rankLead = [...data.staff].sort((a, b) => (b.promotions + b.demotions) - (a.promotions + a.demotions))[0]
   const applicationTotal = data.applicationFunnel.reduce((total, item) => total + item.count, 0)
+  const seriesTotal = data.series.reduce((sum, point) => sum + seriesLegend.reduce((value, item) => value + point[item.field], 0), 0)
 
   return (
-    <div className="mx-auto max-w-[1500px] pb-4">
+    <div className="mx-auto max-w-7xl space-y-4 pb-4">
       <PageHeader
-        
         title="Statistiken"
-        description="Personal und Ausbildung im gewählten Zeitraum. Vergleich mit der gleich langen Vorperiode."
+        description={`${data.period.label} · ${periodText} · Vergleich mit der gleich langen Vorperiode`}
         action={(
-          <div className="inline-flex rounded-[10px] border border-[#48484a]/70 bg-[#161617]/75 p-1" role="group" aria-label="Statistikzeitraum">
+          <div className="inline-flex gap-[2px] rounded-[9px] bg-[#1c1c1e] p-[3px]" role="group" aria-label="Statistikzeitraum">
             {rangeOptions.map((option) => (
               <button
                 key={option.value}
@@ -263,9 +235,9 @@ export default function StatisticsPage() {
                 aria-pressed={range === option.value}
                 title={option.label}
                 className={cn(
-                  'h-8 rounded-[7px] px-2.5 text-[11px] font-semibold transition-colors sm:px-3',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4d4d4]/40',
-                  range === option.value ? 'bg-[#d4d4d4] text-[#1c1c1e] shadow-[0_2px_8px_rgba(212,212,212,.2)]' : 'text-[#8e8e93] hover:bg-[#3a3a3c] hover:text-white',
+                  'rounded-[7px] px-3 py-1.5 text-[13px] font-medium transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/50',
+                  range === option.value ? 'bg-[#636366] text-white shadow-[0_1px_3px_rgba(0,0,0,0.3)]' : 'text-[#98989d] hover:text-white',
                 )}
               >
                 {option.shortLabel}
@@ -275,183 +247,180 @@ export default function StatisticsPage() {
         )}
       />
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#38383a]/55 bg-[#1c1c1e]/65 px-3.5 py-2 text-[11px]">
-        <span className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.12em] text-[#d4d4d4]"><Activity size={12} /> {data.period.label}</span>
-        <span className="font-mono text-[#8e8e93]">{periodText}</span>
-      </div>
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6" aria-label="Kennzahlen">
-        <MetricCard label="Einstellungen" metric={data.overview.hires} icon={UserPlus} tone="sky" hint="im System angelegt" />
-        <MetricCard label="Ausbildungen" metric={data.overview.trainingCompletions} icon={GraduationCap} tone="gold" hint="neu abgeschlossen" />
-        <MetricCard label="Up-Ranks" metric={data.overview.promotions} icon={ArrowUpRight} tone="emerald" hint="durchgeführt" />
-        <MetricCard label="D-Ranks" metric={data.overview.demotions} icon={ArrowDownRight} tone="amber" hint="durchgeführt" />
-        <MetricCard label="Kündigungen" metric={data.overview.terminations} icon={UserMinus} tone="rose" hint="Dienst beendet" />
-        <MetricCard label="Sanktionen" metric={data.overview.sanctions} icon={ShieldAlert} tone="violet" hint="neu ausgestellt" />
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6" aria-label="Kennzahlen">
+        <MetricTile label="Einstellungen" metric={data.overview.hires} color={seriesColor.hires} />
+        <MetricTile label="Ausbildungen" metric={data.overview.trainingCompletions} color={seriesColor.trainingCompletions} />
+        <MetricTile label="Up-Ranks" metric={data.overview.promotions} color={seriesColor.promotions} />
+        <MetricTile label="D-Ranks" metric={data.overview.demotions} color={seriesColor.demotions} />
+        <MetricTile label="Kündigungen" metric={data.overview.terminations} color={seriesColor.terminations} />
+        <MetricTile label="Sanktionen" metric={data.overview.sanctions} />
       </section>
 
-      <section className={cn(panelClass, 'mt-3 p-4 sm:p-5')}>
-        <SectionHeading icon={BarChart3} title="Personalbewegung im Verlauf" description="Alle erfassten Personalereignisse nach Tag, Woche oder Monat gestapelt." aside={<span className="font-mono text-[11px] text-[#8e8e93]">GESAMT {data.series.reduce((sum, point) => sum + seriesLegend.reduce((value, item) => value + point[item.field], 0), 0)}</span>} />
+      <Panel
+        title="Personalbewegung im Verlauf"
+        description="Personalereignisse gestapelt nach Tag, Woche oder Monat."
+        aside={<span className="text-[12px] text-[#98989d]">Gesamt <span className="font-semibold text-white tabular-nums">{seriesTotal}</span></span>}
+      >
         <ActivityChart points={data.series} />
-      </section>
+      </Panel>
 
-      <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,.85fr)]">
-        <section className={cn(panelClass, 'p-4 sm:p-5')}>
-          <SectionHeading icon={Users} title="Personalstand nach Rang" description={`${data.additional.activeAgents} von ${data.additional.currentAgents} Agents sind aktuell aktiv.`} />
-          <div className="space-y-2.5">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel title="Personalstand nach Rang" description={`${data.additional.activeAgents} von ${data.additional.currentAgents} Agents sind aktuell aktiv.`}>
+          <div className="space-y-2">
             {data.rankDistribution.map((rank) => (
-              <div key={rank.id} className="grid grid-cols-[minmax(110px,170px)_minmax(0,1fr)_28px] items-center gap-3">
-                <span className="truncate text-[11px] font-medium" style={{ color: rank.color }}>{rank.label}</span>
-                <span className="h-2 overflow-hidden rounded-full bg-[#161617] ring-1 ring-inset ring-white/[0.04]">
+              <div key={rank.id} className="grid grid-cols-[minmax(100px,160px)_minmax(0,1fr)_32px] items-center gap-3">
+                <span className="truncate text-[12px] font-medium" style={{ color: rank.color }}>{rank.label}</span>
+                <span className="h-2 overflow-hidden rounded-full bg-[#2c2c2e]">
                   <span className="block h-full rounded-full" style={{ width: `${(rank.count / rankMax) * 100}%`, backgroundColor: rank.color }} />
                 </span>
-                <span className="text-right text-[11px] font-semibold text-[#e5e5e5] tabular-nums">{rank.count}</span>
+                <span className="text-right text-[12px] font-semibold text-[#e5e5e5] tabular-nums">{rank.count}</span>
               </div>
             ))}
-            {data.rankDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8e8e93]">Keine aktiven Agents vorhanden.</p>}
+            {data.rankDistribution.length === 0 && <p className="py-4 text-[12.5px] text-[#8e8e93]">Keine aktiven Agents vorhanden.</p>}
           </div>
-        </section>
+        </Panel>
 
-        <section className={cn(panelClass, 'p-4 sm:p-5')}>
-          <SectionHeading icon={BookOpenCheck} title="Ausbildungslage" description={`${data.additional.completedTrainingAssignments} von ${data.additional.trainingAssignments} Zuweisungen abgeschlossen.`} aside={<span className="text-[18px] font-semibold text-[#d4d4d4] tabular-nums">{data.additional.trainingCompletionRate}%</span>} />
+        <Panel
+          title="Ausbildungslage"
+          description={`${data.additional.completedTrainingAssignments} von ${data.additional.trainingAssignments} Zuweisungen abgeschlossen · ${data.additional.agentsWithOpenTrainings} Agents mit offenen Ausbildungen.`}
+          aside={<span className="text-[20px] font-semibold text-white tabular-nums">{data.additional.trainingCompletionRate}%</span>}
+        >
           <div className="space-y-3">
             {data.trainingDistribution.slice(0, 8).map((training) => (
               <div key={training.id}>
-                <div className="mb-1 flex items-center justify-between gap-3 text-[11px]">
-                  <span className="truncate text-[#bcbcbc]">{training.label}</span>
+                <div className="mb-1 flex items-center justify-between gap-3 text-[12px]">
+                  <span className="truncate text-[#c7c7cc]">{training.label}</span>
                   <span className="shrink-0 text-[#8e8e93] tabular-nums">{training.completed}/{training.total} · {training.percentage}%</span>
                 </div>
-                <span className="block h-1.5 overflow-hidden rounded-full bg-[#161617]">
+                <span className="block h-1.5 overflow-hidden rounded-full bg-[#2c2c2e]">
                   <span className="block h-full rounded-full bg-[#0a84ff]" style={{ width: `${training.percentage}%` }} />
                 </span>
               </div>
             ))}
-            {data.trainingDistribution.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8e8e93]">Keine Ausbildungszuweisungen vorhanden.</p>}
+            {data.trainingDistribution.length === 0 && <p className="py-4 text-[12.5px] text-[#8e8e93]">Keine Ausbildungszuweisungen vorhanden.</p>}
           </div>
-        </section>
+        </Panel>
       </div>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-3">
-        <section className={cn(panelClass, 'p-4 sm:p-5 lg:col-span-2')}>
-          <SectionHeading icon={BriefcaseBusiness} title="Bewerbungslage" description={`${applicationTotal} Bewerbungen wurden im gewählten Zeitraum eingereicht.`} />
-          <div className="grid gap-2 sm:grid-cols-5">
-            {data.applicationFunnel.map((item, index) => {
-              const colors = ['#38bdf8', '#60a5fa', '#a78bfa', '#34d399', '#f87171']
-              return (
-                <div key={item.status} className={cn(surfaceClass, 'relative overflow-hidden p-3')}>
-                  <span className="absolute inset-x-0 top-0 h-px" style={{ backgroundColor: colors[index] }} />
-                  <p className="text-[11px] uppercase tracking-[0.1em] text-[#8e8e93]">{item.label}</p>
-                  <p className="mt-2 text-[20px] font-semibold text-white tabular-nums">{item.count}</p>
-                  <div className="mt-2 h-1 rounded-full bg-[#161617]">
-                    <span className="block h-full rounded-full" style={{ width: `${applicationTotal > 0 ? (item.count / applicationTotal) * 100 : 0}%`, backgroundColor: colors[index] }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className={cn(panelClass, 'p-4 sm:p-5')}>
-          <SectionHeading icon={ClipboardCheck} title="Weitere Kennzahlen" description="Aktueller Personal- und Verwaltungsstand." />
-          <dl className="grid grid-cols-2 gap-2">
-            {[
-              ['Offene Ausbildungen', data.additional.agentsWithOpenTrainings],
-              ['Bewerbungen', data.additional.applications.current],
-              ['Neue Probezeiten', data.additional.probationStarts.current],
-              ['Neue Ausbildungsarten', data.additional.newTrainingTypes.current],
-            ].map(([label, value]) => (
-              <div key={String(label)} className={cn(surfaceClass, 'p-3')}>
-                <dt className="text-[11px] leading-4 text-[#8e8e93]">{label}</dt>
-                <dd className="mt-1 text-[18px] font-semibold text-[#e5e5e5] tabular-nums">{value}</dd>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel
+          title="Bewerbungslage"
+          description="Im gewählten Zeitraum eingereichte Bewerbungen nach Status."
+          aside={(
+            <span className="text-right text-[11.5px]">
+              <span className="block text-[20px] font-semibold leading-none text-white tabular-nums">{applicationTotal}</span>
+              <DeltaLabel metric={data.additional.applications} />
+            </span>
+          )}
+          className="lg:col-span-2"
+        >
+          {applicationTotal > 0 && (
+            <div className="mb-3 flex h-2 overflow-hidden rounded-full bg-[#2c2c2e]" aria-hidden>
+              {data.applicationFunnel.map((item, index) => (
+                <span key={item.status} className="h-full" style={{ width: `${(item.count / applicationTotal) * 100}%`, backgroundColor: funnelColors[index % funnelColors.length] }} />
+              ))}
+            </div>
+          )}
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-5">
+            {data.applicationFunnel.map((item, index) => (
+              <div key={item.status} className="min-w-0">
+                <dt className="flex items-center gap-1.5 truncate text-[12px] text-[#98989d]">
+                  <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ backgroundColor: funnelColors[index % funnelColors.length] }} aria-hidden />
+                  {item.label}
+                </dt>
+                <dd className="mt-0.5 text-[18px] font-semibold text-white tabular-nums">{item.count}</dd>
               </div>
             ))}
           </dl>
-        </section>
+        </Panel>
+
+        <Panel title="Weitere Kennzahlen">
+          <dl className="divide-y divide-white/[0.06]">
+            {[
+              { label: 'Neue Probezeiten', metric: data.additional.probationStarts },
+              { label: 'Neue Ausbildungsarten', metric: data.additional.newTrainingTypes },
+            ].map(({ label, metric }) => (
+              <div key={label} className="flex items-baseline justify-between gap-3 py-2 first:pt-0 last:pb-0">
+                <dt className="text-[13px] text-[#c7c7cc]">{label}</dt>
+                <dd className="text-right">
+                  <span className="text-[15px] font-semibold text-white tabular-nums">{metric.current}</span>
+                  <span className="block text-[11.5px]"><DeltaLabel metric={metric} /></span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Panel>
       </div>
 
-      <section className={cn(panelClass, 'mt-3 p-4 sm:p-5')}>
-        <SectionHeading
-          icon={Trophy}
-          title="Bearbeiterbilanz"
-          description="Wer hat Einstellungen, Ausbildungen und Personalmaßnahmen im gewählten Zeitraum bearbeitet?"
-          aside={(
-            <label className="relative block w-full sm:w-[230px]">
-              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
-              <input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="PDler suchen…" className="h-8 w-full rounded-[8px] border border-[#48484a]/65 bg-[#161617]/75 pl-8 pr-3 text-[11px] text-white outline-none transition-colors placeholder:text-[#8e8e93] focus:border-[#d4d4d4]/55 focus:ring-2 focus:ring-[#d4d4d4]/12" />
-            </label>
-          )}
-        />
+      <Panel
+        title="Bearbeiterbilanz"
+        description="Wer hat im gewählten Zeitraum Einstellungen, Ausbildungen und Personalmaßnahmen bearbeitet?"
+        aside={(
+          <label className="relative block w-full sm:w-[240px]">
+            <span className="sr-only">Bearbeiter suchen</span>
+            <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8e8e93]" aria-hidden />
+            <input value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="Bearbeiter suchen…" className="h-[30px] w-full rounded-[7px] border border-[#48484a] bg-[#161617] pl-8 pr-3 text-[12.5px] text-white outline-none transition-colors placeholder:text-[#8e8e93] focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/30" />
+          </label>
+        )}
+      >
+        <dl className="mb-4 grid gap-3 sm:grid-cols-3">
+          <Leader label="Meiste Einstellungen" row={recruiter?.hires ? recruiter : undefined} value={recruiter?.hires ?? 0} />
+          <Leader label="Meiste Ausbildungen" row={trainer?.trainingCompletions ? trainer : undefined} value={trainer?.trainingCompletions ?? 0} />
+          <Leader label="Meiste Rangmaßnahmen" row={rankLead && (rankLead.promotions + rankLead.demotions) > 0 ? rankLead : undefined} value={(rankLead?.promotions ?? 0) + (rankLead?.demotions ?? 0)} />
+        </dl>
 
-        <div className="mb-3 grid gap-2 md:grid-cols-3">
-          <LeaderCard label="Meiste Einstellungen" row={recruiter?.hires ? recruiter : undefined} value={recruiter?.hires ?? 0} icon={UserPlus} />
-          <LeaderCard label="Meiste Ausbildungen" row={trainer?.trainingCompletions ? trainer : undefined} value={trainer?.trainingCompletions ?? 0} icon={GraduationCap} />
-          <LeaderCard label="Meiste Rangmaßnahmen" row={rankLead && (rankLead.promotions + rankLead.demotions) > 0 ? rankLead : undefined} value={(rankLead?.promotions ?? 0) + (rankLead?.demotions ?? 0)} icon={Sparkles} />
-        </div>
-
-        <div className="overflow-x-auto rounded-[11px] border border-white/[0.055]">
-          <table className="w-full min-w-[920px] border-collapse text-left">
-            <thead className="bg-[#161617]/90">
-              <tr className="text-[11px] uppercase tracking-[0.1em] text-[#8e8e93]">
-                <th className="px-3 py-2.5 font-semibold">PDler / Bearbeiter</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Einstellungen</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Ausbildungen</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Up-Ranks</th>
-                <th className="px-3 py-2.5 text-center font-semibold">D-Ranks</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Kündigungen</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Sanktionen</th>
-                <th className="px-3 py-2.5 text-center font-semibold text-[#d4d4d4]">Gesamt</th>
+        <div className="-mx-4 overflow-x-auto sm:-mx-5">
+          <table className="w-full min-w-[760px] border-collapse text-left text-[12.5px]">
+            <thead>
+              <tr className="border-y border-white/[0.06] text-[12px] text-[#8e8e93]">
+                <th scope="col" className="px-4 py-2 font-medium sm:pl-5">Bearbeiter</th>
+                {staffColumns.map((column) => <th key={column.field} scope="col" className="px-3 py-2 text-right font-medium">{column.label}</th>)}
+                <th scope="col" className="px-3 py-2 pr-4 text-right font-medium text-[#c7c7cc] sm:pr-5">Gesamt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.045] bg-[#1c1c1e]/45">
+            <tbody className="divide-y divide-white/[0.045]">
               {filteredStaff.map((row, index) => (
-                <tr key={row.id} className="transition-colors hover:bg-[#3a3a3c]/55">
-                  <td className="px-3 py-2.5">
+                <tr key={row.id} className="transition-colors hover:bg-[#2c2c2e]">
+                  <td className="px-4 py-2 sm:pl-5">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 text-center font-mono text-[11px] text-[#8e8e93]">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="w-5 text-right text-[11.5px] text-[#636366] tabular-nums">{index + 1}</span>
                       <StaffAvatar row={row} />
-                      <span className="max-w-[240px] truncate text-[11.5px] font-medium text-[#e5e5e5]">{row.displayName}</span>
+                      <span className="max-w-[240px] truncate font-medium text-[#e5e5e5]">{row.displayName}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-center text-[11.5px] text-[#7dd3fc] tabular-nums">{row.hires}</td>
-                  <td className="px-3 py-2.5 text-center text-[11.5px] text-[#d6d6d6] tabular-nums">{row.trainingCompletions}</td>
-                  <td className="px-3 py-2.5 text-center text-[11.5px] text-[#6ee7b7] tabular-nums">{row.promotions}</td>
-                  <td className="px-3 py-2.5 text-center text-[11.5px] text-[#fdba74] tabular-nums">{row.demotions}</td>
-                  <td className="px-3 py-2.5 text-center text-[11.5px] text-[#fca5a5] tabular-nums">{row.terminations}</td>
-                  <td className="px-3 py-2.5 text-center text-[11.5px] text-[#c4b5fd] tabular-nums">{row.sanctions}</td>
-                  <td className="px-3 py-2.5 text-center text-[12px] font-semibold text-white tabular-nums">{row.total}</td>
+                  {staffColumns.map((column) => <Count key={column.field} value={row[column.field]} />)}
+                  <Count value={row.total} strong />
                 </tr>
               ))}
             </tbody>
           </table>
-          {filteredStaff.length === 0 && <p className="bg-[#1c1c1e]/45 px-4 py-10 text-center text-[12px] italic text-[#8e8e93]">{staffSearch ? 'Kein Bearbeiter passt zur Suche.' : 'In diesem Zeitraum wurden noch keine Maßnahmen erfasst.'}</p>}
+          {filteredStaff.length === 0 && <p className="px-5 py-8 text-center text-[12.5px] text-[#8e8e93]">{staffSearch ? 'Kein Bearbeiter passt zur Suche.' : 'In diesem Zeitraum wurden noch keine Maßnahmen erfasst.'}</p>}
         </div>
-        <p className="mt-2.5 text-[11px] leading-4 text-[#8e8e93]">Ausbildungen zählen neu als abgeschlossen markierte Ausbildungszuweisungen. Änderungen ohne neuen Abschluss werden nicht als Leistung gezählt.</p>
-      </section>
+        <p className="mt-3 text-[11.5px] leading-relaxed text-[#8e8e93]">Ausbildungen zählen nur, wenn sie neu als abgeschlossen markiert wurden.</p>
+      </Panel>
 
-      <section className={cn(panelClass, 'mt-3 p-4 sm:p-5')}>
-        <SectionHeading icon={Activity} title="Neueste Personalbewegungen" description="Die letzten Ereignisse innerhalb des gewählten Zeitraums." />
-        <div className="grid gap-2 lg:grid-cols-2">
-          {data.latestActivity.map((item) => {
-            const meta = activityMeta[item.type]
-            const Icon = meta.icon
-            return (
-              <article key={item.id} className={cn(surfaceClass, 'flex items-center gap-3 p-3')}>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px]" style={{ color: meta.color, backgroundColor: meta.bg }}><Icon size={15} /></span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11.5px] font-medium text-[#e5e5e5]">{item.subject}</p>
-                  <p className="mt-0.5 truncate text-[11px] text-[#8e8e93]">{item.title} · von {item.actor}</p>
-                </div>
-                <time className="shrink-0 text-[11px] text-[#8e8e93]">{formatDateTime(item.createdAt)}</time>
-              </article>
-            )
-          })}
-          {data.latestActivity.length === 0 && <p className="py-8 text-center text-[12px] italic text-[#8e8e93] lg:col-span-2">Keine Personalbewegungen im gewählten Zeitraum.</p>}
-        </div>
-      </section>
-
-      <div className="mt-3 flex items-center justify-between gap-3 px-1 text-[11px] text-[#8e8e93]">
-        <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={11} /> Datenstand {formatDateTime(data.period.end)}</span>
-        <span className="font-mono uppercase tracking-[0.1em]">FIB · Personalstatistik</span>
-      </div>
+      <Panel title="Neueste Personalbewegungen" description="Die letzten Ereignisse im gewählten Zeitraum.">
+        {data.latestActivity.length > 0 ? (
+          <ul className="grid gap-x-6 lg:grid-cols-2">
+            {data.latestActivity.map((item) => {
+              const meta = activityMeta[item.type]
+              const Icon = meta.icon
+              return (
+                <li key={item.id} className="flex items-center gap-3 border-b border-white/[0.06] py-2.5">
+                  <Icon size={15} className="shrink-0" style={{ color: meta.color }} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-medium text-white">{item.subject}</p>
+                    <p className="truncate text-[12px] text-[#8e8e93]">{item.title} · von {item.actor}</p>
+                  </div>
+                  <time dateTime={item.createdAt} className="shrink-0 text-[11.5px] text-[#8e8e93] tabular-nums">{formatDateTime(item.createdAt)}</time>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="py-4 text-[12.5px] text-[#8e8e93]">Keine Personalbewegungen im gewählten Zeitraum.</p>
+        )}
+      </Panel>
     </div>
   )
 }
