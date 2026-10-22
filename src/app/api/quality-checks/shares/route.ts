@@ -3,7 +3,9 @@ import { NextRequest } from 'next/server'
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { qcShareSchema } from '@/lib/quality-checks'
+import {
+  qcShareSchema,
+} from '@/lib/quality-checks-schemas'
 import { createQcShare, managedQcSharesWhere, qcRouteError } from '@/lib/quality-checks-server'
 
 export const dynamic = 'force-dynamic'

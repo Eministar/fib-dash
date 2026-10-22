@@ -16,7 +16,7 @@ import {
   type LinkGraph,
 } from '@/lib/link-graph'
 
-const investigationSelect = { id: true, caseNumber: true, title: true, classified: true } as const
+const investigationSelect = { id: true, caseNumber: true, title: true } as const
 const personSelect = {
   id: true,
   personNumber: true,
@@ -31,7 +31,7 @@ const vehicleSelect = { id: true, vehicleNumber: true, plate: true, model: true,
 /** Obergrenze je Abfrage – schützt vor riesigen Netzen um ein „Drehkreuz“. */
 const QUERY_LIMIT = 500
 
-type InvestigationRow = { id: string; caseNumber: string; title: string; classified: boolean }
+type InvestigationRow = { id: string; caseNumber: string; title: string }
 type PersonRow = {
   id: string
   personNumber: string
@@ -50,7 +50,7 @@ function investigationNode(row: InvestigationRow, depth: number): GraphNode {
     id: row.id,
     label: row.title,
     code: row.caseNumber,
-    flags: row.classified ? ['Verschlusssache'] : [],
+    flags: [],
     depth,
   }
 }
@@ -86,9 +86,8 @@ function vehicleNode(row: VehicleRow, depth: number): GraphNode {
 }
 
 /**
- * Breitensuche ab einem Fokus. Verschlusssachen ohne Zugriff tauchen weder als
- * Knoten noch als Brücke auf – über eine geheime Akte darf man nicht zu ihren
- * Beteiligten „durchwandern“.
+ * Breitensuche ab einem Fokus. Nur sichtbare Akten tauchen als Knoten oder
+ * Brücke auf.
  *
  * Liefert `null`, wenn der Fokus nicht existiert oder nicht sichtbar ist.
  */

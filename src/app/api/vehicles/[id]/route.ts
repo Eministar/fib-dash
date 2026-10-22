@@ -31,7 +31,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
                 title: true,
                 status: true,
                 priority: true,
-                classified: true,
                 updatedAt: true,
               },
             },

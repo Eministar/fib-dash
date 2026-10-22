@@ -44,17 +44,21 @@ export function linkButton(label: string, url: string): DiscordMessageComponent 
 
 export function componentMessage(
   components: DiscordMessageComponent[],
-  options?: { allowedMentions?: Record<string, unknown> },
+  options?: { allowedMentions?: Record<string, unknown>; accentColor?: number },
 ) {
+  const box = container(components)
+  // Akzent nur, wo die Farbe etwas bedeutet (z. B. Aktenstatus).
+  if (options?.accentColor !== undefined) box.accent_color = options.accentColor
   return {
     flags: DISCORD_COMPONENTS_V2_FLAG,
     allowed_mentions: options?.allowedMentions ?? { parse: [] },
-    components: [container(components)],
+    components: [box],
   }
 }
 
+/** Titelzeile; der Betreff (meist ein Name) steht fett darunter statt in derselben Zeile. */
 export function markdownHeader(icon: string, title: string, subject?: string | null) {
-  return `## \`${icon}\` ${title}${subject ? ` · ${subject}` : ''}`
+  return `## ${icon} ${title}${subject?.trim() ? `\n**${markdownPlain(subject.trim())}**` : ''}`
 }
 
 const ROW_ICONS: Record<string, string> = {
@@ -127,19 +131,34 @@ export function markdownCode(value: string) {
     .join('')
 }
 
+const PLAIN_SPECIAL = /([\\*_~|`[\]])/g
+
+/**
+ * Klartext ohne ungewollte Formatierung: Sternchen, Unterstriche usw. werden
+ * maskiert, Mentions, Zeitstempel, Links und gewollter Inline-Code bleiben.
+ * Ersetzt in den Zeilen die frühere Code-Darstellung jedes Werts.
+ */
+export function markdownPlain(value: string) {
+  return value
+    .split(RICH_TOKEN)
+    .map((part, index) => (index % 2 === 1 ? part : part.replace(PLAIN_SPECIAL, '\\$1')))
+    .join('')
+    .replace(/^(\s*)([#>-])/gm, '$1\\$2')
+}
+
 const LONG_VALUE_CHARS = 90
 
 export function markdownRows(rows: Array<{ label: string; value: string | null | undefined; icon?: string }>) {
   return rows
     .filter((row): row is { label: string; value: string; icon?: string } => Boolean(row.value?.trim()))
     .map((row) => {
-      const icon = `\`${row.icon ?? ROW_ICONS[row.label] ?? '▫️'}\``
+      const icon = row.icon ?? ROW_ICONS[row.label] ?? '▫️'
       const value = row.value.trim()
       // Längere Freitexte (Begründungen, Notizen) lesen sich als Zitat besser als als Code.
       if (value.includes('\n') || value.length > LONG_VALUE_CHARS) {
         return `${icon} **${row.label}**\n${markdownQuote(value.replace(/\*\*/g, ''))}`
       }
-      return `${icon} **${row.label}:** ${markdownCode(value)}`
+      return `${icon} **${row.label}:** ${markdownPlain(value.replace(/\*\*/g, ''))}`
     })
     .join('\n')
 }

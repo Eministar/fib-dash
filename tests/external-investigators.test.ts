@@ -4,9 +4,9 @@ import { normalizePermissions, resolveEffectivePermissions } from '../src/lib/pe
 import { investigationVisibilityWhere } from '../src/lib/investigations'
 import type { CurrentUser } from '../src/lib/auth'
 
-test('Externer Ermittlungszugriff: Akten inkl. Verschlusssachen bearbeiten', () => {
+test('Externer Ermittlungszugriff: Akten ansehen und bearbeiten', () => {
   const permissions = normalizePermissions(['investigations:external'])
-  for (const expected of ['investigations:view', 'investigations:manage', 'investigations:classified'] as const) {
+  for (const expected of ['investigations:view', 'investigations:manage'] as const) {
     assert.ok(permissions.includes(expected), expected)
   }
 })

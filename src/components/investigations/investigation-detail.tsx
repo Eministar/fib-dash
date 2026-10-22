@@ -22,7 +22,6 @@ import {
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { PageLoader } from '@/components/ui/loading'
 import { Modal } from '@/components/ui/modal'
@@ -55,7 +54,6 @@ import { TabBar, resolveTab, type TabItem } from '@/components/ui/tab-bar'
 import { PhotoPicker } from '@/components/investigations/photo-catalog'
 import { mapCategory } from '@/lib/map-spots'
 import {
-  ClassifiedBadge,
   EntryKindBadge,
   PriorityBadge,
   RoleBadge,
@@ -345,7 +343,6 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             <div className="mt-2.5 flex flex-wrap items-center gap-2">
               <StatusBadge status={investigation.status} />
               <PriorityBadge priority={investigation.priority} />
-              {investigation.classified && <ClassifiedBadge />}
             </div>
           </div>
 
@@ -386,20 +383,6 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             </div>
           ))}
         </dl>
-        {/* Rechte, die nicht an der Akte selbst stehen, müssen hier sichtbar sein –
-            sonst kann niemand beantworten, wer die Akte lesen darf. */}
-        {(investigation.accessVia?.length ?? 0) > 0 && (
-          <p className="mt-3 text-[12px] text-[#98989d]">
-            Zugriff auch über{' '}
-            {investigation.accessVia!.map((via, index) => (
-              <span key={`${via.dossierId}-${via.groupId}`}>
-                {index > 0 && ', '}
-                <Link href={`/investigations/dossiers?id=${encodeURIComponent(via.dossierId)}&tab=gruppen`} className="text-[#c4b5fd] hover:underline">{via.dossierTitle}</Link>
-                {' → '}{via.groupName}
-              </span>
-            ))}
-          </p>
-        )}
       </div>
 
       <TabBar tabs={tabs} active={activeTab} onSelect={selectTab} label="Bereiche der Akte" />
@@ -493,7 +476,6 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             investigationId={investigationId}
             assignees={investigation.assignees}
             leadAgent={investigation.leadAgent}
-            classified={investigation.classified}
             agents={agents ?? []}
             canManage={canManage}
             onChanged={refetch}
@@ -857,17 +839,6 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             onValueChange={(value) =>
               void patchInvestigation({ leadAgentId: value || null }, 'Die Fallführung wurde geändert.')
             }
-          />
-
-          <Checkbox
-            checked={investigation.classified}
-            onCheckedChange={(checked) =>
-              void patchInvestigation(
-                { classified: checked },
-                checked ? 'Die Akte ist jetzt eine Verschlusssache.' : 'Die Akte ist nicht mehr vertraulich.',
-              )
-            }
-            label="Verschlusssache"
           />
 
           <div className="flex justify-end pt-1">

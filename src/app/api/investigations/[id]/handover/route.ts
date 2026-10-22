@@ -4,6 +4,7 @@ import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { notifyInvestigationTeam } from '@/lib/notifications-server'
+import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
 import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
@@ -21,8 +22,7 @@ const NOTE_MAX = 5000
 /**
  * Fallführung mit Übergabenotiz wechseln. Anders als das reine Umstellen im
  * Bearbeiten-Dialog landet die Übergabe als Eintrag in der Chronologie, und
- * die bisherige Fallführung bleibt auf Wunsch als Ermittler zugewiesen –
- * sonst verlöre sie bei Verschlusssachen sofort den Zugriff.
+ * die bisherige Fallführung bleibt auf Wunsch als Ermittler zugewiesen.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -86,6 +86,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       newValue: note.slice(0, 2000),
     })
     await notifyInvestigationTeam({ investigation, actorId: user.id, newLeadAgentId: nextLead.id })
+    queueDiscordInvestigationEvent({
+      type: 'handover',
+      investigationId: investigation.id,
+      caseNumber: investigation.caseNumber,
+      title: investigation.title,
+      leadAgentName: agentDisplayName(nextLead),
+      actorName: user.displayName,
+      note,
+      rows: [
+        { label: 'Von', value: agentDisplayName(previousLead) },
+        { label: 'An', value: agentDisplayName(nextLead) },
+      ],
+    })
 
     return success(serializeBigInts(investigation))
   } catch (cause: unknown) {

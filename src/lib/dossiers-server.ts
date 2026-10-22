@@ -53,7 +53,7 @@ export async function saveDossier(id: string | undefined, input: z.infer<typeof 
     if (vehicleIds && await tx.vehicle.count({ where: { id: { in: vehicleIds } } }) !== vehicleIds.length) throw new DossierError('Fahrzeugakte nicht gefunden', 404)
     const mapSpotIds = input.mapSpotIds ? [...new Set(input.mapSpotIds)] : undefined
     if (mapSpotIds && await tx.mapSpot.count({ where: { id: { in: mapSpotIds } } }) !== mapSpotIds.length) throw new DossierError('Kartenpunkt nicht gefunden', 404)
-    // Updating visible links must not disconnect classified cases hidden from this user.
+    // Nur die Verknüpfungen ersetzen, die der Bearbeiter auch sieht.
     const visibleLinks = id && investigationIds ? await tx.investigation.findMany({ where: { AND: [investigationVisibilityWhere(user), { dossiers: { some: { id } } }] }, select: { id: true } }) : []
     const { personIds: _persons, investigationIds: _investigations, vehicleIds: _vehicles, mapSpotIds: _mapSpots, photoIds: _photos, ...fields } = input
     void _persons; void _investigations; void _vehicles; void _mapSpots; void _photos

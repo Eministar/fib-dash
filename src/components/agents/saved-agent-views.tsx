@@ -1,7 +1,7 @@
 'use client'
 
 import { SavedViews } from '@/components/ui/saved-views'
-import { agentSavedViewsSchema, readAgentViews, sameAgentFilters, emptyAgentFilters, type AgentViewFilters } from '@/lib/agent-saved-views'
+import { readAgentViews, sameAgentFilters, emptyAgentFilters, validAgentViews, type AgentViewFilters } from '@/lib/agent-saved-views'
 
 export function SavedAgentViews({ userId, filters, onApply }: { userId: string; filters: AgentViewFilters; onApply: (filters: AgentViewFilters) => void }) {
   return <SavedViews
@@ -11,7 +11,7 @@ export function SavedAgentViews({ userId, filters, onApply }: { userId: string; 
     onApply={onApply}
     read={readAgentViews}
     same={sameAgentFilters}
-    validate={(views) => agentSavedViewsSchema.safeParse(views).success}
+    validate={validAgentViews}
     defaultLabel="Alle Agents"
     placeholder="Zum Beispiel Agents in Ausbildung"
     hint="Speichert Suche, Status, Rang, Unit und Markierung für dein Konto in diesem Browser."

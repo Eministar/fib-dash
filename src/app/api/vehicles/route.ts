@@ -36,8 +36,7 @@ export async function GET(req: NextRequest) {
       orderBy: [{ createdAt: 'desc' }],
       include: {
         ownerPerson: true,
-        // Nur sichtbare Akten zaehlen – sonst verraet die Zahl, dass es zu
-        // diesem Fahrzeug eine Verschlusssache gibt.
+        // Nur sichtbare Akten zaehlen.
         _count: {
           select: { investigations: { where: { investigation: investigationVisibilityWhere(user) } } },
         },

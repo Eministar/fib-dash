@@ -16,9 +16,8 @@ type HistoryEntry = {
 }
 
 /**
- * Wer wann was an dieser Akte geändert hat. Bei Verschlusssachen ist
- * Nachvollziehbarkeit kein Luxus – die Daten lagen im Prüfprotokoll schon,
- * wurden in der Akte aber nirgends gezeigt.
+ * Wer wann was an dieser Akte geändert hat – die Daten lagen im
+ * Prüfprotokoll schon, wurden in der Akte aber nirgends gezeigt.
  */
 export function InvestigationHistory({ investigationId }: { investigationId: string }) {
   const { data, loading, error } = useFetch<HistoryEntry[]>(`/api/investigations/${investigationId}/history`)

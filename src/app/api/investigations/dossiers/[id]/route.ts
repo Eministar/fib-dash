@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { createAuditLog } from '@/lib/audit'
 import { dossierRouteError, dossierSchema, saveDossier, DossierError } from '@/lib/dossiers-server'
 import { investigationVisibilityWhere } from '@/lib/investigations'
+import { queueForumTask, removeForumPost, syncDossierForum } from '@/lib/investigation-forum'
 
 type Context = { params: Promise<{ id: string }> }
 export async function GET(_req: Request, { params }: Context) {
@@ -13,7 +14,7 @@ export async function GET(_req: Request, { params }: Context) {
       photo: { select: { id: true, title: true } },
       photos: { select: { id: true, title: true }, orderBy: { createdAt: 'desc' } },
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
-      investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, classified: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
+      investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
       vehicles: { select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' } },
       mapSpots: { select: { id: true, title: true, category: true, icon: true, x: true, y: true }, orderBy: { title: 'asc' } },
       // Nur Namen: Mitglieder der Gruppen bleiben vertraulich.
@@ -25,17 +26,21 @@ export async function GET(_req: Request, { params }: Context) {
 export async function PATCH(req: Request, { params }: Context) {
   try {
     const user = await requirePermission('investigations:manage')
-    return success(await saveDossier((await params).id, dossierSchema.partial().parse(await req.json()), user))
+    const dossier = await saveDossier((await params).id, dossierSchema.partial().parse(await req.json()), user)
+    queueForumTask('Dauerakte im Forum', () => syncDossierForum(dossier.id))
+    return success(dossier)
   } catch (cause) { return dossierRouteError(cause) }
 }
 export async function DELETE(_req: Request, { params }: Context) {
   try {
     const user = await requirePermission('investigations:delete')
     const { id } = await params
-    await prisma.$transaction(async tx => {
-      const deleted = await tx.dossier.delete({ where: { id } })
-      await createAuditLog({ action: 'DOSSIER_DELETED', userId: user.id, oldValue: JSON.stringify(deleted) }, tx)
+    const deleted = await prisma.$transaction(async tx => {
+      const row = await tx.dossier.delete({ where: { id } })
+      await createAuditLog({ action: 'DOSSIER_DELETED', userId: user.id, oldValue: JSON.stringify(row) }, tx)
+      return row
     })
+    queueForumTask('Dauerakte aus dem Forum entfernen', () => removeForumPost(deleted.discordThreadId))
     return success({ id })
   } catch (cause) { return dossierRouteError(cause) }
 }

@@ -4,7 +4,7 @@ import { checklistFromTemplate, openRolesFromTemplate, parseTemplateInput, readC
 
 const template: InvestigationTemplateData = {
   id: 'template', name: 'Drogen', description: null, titlePrefix: 'Drogen –', summary: 'Sachverhalt\n\nMaßnahmen',
-  priority: 'HIGH', classified: false, checklist: ['Tatort sichern'], roles: [{ role: 'SUSPECT', label: 'Verkäufer' }],
+  priority: 'HIGH', checklist: ['Tatort sichern'], roles: [{ role: 'SUSPECT', label: 'Verkäufer' }],
   leadAgentId: 'lead', assigneeIds: ['agent', 'deleted'], active: true, sortOrder: 0, updatedAt: new Date().toISOString(),
 }
 
@@ -25,12 +25,11 @@ test('Vorlagenwechsel entfernt alte Vorgaben und filtert gelöschte Agents', () 
   const filled = templatePrefill(template, ['lead', 'agent'])
   assert.deepEqual(filled.assigneeIds, ['agent'])
   assert.deepEqual(mergeTemplatePrefill(filled, filled, empty), empty)
-  assert.equal(empty.classified, true)
 })
 
 test('eigene Eingaben bleiben beim Vorlagenwechsel erhalten', () => {
   const previous = templatePrefill(template)
-  const edited = { ...previous, title: 'Eigener Titel', summary: 'Eigener Text', priority: 'URGENT', classified: true, leadAgentId: 'other', assigneeIds: ['other'] }
+  const edited = { ...previous, title: 'Eigener Titel', summary: 'Eigener Text', priority: 'URGENT', leadAgentId: 'other', assigneeIds: ['other'] }
   assert.deepEqual(mergeTemplatePrefill(edited, previous, templatePrefill(null)), edited)
   assert.equal(composeTitle('Drogen –', 'Drogen – Hafen'), 'Drogen – Hafen')
 })

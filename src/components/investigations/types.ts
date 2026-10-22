@@ -82,7 +82,6 @@ export type BodycamClip = {
     id: string
     caseNumber: string
     title: string
-    classified: boolean
   } | null
   entry?: { id: string; title: string; kind: InvestigationEntryKindKey } | null
 }
@@ -141,7 +140,6 @@ export type LinkedCase = {
   title: string
   status: InvestigationStatusKey
   priority: InvestigationPriorityKey
-  classified: boolean
 }
 
 export type InvestigationCrossLink = {
@@ -180,7 +178,6 @@ export type InvestigationListItem = {
   summary: string | null
   status: InvestigationStatusKey
   priority: InvestigationPriorityKey
-  classified: boolean
   closedAt: string | null
   createdAt: string
   updatedAt: string
@@ -207,6 +204,4 @@ export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assign
   linksTo: InvestigationCrossLink[]
   /** Nur im GET der Akte: weitere Akten je beteiligter Person / Fahrzeug. */
   crossHits?: CaseCrossHits
-  /** Nur für Verwalter: Lesezugriff über Ermittlungsgruppen an Dauerakten. */
-  accessVia?: { dossierId: string; dossierTitle: string; groupId: string; groupName: string }[]
 }

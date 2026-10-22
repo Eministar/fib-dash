@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, ViewTransition } from 'react'
+import { useEffect, useState, ViewTransition } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ShieldAlert } from 'lucide-react'
@@ -29,10 +29,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, loading, authError, refreshUser, clearClientCache } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
+  // Läuft ein Test, wird eng nachgefragt (Ablaufzeit, Sperre); sonst reicht der
+  // normale Takt – vorher fragte jede offene Seite alle 5 s nach.
+  const [testRunning, setTestRunning] = useState(false)
   const { data: activeSession, loading: activeSessionLoading } = useFetch<ActiveTestSession | null>(
     !loading && user ? '/api/form-test-sessions/active' : null,
-    5_000,
+    testRunning ? 5_000 : 30_000,
   )
+  useEffect(() => { setTestRunning(Boolean(activeSession)) }, [activeSession])
   // Der Bodycam-Lesezugriff haengt an einer Discord-Rolle, nicht an einer
   // Permission. Ohne diese Abfrage waere ein reiner Katalog-Leser `visitorOnly`
   // und wuerde ins Besucherportal geschoben, obwohl der Katalog fuer ihn offen ist.

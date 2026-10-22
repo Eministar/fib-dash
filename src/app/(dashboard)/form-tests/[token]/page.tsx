@@ -261,6 +261,8 @@ export default function FormTestLinkPage() {
     setStarting(true)
     try {
       await execute(`/api/form-links/${token}/start`, { method: 'POST' })
+      // Die App-Hülle fragt laufende Tests sonst nur alle 30 s ab.
+      notifyLiveUpdate()
       await refetch()
     } catch (e) {
       addToast({ type: 'error', title: 'Test konnte nicht gestartet werden', message: e instanceof Error ? e.message : '' })

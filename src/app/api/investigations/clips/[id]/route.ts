@@ -76,7 +76,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id },
       data,
       include: {
-        investigation: { select: { id: true, caseNumber: true, title: true, classified: true } },
+        investigation: { select: { id: true, caseNumber: true, title: true } },
         entry: { select: { id: true, title: true, kind: true } },
         recordedByAgent: {
           select: {

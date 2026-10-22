@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url)
-  await runAgentStatusAutomation()
+  // Wie bei /api/stats nicht abwarten: die Automatik schreibt pro Agent nacheinander
+  // und ist ohnehin gedrosselt. Die Liste zeigt den zuletzt gespeicherten Stand.
+  void runAgentStatusAutomation().catch((error) => console.error('[Agents] Status-Automation fehlgeschlagen:', error))
   const search = searchParams.get('search')
   const status = searchParams.get('status')
   const rankId = searchParams.get('rankId')

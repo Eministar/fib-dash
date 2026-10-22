@@ -63,7 +63,7 @@ export function AgentPicker({
   }
 
   // Ohne Discord-Verknüpfung lässt sich der Agent keinem Dashboard-Konto
-  // zuordnen – die Zuweisung öffnet dann keine Verschlusssache.
+  // zuordnen – er bekommt dann keine Benachrichtigung.
   const unlinked = selectedAgents.filter((agent) => !agent.discordId)
 
   return (
@@ -139,7 +139,7 @@ export function AgentPicker({
           <span>
             {unlinked.map(agentLabel).join(', ')}{' '}
             {unlinked.length === 1 ? 'hat' : 'haben'} keine Discord-Verknüpfung und erhält dadurch
-            keinen Zugriff auf Verschlusssachen.
+            keine Benachrichtigung.
           </span>
         </p>
       )}

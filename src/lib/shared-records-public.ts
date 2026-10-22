@@ -1,11 +1,11 @@
 import { prisma } from './prisma'
 import { ShareError } from './record-shares'
-import { SHARE_KINDS, type ShareKind } from './record-share-validation'
+import { SHARE_KINDS, type ShareKind } from './record-share-kinds'
 import type { Prisma } from '@/generated/prisma'
 import { DOSSIER_KINDS } from './dossiers'
 import { INVESTIGATION_STATUS_LABELS, INVESTIGATION_ENTRY_KIND_LABELS, PERSON_LINK_TYPE_LABELS } from './investigations'
 
-export type SharedItem = { kind: string; recordId: string; classifiedAtGrant: boolean }
+export type SharedItem = { kind: string; recordId: string }
 type PublicClient = Pick<Prisma.TransactionClient, 'dossier' | 'person' | 'vehicle' | 'investigation' | 'bodycamClip' | 'investigationPhoto'>
 export function requireSharedSelection<T extends { kind: string; recordId: string }>(items: T[], kind: string, id: string): T {
   const item = items.find(item => item.kind === kind && item.recordId === id)
@@ -13,22 +13,21 @@ export function requireSharedSelection<T extends { kind: string; recordId: strin
   return item
 }
 /** Eine freigegebene Dauerakte gibt ihre Personen-, Einsatz- und Fahrzeugakten
- *  mit frei, jede freigegebene Einsatzakte ihre Bodycam-Clips. Verschlusssachen
- *  bleiben außen vor, solange sie nicht einzeln ausgewählt wurden. Ausdrücklich
+ *  mit frei, jede freigegebene Einsatzakte ihre Bodycam-Clips. Ausdrücklich
  *  gewählte Einträge stehen vorne. */
 export async function expandSharedItems(items: SharedItem[], client: PublicClient = prisma): Promise<SharedItem[]> {
   const result = [...items]
   const seen = new Set(items.map(item => `${item.kind}:${item.recordId}`))
-  const add = (kind: ShareKind, recordId: string, classifiedAtGrant = false) => {
+  const add = (kind: ShareKind, recordId: string) => {
     if (seen.has(`${kind}:${recordId}`)) return
     seen.add(`${kind}:${recordId}`)
-    result.push({ kind, recordId, classifiedAtGrant })
+    result.push({ kind, recordId })
   }
   const dossierIds = items.filter(item => item.kind === 'DOSSIER').map(item => item.recordId)
   if (dossierIds.length) {
     const dossiers = await client.dossier.findMany({
       where: { id: { in: dossierIds } },
-      select: { persons: { select: { id: true } }, investigations: { where: { classified: false }, select: { id: true } }, vehicles: { select: { id: true } } },
+      select: { persons: { select: { id: true } }, investigations: { select: { id: true } }, vehicles: { select: { id: true } } },
     })
     for (const d of dossiers) {
       d.investigations.forEach(r => add('CASE', r.id))
@@ -36,11 +35,11 @@ export async function expandSharedItems(items: SharedItem[], client: PublicClien
       d.vehicles.forEach(r => add('VEHICLE', r.id))
     }
   }
-  // Clips erben die Freigabe ihrer Einsatzakte – inklusive VS-Freigabe.
-  const cases = new Map(result.filter(item => item.kind === 'CASE').map(item => [item.recordId, item.classifiedAtGrant]))
-  if (!cases.size) return result
-  const clips = await client.bodycamClip.findMany({ where: { investigationId: { in: [...cases.keys()] } }, select: { id: true, investigationId: true }, orderBy: { recordedAt: 'asc' } })
-  clips.forEach(clip => add('CLIP', clip.id, cases.get(clip.investigationId) ?? false))
+  // Clips erben die Freigabe ihrer Einsatzakte.
+  const cases = result.filter(item => item.kind === 'CASE').map(item => item.recordId)
+  if (!cases.length) return result
+  const clips = await client.bodycamClip.findMany({ where: { investigationId: { in: cases } }, select: { id: true, investigationId: true }, orderBy: { recordedAt: 'asc' } })
+  clips.forEach(clip => add('CLIP', clip.id))
   return result
 }
 
@@ -49,8 +48,8 @@ export async function sharedHeading(item: SharedItem, client: PublicClient = pri
   if (item.kind === 'DOSSIER') return (await client.dossier.findUnique({ where: { id }, select: { title: true } }))?.title ?? null
   if (item.kind === 'PERSON') { const p = await client.person.findUnique({ where: { id }, select: { personNumber: true, firstName: true, lastName: true } }); return p ? `${p.personNumber} · ${p.firstName} ${p.lastName}` : null }
   if (item.kind === 'VEHICLE') { const v = await client.vehicle.findUnique({ where: { id }, select: { vehicleNumber: true, model: true, plate: true } }); return v ? `${v.vehicleNumber} · ${v.plate ?? v.model ?? 'Fahrzeug'}` : null }
-  if (item.kind === 'CASE') { const c = await client.investigation.findUnique({ where: { id }, select: { title: true, caseNumber: true, classified: true } }); return c && (!c.classified || item.classifiedAtGrant) ? `${c.caseNumber} · ${c.title}` : null }
-  if (item.kind === 'CLIP') { const c = await client.bodycamClip.findUnique({ where: { id }, select: { title: true, investigation: { select: { classified: true } } } }); return c && (!c.investigation.classified || item.classifiedAtGrant) ? c.title : null }
+  if (item.kind === 'CASE') { const c = await client.investigation.findUnique({ where: { id }, select: { title: true, caseNumber: true } }); return c ? `${c.caseNumber} · ${c.title}` : null }
+  if (item.kind === 'CLIP') { const c = await client.bodycamClip.findUnique({ where: { id }, select: { title: true } }); return c?.title ?? null }
   return null
 }
 

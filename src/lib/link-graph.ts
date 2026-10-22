@@ -24,7 +24,7 @@ export interface GraphNode {
   id: string
   label: string
   code: string
-  /** Fahndung, gefährlich, gestohlen, Verschlusssache … */
+  /** Fahndung, gefährlich, gestohlen … */
   flags: string[]
   /** Abstand zum Fokus in Schritten. */
   depth: number

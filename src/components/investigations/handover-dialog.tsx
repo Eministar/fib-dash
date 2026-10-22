@@ -88,9 +88,6 @@ export function HandoverDialog({
               onCheckedChange={setKeepPrevious}
               label="Bisherige Fallführung bleibt als Ermittler zugewiesen"
             />
-            {!keepPrevious && (
-              <p className="ml-7 mt-1 text-[12px] text-[#ffb340]">Bei Verschlusssachen verliert sie damit den Zugriff, sofern sie kein anderes Recht hat.</p>
-            )}
           </div>
         )}
         {failure && <p role="alert" className="text-[12.5px] text-[#fca5a5]">{failure}</p>}

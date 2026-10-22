@@ -4,21 +4,23 @@ import {
   aggregateOfficerStats,
   correctionError,
   entryBalance,
-  qcCompleteSchema,
   QC_GRADES,
   formatQcGrade,
+  QC_REPORT_TEMPLATE,
+  qcReportTemplate,
+  qcShareCovers,
+  qcShareIsActive,
+  suggestRating,
+} from '../src/lib/quality-checks'
+import {
+  qcCompleteSchema,
   qcEntrySchema,
   qcEntryUpdateSchema,
   qcGradeSchema,
   qcReportSchema,
-  QC_REPORT_TEMPLATE,
   qcCreateSchema,
-  qcReportTemplate,
-  qcShareCovers,
-  qcShareIsActive,
   qcShareSchema,
-  suggestRating,
-} from '../src/lib/quality-checks'
+} from '../src/lib/quality-checks-schemas'
 import { lspdConfig } from '../src/lib/lspd-hr-client-config'
 import { readLspdSnapshot } from '../src/lib/lspd-officers'
 

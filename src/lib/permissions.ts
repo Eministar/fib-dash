@@ -49,7 +49,6 @@ export const PERMISSIONS = [
   'lad:manage',
   'investigations:view',
   'investigations:manage',
-  'investigations:classified',
   'investigations:delete',
   'investigations:templates',
   'investigations:external',
@@ -132,7 +131,6 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'lad:manage': 'Legal Affairs verwalten',
   'investigations:view': 'Ermittlungsakten ansehen',
   'investigations:manage': 'Ermittlungsakten verwalten',
-  'investigations:classified': 'Verschlusssachen einsehen',
   'investigations:delete': 'Ermittlungsakten löschen',
   'investigations:templates': 'Aktenvorlagen verwalten',
   'investigations:external': 'Externer Ermittlungszugriff (ohne Personalakten)',
@@ -210,16 +208,15 @@ const IMPLIED_PERMISSIONS: Partial<Record<Permission, Permission[]>> = {
 'internal-affairs:manage': ['internal-affairs:view', 'agents:view'],
   'lad:manage': ['lad:view', 'agents:view'],
   'investigations:manage': ['investigations:view', 'agents:view'],
-  // Verschlusssachen und Löschen setzen Lesezugriff voraus, gewähren aber
-  // bewusst kein `investigations:manage` – Einsicht ist nicht Bearbeitung.
-  'investigations:classified': ['investigations:view'],
+  // Löschen setzt Lesezugriff voraus, gewährt aber bewusst kein
+  // `investigations:manage` – Einsicht ist nicht Bearbeitung.
   'investigations:delete': ['investigations:view'],
   'investigations:templates': ['investigations:view', 'agents:view'],
-  // Für Externe (z. B. LSPD) mit eigener Discord-Rolle: Akten inkl.
-  // Verschlusssachen sehen, anlegen und bearbeiten – aber kein `agents:view`.
+  // Für Externe (z. B. LSPD) mit eigener Discord-Rolle: Akten sehen, anlegen
+  // und bearbeiten – aber kein `agents:view`.
   // Das trägt nur, weil Implikationen eine Ebene tief aufgelöst werden: das
   // `agents:view` von `investigations:manage` kommt hier nicht mit (Test sichert das ab).
-  'investigations:external': ['investigations:view', 'investigations:manage', 'investigations:classified'],
+  'investigations:external': ['investigations:view', 'investigations:manage'],
   'quality-checks:manage': ['quality-checks:view'],
   'map:manage': ['map:view'],
   'notes:manage': ['notes:view', 'agents:view'],

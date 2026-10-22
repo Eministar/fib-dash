@@ -738,9 +738,9 @@ model Agent {
   createdAt        DateTime               @default(now())
   updatedAt        DateTime               @updatedAt
 
-  codename            Codename?            @relation("CodenameCurrentHolder")
+  codename            Codename?              @relation("CodenameCurrentHolder")
   leadershipGroups    LeadershipGroupAgent[]
-  codenameAssignments CodenameAssignment[] @relation("CodenameAssignments")
+  codenameAssignments CodenameAssignment[]   @relation("CodenameAssignments")
 
   trainings                AgentTraining[]
   promotionLogs            PromotionLog[]
@@ -769,6 +769,7 @@ model Agent {
   agentOfMonthVotes        AgentOfMonthVote[]      @relation("AgentOfMonthNominee")
 
   @@index([badgeNumber])
+  @@index([status])
 }
 
 /// Chronologischer Internal-Affairs-Eintrag zu einer durchgeführten
@@ -1012,6 +1013,8 @@ model PromotionLog {
   performedBy       User?    @relation("PerformedBy", fields: [performedByUserId], references: [id], onDelete: SetNull)
   note              String?
   createdAt         DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Termination {
@@ -1027,6 +1030,8 @@ model Termination {
   previousBadgeNumber String?
   previousFirstName   String?
   previousLastName    String?
+
+  @@index([terminatedAt])
 }
 
 /// Disziplinarische Sanktion nach dem FIB-Sanktionskatalog v1.0.
@@ -1144,6 +1149,7 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+  @@index([action, createdAt])
 }
 
 model ChangeSet {
@@ -1780,15 +1786,14 @@ model Investigation {
   status     InvestigationStatus   @default(OPEN)
   priority   InvestigationPriority @default(NORMAL)
 
-  /// Verschlusssache: nur Ersteller, Fallführung, zugewiesene Ermittler und
-  /// Inhaber von `investigations:classified` sehen die Akte samt Clips.
-  classified Boolean @default(false)
+  /// Beitrag im Ermittlungs-Forum auf Discord (Thread-ID = ID der Startnachricht).
+  discordThreadId String? @db.VarChar(32)
 
   /// Fallführender Agent.
   leadAgentId String?
   leadAgent   Agent?  @relation("InvestigationLeadAgent", fields: [leadAgentId], references: [id], onDelete: SetNull)
 
-  closedAt    DateTime?
+  closedAt DateTime?
 
   /// Vorlage, aus der die Akte angelegt wurde (nur zur Nachvollziehbarkeit).
   templateId String?
@@ -1800,9 +1805,9 @@ model Investigation {
   openRoles  Json?
 
   createdById String?
-  createdBy   User?     @relation("InvestigationCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdBy   User?    @relation("InvestigationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   assignees InvestigationAssignee[]
   entries   InvestigationEntry[]
@@ -1821,7 +1826,7 @@ model Investigation {
 }
 
 /// Vorlage für neue Einsatzakten (z. B. Drogen, Korruption, Raub). Füllt beim
-/// Anlegen Titel, Abschnitte, Priorität, Verschlusssache und Beteiligte vor und
+/// Anlegen Titel, Abschnitte, Priorität und Beteiligte vor und
 /// gibt der Akte eine Checkliste mit. Änderungen an der Vorlage wirken nur auf
 /// künftige Akten – bestehende behalten ihre Kopie.
 model InvestigationTemplate {
@@ -1833,7 +1838,6 @@ model InvestigationTemplate {
   /// Vorbereitete Abschnitte der Zusammenfassung (Markdown).
   summary     String?               @db.Text
   priority    InvestigationPriority @default(NORMAL)
-  classified  Boolean               @default(false)
   /// Arbeitsschritte als Text-Liste: `["Tatort sichern", …]`.
   checklist   Json                  @default("[]")
   /// Rollen-Platzhalter: `[{ role: "SUSPECT", label: "Tatverdächtiger" }]`.
@@ -1853,7 +1857,7 @@ model InvestigationTemplate {
   @@index([active, sortOrder])
 }
 
-/// Zusätzlich zugewiesene Ermittler. Sie behalten Zugriff auf Verschlusssachen.
+/// Zusätzlich zugewiesene Ermittler.
 model InvestigationAssignee {
   id              String        @id @default(cuid())
   investigationId String
@@ -2227,34 +2231,36 @@ model InvestigationPhoto {
 }
 
 model Dossier {
-  id             String               @id @default(cuid())
-  title          String               @db.VarChar(200)
+  id              String               @id @default(cuid())
+  title           String               @db.VarChar(200)
   /// FAMILY | COLLECTION | PROPERTY | FILE
-  kind           String               @default("COLLECTION") @db.VarChar(20)
-  description    String?              @db.Text
-  address        String?              @db.VarChar(300)
-  photoId        String?
-  photo          InvestigationPhoto?  @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  kind            String               @default("COLLECTION") @db.VarChar(20)
+  description     String?              @db.Text
+  address         String?              @db.VarChar(300)
+  photoId         String?
+  photo           InvestigationPhoto?  @relation(fields: [photoId], references: [id], onDelete: SetNull)
   /// Weitere Bilder neben dem Titelbild. Die Kacheln zeigen `photo`, damit das
   /// Bild dort stabil bleibt – eine n:m-Relation hat keine feste Reihenfolge.
-  photos         InvestigationPhoto[] @relation("DossierPhotos")
-  persons        Person[]             @relation("DossierPersons")
-  investigations Investigation[]      @relation("DossierInvestigations")
-  vehicles       Vehicle[]            @relation("DossierVehicles")
-  mapSpots       MapSpot[]            @relation("DossierMapSpots")
+  photos          InvestigationPhoto[] @relation("DossierPhotos")
+  persons         Person[]             @relation("DossierPersons")
+  investigations  Investigation[]      @relation("DossierInvestigations")
+  vehicles        Vehicle[]            @relation("DossierVehicles")
+  mapSpots        MapSpot[]            @relation("DossierMapSpots")
   /// Ermittlungsgruppen, deren Mitglieder alle Einsatzakten dieser Dauerakte lesen.
-  accessGroups   DossierAccessGroup[]
-  createdById    String?
-  createdBy      User?                @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  accessGroups    DossierAccessGroup[]
+  /// Beitrag im Ermittlungs-Forum auf Discord (Tag „Dauerakte“).
+  discordThreadId String?              @db.VarChar(32)
+  createdById     String?
+  createdBy       User?                @relation("DossierCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   @@index([kind, updatedAt])
 }
 
-/// Lesezugriff einer Ermittlungsgruppe auf alle Einsatzakten einer Dauerakte,
-/// Verschlusssachen eingeschlossen. Die Mitgliedschaft wird bei jeder Prüfung
-/// frisch gelesen, ein Gruppenaustritt wirkt also sofort.
+/// Früher Lesezugriff einer Ermittlungsgruppe auf Verschlusssachen einer
+/// Dauerakte. Seit es keine Verschlusssachen mehr gibt, ohne Wirkung; die Daten
+/// bleiben erhalten.
 model DossierAccessGroup {
   dossierId String
   groupId   String
@@ -2386,20 +2392,21 @@ model RecordShare {
   createdBy   User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+  /// Razzia-Antrag als Anschreiben zu den freigegebenen Akten (siehe lib/raid-request).
+  raidRequest Json?
   items       RecordShareItem[]
 
   @@index([createdById, createdAt])
 }
 
 model RecordShareItem {
-  id                String      @id @default(cuid())
-  shareId           String
-  share             RecordShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  id       String      @id @default(cuid())
+  shareId  String
+  share    RecordShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
   /// DOSSIER | CASE | PERSON | VEHICLE | CLIP
-  kind              String      @db.VarChar(20)
-  recordId          String      @db.VarChar(191)
-  title             String      @db.VarChar(300)
-  classifiedAtGrant Boolean     @default(false)
+  kind     String      @db.VarChar(20)
+  recordId String      @db.VarChar(191)
+  title    String      @db.VarChar(300)
 
   @@unique([shareId, kind, recordId])
   @@index([kind, recordId])

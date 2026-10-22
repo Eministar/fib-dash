@@ -23,7 +23,7 @@ import { AgentPicker } from './agent-picker'
 import { useInvestigationMutation } from './use-investigation-mutation'
 import type { AgentLite } from './types'
 
-const emptyForm = (): TemplateInput => ({ name: '', description: '', titlePrefix: '', summary: '', priority: 'NORMAL', classified: false, checklist: [], roles: [], leadAgentId: null, assigneeIds: [], active: true, sortOrder: 0 })
+const emptyForm = (): TemplateInput => ({ name: '', description: '', titlePrefix: '', summary: '', priority: 'NORMAL', checklist: [], roles: [], leadAgentId: null, assigneeIds: [], active: true, sortOrder: 0 })
 
 export function InvestigationTemplates() {
   const { user } = useAuth()
@@ -81,7 +81,6 @@ export function InvestigationTemplates() {
             <Select label="Priorität" value={form.priority} options={labelOptions(INVESTIGATION_PRIORITY_LABELS)} onValueChange={value => setForm({ ...form, priority: value as TemplateInput['priority'] })} />
             <Input label="Sortierung" type="number" min={0} max={9999} value={form.sortOrder} onChange={event => setForm({ ...form, sortOrder: Number(event.target.value) })} />
           </div>
-          <Checkbox label="Verschlusssache" checked={form.classified} onCheckedChange={classified => setForm({ ...form, classified })} />
           <Checkbox label="Vorlage aktiv" checked={form.active} onCheckedChange={active => setForm({ ...form, active })} />
           {agentsError && <p role="alert" className="text-sm text-red-400">Agents konnten nicht geladen werden: {agentsError}</p>}
           <AgentPicker single label="Fallführung" agents={agents ?? []} value={form.leadAgentId ? [form.leadAgentId] : []} onChange={ids => setForm({ ...form, leadAgentId: ids[0] ?? null })} />

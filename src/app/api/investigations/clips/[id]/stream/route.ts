@@ -5,7 +5,6 @@ import { bodycamAccess, canAccessBodycamClip } from '@/lib/bodycam-access'
 import { clipFileResponse } from '@/lib/clips'
 import { prisma } from '@/lib/prisma'
 import { routeError } from '@/lib/investigations-server'
-import { investigationAccessInclude } from '@/lib/investigations'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,20 +20,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const clip = await prisma.bodycamClip.findUnique({
       where: { id },
-      select: {
-        filename: true,
-        mimeType: true,
-        investigation: {
-          select: {
-            classified: true,
-            createdById: true,
-            ...investigationAccessInclude,
-          },
-        },
-      },
+      select: { filename: true, mimeType: true },
     })
     if (!clip) return notFound('Clip')
-    if (!canAccessBodycamClip(access, clip.investigation)) return forbidden()
+    if (!canAccessBodycamClip(access)) return forbidden()
 
     const response = await clipFileResponse(clip.filename, clip.mimeType, req.headers.get('range'))
     response.headers.set('Cache-Control', 'private, no-store')

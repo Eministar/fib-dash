@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { EyeOff, FolderOpen, Folders, FolderSearch, Image as ImageIcon, ImageOff, Plus, Pencil, MapPin, Trash2 } from 'lucide-react'
+import { FolderOpen, Folders, FolderSearch, Image as ImageIcon, ImageOff, Plus, Pencil, MapPin, Trash2 } from 'lucide-react'
 import { DOSSIER_KINDS, type DossierKind } from '@/lib/dossiers'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
@@ -29,7 +29,6 @@ import { mapCategory } from '@/lib/map-spots'
 import { PhotoField, PhotoPicker, type CatalogPhoto } from './photo-catalog'
 import { ImageLightbox, LightboxThumb } from '@/components/ui/image-lightbox'
 import { PriorityBadge, StatusBadge } from './investigation-badges'
-import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
 import type { InvestigationPriorityKey, InvestigationStatusKey } from '@/lib/investigations'
 import { useUrlState } from '@/hooks/use-url-state'
@@ -43,7 +42,7 @@ type Dossier = {
   photoId: string | null; photos?: { id: string; title: string }[];
   updatedAt?: string; createdBy?: { displayName: string } | null;
   persons?: { id: string; firstName: string; lastName: string; personNumber: string }[];
-  investigations?: { id: string; title: string; caseNumber: string; status: InvestigationStatusKey; priority: InvestigationPriorityKey; classified: boolean; updatedAt: string; createdBy?: { displayName: string } | null }[];
+  investigations?: { id: string; title: string; caseNumber: string; status: InvestigationStatusKey; priority: InvestigationPriorityKey; updatedAt: string; createdBy?: { displayName: string } | null }[];
   vehicles?: { id: string; vehicleNumber: string; plate: string | null; model: string | null }[];
   mapSpots?: PickedSpot[];
   accessGroups?: { group: { id: string; name: string } }[];
@@ -97,7 +96,7 @@ function DossierView({ id }: { id: string | null }) {
   const caseCards: RegisterCardData[] = (current?.investigations ?? []).map(item => ({
     key: `i-${item.id}`, href: `/investigations/${item.id}`, variant: 'investigation' as const,
     kind: 'Einsatzakte', title: item.title, photoId: null,
-    code: item.caseNumber, status: item.status, priority: item.priority, classified: item.classified,
+    code: item.caseNumber, status: item.status, priority: item.priority,
     author: item.createdBy?.displayName, date: item.updatedAt,
   }))
 
@@ -106,7 +105,6 @@ function DossierView({ id }: { id: string | null }) {
     { id: 'personen', label: 'Personenakten', count: current?.persons?.length ?? 0 },
     { id: 'fahrzeuge', label: 'Fahrzeugakten', count: current?.vehicles?.length ?? 0 },
     { id: 'medien', label: 'Medien & Orte', count: (current?.photos?.length ?? 0) + (current?.mapSpots?.length ?? 0) },
-    { id: 'gruppen', label: 'Ermittlungsgruppen', count: current?.accessGroups?.length ?? 0 },
   ]
   const activeTab = resolveTab(params.get('tab'), tabs)
   const selectTab = (tab: string) => {
@@ -204,7 +202,6 @@ function DossierView({ id }: { id: string | null }) {
         </SectionCard>
       </>}
 
-      {activeTab === 'gruppen' && current && <DossierAccessGroups dossier={current} manage={manage} onChanged={() => void detail.refetch()} />}
     </> : <>
       <FilterBar>
         <SearchInput value={search} onChange={value => { setSearch(value); setPage(1) }} label="Dauerakte suchen" placeholder="Akte nach Titel oder Adresse suchen …" />
@@ -241,52 +238,12 @@ function DossierView({ id }: { id: string | null }) {
   </div>
 }
 
-/**
- * Ermittlungsgruppen an der Dauerakte: ihre Mitglieder lesen alle Einsatzakten
- * dieser Akte, auch Verschlusssachen. Mitglieder selbst bleiben vertraulich.
- */
-function DossierAccessGroups({ dossier, manage, onChanged }: { dossier: Dossier; manage: boolean; onChanged: () => void }) {
-  const options = useFetch<{ id: string; name: string }[]>(manage ? '/api/leadership/groups/options' : null)
-  const { execute, loading } = useApi()
-  const [failure, setFailure] = useState('')
-  const assigned = dossier.accessGroups ?? []
-  const available = (options.data ?? []).filter(group => !assigned.some(access => access.group.id === group.id))
-
-  async function change(method: 'POST' | 'DELETE', groupId: string) {
-    setFailure('')
-    try {
-      const base = `/api/investigations/dossiers/${dossier.id}/access-groups`
-      await execute(method === 'POST' ? base : `${base}?groupId=${encodeURIComponent(groupId)}`, method === 'POST'
-        ? { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId }) }
-        : { method })
-      onChanged()
-    } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Änderung fehlgeschlagen') }
-  }
-
-  // Ohne `empty`, damit der Hinweis zur Tragweite auch vor der ersten Zuweisung steht.
-  return <SectionCard title="Ermittlungsgruppen" count={assigned.length}
-    action={manage && available.length > 0
-      ? <Select value="" disabled={loading} onValueChange={groupId => { if (groupId) void change('POST', groupId) }}
-          options={[{ value: '', label: 'Gruppe hinzufügen …' }, ...available.map(group => ({ value: group.id, label: group.name }))]} />
-      : null}>
-    <p className="mb-3 flex items-start gap-2 text-[12px] text-[#d4a017]"><EyeOff size={14} className="mt-[1px] shrink-0" />Mitglieder dieser Gruppen lesen alle Einsatzakten dieser Akte – auch Verschlusssachen und Akten, die später verknüpft werden.</p>
-    {failure && <p role="alert" className="mb-3 text-sm text-red-300">{failure}</p>}
-    {!assigned.length && <p className="py-1 text-[12.5px] text-[#8e8e93]">Keine Ermittlungsgruppe zugewiesen. Zugriff haben nur die an den einzelnen Einsatzakten eingetragenen Ermittler.</p>}
-    <ul className="space-y-1.5">
-      {assigned.map(({ group }) => <li key={group.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#38383a] px-3 py-2 text-sm text-[#d4d4d4]">
-        <span className="truncate">{group.name}</span>
-        {manage && <Button size="sm" variant="ghost" disabled={loading} aria-label={`${group.name} entfernen`} onClick={() => void change('DELETE', group.id)}><Trash2 size={13} />Entfernen</Button>}
-      </li>)}
-    </ul>
-  </SectionCard>
-}
-
 type RegisterCardData = {
   key: string; href: string; variant: 'dossier' | 'investigation'
   kind: string; title: string; photoId: string | null
   /** Aktenzeichen bei Einsatzakten, Adresse bei Dauerakten. */
   code?: string
-  status?: InvestigationStatusKey; priority?: InvestigationPriorityKey; classified?: boolean
+  status?: InvestigationStatusKey; priority?: InvestigationPriorityKey
   facts?: string[]
   author?: string; date?: string
 }
@@ -312,10 +269,9 @@ function RegisterCard({ card }: { card: RegisterCardData }) {
         <span className="line-clamp-2">{card.title}</span>
       </h3>
 
-      {(card.status || card.classified) && <div className="flex flex-wrap gap-1.5">
+      {card.status && <div className="flex flex-wrap gap-1.5">
         {card.status && <StatusBadge status={card.status} />}
         {card.priority && <PriorityBadge priority={card.priority} />}
-        {card.classified && <Badge variant="danger" className="gap-1"><EyeOff className="h-3 w-3" />Verschluss</Badge>}
       </div>}
 
       {card.code && <p className="truncate font-mono text-[11px] text-[#d4af37]">{card.code}</p>}

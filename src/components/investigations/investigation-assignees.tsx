@@ -17,7 +17,6 @@ interface InvestigationAssigneesProps {
   investigationId: string
   assignees: InvestigationAssignee[]
   leadAgent: AgentLite | null
-  classified: boolean
   agents: AgentLite[]
   canManage: boolean
   onChanged: () => void | Promise<void>
@@ -27,7 +26,6 @@ export function InvestigationAssignees({
   investigationId,
   assignees,
   leadAgent,
-  classified,
   agents,
   canManage,
   onChanged,
@@ -74,9 +72,7 @@ export function InvestigationAssignees({
         <div>
           <h2 className="text-[14px] font-semibold text-white">Zugewiesene Ermittler</h2>
           <p className="mt-0.5 text-[11.5px] text-[#8e8e93]">
-            {classified
-              ? 'Diese Agents sehen die Verschlusssache zusätzlich zu Ersteller, Fallführung und Berechtigten.'
-              : 'Die Akte ist nicht vertraulich – Zuweisungen dokumentieren hier, wer ermittelt.'}
+            Zuweisungen dokumentieren, wer an der Akte ermittelt.
           </p>
         </div>
         {canManage && (
@@ -117,7 +113,7 @@ export function InvestigationAssignees({
                 {!assignee.agent.discordId && (
                   <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#d4a017]">
                     <AlertTriangle className="h-3 w-3 shrink-0" />
-                    Ohne Discord-Verknüpfung – kein Zugriff auf Verschlusssachen.
+                    Ohne Discord-Verknüpfung – bekommt keine Benachrichtigungen.
                   </p>
                 )}
               </div>
@@ -141,7 +137,7 @@ export function InvestigationAssignees({
         open={open}
         onClose={() => setOpen(false)}
         title="Ermittler zuweisen"
-        description="Zugewiesene Agents behalten Zugriff, auch wenn die Akte zur Verschlusssache wird."
+        description="Zugewiesene Agents werden benachrichtigt und finden die Akte unter „Meine Akten“."
         size="lg"
       >
         <div className="space-y-4">

@@ -23,6 +23,8 @@ interface DiscordRole {
 interface DiscordChannel {
   id: string
   name?: string
+  /** 0 Text, 5 Ankündigung, 15 Forum. */
+  type?: number
 }
 
 interface DiscordRank {
@@ -416,8 +418,10 @@ export default function SettingsPage() {
   ]
   const channelOptions = [
     { value: '', label: 'Kein Channel' },
-    ...(discordData?.channels.map((channel) => ({ value: channel.id, label: `#${channel.name || channel.id}` })) || []),
+    ...(discordData?.channels.map((channel) => ({ value: channel.id, label: `#${channel.name || channel.id}${channel.type === 15 ? ' (Forum)' : ''}` })) || []),
   ]
+  // Nur das Ermittlungs-Forum legt Beiträge an; alle anderen Meldungen posten direkt und brauchen einen Text-Channel.
+  const textChannelOptions = channelOptions.filter((option) => !option.label.endsWith(' (Forum)'))
   const roleName = (roleId: string) => discordData?.roles.find((role) => role.id === roleId)?.name || roleId
   const syncPercent = fullSyncResult
     ? 100
@@ -718,7 +722,7 @@ export default function SettingsPage() {
                     label="Ankündigungs-Channel"
                     value={discordForm.announcementsChannelId}
                     onValueChange={(announcementsChannelId) => setDiscordForm({ ...discordForm, announcementsChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
               </div>
               <div className="sm:col-span-2">
@@ -726,7 +730,7 @@ export default function SettingsPage() {
                     label="Update-Channel"
                     value={discordForm.updateChannelId}
                     onValueChange={(updateChannelId) => setDiscordForm({ ...discordForm, updateChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Channel für Update-Mitteilungen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
@@ -737,7 +741,7 @@ export default function SettingsPage() {
                     label="Sanktions-Channel"
                     value={discordForm.sanctionsChannelId}
                     onValueChange={(sanctionsChannelId) => setDiscordForm({ ...discordForm, sanctionsChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Channel für neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
@@ -751,8 +755,26 @@ export default function SettingsPage() {
                     options={channelOptions}
                 />
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Meldungen zu Einsatzakten und neuen Bodycam-Clips. Verschlusssachen werden nie gepostet.
-                  Leer lassen, um die Meldungen abzuschalten.
+                  Am besten ein Forum: Jede Einsatzakte bekommt einen eigenen Beitrag mit Aktenkarte und Verlauf, jede Dauerakte einen Beitrag mit Tag „Dauerakte“ und Links zu ihren Ermittlungen, dazu eine angepinnte Übersicht. Bei einem normalen Text-Channel kommt je Ereignis eine Nachricht. Leer lassen, um die Meldungen abzuschalten.
+                </p>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-2"
+                    disabled={!discordForm.investigationsChannelId}
+                    onClick={async () => {
+                      try {
+                        await execute('/api/discord/investigations-forum', { method: 'POST' })
+                        addToast({ type: 'success', title: 'Forum wird aufgebaut', message: 'Beiträge für laufende Akten und alle Dauerakten entstehen im Hintergrund.' })
+                      } catch (err) {
+                        addToast({ type: 'error', title: 'Forum nicht aufgebaut', message: err instanceof Error ? err.message : '' })
+                      }
+                    }}
+                >
+                  Forum aufbauen
+                </Button>
+                <p className="text-[11px] text-[#8e8e93] mt-1.5">
+                  Der Bot braucht im Forum „Beiträge erstellen“, „In Threads schreiben“ und „Kanäle verwalten“ (für Tags und das Anpinnen).
                 </p>
               </div>
               <div className="sm:col-span-2">
@@ -760,7 +782,7 @@ export default function SettingsPage() {
                     label="Neueinstellung: Channel für Kurz-Ping"
                     value={discordForm.hirePingChannelId}
                     onValueChange={(hirePingChannelId) => setDiscordForm({ ...discordForm, hirePingChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="mt-1.5 text-[11px] text-[#8e8e93]">Bei einem neu angelegten Agent wird er selbst einmal kurz erwähnt; die Nachricht wird nach etwa einer Sekunde wieder gelöscht. Ohne hinterlegte Discord-ID des Agents passiert nichts. Leer bedeutet deaktiviert.</p>
               </div>
@@ -792,14 +814,14 @@ export default function SettingsPage() {
                     onValueChange={(bodycamViewerRoleId) => setDiscordForm({ ...discordForm, bodycamViewerRoleId })}
                     options={roleOptions}
                 />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Gewährt angemeldeten Rollenmitgliedern Lesezugriff auf den gesamten Bodycam-Katalog — auch auf Clips aus Verschlusssachen. Die Akten selbst bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.</p>
+                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Gewährt angemeldeten Rollenmitgliedern Lesezugriff auf den gesamten Bodycam-Katalog. Die Akten selbst bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.</p>
               </div>
               <div className="sm:col-span-2">
                 <Select
                     label="Bildkatalog-Channel"
                     value={discordForm.photoCatalogChannelId}
                     onValueChange={(photoCatalogChannelId) => setDiscordForm({ ...discordForm, photoCatalogChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="mt-1.5 text-[11px] text-[#8e8e93]">Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot benötigt Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Leer lassen zum Abschalten; eine Umgebungsvariable hat Vorrang.</p>
               </div>
@@ -808,7 +830,7 @@ export default function SettingsPage() {
                     label="Decknamen-Board"
                     value={discordForm.codenameBoardChannelId}
                     onValueChange={(codenameBoardChannelId) => setDiscordForm({ ...discordForm, codenameBoardChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="mt-1.5 text-[11px] text-[#8e8e93]">Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.</p>
               </div>
@@ -817,7 +839,7 @@ export default function SettingsPage() {
                     label="Dienstzeiten-Channel"
                     value={discordForm.dutyStatusChannelId}
                     onValueChange={(dutyStatusChannelId) => setDiscordForm({ ...discordForm, dutyStatusChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Öffentliches Panel mit allen Agents im Dienst. Im manuellen Modus mit Ein-/Ausstempel-Buttons.
@@ -828,7 +850,7 @@ export default function SettingsPage() {
                     label="Dienstzeit-Protokoll (Admin)"
                     value={discordForm.dutyAdminLogChannelId}
                     onValueChange={(dutyAdminLogChannelId) => setDiscordForm({ ...discordForm, dutyAdminLogChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Optionaler Admin-Channel für Dienstzeit-Hinweise. Leer lassen, um den Ankündigungs-Channel zu nutzen.
@@ -839,7 +861,7 @@ export default function SettingsPage() {
                     label="Abmeldungs-Channel"
                     value={discordForm.absenceStatusChannelId}
                     onValueChange={(absenceStatusChannelId) => setDiscordForm({ ...discordForm, absenceStatusChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Öffentliches Panel mit allen aktuell abgemeldeten Agents. Leer lassen, um den Dienstzeiten- oder Ankündigungs-Channel zu nutzen.
@@ -850,7 +872,7 @@ export default function SettingsPage() {
                     label="Wochenbericht an die Leitung"
                     value={discordForm.weeklyReportChannelId ?? ''}
                     onValueChange={(weeklyReportChannelId) => setDiscordForm({ ...discordForm, weeklyReportChannelId })}
-                    options={channelOptions}
+                    options={textChannelOptions}
                 />
                 <p className="text-[11px] text-[#8e8e93] mt-1.5">
                   Jeden Montag ab 8 Uhr: Einstellungen, Kündigungen, Rangänderungen, Sanktionen und Dienststunden der Vorwoche im Vergleich zur Woche davor. Leer lassen, um keinen Bericht zu senden.

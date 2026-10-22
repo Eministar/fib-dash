@@ -1,9 +1,8 @@
 /**
- * Qualitätskontrollen von LSPD-Beamten (verdeckte Mitfahrt). Reine Logik,
- * Typen und Eingabeprüfung – Client und Server nutzen dieselbe Quelle.
+ * Qualitätskontrollen von LSPD-Beamten (verdeckte Mitfahrt). Reine Logik und
+ * Typen ohne zod – die Eingabeprüfung liegt in `quality-checks-schemas`, damit
+ * die Seiten im Browser schlank bleiben.
  */
-import { z } from 'zod'
-
 import { cleanLspdBadge, lspdOfficerName, lspdStatusLabel, type LspdOfficer } from '@/lib/lspd-officers'
 
 export const QUALITY_CHECK_PREFIX = 'QK-'
@@ -55,7 +54,7 @@ export const QC_GRADES: readonly number[] = QC_BASE_GRADES.flatMap((base) =>
   base === 6 ? [6] : [roundGrade(base - QC_GRADE_TENDENCY), base, roundGrade(base + QC_GRADE_TENDENCY)],
 )
 
-function roundGrade(value: number) {
+export function roundGrade(value: number) {
   return Math.round(value * 10) / 10
 }
 
@@ -74,11 +73,6 @@ export function formatQcGrade(value: number) {
   return `${base}${diff < 0 ? '+' : diff > 0 ? '−' : ''}`
 }
 
-const gradeSchema = z
-  .number()
-  .refine(isQcGrade, 'Note 1+ bis 6')
-  .transform(roundGrade)
-
 export const QC_STATUS_LABELS: Record<string, string> = {
   RUNNING: 'Läuft',
   COMPLETED: 'Abgeschlossen',
@@ -91,38 +85,6 @@ export const QC_SHARE_SCOPE_LABELS: Record<QcShareScope, string> = {
   OFFICER: 'Eine Beamtenakte',
   ALL: 'Alle Beamtenakten',
 }
-
-const isoDate = z.iso.datetime({ offset: true })
-const notInFuture = (value: string) => new Date(value).getTime() <= Date.now() + 5 * 60_000
-
-export const qcCreateSchema = z
-  .object({
-    lspdOfficerId: z.string().trim().min(1).max(191),
-    checkType: z.enum(QC_CHECK_TYPES).default('PATROL'),
-    startedAt: isoDate.refine(notInFuture, 'Der Beginn darf nicht in der Zukunft liegen').optional(),
-    location: z.string().trim().max(200).optional(),
-  })
-  .strict()
-
-export const qcEntrySchema = z
-  .object({
-    kind: z.enum(QC_ENTRY_KINDS),
-    text: z.string().trim().min(1, 'Bitte etwas eintragen').max(5000),
-    occurredAt: isoDate.refine(notInFuture, 'Der Zeitpunkt darf nicht in der Zukunft liegen').optional(),
-    /** Korrigiert einen früheren Eintrag derselben Kontrolle. */
-    correctsId: z.string().trim().min(1).max(191).optional(),
-  })
-  .strict()
-
-/** Eintrag einer laufenden Kontrolle nachträglich ändern. */
-export const qcEntryUpdateSchema = z
-  .object({
-    kind: z.enum(QC_ENTRY_KINDS).optional(),
-    text: z.string().trim().min(1, 'Bitte etwas eintragen').max(5000).optional(),
-    occurredAt: isoDate.refine(notInFuture, 'Der Zeitpunkt darf nicht in der Zukunft liegen').optional(),
-  })
-  .strict()
-  .refine((input) => Object.values(input).some((value) => value !== undefined), 'Keine Änderung angegeben')
 
 /**
  * Gliederung für den Abschlussbericht je Kontrollart. Wird nur auf Wunsch
@@ -143,54 +105,6 @@ export function qcReportTemplate(type: string | null | undefined) {
 
 /** Allgemeine Gliederung (Kontrollart „Sonstige“). */
 export const QC_REPORT_TEMPLATE = qcReportTemplate('OTHER')
-
-const reportText = z.string().trim().min(1, 'Bitte einen Abschlussbericht schreiben').max(20000)
-
-export const qcCompleteSchema = z
-  .object({
-    rating: z.enum(QC_RATINGS),
-    grade: gradeSchema.nullable().optional(),
-    summary: reportText,
-    endedAt: isoDate.refine(notInFuture, 'Das Ende darf nicht in der Zukunft liegen').optional(),
-    location: z.string().trim().max(200).optional(),
-  })
-  .strict()
-
-/** Abschlussbericht einer abgeschlossenen Kontrolle überarbeiten. */
-export const qcReportSchema = z.object({ summary: reportText }).strict()
-
-/** Note einer laufenden Kontrolle setzen oder zurücknehmen (`null`). */
-export const qcGradeSchema = z.object({ grade: gradeSchema.nullable() }).strict()
-
-export const qcShareSchema = z
-  .object({
-    title: z.string().trim().min(1).max(200),
-    scope: z.enum(QC_SHARE_SCOPES),
-    checkId: z.string().trim().min(1).max(191).nullable().default(null),
-    lspdOfficerId: z.string().trim().min(1).max(191).nullable().default(null),
-    includeCareer: z.boolean().default(false),
-    enabled: z.boolean().default(true),
-    expiresAt: isoDate.nullable().default(null),
-  })
-  .strict()
-  .superRefine((input, ctx) => {
-    if (input.scope === 'CHECK' && !input.checkId) ctx.addIssue({ code: 'custom', message: 'Bitte die Kontrolle wählen', path: ['checkId'] })
-    if (input.scope === 'OFFICER' && !input.lspdOfficerId) ctx.addIssue({ code: 'custom', message: 'Bitte den Beamten wählen', path: ['lspdOfficerId'] })
-    if (input.expiresAt && new Date(input.expiresAt).getTime() <= Date.now()) {
-      ctx.addIssue({ code: 'custom', message: 'Das Ablaufdatum muss in der Zukunft liegen', path: ['expiresAt'] })
-    }
-  })
-
-export const qcShareUpdateSchema = z
-  .object({
-    enabled: z.boolean().optional(),
-    expiresAt: isoDate.nullable().optional(),
-    includeCareer: z.boolean().optional(),
-    title: z.string().trim().min(1).max(200).optional(),
-    /** Neuen geheimen Link erzeugen; der alte wird ungültig. */
-    rotate: z.literal(true).optional(),
-  })
-  .strict()
 
 export interface QcEntryLike {
   id: string

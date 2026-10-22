@@ -104,7 +104,6 @@ export async function POST(req: NextRequest) {
     if (!isInvestigationPriority(priority)) return error('Unbekannte Priorität')
 
     const summary = cleanText(body.summary) || null
-    const classified = body.classified === true
     const leadAgentId = cleanText(body.leadAgentId) || null
 
     let leadAgent = null
@@ -116,8 +115,6 @@ export async function POST(req: NextRequest) {
       if (!leadAgent) return error('Fallführender Agent wurde nicht gefunden', 404)
     }
 
-    // Zugewiesene Ermittler duerfen die Akte auch dann sehen, wenn sie als
-    // Verschlusssache angelegt wird.
     const assigneeIds = await validateAgentIds(body.assigneeIds)
 
     const mapSpotIds = validateIdList(body.mapSpotIds)
@@ -152,7 +149,6 @@ export async function POST(req: NextRequest) {
         summary,
         status,
         priority,
-        classified,
         leadAgentId,
         createdById: user.id,
         ...(templateCopy ? { templateId, checklist: templateCopy.checklist, openRoles: templateCopy.openRoles } : {}),
@@ -167,7 +163,7 @@ export async function POST(req: NextRequest) {
     await createAuditLog({
       action: 'INVESTIGATION_CREATED',
       userId: user.id,
-      details: `Ermittlungsakte ${caseNumber}: "${title}"${classified ? ' (Verschlusssache)' : ''}`,
+      details: `Ermittlungsakte ${caseNumber}: "${title}"`,
     })
 
     await notifyInvestigationTeam({
@@ -179,9 +175,9 @@ export async function POST(req: NextRequest) {
 
     queueDiscordInvestigationEvent({
       type: 'created',
+      investigationId: investigation.id,
       caseNumber,
       title,
-      classified,
       leadAgentName: agentDisplayName(leadAgent),
       actorName: user.displayName,
       note: summary,

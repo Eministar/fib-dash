@@ -1,4 +1,3 @@
-import { EyeOff } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import {
@@ -52,15 +51,6 @@ export function RoleBadge({ role }: { role: InvestigationPersonRoleKey }) {
 
 export function EntryKindBadge({ kind }: { kind: InvestigationEntryKindKey }) {
   return <Badge variant="default">{INVESTIGATION_ENTRY_KIND_LABELS[kind]}</Badge>
-}
-
-export function ClassifiedBadge() {
-  return (
-    <Badge variant="danger" className="gap-1">
-      <EyeOff className="h-3 w-3" />
-      Verschlusssache
-    </Badge>
-  )
 }
 
 /** Auswahloptionen für die Filter- und Formular-Selects. */

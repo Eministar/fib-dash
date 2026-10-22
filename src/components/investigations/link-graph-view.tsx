@@ -356,7 +356,7 @@ function GraphCanvas({ graph, onFocus }: { graph: LinkGraph; onFocus: (key: stri
               if (!point) return null
               const isFocus = node.key === graph.focus
               const radius = isFocus ? 14 : node.kind === 'investigation' ? 10 : 8
-              const alarm = node.flags.some((flag) => flag !== 'Verschlusssache')
+              const alarm = node.flags.length > 0
               return (
                 <g
                   key={node.key}

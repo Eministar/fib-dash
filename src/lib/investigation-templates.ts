@@ -32,7 +32,6 @@ export type InvestigationTemplateData = {
   titlePrefix: string | null
   summary: string | null
   priority: InvestigationPriorityKey
-  classified: boolean
   checklist: string[]
   roles: TemplateRole[]
   leadAgentId: string | null
@@ -118,7 +117,6 @@ export function parseTemplateInput(body: unknown): { ok: true; value: TemplateIn
       titlePrefix: cleanText(input.titlePrefix, TEMPLATE_LIMITS.titlePrefix) || null,
       summary: typeof input.summary === 'string' ? input.summary.slice(0, TEMPLATE_LIMITS.summary).trim() || null : null,
       priority,
-      classified: input.classified === true,
       checklist: sanitizeChecklist(input.checklist),
       roles: sanitizeRoles(input.roles),
       leadAgentId: cleanText(input.leadAgentId, 64) || null,
@@ -137,7 +135,6 @@ export function toTemplateData(row: {
   titlePrefix: string | null
   summary: string | null
   priority: string
-  classified: boolean
   checklist: unknown
   roles: unknown
   leadAgentId: string | null
@@ -154,7 +151,6 @@ export function toTemplateData(row: {
     titlePrefix: row.titlePrefix,
     summary: row.summary,
     priority: isInvestigationPriority(row.priority) ? row.priority : 'NORMAL',
-    classified: row.classified,
     checklist: sanitizeChecklist(row.checklist),
     roles: sanitizeRoles(row.roles),
     leadAgentId: row.leadAgentId,
@@ -228,7 +224,7 @@ export function composeTitle(prefix: string | null | undefined, title: string): 
   return `${cleanPrefix} ${cleanTitle}`.replace(/\s+/g, ' ').trim()
 }
 
-export type TemplatePrefill = Pick<TemplateInput, 'classified' | 'assigneeIds'> & { title: string; summary: string; leadAgentId: string; priority: string }
+export type TemplatePrefill = Pick<TemplateInput, 'assigneeIds'> & { title: string; summary: string; leadAgentId: string; priority: string }
 
 export function templatePrefill(template: InvestigationTemplateData | null, agentIds?: string[]): TemplatePrefill {
   const exists = (id: string) => !agentIds || agentIds.includes(id)
@@ -236,7 +232,6 @@ export function templatePrefill(template: InvestigationTemplateData | null, agen
     title: template?.titlePrefix ? `${template.titlePrefix.trim()} ` : '',
     summary: template?.summary ?? '',
     priority: template?.priority ?? 'NORMAL',
-    classified: template?.classified ?? true,
     leadAgentId: template?.leadAgentId && exists(template.leadAgentId) ? template.leadAgentId : '',
     assigneeIds: template?.assigneeIds.filter(exists) ?? [],
   }
@@ -249,7 +244,6 @@ export function mergeTemplatePrefill<T extends TemplatePrefill>(form: T, previou
     title: !form.title.trim() || form.title === previous.title ? next.title : form.title,
     summary: !form.summary.trim() || form.summary === previous.summary ? next.summary : form.summary,
     priority: form.priority === previous.priority ? next.priority : form.priority,
-    classified: form.classified === previous.classified ? next.classified : form.classified,
     leadAgentId: form.leadAgentId === previous.leadAgentId ? next.leadAgentId : form.leadAgentId,
     assigneeIds: form.assigneeIds.length === previous.assigneeIds.length && form.assigneeIds.every(id => previous.assigneeIds.includes(id)) ? next.assigneeIds : form.assigneeIds,
   }

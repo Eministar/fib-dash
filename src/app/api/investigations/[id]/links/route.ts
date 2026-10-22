@@ -31,8 +31,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!from) return notFound('Ermittlungsakte')
     if (!to) return notFound('Zielakte')
 
-    // Beide Seiten pruefen: sonst liesse sich ueber einen Querverweis der Kopf
-    // einer Verschlusssache in eine offene Akte spiegeln.
+    // Beide Seiten pruefen, damit eine kuenftige Zugriffsregel auch Querverweise abdeckt.
     if (!canAccessInvestigation(user, from) || !canAccessInvestigation(user, to)) return forbidden()
 
     try {
@@ -46,7 +45,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
               title: true,
               status: true,
               priority: true,
-              classified: true,
             },
           },
         },

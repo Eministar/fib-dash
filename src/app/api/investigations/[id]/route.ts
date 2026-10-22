@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { hasPermission } from '@/lib/permissions'
 import { createAuditLog } from '@/lib/audit'
 import { deleteClipFile } from '@/lib/clips'
 import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
+import { queueForumTask, refreshInvestigationForumCard, removeForumPost } from '@/lib/investigation-forum'
 import { notifyInvestigationTeam } from '@/lib/notifications-server'
 import { caseCrossHits } from '@/lib/cross-hits-server'
 import { prisma } from '@/lib/prisma'
@@ -15,7 +15,6 @@ import {
   canAccessInvestigation,
   investigationAccessInclude,
   investigationDetailInclude,
-  investigationGroupAccessInclude,
   isInvestigationPriority,
   isInvestigationStatus,
   serializeBigInts,
@@ -36,26 +35,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const user = await requirePermission('investigations:view')
     const { id } = await params
 
-    const loaded = await prisma.investigation.findUnique({
+    const investigation = await prisma.investigation.findUnique({
       where: { id },
-      include: {
-        ...investigationDetailInclude,
-        dossiers: { select: { id: true, title: true, accessGroups: { select: { group: { select: {
-          id: true, name: true, ...investigationGroupAccessInclude.dossiers.select.accessGroups.select.group.select,
-        } } } } } },
-      },
+      include: investigationDetailInclude,
     })
-    if (!loaded) return notFound('Ermittlungsakte')
-    if (!canAccessInvestigation(user, loaded)) return forbidden()
-
-    // Gruppenmitglieder sind vertraulich und verlassen den Server nie. Woher ein
-    // Zugriff kommt, sehen nur Verwalter (Dauerakte → Ermittlungsgruppe).
-    const { dossiers, ...investigation } = loaded
-    const accessVia = hasPermission(user, 'investigations:manage')
-      ? dossiers.flatMap((dossier) => dossier.accessGroups.map((access) => ({
-          dossierId: dossier.id, dossierTitle: dossier.title, groupId: access.group.id, groupName: access.group.name,
-        })))
-      : []
+    if (!investigation) return notFound('Ermittlungsakte')
+    if (!canAccessInvestigation(user, investigation)) return forbidden()
 
     const crossHits = await caseCrossHits(
       user,
@@ -64,7 +49,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       investigation.vehicles.map((link) => link.vehicleId),
     )
 
-    return success(serializeBigInts({ ...investigation, crossHits, accessVia }))
+    return success(serializeBigInts({ ...investigation, crossHits }))
   } catch (cause: unknown) {
     return routeError(cause)
   }
@@ -110,10 +95,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const priority = cleanText(body.priority)
       if (!isInvestigationPriority(priority)) return error('Unbekannte Priorität')
       data.priority = priority
-    }
-
-    if (body.classified !== undefined) {
-      data.classified = body.classified === true
     }
 
     if (body.leadAgentId !== undefined) {
@@ -182,9 +163,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const closing = investigation.status === 'CLOSED' || investigation.status === 'ARCHIVED'
       queueDiscordInvestigationEvent({
         type: closing ? 'closed' : 'status',
+        investigationId: investigation.id,
         caseNumber: investigation.caseNumber,
         title: investigation.title,
-        classified: investigation.classified,
         leadAgentName: agentDisplayName(investigation.leadAgent),
         actorName: user.displayName,
         rows: [
@@ -193,6 +174,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           { label: 'Priorität', value: INVESTIGATION_PRIORITY_LABELS[investigation.priority] },
         ],
       })
+    } else {
+      // Titel, Fallführung, Priorität …: nur die Aktenkarte im Forum nachziehen.
+      queueForumTask('Aktenkarte aktualisieren', () => refreshInvestigationForumCard(investigation.id))
     }
 
     return success(serializeBigInts(investigation))
@@ -208,7 +192,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     const existing = await prisma.investigation.findUnique({
       where: { id },
-      include: { ...investigationAccessInclude, clips: { select: { filename: true } } },
+      include: { ...investigationAccessInclude, clips: { select: { filename: true } }, dossiers: { select: { id: true } } },
     })
     if (!existing) return notFound('Ermittlungsakte')
     if (!canAccessInvestigation(user, existing)) return forbidden()
@@ -234,6 +218,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       userId: user.id,
       details: `Ermittlungsakte ${existing.caseNumber}: "${existing.title}" gelöscht (${existing.clips.length} Clips)`,
     })
+    queueForumTask('Beitrag entfernen', () => removeForumPost(existing.discordThreadId, existing.dossiers.map((dossier) => dossier.id)))
 
     return success({ id })
   } catch (cause: unknown) {

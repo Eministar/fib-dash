@@ -25,7 +25,6 @@ export type SearchHit = {
   /** Fundstelle im Kontext, damit man sieht, warum der Treffer kam. */
   hint?: string
   href: string
-  classified?: boolean
 }
 
 /** Pro Gruppe, damit eine große Gruppe die anderen nicht verdrängt. */

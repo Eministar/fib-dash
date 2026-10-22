@@ -47,7 +47,7 @@ type VehicleDetail = Vehicle & {
     note: string | null
     investigation: Pick<
       InvestigationListItem,
-      'id' | 'caseNumber' | 'title' | 'status' | 'priority' | 'classified' | 'updatedAt'
+      'id' | 'caseNumber' | 'title' | 'status' | 'priority' | 'updatedAt'
     >
   }[]
 }

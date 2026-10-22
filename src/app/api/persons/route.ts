@@ -35,8 +35,7 @@ export async function GET(req: NextRequest) {
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
       include: {
         createdBy: { select: { id: true, displayName: true } },
-        // Nur Akten mitzählen, die der Benutzer auch sehen darf – sonst
-        // verrät die Zahl die Existenz von Verschlusssachen.
+        // Nur Akten mitzählen, die der Benutzer auch sehen darf.
         _count: {
           select: { investigations: { where: { investigation: investigationVisibilityWhere(user) } } },
         },

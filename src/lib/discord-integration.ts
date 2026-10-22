@@ -85,8 +85,8 @@ export type DiscordConfig = {
   dutyAdminLogChannelId: string
   /// Fallback-Channel für Vertragsnachrichten, wenn die DM nicht zustellbar ist.
   contractsChannelId: string
-  /// Channel für Meldungen des Ermittlungssystems. Verschlusssachen werden
-  /// grundsätzlich nicht gepostet.
+  /// Channel für Meldungen des Ermittlungssystems: Forum (ein Beitrag je Akte)
+  /// oder normaler Text-Channel.
   investigationsChannelId: string
   dutyStatusMessageId: string
   absenceStatusChannelId: string
@@ -404,10 +404,23 @@ async function getDiscordMemberRoleIds(discordId: string, guildId?: string): Pro
  * Independent of the dashboard group mapping, so it cannot be broken by group
  * misconfiguration and is never persisted (the periodic sync cannot strip it).
  */
+// Die Admin-Prüfung läuft bei jeder Anmeldeprüfung; die volle Config kostet
+// vier Abfragen. Nur Server und Admin-Rollen werden kurz gemerkt.
+const ADMIN_ROLE_CONFIG_TTL_MS = 30_000
+let adminRoleConfigCache: { expiresAt: number; value: Promise<Pick<DiscordConfig, 'guildId' | 'adminRoleIds'>> } | null = null
+
+function adminRoleConfig() {
+  if (adminRoleConfigCache && Date.now() < adminRoleConfigCache.expiresAt) return adminRoleConfigCache.value
+  const value = getDiscordConfig().then(({ guildId, adminRoleIds }) => ({ guildId, adminRoleIds }))
+  adminRoleConfigCache = { expiresAt: Date.now() + ADMIN_ROLE_CONFIG_TTL_MS, value }
+  value.catch(() => { adminRoleConfigCache = null })
+  return value
+}
+
 export async function isDiscordUserAdmin(discordId: string | null | undefined): Promise<boolean> {
   const id = snowflake(discordId)
   if (!id) return false
-  const config = await getDiscordConfig()
+  const config = await adminRoleConfig()
   if (config.adminRoleIds.length === 0) return false
   const roles = await getDiscordMemberRoleIds(id, config.guildId)
   if (!roles) return false
@@ -801,7 +814,7 @@ async function discordFetchRaw<T>(path: string, init?: RequestInit, attempt = 0)
   return res.json() as Promise<T>
 }
 
-class DiscordApiError extends Error {
+export class DiscordApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: number | undefined,
@@ -820,7 +833,7 @@ function isMissingDiscordPermissions(error: unknown) {
   return error instanceof DiscordApiError && error.status === 403 && error.code === 50013
 }
 
-async function discordFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export async function discordFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return enqueueRateLimited(() => discordFetchRaw<T>(path, init))
 }
 
@@ -941,6 +954,7 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
 }
 
 export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
+  adminRoleConfigCache = null
   const data: Record<string, string> = {}
 
   if (input.codenameBoardChannelId !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardChannelId] = input.codenameBoardChannelId.trim()
@@ -990,6 +1004,8 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
       })
     )),
   )
+  // Ein Lesezugriff während des Speicherns könnte den alten Stand gemerkt haben.
+  adminRoleConfigCache = null
 }
 
 export async function getDiscordGuildRoles(guildId?: string) {
@@ -1609,9 +1625,9 @@ export async function sendDiscordUpdateAnnouncement(input: DiscordUpdateAnnounce
   if (!title) throw new Error('Titel ist erforderlich')
 
   const blocks = [
-    updateAnnouncementBlock('`✨` Neue Funktionen', input.added ?? []),
-    updateAnnouncementBlock('`🔧` Verbesserungen', input.changed ?? []),
-    updateAnnouncementBlock('`🗑️` Nicht mehr enthalten', input.removed ?? []),
+    updateAnnouncementBlock('✨ Neue Funktionen', input.added ?? []),
+    updateAnnouncementBlock('🔧 Verbesserungen', input.changed ?? []),
+    updateAnnouncementBlock('🗑️ Nicht mehr enthalten', input.removed ?? []),
   ].filter((block): block is string => Boolean(block))
 
   if (blocks.length === 0) {
@@ -1690,7 +1706,7 @@ function trainingRoleValue(config: DiscordConfig, change: DiscordTrainingChange)
 }
 
 function trainingChangeLine(change: DiscordTrainingChange, config: DiscordConfig) {
-  return `${change.completed ? '`✅`' : '`❌`'} ${trainingRoleValue(config, change)} · \`${change.completed ? 'abgeschlossen' : 'nicht abgeschlossen'}\``
+  return `${change.completed ? '✅' : '❌'} ${trainingRoleValue(config, change)} · \`${change.completed ? 'abgeschlossen' : 'nicht abgeschlossen'}\``
 }
 
 async function unitChangeBlock(change: DiscordUnitChange, config: DiscordConfig) {
@@ -1712,9 +1728,9 @@ async function unitChangeBlock(change: DiscordUnitChange, config: DiscordConfig)
   }
   const list = (unitKeys: string[]) => unitKeys.map(unitLabel).join(', ')
   const details = [
-    added.length ? `\`➕\` **Neu zugeordnet:** ${list(added)}` : null,
-    removed.length ? `\`➖\` **Nicht mehr zugeordnet:** ${list(removed)}` : null,
-    `\`🛡️\` **Aktuelle Zuordnung:** ${change.current.length ? list(change.current) : '`keine Unit`'}`,
+    added.length ? `➕ **Neu zugeordnet:** ${list(added)}` : null,
+    removed.length ? `➖ **Nicht mehr zugeordnet:** ${list(removed)}` : null,
+    `🛡️ **Aktuelle Zuordnung:** ${change.current.length ? list(change.current) : '`keine Unit`'}`,
   ].filter((line): line is string => Boolean(line))
 
   return details.join('\n')
@@ -1761,7 +1777,7 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
     const rankRoleSnow = snowflake(agent.rankId ? config.rankRoleMap[agent.rankId] : '')
     const rankValue = rankRoleSnow ? `<@&${rankRoleSnow}>` : agent.rank?.name ? `\`${agent.rank.name}\`` : null
     const who = snowflake(agent.discordId) ? `<@${snowflake(agent.discordId)}>` : `**${agentDisplayName}**`
-    agentLine = [`\`👤\` ${who}`, `\`🪪\` \`${dn}\``, rankValue ? `\`🎖️\` ${rankValue}` : null].filter(Boolean).join('  ·  ')
+    agentLine = [`👤 ${who}`, `🪪 \`${dn}\``, rankValue ? `🎖️ ${rankValue}` : null].filter(Boolean).join('  ·  ')
     if (event.type === 'hire') {
       rows.push({ label: 'Eintrittsdatum', value: discordTimestamp(agent.hireDate ?? now, 'D') })
     }
@@ -2017,7 +2033,7 @@ async function dutyStatusPayload() {
   const listParts: string[] = []
 
   if (visible.length === 0) {
-    listParts.push('> `💤` Derzeit ist niemand im Dienst.')
+    listParts.push('> 💤 Derzeit ist niemand im Dienst.')
   } else {
     const lines = visible.map((row, index) => {
       const num = String(index + 1).padStart(2, '0')
@@ -2026,8 +2042,8 @@ async function dutyStatusPayload() {
       const current = formatDuration(active?.currentDurationMs ?? 0)
       const dn = bracketedServiceNumber(agentBadge(row), prefix)
       return [
-        `\`${num}\`  \`👤\` **${agentName(row)}**  ·  \`🎖️\` \`${row.rank.name}\`  ·  \`⏱️\` \`${current}\``,
-        `> \`🪪\` \`${dn}\`  ·  ${mention(row.discordId)}  ·  \`🕒\` seit ${since}`,
+        `\`${num}\`  👤 **${agentName(row)}**  ·  🎖️ \`${row.rank.name}\`  ·  ⏱️ \`${current}\``,
+        `> 🪪 \`${dn}\`  ·  ${mention(row.discordId)}  ·  🕒 seit ${since}`,
       ].join('\n')
     })
     listParts.push(...chunkLines(lines, 3000))
@@ -2037,7 +2053,7 @@ async function dutyStatusPayload() {
   const text = markdownTextDisplays([
     markdownHeader('🚓', 'Dienststatus'),
     summary,
-    '### `🟢` Aktuell im Dienst',
+    '### 🟢 Aktuell im Dienst',
     ...listParts,
     markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
   ])
@@ -2073,14 +2089,14 @@ export async function announceDutyModeChange(mode: DutyMode, actorName: string) 
 
   const body = mode === 'manual'
     ? [
-        '## `⏱️` Ab sofort manuell einstempeln',
+        '## ⏱️ Ab sofort manuell einstempeln',
         'Die automatische Erfassung über die Dienstzeiten-API ist pausiert.',
         '- Zu Dienstbeginn **Einstempeln** klicken, zum Dienstende **Ausstempeln** – hier im Channel oder im Dashboard unter „Dienstzeiten“.',
         '- Alle 2,5 Stunden fragt der Bot per Direktnachricht nach, ob du noch im Dienst bist. Ohne Antwort innerhalb einer Minute wirst du automatisch ausgestempelt.',
         '- Startest du FiveM bzw. NERO-V Roleplay, ohne eingestempelt zu sein, erinnert dich der Bot per Direktnachricht – dort kannst du dich direkt einstempeln.',
       ]
     : [
-        '## `✅` Dienstzeiten wieder automatisch',
+        '## ✅ Dienstzeiten wieder automatisch',
         'Die Dienstzeit wird wieder automatisch über die Player-Online-API erfasst. Manuelles Ein- und Ausstempeln ist nicht mehr nötig; offene Stempelungen wurden beendet.',
       ]
   await postChannelMessage(channelId, componentMessage(markdownTextDisplays([
@@ -2253,16 +2269,16 @@ async function absenceStatusPayload() {
   const listParts: string[] = []
 
   if (visible.length === 0) {
-    listParts.push('> `✅` Aktuell ist niemand abgemeldet.')
+    listParts.push('> ✅ Aktuell ist niemand abgemeldet.')
   } else {
     const lines = visible.map((notice) => {
       const agent = notice.agent
       const reason = truncate(notice.reason.replace(/\s+/g, ' ').replace(/`/g, "'"), 180)
       const dn = bracketedServiceNumber(agentBadge(agent), prefix)
       return [
-        `\`👤\` **${agentName(agent)}**  ·  \`🪪\` \`${dn}\`  ·  ${mention(agent.discordId)}`,
-        `> \`🏁\` Rückkehr ${discordTimestamp(notice.endsAt, 'D')} (${discordTimestamp(notice.endsAt, 'R')})`,
-        `> \`📝\` \`${reason}\``,
+        `👤 **${agentName(agent)}**  ·  🪪 \`${dn}\`  ·  ${mention(agent.discordId)}`,
+        `> 🏁 Rückkehr ${discordTimestamp(notice.endsAt, 'D')} (${discordTimestamp(notice.endsAt, 'R')})`,
+        `> 📝 \`${reason}\``,
       ].join('\n')
     })
     listParts.push(...chunkLines(lines, 3000))
@@ -2275,21 +2291,21 @@ async function absenceStatusPayload() {
     const visibleLeave = onLeaveAgents.slice(0, ABSENCE_LIST_LIMIT)
     const leaveLines = visibleLeave.map((agent) => {
       const dn = bracketedServiceNumber(agentBadge(agent), prefix)
-      const since = agent.onLeaveSince ? `\`🕒\` seit ${discordTimestamp(agent.onLeaveSince, 'D')} · ` : ''
+      const since = agent.onLeaveSince ? `🕒 seit ${discordTimestamp(agent.onLeaveSince, 'D')} · ` : ''
       return [
-        `\`👤\` **${agentName(agent)}**  ·  \`🪪\` \`${dn}\`  ·  ${mention(agent.discordId)}`,
+        `👤 **${agentName(agent)}**  ·  🪪 \`${dn}\`  ·  ${mention(agent.discordId)}`,
         `> ${since}\`bis auf Weiteres\``,
-        agent.onLeaveReason ? `> \`📝\` \`${truncate(agent.onLeaveReason.replace(/\s+/g, ' ').replace(/`/g, "'"), 180)}\`` : null,
+        agent.onLeaveReason ? `> 📝 \`${truncate(agent.onLeaveReason.replace(/\s+/g, ' ').replace(/`/g, "'"), 180)}\`` : null,
       ].filter(Boolean).join('\n')
     })
-    leaveParts.push(`### \`🌴\` Beurlaubt\n-# \`${onLeaveAgents.length}\` aktuell beurlaubt`, ...chunkLines(leaveLines, 3000))
+    leaveParts.push(`### 🌴 Beurlaubt\n-# \`${onLeaveAgents.length}\` aktuell beurlaubt`, ...chunkLines(leaveLines, 3000))
     const leaveOverflow = onLeaveAgents.length - visibleLeave.length
     if (leaveOverflow > 0) leaveParts.push(`-# … und ${leaveOverflow} weitere`)
   }
 
   return componentMessage([
     ...markdownTextDisplays([
-      `## \`📋\` Abmeldungen\n-# \`${absences.length}\` aktuell abgemeldet`,
+      `## 📋 Abmeldungen\n-# \`${absences.length}\` aktuell abgemeldet`,
       ...listParts,
       ...leaveParts,
       markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),
@@ -2396,11 +2412,10 @@ export function queueDiscordHrEvent(event: Parameters<typeof sendDiscordHrEvent>
 /* ── Ermittlungssystem ────────────────────────────────────────────── */
 
 export type DiscordInvestigationEventInput = {
-  type: 'created' | 'status' | 'clip' | 'closed' | 'assignee'
+  type: 'created' | 'status' | 'clip' | 'closed' | 'assignee' | 'handover'
+  investigationId: string
   caseNumber: string
   title: string
-  /// Verschlusssachen werden nie gepostet – der Aufrufer muss das Flag setzen.
-  classified: boolean
   leadAgentName?: string | null
   actorName?: string | null
   rows?: Array<{ label: string; value: string | null | undefined }>
@@ -2413,15 +2428,17 @@ const INVESTIGATION_EVENT_META = {
   clip: { icon: '🎥', label: 'Neuer Bodycam-Clip' },
   closed: { icon: '📕', label: 'Ermittlung abgeschlossen' },
   assignee: { icon: '👤', label: 'Ermittler zugewiesen' },
+  handover: { icon: '🤝', label: 'Fallführung übergeben' },
 } as const
 
 export async function sendDiscordInvestigationEvent(event: DiscordInvestigationEventInput) {
-  // Vertrauliche Akten verlassen das Dashboard grundsätzlich nicht.
-  if (event.classified) return null
-
   const config = await getDiscordConfig()
   const channelId = config.investigationsChannelId
   if (!channelId || !botToken()) return null
+
+  // Forum: ein Beitrag je Akte. Dynamisch, weil das Forum-Modul dieses importiert.
+  const { postInvestigationForumEvent } = await import('./investigation-forum')
+  if (await postInvestigationForumEvent(event)) return { channelId, messageId: null }
 
   const meta = INVESTIGATION_EVENT_META[event.type]
   const rows = [

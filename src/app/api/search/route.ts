@@ -17,9 +17,7 @@ export const dynamic = 'force-dynamic'
  * Bereichsübergreifende Suche. Jede Gruppe wird einzeln begrenzt, damit ein
  * häufiger Begriff in der Chronologie nicht alle anderen Treffer verdrängt.
  *
- * Verschlusssachen laufen durch `investigationVisibilityWhere`; das gilt auch
- * für Chronologie-Einträge, die sonst den Inhalt einer geheimen Akte
- * durchscheinen ließen.
+ * Akten und Chronologie-Einträge laufen durch `investigationVisibilityWhere`.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -62,7 +60,7 @@ export async function GET(req: NextRequest) {
             words((token) => [{ title: { contains: token } }, { caseNumber: { contains: token } }, { summary: { contains: token } }]),
           ],
         },
-        select: { id: true, caseNumber: true, title: true, summary: true, classified: true },
+        select: { id: true, caseNumber: true, title: true, summary: true },
         orderBy: { updatedAt: 'desc' },
         take,
       }),
@@ -107,7 +105,7 @@ export async function GET(req: NextRequest) {
           title: true,
           content: true,
           investigationId: true,
-          investigation: { select: { caseNumber: true, classified: true } },
+          investigation: { select: { caseNumber: true } },
         },
         orderBy: { occurredAt: 'desc' },
         take,
@@ -152,7 +150,6 @@ export async function GET(req: NextRequest) {
         title: row.title,
         hint: excerpt(row.summary, term),
         href: `/investigations/${row.id}`,
-        classified: row.classified,
       })),
       ...dossiers.map((row) => ({
         id: row.id,
@@ -193,7 +190,6 @@ export async function GET(req: NextRequest) {
         title: row.title,
         hint: excerpt(row.content, term),
         href: `/investigations/${row.investigationId}?tab=chronologie`,
-        classified: row.investigation.classified,
       })),
     ]
 

@@ -22,9 +22,8 @@ const MAX_CANDIDATES = 50
 const MAX_HITS = 5
 
 /**
- * Bestehende Personen, die zu den Eingaben passen. Verschlusssachen, die der
- * Nutzer nicht sehen darf, werden nicht mitgezählt – sonst verriete schon die
- * Zahl, dass es eine geheime Akte zu dieser Person gibt.
+ * Bestehende Personen, die zu den Eingaben passen, mit den für den Nutzer
+ * sichtbaren Akten.
  */
 export async function findPersonCrossHits(
   user: CurrentUser,

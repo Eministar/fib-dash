@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Car, Clock, CornerDownLeft, EyeOff, FolderPlus, Gavel, History, LogOut, Plane, Search, UserPlus, UserRound } from 'lucide-react'
+import { ArrowRight, Car, Clock, CornerDownLeft, FolderPlus, Gavel, History, LogOut, Plane, Search, UserPlus, UserRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { Modal } from '@/components/ui/modal'
@@ -46,7 +46,6 @@ type PaletteItem = {
   hint?: string
   keywords?: string[]
   icon?: LucideIcon
-  classified?: boolean
   run: () => void
 }
 
@@ -204,7 +203,6 @@ export function GlobalSearch() {
                 title: hit.title,
                 code: hit.code,
                 hint: hit.hint,
-                classified: hit.classified,
                 run: go(hit.href),
               })),
             // Direkt unter den Agents: Aktionen zum besten Treffer.
@@ -339,12 +337,6 @@ export function GlobalSearch() {
                             <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                               {item.code && <span className="font-mono text-[11.5px] text-[#d4d4d4]">{item.code}</span>}
                               <span className="truncate text-[13.5px] font-medium text-white">{item.title}</span>
-                              {item.classified && (
-                                <span className="inline-flex items-center gap-1 rounded bg-[#7f1d1d]/40 px-1.5 text-[11px] text-[#fca5a5]">
-                                  <EyeOff className="h-3 w-3" />
-                                  Verschluss
-                                </span>
-                              )}
                             </span>
                             {item.hint && <span className="mt-0.5 block truncate text-[12px] text-[#98989d]">{item.hint}</span>}
                           </span>
@@ -368,7 +360,7 @@ export function GlobalSearch() {
             )}
             {isSearchable(trimmed) && !waiting && !error && items.length === 0 && (
               <p className="py-8 text-center text-[12.5px] text-[#8e8e93]">
-                Nichts gefunden für „{trimmed}“. Verschlusssachen ohne Berechtigung erscheinen hier nicht.
+                Nichts gefunden für „{trimmed}“.
               </p>
             )}
           </div>

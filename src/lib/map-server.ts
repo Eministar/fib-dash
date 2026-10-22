@@ -9,7 +9,7 @@ import { MAP_CATEGORY_IDS, MAP_SPOT_LIMITS, type MapCategory, type MapSpot } fro
 export const spotInclude = {
   createdBy: { select: { id: true, displayName: true } },
   dossiers: { select: { id: true, title: true, kind: true }, orderBy: { title: 'asc' } },
-  investigations: { select: { id: true, caseNumber: true, title: true, classified: true }, orderBy: { caseNumber: 'asc' } },
+  investigations: { select: { id: true, caseNumber: true, title: true }, orderBy: { caseNumber: 'asc' } },
   observations: {
     select: { id: true, note: true, observedAt: true, createdBy: { select: { displayName: true } } },
     orderBy: { observedAt: 'desc' },
@@ -17,9 +17,7 @@ export const spotInclude = {
 } satisfies Prisma.MapSpotInclude
 
 /**
- * Wie `spotInclude`, aber Verschlusssachen bleiben für Unbefugte weg. Der
- * Punkt selbst bleibt sichtbar: verschwände er, verriete genau dieses
- * Verschwinden die geheime Verknüpfung.
+ * Wie `spotInclude`, aber nur mit Akten, die der Nutzer sehen darf.
  */
 export function visibleSpotInclude(user: CurrentUser) {
   return {
@@ -82,7 +80,7 @@ export function serializeSpot(spot: SpotRow): MapSpot {
     y: spot.y,
     // `?? []` deckt POST und PATCH ab, die ohne die Relationen laden können.
     dossiers: spot.dossiers?.map((entry) => ({ id: entry.id, title: entry.title, kind: entry.kind })) ?? [],
-    investigations: spot.investigations?.map((entry) => ({ id: entry.id, caseNumber: entry.caseNumber, title: entry.title, classified: entry.classified })) ?? [],
+    investigations: spot.investigations?.map((entry) => ({ id: entry.id, caseNumber: entry.caseNumber, title: entry.title })) ?? [],
     observations: spot.observations?.map((entry) => ({
       id: entry.id,
       note: entry.note,

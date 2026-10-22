@@ -51,7 +51,7 @@ export interface MapSpot {
   /** Dauerakten, die diesen Punkt als Route, Sammler oder Anwesen führen. */
   dossiers: { id: string; title: string; kind: string }[]
   /** Einsatzakten an diesem Punkt – bereits sichtbarkeitsgefiltert. */
-  investigations: { id: string; caseNumber: string; title: string; classified: boolean }[]
+  investigations: { id: string; caseNumber: string; title: string }[]
   /** Beobachtungen, neueste zuerst. */
   observations: { id: string; note: string; observedAt: string; createdByName: string }[]
   createdById: string | null

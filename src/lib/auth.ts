@@ -286,7 +286,8 @@ async function loadUserUnitPermissions(params: { userId: string; discordId: stri
     seenUnitIds.add(unit.id)
   }
 
-  const directAssignments = await prisma.userUnitAssignment.findMany({
+  // Direkte Zuweisungen und die Personalakte unabhängig voneinander laden.
+  const [directAssignments, agent] = await Promise.all([prisma.userUnitAssignment.findMany({
     where: { userId, unit: { active: true } },
     select: {
       unit: {
@@ -300,16 +301,17 @@ async function loadUserUnitPermissions(params: { userId: string; discordId: stri
         },
       },
     },
-  })
+  }), discordId
+    ? prisma.agent.findFirst({
+        where: { discordId, status: { not: 'TERMINATED' } },
+        select: { unit: true, units: true },
+      })
+    : Promise.resolve(null)])
   for (const assignment of directAssignments) {
     addUnitAccess(assignment.unit)
   }
 
   if (discordId) {
-    const agent = await prisma.agent.findFirst({
-      where: { discordId, status: { not: 'TERMINATED' } },
-      select: { unit: true, units: true },
-    })
     const keys = agent ? agentUnitKeys(agent) : []
     if (keys.length > 0) {
       const units = await prisma.unit.findMany({
@@ -383,7 +385,35 @@ export async function getUserByDiscordId(discordId: string) {
   return loadUserByDiscordId(discordId)
 }
 
-async function loadUserForAuth(userId: string): Promise<CurrentUser | null> {
+/**
+ * Jeder API-Aufruf prüft den Nutzer; eine Seite feuert mehrere davon parallel.
+ * Für kurze Zeit wird das Ergebnis geteilt – gleichzeitige Aufrufe warten auf
+ * dieselbe Abfrage. Geänderte Rechte greifen spätestens nach {@link AUTH_CACHE_TTL_MS}.
+ */
+const AUTH_CACHE_TTL_MS = 10_000
+const AUTH_CACHE_MAX = 1_000
+const authUserCache = new Map<string, { expiresAt: number; user: Promise<CurrentUser | null> }>()
+
+/** Nach Rechteänderungen aufrufen, damit sie sofort greifen. Ohne ID: alle. */
+export function invalidateAuthCache(userId?: string) {
+  if (userId) authUserCache.delete(userId)
+  else authUserCache.clear()
+}
+
+function loadUserForAuth(userId: string): Promise<CurrentUser | null> {
+  const cached = authUserCache.get(userId)
+  if (cached && Date.now() < cached.expiresAt) return cached.user
+  if (authUserCache.size >= AUTH_CACHE_MAX) {
+    for (const [key, entry] of authUserCache) if (Date.now() >= entry.expiresAt) authUserCache.delete(key)
+    if (authUserCache.size >= AUTH_CACHE_MAX) authUserCache.clear()
+  }
+  const user = loadUserForAuthUncached(userId)
+  authUserCache.set(userId, { expiresAt: Date.now() + AUTH_CACHE_TTL_MS, user })
+  user.catch(() => { if (authUserCache.get(userId)?.user === user) authUserCache.delete(userId) })
+  return user
+}
+
+async function loadUserForAuthUncached(userId: string): Promise<CurrentUser | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -407,7 +437,12 @@ async function loadUserForAuth(userId: string): Promise<CurrentUser | null> {
   if (user.group && !groupsById.has(user.group.id)) groupsById.set(user.group.id, user.group)
   const groups = Array.from(groupsById.values())
 
-  const unitPerms = await loadUserUnitPermissions({ userId: user.id, discordId: user.discordId })
+  // Unabhängig voneinander – parallel statt nacheinander.
+  const [unitPerms, discordAdmin, displayName] = await Promise.all([
+    loadUserUnitPermissions({ userId: user.id, discordId: user.discordId }),
+    user.discordId ? isDiscordUserAdmin(user.discordId) : Promise.resolve(false),
+    resolveUserDisplayName(user),
+  ])
   let effectivePermissions = resolveEffectivePermissions(
     user.permissions,
     [
@@ -423,13 +458,12 @@ async function loadUserForAuth(userId: string): Promise<CurrentUser | null> {
     effectivePermissions = [...PERMISSIONS]
   }
 
-  if (user.discordId && (await isDiscordUserAdmin(user.discordId))) {
+  if (discordAdmin) {
     effectivePermissions = [...PERMISSIONS]
     if (!groupList.some((g) => g.name.toLowerCase() === 'admin')) {
       groupList.unshift({ id: 'discord-admin', name: 'Admin' })
     }
   }
-  const displayName = await resolveUserDisplayName(user)
 
   return {
     id: user.id,

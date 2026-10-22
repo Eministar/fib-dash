@@ -1,5 +1,4 @@
 import type { CurrentUser } from '@/lib/auth'
-import { hasPermission } from '@/lib/permissions'
 // Nur als Typ importiert: die Datei wird auch von Client-Komponenten für die
 // Label-Tabellen genutzt und darf den Prisma-Client nicht ins Bundle ziehen.
 import type { Prisma } from '@/generated/prisma'
@@ -129,17 +128,7 @@ const linkedCaseSelect = {
   title: true,
   status: true,
   priority: true,
-  classified: true,
 } as const
-
-/**
- * Mitglieder der Ermittlungsgruppen, die einer Dauerakte dieser Einsatzakte
- * zugewiesen sind. Wird bei jeder Prüfung frisch gelesen – ein Gruppenaustritt
- * wirkt damit sofort.
- */
-export const investigationGroupAccessInclude = {
-  dossiers: { select: { accessGroups: { select: { group: { select: { agents: { select: { agent: { select: { userId: true, discordId: true, status: true } } } } } } } } } },
-} as const satisfies Prisma.InvestigationInclude
 
 export const investigationListInclude = {
   leadAgent: { select: agentSelect },
@@ -217,32 +206,14 @@ export const evidenceInclude = {
 } as const satisfies Prisma.EvidenceInclude
 
 /**
- * Genau die Felder, die `canAccessInvestigation` liest. Als `include` an einer
- * Akte oder – über `investigation` – an Eintrag, Clip und Personenverknüpfung
- * verwendbar, damit die Zugriffsprüfung überall dieselbe Grundlage hat.
+ * Früher die Felder für die Verschlusssachen-Prüfung. Verschlusssachen gibt
+ * es nicht mehr; das leere Include bleibt, damit die Aufrufer unverändert
+ * bleiben und eine spätere Zugriffsregel nur hier ansetzen muss.
  */
-export const investigationAccessInclude = {
-  leadAgent: { select: { discordId: true } },
-  assignees: { select: { agent: { select: { discordId: true } } } },
-  ...investigationGroupAccessInclude,
-} as const satisfies Prisma.InvestigationInclude
-
-type GroupMemberAgent = { userId: string | null; discordId: string | null; status: string }
+export const investigationAccessInclude = {} as const satisfies Prisma.InvestigationInclude
 
 /// Minimale Felder, die `canAccessInvestigation` benötigt.
-export interface InvestigationAccessShape {
-  classified: boolean
-  createdById: string | null
-  leadAgent?: { discordId: string | null } | null
-  assignees?: { agent?: { discordId: string | null } | null }[] | null
-  dossiers?: { accessGroups: { group: { agents: { agent: GroupMemberAgent }[] } }[] }[] | null
-}
-
-/** Die Personalakte gehört zum Nutzer: verknüpftes Konto oder gleiche Discord-ID. */
-function isViewerAgent(user: CurrentUser, agent: GroupMemberAgent) {
-  if (agent.status === 'TERMINATED') return false
-  return agent.userId === user.id || (!!user.discordId && agent.discordId === user.discordId)
-}
+export type InvestigationAccessShape = object
 
 function viewerAgentWhere(user: CurrentUser): Prisma.AgentWhereInput {
   return {
@@ -252,50 +223,19 @@ function viewerAgentWhere(user: CurrentUser): Prisma.AgentWhereInput {
 }
 
 /**
- * Verschlusssachen sind nur für Ersteller, Fallführung, zugewiesene Ermittler,
- * Mitglieder einer an der Dauerakte zugewiesenen Ermittlungsgruppe und Inhaber
- * von `investigations:classified` sichtbar. Die Prüfung gilt für
- * Akte, Einträge, Clip-Metadaten und die Streaming-Route gleichermaßen – sonst
- * wären Clips vertraulicher Akten über die URL abgreifbar.
- *
- * Zugewiesen werden Agents, angemeldet sind Benutzerkonten – die Brücke ist
- * wie überall im Dashboard die Discord-ID.
+ * Jede Akte ist für alle mit `investigations:view` sichtbar – Verschlusssachen
+ * wurden abgeschafft. Die Funktion bleibt als einzige Stelle für Aktenzugriff,
+ * die Rechteprüfung selbst übernimmt `requirePermission` in den Routen.
  */
-export function canAccessInvestigation(user: CurrentUser, investigation: InvestigationAccessShape) {
-  if (!investigation.classified) return true
-  if (hasPermission(user, 'investigations:classified')) return true
-  if (investigation.createdById && investigation.createdById === user.id) return true
-  // Zugriff über eine Ermittlungsgruppe an einer Dauerakte dieser Akte.
-  const viaGroup = (investigation.dossiers ?? []).some((dossier) =>
-    dossier.accessGroups.some((access) => access.group.agents.some((member) => isViewerAgent(user, member.agent))))
-  if (viaGroup) return true
-  if (!user.discordId) return false
-  if (investigation.leadAgent?.discordId === user.discordId) return true
-  return (investigation.assignees ?? []).some(
-    (assignee) => assignee.agent?.discordId === user.discordId,
-  )
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Signatur bleibt für alle Aufrufer gleich.
+export function canAccessInvestigation(_user: CurrentUser, _investigation: InvestigationAccessShape) {
+  return true
 }
 
-/**
- * Where-Bedingung, die Verschlusssachen für den Benutzer ausblendet. Wird für
- * Listen genutzt, damit die Filterung in der Datenbank passiert und die
- * Trefferzahlen stimmen.
- */
-export function investigationVisibilityWhere(user: CurrentUser): Prisma.InvestigationWhereInput {
-  if (hasPermission(user, 'investigations:classified')) return {}
-
-  const openings: Prisma.InvestigationWhereInput[] = [
-    { classified: false },
-    { createdById: user.id },
-  ]
-
-  if (user.discordId) {
-    openings.push({ leadAgent: { discordId: user.discordId } })
-    openings.push({ assignees: { some: { agent: { discordId: user.discordId } } } })
-  }
-  openings.push({ dossiers: { some: { accessGroups: { some: { group: { agents: { some: { agent: viewerAgentWhere(user) } } } } } } } })
-
-  return { OR: openings }
+/** Listenfilter zur Sichtbarkeit; ohne Verschlusssachen gibt es nichts auszublenden. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Signatur bleibt für alle Aufrufer gleich.
+export function investigationVisibilityWhere(_user: CurrentUser): Prisma.InvestigationWhereInput {
+  return {}
 }
 
 /**

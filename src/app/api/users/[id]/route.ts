@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth'
+import { invalidateAuthCache, requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, notFound, forbidden } from '@/lib/api-response'
 import { sanitizePermissions } from '@/lib/permissions'
 import { getDiscordConfig, getDiscordGuildMember, addDiscordRoleToMember, removeDiscordRoleFromMember } from '@/lib/discord-integration'
@@ -169,6 +169,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
+    invalidateAuthCache()
     return success(serializeUser(user))
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Serverfehler'
@@ -190,6 +191,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!user) return notFound('Benutzer')
 
     await prisma.user.delete({ where: { id } })
+    invalidateAuthCache()
     return success({ message: 'Benutzer gelöscht' })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Serverfehler'

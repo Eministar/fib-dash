@@ -11,7 +11,6 @@ import { FileVideo, FolderOpen, ListChecks, Plus, Users } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { ListSkeleton } from '@/components/ui/loading'
 import { Modal } from '@/components/ui/modal'
@@ -27,7 +26,6 @@ import {
 } from '@/lib/investigations'
 import { cn, formatDateTime } from '@/lib/utils'
 import {
-  ClassifiedBadge,
   PriorityBadge,
   StatusBadge,
   labelOptions,
@@ -47,9 +45,9 @@ import { checklistProgress, composeTitle, templatePrefill, mergeTemplatePrefill,
 import { SavedViews } from '@/components/ui/saved-views'
 import {
   defaultInvestigationFilters,
-  investigationSavedViewsSchema,
   readInvestigationViews,
   sameInvestigationFilters,
+  validInvestigationViews,
   type InvestigationViewFilters,
 } from '@/lib/investigation-saved-views'
 
@@ -78,15 +76,12 @@ type CreateForm = {
   summary: string
   status: string
   priority: string
-  classified: boolean
   leadAgentId: string
   assigneeIds: string[]
   mapSpots: PickedSpot[]
   photos: CatalogPhoto[]
 }
 
-/** Neue Akten sind standardmäßig Verschlusssache: die Öffnung für alle
- *  Ermittler soll eine bewusste Entscheidung sein, nicht der Normalfall. */
 function emptyForm(): CreateForm {
   return {
     templateId: '',
@@ -96,7 +91,6 @@ function emptyForm(): CreateForm {
     summary: '',
     status: 'OPEN',
     priority: 'NORMAL',
-    classified: true,
     leadAgentId: '',
     assigneeIds: [],
     mapSpots: [],
@@ -189,7 +183,6 @@ export function InvestigationsWorkspace() {
           summary: form.summary,
           status: form.status,
           priority: form.priority,
-          classified: form.classified,
           leadAgentId: form.leadAgentId || null,
           assigneeIds: form.assigneeIds,
           mapSpotIds: form.mapSpots.map((spot) => spot.id),
@@ -232,7 +225,6 @@ export function InvestigationsWorkspace() {
                       template.checklist.length ? `${template.checklist.length} Checklistenpunkte` : null,
                       template.roles.length ? `${template.roles.length} offene Rollen` : null,
                       INVESTIGATION_PRIORITY_LABELS[template.priority],
-                      template.classified ? 'Verschlusssache' : null,
                     ].filter(Boolean).join(' · ')
                   : 'Leere Akte, alles selbst ausfüllen'
                 return (
@@ -339,20 +331,7 @@ export function InvestigationsWorkspace() {
             agents={agents ?? []}
             value={form.assigneeIds}
             onChange={(assigneeIds) => setForm((prev) => ({ ...prev, assigneeIds }))}
-            description="Zugewiesene Ermittler sehen die Akte auch dann, wenn sie als Verschlusssache geführt wird."
           />
-          <div className="rounded-[10px] border border-[#3a3a3c] bg-[#161617] p-3.5">
-            <Checkbox
-              checked={form.classified}
-              onCheckedChange={(checked) => setForm((prev) => ({ ...prev, classified: checked }))}
-              label="Als Verschlusssache führen"
-            />
-            <p className="mt-2 text-[12px] leading-relaxed text-[#98989d]">
-              {form.classified
-                ? 'Voreingestellt. Nur Ersteller, Fallführung, zugewiesene Ermittler und Berechtigte sehen die Akte samt Clips.'
-                : 'Abgewählt: die Akte ist für alle Ermittler mit Akteneinsicht sichtbar.'}
-            </p>
-          </div>
         </div>
       ),
     },
@@ -404,7 +383,6 @@ export function InvestigationsWorkspace() {
             ['Priorität', INVESTIGATION_PRIORITY_LABELS[form.priority as keyof typeof INVESTIGATION_PRIORITY_LABELS] ?? form.priority],
             ['Fallführung', agentOptions.find((option) => option.value === form.leadAgentId)?.label ?? 'Keine Fallführung'],
             ['Ermittler', form.assigneeIds.length ? `${form.assigneeIds.length} zugewiesen` : 'Keine'],
-            ['Verschlusssache', form.classified ? 'Ja' : 'Nein'],
             ['Kartenpunkte', form.mapSpots.length ? form.mapSpots.map((spot) => spot.title).join(', ') : 'Keine'],
             ['Bilder', form.photos.length ? `${form.photos.length} ausgewählt` : 'Keine'],
           ] as [string, string][]).map(([label, value]) => (
@@ -464,7 +442,7 @@ export function InvestigationsWorkspace() {
           onApply={applyFilters}
           read={readInvestigationViews}
           same={sameInvestigationFilters}
-          validate={(views) => investigationSavedViewsSchema.safeParse(views).success}
+          validate={validInvestigationViews}
           defaultLabel="Laufende Akten"
           placeholder="Zum Beispiel Meine kritischen Fälle"
           hint="Speichert Suche, Zuständigkeit, Status und Priorität für dein Konto in diesem Browser."
@@ -517,7 +495,6 @@ export function InvestigationsWorkspace() {
                     <span className="font-mono text-[12px] text-[#d4af37]">{investigation.caseNumber}</span>
                     <StatusBadge status={investigation.status} />
                     <PriorityBadge priority={investigation.priority} />
-                    {investigation.classified && <ClassifiedBadge />}
                   </div>
                   <h2 className="mt-1.5 truncate text-[15px] font-semibold text-white">{investigation.title}</h2>
                   {investigation.summary && (

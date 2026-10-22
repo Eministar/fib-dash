@@ -18,6 +18,8 @@ import {
   formatQcGrade,
   qcShareCovers,
   qcShareIsActive,
+} from '@/lib/quality-checks'
+import {
   type qcCompleteSchema,
   type qcCreateSchema,
   type qcEntrySchema,
@@ -26,7 +28,7 @@ import {
   type qcReportSchema,
   type qcShareSchema,
   type qcShareUpdateSchema,
-} from '@/lib/quality-checks'
+} from '@/lib/quality-checks-schemas'
 import type { Prisma } from '@/generated/prisma'
 
 export class QcError extends Error {

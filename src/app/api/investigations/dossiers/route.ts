@@ -4,6 +4,7 @@ import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { dossierRouteError, dossierSchema, saveDossier } from '@/lib/dossiers-server'
 import { investigationVisibilityWhere } from '@/lib/investigations'
+import { queueForumTask, syncDossierForum } from '@/lib/investigation-forum'
 
 export async function GET(req: Request) {
   try {
@@ -25,6 +26,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const user = await requirePermission('investigations:manage')
-    return success(await saveDossier(undefined, dossierSchema.parse(await req.json()), user), 201)
+    const dossier = await saveDossier(undefined, dossierSchema.parse(await req.json()), user)
+    queueForumTask('Dauerakte im Forum', () => syncDossierForum(dossier.id))
+    return success(dossier, 201)
   } catch (cause) { return dossierRouteError(cause) }
 }

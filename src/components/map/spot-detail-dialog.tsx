@@ -130,9 +130,6 @@ export function SpotDetailDialog({
                       >
                         {investigation.caseNumber} · {investigation.title}
                       </Link>
-                      {investigation.classified && (
-                        <span className="rounded bg-[#7f1d1d]/40 px-1.5 text-[11px] text-[#fca5a5]">Verschluss</span>
-                      )}
                     </li>
                   ))}
                 </ul>

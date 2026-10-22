@@ -3,7 +3,9 @@ import { NextRequest } from 'next/server'
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { qcCreateSchema } from '@/lib/quality-checks'
+import {
+  qcCreateSchema,
+} from '@/lib/quality-checks-schemas'
 import { createQualityCheck, qcRouteError } from '@/lib/quality-checks-server'
 import type { Prisma } from '@/generated/prisma'
 

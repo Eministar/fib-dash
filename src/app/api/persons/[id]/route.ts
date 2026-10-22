@@ -25,8 +25,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         linksFrom: { orderBy: { createdAt: 'asc' }, include: { toPerson: true } },
         linksTo: { orderBy: { createdAt: 'asc' }, include: { fromPerson: true } },
         investigations: {
-          // Verschlusssachen tauchen in der Personenakte nicht auf, wenn der
-          // Benutzer sie nicht ohnehin sehen dürfte.
+          // Nur Akten, die der Benutzer auch sehen darf.
           where: { investigation: investigationVisibilityWhere(user) },
           orderBy: { createdAt: 'desc' },
           include: {
@@ -37,7 +36,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
                 title: true,
                 status: true,
                 priority: true,
-                classified: true,
                 updatedAt: true,
               },
             },

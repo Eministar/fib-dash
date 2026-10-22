@@ -10,7 +10,7 @@ test('Share tokens are random and hashed; expired, disabled, replaced and invali
   const a = createShareToken(), b = createShareToken()
   assert.notEqual(a.token, b.token); assert.equal(a.token.length, 43); assert.equal(a.tokenHash.length, 64)
   assert.equal(tokenHash(a.token), a.tokenHash); assert.notEqual(a.token, a.tokenHash)
-  const share = { id: 's', title: 'Share', tokenHash: a.tokenHash, enabled: true, expiresAt: null as Date | null, version: 1, createdById: 'u', createdAt: new Date(), updatedAt: new Date(), items: [] }
+  const share = { id: 's', title: 'Share', tokenHash: a.tokenHash, enabled: true, expiresAt: null as Date | null, version: 1, createdById: 'u', createdAt: new Date(), updatedAt: new Date(), raidRequest: null, items: [] }
   const lookup = async (hash: string) => hash === share.tokenHash ? share : null
   assert.equal((await resolveShare(a.token, lookup)).id, 's')
   share.enabled = false
@@ -29,40 +29,38 @@ test('Selection is scoped by both type and ID; unselected children and media do 
   for (const [kind, id] of [['DOSSIER', 'child'], ['CLIP', 'parent'], ['VEHICLE', 'same-id'], ['PERSON', 'other']]) assert.throws(() => requireSharedSelection(items, kind, id), /nicht freigegeben/)
 })
 
-test('A shared dossier releases its cases, persons and vehicles but queries only non-classified cases', async () => {
-  let where: unknown
-  const client = { dossier: { findMany: async (args: { select: { investigations: { where: unknown } } }) => { where = args.select.investigations.where; return [{ investigations: [{ id: 'c1' }], persons: [{ id: 'p1' }], vehicles: [{ id: 'v1' }] }] } }, bodycamClip: { findMany: async () => [] } } as unknown as Prisma.TransactionClient
-  const items = [{ kind: 'DOSSIER', recordId: 'd', classifiedAtGrant: false }, { kind: 'PERSON', recordId: 'p1', classifiedAtGrant: false }]
+test('A shared dossier releases all its cases, persons and vehicles', async () => {
+  let where: unknown = 'unset'
+  const client = { dossier: { findMany: async (args: { select: { investigations: { where?: unknown } } }) => { where = args.select.investigations.where; return [{ investigations: [{ id: 'c1' }], persons: [{ id: 'p1' }], vehicles: [{ id: 'v1' }] }] } }, bodycamClip: { findMany: async () => [] } } as unknown as Prisma.TransactionClient
+  const items = [{ kind: 'DOSSIER', recordId: 'd' }, { kind: 'PERSON', recordId: 'p1' }]
   const expanded = await expandSharedItems(items, client)
   assert.deepEqual(expanded.map(i => `${i.kind}:${i.recordId}`), ['DOSSIER:d', 'PERSON:p1', 'CASE:c1', 'VEHICLE:v1'])
-  assert.deepEqual(where, { classified: false })
+  assert.equal(where, undefined)
   assert.equal(requireSharedSelection(expanded, 'CASE', 'c1').recordId, 'c1')
   assert.throws(() => requireSharedSelection(expanded, 'CLIP', 'c1'), /nicht freigegeben/)
-  assert.deepEqual(await expandSharedItems([{ kind: 'PERSON', recordId: 'x', classifiedAtGrant: false }], {} as Prisma.TransactionClient), [{ kind: 'PERSON', recordId: 'x', classifiedAtGrant: false }])
+  assert.deepEqual(await expandSharedItems([{ kind: 'PERSON', recordId: 'x' }], {} as Prisma.TransactionClient), [{ kind: 'PERSON', recordId: 'x' }])
 })
 
-test('Shared cases release their bodycam clips and pass on the classified grant', async () => {
+test('Shared cases release their bodycam clips', async () => {
   let where: unknown
   const client = {
     dossier: { findMany: async () => [{ investigations: [{ id: 'c2' }], persons: [], vehicles: [] }] },
     bodycamClip: { findMany: async (args: { where: unknown }) => { where = args.where; return [{ id: 'k1', investigationId: 'c1' }, { id: 'k2', investigationId: 'c2' }] } },
   } as unknown as Prisma.TransactionClient
-  const expanded = await expandSharedItems([{ kind: 'CASE', recordId: 'c1', classifiedAtGrant: true }, { kind: 'DOSSIER', recordId: 'd', classifiedAtGrant: false }], client)
+  const expanded = await expandSharedItems([{ kind: 'CASE', recordId: 'c1' }, { kind: 'DOSSIER', recordId: 'd' }], client)
   assert.deepEqual(where, { investigationId: { in: ['c1', 'c2'] } })
-  assert.deepEqual(expanded.filter(i => i.kind === 'CLIP'), [{ kind: 'CLIP', recordId: 'k1', classifiedAtGrant: true }, { kind: 'CLIP', recordId: 'k2', classifiedAtGrant: false }])
+  assert.deepEqual(expanded.filter(i => i.kind === 'CLIP'), [{ kind: 'CLIP', recordId: 'k1' }, { kind: 'CLIP', recordId: 'k2' }])
   assert.equal(requireSharedSelection(expanded, 'CLIP', 'k2').recordId, 'k2')
 })
 
 test('Public case projection contains chronology but no unselected relations, creator IDs or internal metadata', async () => {
-  const row = { title: 'Visible case', caseNumber: 'ERM-1', classified: false, summary: 'Summary', status: 'OPEN', createdById: 'secret-user', persons: [{ name: 'hidden-person' }], clips: [{ filename: 'hidden.mp4' }], entries: [{ title: 'Interview', content: 'Text', kind: 'NOTE', occurredAt: new Date('2026-01-01'), createdById: 'secret-user', clips: [{ title: 'hidden-clip' }] }] }
+  const row = { title: 'Visible case', caseNumber: 'ERM-1', summary: 'Summary', status: 'OPEN', createdById: 'secret-user', persons: [{ name: 'hidden-person' }], clips: [{ filename: 'hidden.mp4' }], entries: [{ title: 'Interview', content: 'Text', kind: 'NOTE', occurredAt: new Date('2026-01-01'), createdById: 'secret-user', clips: [{ title: 'hidden-clip' }] }] }
   const client = { investigation: { findUnique: async () => row, findUniqueOrThrow: async () => row } } as unknown as Prisma.TransactionClient
-  const result = await publicRecord({ kind: 'CASE', recordId: 'c', classifiedAtGrant: false }, client)
+  const result = await publicRecord({ kind: 'CASE', recordId: 'c' }, client)
   const json = JSON.stringify(result)
   assert.match(json, /Interview/); assert.match(json, /Summary/)
   assert.doesNotMatch(json, /secret-user|hidden-person|hidden.mp4|hidden-clip|createdById/)
-  row.classified = true
-  assert.equal(await sharedHeading({ kind: 'CASE', recordId: 'c', classifiedAtGrant: false }, client), null)
-  assert.notEqual(await sharedHeading({ kind: 'CASE', recordId: 'c', classifiedAtGrant: true }, client), null)
+  assert.equal(await sharedHeading({ kind: 'CASE', recordId: 'c' }, client), 'ERM-1 · Visible case')
 })
 
 test('Person links are only exposed when the linked person is part of the same share', async () => {
@@ -73,7 +71,7 @@ test('Person links are only exposed when the linked person is part of the same s
     if ('photo' in select) return { photoUrl: null, photo: null }
     return { personNumber: 'PER-1', firstName: 'Main', lastName: 'Person' }
   }, findUniqueOrThrow: async () => ({ alias: null, identifier: null, dateOfBirth: null, phone: null, notes: null, wanted: false, dangerous: false }) } } as unknown as Prisma.TransactionClient
-  const shared = [{ kind: 'PERSON', recordId: 'p1', classifiedAtGrant: false }, { kind: 'PERSON', recordId: 'p2', classifiedAtGrant: false }]
+  const shared = [{ kind: 'PERSON', recordId: 'p1' }, { kind: 'PERSON', recordId: 'p2' }]
   const result = await publicRecord(shared[0], client, shared)
   assert.deepEqual(result.related, [{ kind: 'PERSON', label: 'Personenakten · Familie', recordId: 'p2', title: 'PER-2 · Shared Friend' }])
   assert.doesNotMatch(JSON.stringify(result), /Hidden|p3/)
@@ -83,7 +81,7 @@ test('Public photos only use the selected record catalog photo; arbitrary URLs a
   let photoUrl = 'https://untrusted.example/private.png'
   let reads = 0
   const client = { person: { findUnique: async () => ({ photoUrl }) }, investigationPhoto: { findUnique: async ({ where }: { where: { id: string } }) => { reads++; assert.equal(where.id, 'photo'); return { filename: 'stored.png', mimeType: 'image/png' } } } } as unknown as Prisma.TransactionClient
-  const item = { kind: 'PERSON', recordId: 'person', classifiedAtGrant: false }
+  const item = { kind: 'PERSON', recordId: 'person' }
   assert.equal(await sharedPhoto(item, client), null); assert.equal(reads, 0)
   photoUrl = '/api/investigations/photos/photo/image'
   assert.equal((await sharedPhoto(item, client))?.filename, 'stored.png')

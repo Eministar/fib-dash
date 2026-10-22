@@ -6,7 +6,7 @@ import type { Prisma } from '@/generated/prisma'
 import { investigationVisibilityWhere } from './investigations'
 import { hasPermission } from './permissions'
 import { error, forbidden, unauthorized } from './api-response'
-import { shareIsActive, type ShareKind, type ShareSelection } from './record-share-validation'
+import { shareIsActive, type ShareKind, type ShareSelection } from './record-share-kinds'
 
 export class ShareError extends Error { constructor(message: string, readonly status = 400) { super(message) } }
 export function shareError(cause: unknown) {
@@ -41,53 +41,53 @@ export async function resolveShare(
   return share
 }
 
-export type ShareCandidate = ShareSelection & { title: string; classifiedAtGrant: boolean }
+export type ShareCandidate = ShareSelection & { title: string }
 type Client = Pick<Prisma.TransactionClient, 'dossier' | 'investigation' | 'person' | 'vehicle' | 'bodycamClip'>
 export async function shareCandidates(client: Client, user: CurrentUser, kind: ShareKind, search = '', page = 1) {
   const take = 30, skip = (page - 1) * take
   if (kind === 'DOSSIER') {
     const where = search ? { title: { contains: search } } : {}
     const [rows, total] = await Promise.all([client.dossier.findMany({ where, select: { id: true, title: true, kind: true }, orderBy: { title: 'asc' }, take, skip }), client.dossier.count({ where })])
-    return { items: rows.map(r => ({ kind, recordId: r.id, title: r.title, classifiedAtGrant: false })), total }
+    return { items: rows.map(r => ({ kind, recordId: r.id, title: r.title })), total }
   }
   if (kind === 'PERSON') {
     const where = search ? { OR: [{ firstName: { contains: search } }, { lastName: { contains: search } }, { personNumber: { contains: search } }] } : {}
     const [rows, total] = await Promise.all([client.person.findMany({ where, select: { id: true, personNumber: true, firstName: true, lastName: true }, orderBy: { lastName: 'asc' }, take, skip }), client.person.count({ where })])
-    return { items: rows.map(r => ({ kind, recordId: r.id, title: `${r.personNumber} · ${r.firstName} ${r.lastName}`, classifiedAtGrant: false })), total }
+    return { items: rows.map(r => ({ kind, recordId: r.id, title: `${r.personNumber} · ${r.firstName} ${r.lastName}` })), total }
   }
   if (kind === 'VEHICLE') {
     const where = search ? { OR: [{ vehicleNumber: { contains: search } }, { plate: { contains: search } }, { model: { contains: search } }] } : {}
     const [rows, total] = await Promise.all([client.vehicle.findMany({ where, select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' }, take, skip }), client.vehicle.count({ where })])
-    return { items: rows.map(r => ({ kind, recordId: r.id, title: `${r.vehicleNumber} · ${r.plate ?? r.model ?? 'Fahrzeug'}`, classifiedAtGrant: false })), total }
+    return { items: rows.map(r => ({ kind, recordId: r.id, title: `${r.vehicleNumber} · ${r.plate ?? r.model ?? 'Fahrzeug'}` })), total }
   }
   if (kind === 'CASE') {
     const where = { AND: [investigationVisibilityWhere(user), ...(search ? [{ OR: [{ title: { contains: search } }, { caseNumber: { contains: search } }] }] : [])] }
-    const [rows, total] = await Promise.all([client.investigation.findMany({ where, select: { id: true, title: true, caseNumber: true, classified: true }, orderBy: { updatedAt: 'desc' }, take, skip }), client.investigation.count({ where })])
-    return { items: rows.map(r => ({ kind, recordId: r.id, title: `${r.caseNumber} · ${r.title}`, classifiedAtGrant: r.classified })), total }
+    const [rows, total] = await Promise.all([client.investigation.findMany({ where, select: { id: true, title: true, caseNumber: true }, orderBy: { updatedAt: 'desc' }, take, skip }), client.investigation.count({ where })])
+    return { items: rows.map(r => ({ kind, recordId: r.id, title: `${r.caseNumber} · ${r.title}` })), total }
   }
   const where = { investigation: investigationVisibilityWhere(user), ...(search ? { title: { contains: search } } : {}) }
-  const [rows, total] = await Promise.all([client.bodycamClip.findMany({ where, select: { id: true, title: true, investigation: { select: { classified: true } } }, orderBy: { createdAt: 'desc' }, take, skip }), client.bodycamClip.count({ where })])
-  return { items: rows.map(r => ({ kind, recordId: r.id, title: r.title, classifiedAtGrant: r.investigation.classified })), total }
+  const [rows, total] = await Promise.all([client.bodycamClip.findMany({ where, select: { id: true, title: true }, orderBy: { createdAt: 'desc' }, take, skip }), client.bodycamClip.count({ where })])
+  return { items: rows.map(r => ({ kind, recordId: r.id, title: r.title })), total }
 }
 
 export async function validateShareItems(client: Client, user: CurrentUser, items: ShareSelection[]): Promise<ShareCandidate[]> {
   return Promise.all(items.map(async item => {
     const { kind, recordId: id } = item
     if (kind === 'CASE') {
-      const row = await client.investigation.findFirst({ where: { AND: [{ id }, investigationVisibilityWhere(user)] }, select: { title: true, caseNumber: true, classified: true } })
-      if (row) return { ...item, title: `${row.caseNumber} · ${row.title}`, classifiedAtGrant: row.classified }
+      const row = await client.investigation.findFirst({ where: { AND: [{ id }, investigationVisibilityWhere(user)] }, select: { title: true, caseNumber: true } })
+      if (row) return { ...item, title: `${row.caseNumber} · ${row.title}` }
     } else if (kind === 'CLIP') {
-      const row = await client.bodycamClip.findFirst({ where: { id, investigation: investigationVisibilityWhere(user) }, select: { title: true, investigation: { select: { classified: true } } } })
-      if (row) return { ...item, title: row.title, classifiedAtGrant: row.investigation.classified }
+      const row = await client.bodycamClip.findFirst({ where: { id, investigation: investigationVisibilityWhere(user) }, select: { title: true } })
+      if (row) return { ...item, title: row.title }
     } else if (kind === 'DOSSIER') {
       const row = await client.dossier.findUnique({ where: { id }, select: { title: true } })
-      if (row) return { ...item, title: row.title, classifiedAtGrant: false }
+      if (row) return { ...item, title: row.title }
     } else if (kind === 'PERSON') {
       const row = await client.person.findUnique({ where: { id }, select: { firstName: true, lastName: true, personNumber: true } })
-      if (row) return { ...item, title: `${row.personNumber} · ${row.firstName} ${row.lastName}`, classifiedAtGrant: false }
+      if (row) return { ...item, title: `${row.personNumber} · ${row.firstName} ${row.lastName}` }
     } else {
       const row = await client.vehicle.findUnique({ where: { id }, select: { vehicleNumber: true, plate: true } })
-      if (row) return { ...item, title: `${row.vehicleNumber} · ${row.plate ?? 'Fahrzeug'}`, classifiedAtGrant: false }
+      if (row) return { ...item, title: `${row.vehicleNumber} · ${row.plate ?? 'Fahrzeug'}` }
     }
     throw new ShareError('Ein ausgewählter Eintrag existiert nicht oder ist nicht mehr zugänglich', 403)
   }))

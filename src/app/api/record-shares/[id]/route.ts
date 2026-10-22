@@ -1,3 +1,4 @@
+import { Prisma } from '@/generated/prisma'
 import { z } from 'zod'
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
@@ -24,7 +25,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (change && (change.action === 'rotate' || change.enabled)) await validateShareItems(tx, user, existing.items as ShareSelection[])
       const updated = await tx.recordShare.updateMany({ where: { id, version }, data: {
         version: { increment: 1 },
-        ...(edit ? { title: edit.title, enabled: edit.enabled, expiresAt: edit.expiresAt ? new Date(edit.expiresAt) : null } : {}),
+        ...(edit ? { title: edit.title, enabled: edit.enabled, expiresAt: edit.expiresAt ? new Date(edit.expiresAt) : null, raidRequest: edit.raidRequest ?? Prisma.DbNull } : {}),
         ...(change?.action === 'toggle' ? { enabled: change.enabled } : {}),
         ...(secret ? { tokenHash: secret.tokenHash } : {}),
       } })

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { renderMarkdown } from '../src/lib/markdown'
-import { markdownCode, markdownRows } from '../src/lib/discord-components'
+import { markdownCode, markdownHeader, markdownPlain, markdownRows } from '../src/lib/discord-components'
 
 test('reference definitions cannot break out of href or title attributes', () => {
   const html = renderMarkdown([
@@ -33,5 +33,20 @@ test('discord row values go into code spans while mentions and timestamps stay c
   assert.equal(markdownCode('FIB-12 → **FIB-07**'), '`FIB-12` → `FIB-07`')
   assert.equal(markdownCode('12.10.2026 · <t:1791000000:R>'), '`12.10.2026` · <t:1791000000:R>')
   assert.equal(markdownCode('<@123456789012345678>'), '<@123456789012345678>')
-  assert.equal(markdownRows([{ label: 'Grund', value: 'Fehlen' }]), '`📝` **Grund:** `Fehlen`')
+})
+
+test('discord rows show plain values but cannot inject formatting', () => {
+  assert.equal(markdownRows([{ label: 'Grund', value: 'Fehlen' }]), '📝 **Grund:** Fehlen')
+  // Formatierung aus Eingaben wird maskiert statt ausgeführt.
+  assert.equal(markdownPlain('*fett* _kursiv_ ~~weg~~ ||spoiler|| [link](x)'), String.raw`\*fett\* \_kursiv\_ \~\~weg\~\~ \|\|spoiler\|\| \[link\](x)`)
+  assert.equal(markdownPlain('# Überschrift'), String.raw`\# Überschrift`)
+  assert.equal(markdownPlain('> Zitat'), String.raw`\> Zitat`)
+  // Mentions, Zeitstempel und Links bleiben klickbar.
+  assert.equal(markdownPlain('<@123456789012345678> · <t:1791000000:R> · https://a.test/x_y'), '<@123456789012345678> · <t:1791000000:R> · https://a.test/x_y')
+  assert.equal(markdownRows([{ label: 'Grund', value: '**laut**' }]), '📝 **Grund:** laut')
+})
+
+test('discord header puts the subject on its own bold line', () => {
+  assert.equal(markdownHeader('📢', 'Neue Version', 'v1.2'), '## 📢 Neue Version\n**v1.2**')
+  assert.equal(markdownHeader('📢', 'Ohne Betreff'), '## 📢 Ohne Betreff')
 })

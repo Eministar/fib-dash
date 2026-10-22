@@ -2,7 +2,9 @@ import { NextRequest } from 'next/server'
 
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { qcGradeSchema } from '@/lib/quality-checks'
+import {
+  qcGradeSchema,
+} from '@/lib/quality-checks-schemas'
 import { gradeQualityCheck, qcRouteError } from '@/lib/quality-checks-server'
 
 export const dynamic = 'force-dynamic'

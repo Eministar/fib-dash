@@ -71,14 +71,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       await notifyInvestigationTeam({ investigation, actorId: user.id, addedAssigneeIds: [agentId] })
 
-      // Verschlusssachen filtert `sendDiscordInvestigationEvent` selbst heraus:
-      // die Zuweisung zu einer geheimen Akte darf nicht im offenen Channel
-      // stehen. Der Zugewiesene sieht sie im Dashboard.
       queueDiscordInvestigationEvent({
         type: 'assignee',
+        investigationId: investigation.id,
         caseNumber: investigation.caseNumber,
         title: investigation.title,
-        classified: investigation.classified,
         actorName: user.displayName,
         rows: [
           { label: 'Ermittler', value: agentDisplayName(agent) },
@@ -87,10 +84,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       })
 
       // Ohne verknuepftes Discord-Konto laesst sich der Agent keinem
-      // Dashboard-Benutzer zuordnen – die Zuweisung steht dann zwar in der
-      // Akte, oeffnet aber keine Verschlusssache.
+      // Dashboard-Benutzer zuordnen – er bekommt dann keine Benachrichtigung.
       return success(
-        { assignee, warning: agent.discordId ? null : 'Agent hat keine Discord-Verknüpfung und erhält dadurch keinen Zugriff auf Verschlusssachen.' },
+        { assignee, warning: agent.discordId ? null : 'Agent hat keine Discord-Verknüpfung und erhält dadurch keine Benachrichtigung.' },
         201,
       )
     } catch (cause: unknown) {

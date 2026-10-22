@@ -3,7 +3,9 @@ import { NextRequest } from 'next/server'
 import { notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { qcCompleteSchema } from '@/lib/quality-checks'
+import {
+  qcCompleteSchema,
+} from '@/lib/quality-checks-schemas'
 import { completeQualityCheck, qcDetailInclude, qcRouteError } from '@/lib/quality-checks-server'
 
 export const dynamic = 'force-dynamic'

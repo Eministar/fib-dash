@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth'
+import { invalidateAuthCache, requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { sanitizePermissions } from '@/lib/permissions'
 import { isUniqueConstraintError } from '@/lib/prisma-errors'
@@ -49,6 +49,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     })
 
+    invalidateAuthCache()
     return success(serializeGroup(group))
   } catch (e: unknown) {
     if (isUniqueConstraintError(e)) return error('Benutzergruppe existiert bereits')
@@ -76,6 +77,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     // Löschen ist immer möglich: Mitgliedschaften (auch Discord-synchronisierte) werden
     // per Cascade entfernt, die Primärgruppen-Zuordnung der Benutzer per SetNull gelöst.
     await userGroupDelegate(prisma).delete({ where: { id } })
+    invalidateAuthCache()
     return success({ message: 'Benutzergruppe gelöscht' })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Serverfehler'

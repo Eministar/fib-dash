@@ -24,19 +24,10 @@ test('Bodycam role is read-only, sees the whole catalog and cannot bypass token 
   assert.equal(full.roleOnly, false)
 })
 
-test('Clip access follows the role for role viewers and the case rules for everyone else', async () => {
-  const user = { id: 'u', username: 'user', displayName: 'User', discordId: '123456789012345678', avatarUrl: null, groups: [], permissions: [] }
-  const classified = { classified: true, createdById: 'someone-else', leadAgent: null, assignees: [] }
-  const open = { classified: false, createdById: 'someone-else', leadAgent: null, assignees: [] }
-
-  assert.equal(canAccessBodycamClip({ user, full: false, roleOnly: true }, classified), true)
-  assert.equal(canAccessBodycamClip({ user, full: false, roleOnly: true }, open), true)
-  // Ohne die Rolle bleibt es bei den Aktenrechten.
-  assert.equal(canAccessBodycamClip({ user, full: false, roleOnly: false }, classified), false)
-  assert.equal(canAccessBodycamClip({ user, full: true, roleOnly: false }, classified), false)
-  assert.equal(canAccessBodycamClip({ user, full: true, roleOnly: false }, open), true)
-  const lead = { ...classified, leadAgent: { discordId: user.discordId } }
-  assert.equal(canAccessBodycamClip({ user, full: true, roleOnly: false }, lead), true)
+test('Clips sieht, wer Akteneinsicht oder die Bodycam-Rolle hat', async () => {
+  assert.equal(canAccessBodycamClip({ full: false, roleOnly: true }), true)
+  assert.equal(canAccessBodycamClip({ full: true, roleOnly: false }), true)
+  assert.equal(canAccessBodycamClip({ full: false, roleOnly: false }), false)
 })
 
 test('Merge moves all controls, retains aliases and rejects self/repeated merges', async () => {

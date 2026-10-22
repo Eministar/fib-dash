@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) { return uploadCors(req, await listC
 export const dynamic = 'force-dynamic'
 
 const clipInclude = {
-  investigation: { select: { id: true, caseNumber: true, title: true, classified: true } },
+  investigation: { select: { id: true, caseNumber: true, title: true } },
   entry: { select: { id: true, title: true, kind: true } },
   recordedByAgent: {
     select: {
@@ -206,9 +206,9 @@ async function uploadClip(req: NextRequest) {
 
     queueDiscordInvestigationEvent({
       type: 'clip',
+      investigationId: investigation.id,
       caseNumber: investigation.caseNumber,
       title: investigation.title,
-      classified: investigation.classified,
       leadAgentName: agentDisplayName(investigation.leadAgent),
       actorName: user.displayName,
       note: title,

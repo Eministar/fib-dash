@@ -12,6 +12,7 @@ import {
   serializeBigInts,
 } from '@/lib/investigations'
 import { asJson, cleanText, parseDate, routeError } from '@/lib/investigations-server'
+import { queueForumTask, refreshInvestigationForumCard } from '@/lib/investigation-forum'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       userId: user.id,
       details: `Akte ${investigation.caseNumber}: Eintrag "${title}" hinzugefügt`,
     })
+    queueForumTask('Aktenkarte aktualisieren', () => refreshInvestigationForumCard(id))
 
     return success(serializeBigInts(entry), 201)
   } catch (cause: unknown) {

@@ -13,16 +13,8 @@ const baseUser: CurrentUser = {
   permissions: [],
 }
 
-test('Ohne Sonderrecht filtert der Include Verschlusssachen auf sichtbare Akten', () => {
-  const include = visibleSpotInclude(baseUser)
-  const where = include.investigations.where as { OR?: unknown[] }
-  assert.ok(Array.isArray(where.OR), 'Die Sichtbarkeitsbedingung muss durchgereicht werden')
-  assert.ok(JSON.stringify(where).includes('"classified":false'))
-})
-
-test('Mit investigations:classified bleibt der Include ungefiltert', () => {
-  const include = visibleSpotInclude({ ...baseUser, permissions: ['investigations:classified'] })
-  assert.deepEqual(include.investigations.where, {})
+test('Ohne Verschlusssachen zeigt ein Kartenpunkt alle verknüpften Akten', () => {
+  assert.deepEqual(visibleSpotInclude(baseUser).investigations.where, {})
 })
 
 test('serializeSpot reicht verknüpfte Akten in stabiler Form nach außen', () => {
@@ -31,13 +23,13 @@ test('serializeSpot reicht verknüpfte Akten in stabiler Form nach außen', () =
     x: 10, y: 20, createdById: null, createdBy: null,
     createdAt: new Date('2026-01-01T00:00:00Z'), updatedAt: new Date('2026-01-02T00:00:00Z'),
     dossiers: [{ id: 'd1', title: 'Familie Moretti', kind: 'FAMILY' }],
-    investigations: [{ id: 'i1', caseNumber: 'ERM-0001', title: 'Waffenhandel', classified: true }],
+    investigations: [{ id: 'i1', caseNumber: 'ERM-0001', title: 'Waffenhandel' }],
     observations: [
       { id: 'o1', note: 'Zwei Fahrzeuge, 20 Minuten', observedAt: new Date('2026-02-03T18:00:00Z'), createdBy: { displayName: 'Ermittler' } },
     ],
   })
   assert.deepEqual(spot.dossiers, [{ id: 'd1', title: 'Familie Moretti', kind: 'FAMILY' }])
-  assert.deepEqual(spot.investigations, [{ id: 'i1', caseNumber: 'ERM-0001', title: 'Waffenhandel', classified: true }])
+  assert.deepEqual(spot.investigations, [{ id: 'i1', caseNumber: 'ERM-0001', title: 'Waffenhandel' }])
   assert.equal(spot.createdByName, 'Unbekannt')
 })
 
