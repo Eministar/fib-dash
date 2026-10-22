@@ -20,6 +20,8 @@ export async function register() {
     ensureAgentStatusAutomationWorker()
     const { ensureWeeklyReportWorker } = await import('./lib/weekly-report-server')
     ensureWeeklyReportWorker()
+    const { ensureStorageLogWorker } = await import('./lib/storage-logs-server')
+    ensureStorageLogWorker()
     const [{ ensureDatabaseBackupScheduler }, { prisma }] = await Promise.all([import('./lib/database-backup'), import('./lib/prisma')])
     ensureDatabaseBackupScheduler(prisma)
     const { migrateContractSignatures } = await import('./lib/contract-signature-migration')

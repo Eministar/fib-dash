@@ -1,5 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { DiscordApiError, discordFetch, getDiscordConfig } from '@/lib/discord-integration'
+import { readFile } from 'node:fs/promises'
+
+import { DISCORD_UPLOAD_LIMIT_BYTES, DiscordApiError, discordFetch, getDiscordConfig, postChannelMessageWithFiles, type DiscordUploadFile } from '@/lib/discord-integration'
+import { resolveClipPath } from '@/lib/clips'
+import { photoPath } from '@/lib/investigation-photos'
 import { agentDisplayName } from '@/lib/investigations-server'
 import { resolveBaseUrl } from '@/lib/site'
 import {
@@ -267,6 +271,8 @@ export async function postInvestigationForumEvent(event: {
   rows?: Array<{ label: string; value: string | null | undefined }>
   note?: string | null
   actorName?: string | null
+  clipId?: string
+  photoIds?: string[]
 }) {
   const ctx = await context()
   if (!ctx) return false
@@ -274,14 +280,62 @@ export async function postInvestigationForumEvent(event: {
   const post = await syncInvestigationPost(ctx.forum, ctx.tags, event.investigationId)
   if (!post) return true
   if (event.type !== 'created') {
-    await discordFetch(`/channels/${post.threadId}/messages`, {
-      method: 'POST',
-      body: JSON.stringify(forumEventMessage({ type: event.type, rows: event.rows, note: event.note, actorName: event.actorName })),
-    })
+    const files = await eventFiles(event, post.threadId)
+    const rows = [...(event.rows ?? []), ...(files.skipped ? [{ label: 'Hinweis', value: files.skipped }] : [])]
+    const message = forumEventMessage({ type: event.type, rows, note: event.note, actorName: event.actorName })
+    await discordFetch(`/channels/${post.threadId}/messages`, { method: 'POST', body: JSON.stringify(message) })
+    // Dateien als schlichte Nachricht darunter: Komponenten-Nachrichten zeigen Anhänge
+    // nur über eigene Bausteine, normale Nachrichten spielen Bilder und Videos direkt ab.
+    for (const batch of files.batches) {
+      await postChannelMessageWithFiles(post.threadId, { allowed_mentions: { parse: [] } }, batch)
+    }
   }
   // Neuer Beitrag oder geänderter Status: die Links in den Dauerakten nachziehen.
   if (post.created || event.type === 'status' || event.type === 'closed') await refreshDossiers(ctx, post.dossierIds)
   return true
+}
+
+const MAX_FILES_PER_MESSAGE = 10
+
+/**
+ * Anhänge für eine Meldung: Clip-Video bzw. Bilder, in Gruppen unter der
+ * Upload-Grenze. Zu Großes wird nicht angehängt, sondern als Hinweis genannt.
+ * Bilder, die selbst aus diesem Beitrag stammen, werden nicht zurückgespiegelt.
+ */
+async function eventFiles(event: { clipId?: string; photoIds?: string[] }, threadId: string) {
+  const batches: DiscordUploadFile[][] = []
+  let skipped = ''
+  if (event.clipId) {
+    const clip = await prisma.bodycamClip.findUnique({ where: { id: event.clipId }, select: { filename: true, originalName: true, mimeType: true, sizeBytes: true } })
+    if (clip && Number(clip.sizeBytes) <= DISCORD_UPLOAD_LIMIT_BYTES) {
+      const data = await readFile(resolveClipPath(clip.filename)).catch(() => null)
+      if (data) batches.push([{ name: clip.originalName || clip.filename, data, contentType: clip.mimeType }])
+    } else if (clip) {
+      skipped = `Video ist ${Math.round(Number(clip.sizeBytes) / 1024 / 1024)} MB groß – zu groß für Discord, im Dashboard ansehen.`
+    }
+  }
+  if (event.photoIds?.length) {
+    const photos = await prisma.investigationPhoto.findMany({
+      where: { id: { in: event.photoIds }, NOT: { channelId: threadId } },
+      select: { filename: true, title: true, mimeType: true, sizeBytes: true },
+    })
+    let current: DiscordUploadFile[] = []
+    let currentBytes = 0
+    for (const photo of photos) {
+      if (photo.sizeBytes > DISCORD_UPLOAD_LIMIT_BYTES) continue
+      const data = await readFile(photoPath(photo.filename)).catch(() => null)
+      if (!data) continue
+      if (current.length >= MAX_FILES_PER_MESSAGE || currentBytes + data.length > DISCORD_UPLOAD_LIMIT_BYTES) {
+        batches.push(current)
+        current = []
+        currentBytes = 0
+      }
+      current.push({ name: photo.filename, data, contentType: photo.mimeType })
+      currentBytes += data.length
+    }
+    if (current.length) batches.push(current)
+  }
+  return { batches, skipped }
 }
 
 /** Aktenkarte nachziehen, wenn sich etwas ohne eigene Verlaufsmeldung ändert (Titel, Einträge …). */

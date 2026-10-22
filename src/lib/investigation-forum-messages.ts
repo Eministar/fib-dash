@@ -160,7 +160,7 @@ export function dossierOverview(dossiers: OverviewDossier[]) {
   ], { accentColor: OVERVIEW_ACCENT })
 }
 
-export type ForumEventType = 'status' | 'clip' | 'closed' | 'assignee' | 'handover'
+export type ForumEventType = 'status' | 'clip' | 'closed' | 'assignee' | 'handover' | 'entry' | 'photos'
 
 const EVENT_TITLE: Record<ForumEventType, string> = {
   status: '🔄 Status geändert',
@@ -168,6 +168,8 @@ const EVENT_TITLE: Record<ForumEventType, string> = {
   closed: '📕 Ermittlung abgeschlossen',
   assignee: '👤 Ermittler zugewiesen',
   handover: '🤝 Fallführung übergeben',
+  entry: '📝 Neuer Eintrag',
+  photos: '🖼️ Neue Bilder',
 }
 
 /** Kurze Verlaufsmeldung im Beitrag einer Akte. */

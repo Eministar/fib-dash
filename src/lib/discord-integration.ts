@@ -1595,6 +1595,43 @@ function bracketedServiceNumber(badgeNumber: string, prefix: string) {
   return `[${join}]`
 }
 
+/** Discord nimmt von Bots ohne Server-Boost höchstens 10 MiB je Nachricht an. */
+export const DISCORD_UPLOAD_LIMIT_BYTES = 10 * 1024 * 1024
+
+export type DiscordUploadFile = { name: string; data: Buffer; contentType: string }
+
+/**
+ * Nachricht mit Dateianhängen (multipart). Eigene Funktion, weil `discordFetch`
+ * immer JSON sendet. Läuft durch dieselbe Warteschlange wie alle Bot-Aufrufe.
+ */
+export async function postChannelMessageWithFiles(channelId: string, payload: Record<string, unknown>, files: DiscordUploadFile[]) {
+  return enqueueRateLimited(async () => {
+    const token = botToken()
+    if (!token) throw new Error('Discord Bot-Token fehlt')
+    for (let attempt = 0; ; attempt++) {
+      const form = new FormData()
+      form.append('payload_json', JSON.stringify({
+        ...payload,
+        attachments: files.map((file, index) => ({ id: index, filename: file.name })),
+      }))
+      files.forEach((file, index) => form.append(`files[${index}]`, new Blob([new Uint8Array(file.data)], { type: file.contentType }), file.name))
+      const res = await fetch(`${API_BASE}/channels/${channelId}/messages`, {
+        method: 'POST',
+        headers: { authorization: `Bot ${token}` },
+        body: form,
+        signal: AbortSignal.timeout(120_000),
+      })
+      if (res.status === 429 && attempt < MAX_RETRIES) {
+        const body = await res.json().catch(() => ({ retry_after: 2 })) as { retry_after?: number }
+        await wait(Math.min((body.retry_after ?? 2) * 1000, 30_000) + 250)
+        continue
+      }
+      if (!res.ok) throw new DiscordApiError(res.status, undefined, (await res.text().catch(() => '')) || res.statusText)
+      return res.json() as Promise<{ id: string }>
+    }
+  })
+}
+
 export async function postChannelMessage(channelId: string, payload: Record<string, unknown>) {
   return discordFetch<{ id: string }>(`/channels/${channelId}/messages`, {
     method: 'POST',
@@ -2412,8 +2449,11 @@ export function queueDiscordHrEvent(event: Parameters<typeof sendDiscordHrEvent>
 /* ── Ermittlungssystem ────────────────────────────────────────────── */
 
 export type DiscordInvestigationEventInput = {
-  type: 'created' | 'status' | 'clip' | 'closed' | 'assignee' | 'handover'
+  type: 'created' | 'status' | 'clip' | 'closed' | 'assignee' | 'handover' | 'entry' | 'photos'
   investigationId: string
+  /** Nur im Forum: Datei des Clips bzw. die Bilder anhängen. */
+  clipId?: string
+  photoIds?: string[]
   caseNumber: string
   title: string
   leadAgentName?: string | null
@@ -2429,6 +2469,8 @@ const INVESTIGATION_EVENT_META = {
   closed: { icon: '📕', label: 'Ermittlung abgeschlossen' },
   assignee: { icon: '👤', label: 'Ermittler zugewiesen' },
   handover: { icon: '🤝', label: 'Fallführung übergeben' },
+  entry: { icon: '📝', label: 'Neuer Eintrag' },
+  photos: { icon: '🖼️', label: 'Neue Bilder' },
 } as const
 
 export async function sendDiscordInvestigationEvent(event: DiscordInvestigationEventInput) {
@@ -2439,6 +2481,8 @@ export async function sendDiscordInvestigationEvent(event: DiscordInvestigationE
   // Forum: ein Beitrag je Akte. Dynamisch, weil das Forum-Modul dieses importiert.
   const { postInvestigationForumEvent } = await import('./investigation-forum')
   if (await postInvestigationForumEvent(event)) return { channelId, messageId: null }
+  // Einzelne Einträge und Bilder gehören in den Akten-Beitrag, nicht in einen Text-Channel.
+  if (event.type === 'entry' || event.type === 'photos') return null
 
   const meta = INVESTIGATION_EVENT_META[event.type]
   const rows = [

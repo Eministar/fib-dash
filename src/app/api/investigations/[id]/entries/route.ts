@@ -5,6 +5,7 @@ import { requirePermission } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
 import {
+  INVESTIGATION_ENTRY_KIND_LABELS,
   canAccessInvestigation,
   investigationAccessInclude,
   isInvestigationEntryKind,
@@ -12,7 +13,7 @@ import {
   serializeBigInts,
 } from '@/lib/investigations'
 import { asJson, cleanText, parseDate, routeError } from '@/lib/investigations-server'
-import { queueForumTask, refreshInvestigationForumCard } from '@/lib/investigation-forum'
+import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,7 +68,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       userId: user.id,
       details: `Akte ${investigation.caseNumber}: Eintrag "${title}" hinzugefügt`,
     })
-    queueForumTask('Aktenkarte aktualisieren', () => refreshInvestigationForumCard(id))
+    queueDiscordInvestigationEvent({
+      type: 'entry',
+      investigationId: id,
+      caseNumber: investigation.caseNumber,
+      title: investigation.title,
+      actorName: user.displayName,
+      note: content,
+      rows: [
+        { label: INVESTIGATION_ENTRY_KIND_LABELS[kind], value: title },
+        { label: 'Ort', value: location },
+      ],
+    })
 
     return success(serializeBigInts(entry), 201)
   } catch (cause: unknown) {

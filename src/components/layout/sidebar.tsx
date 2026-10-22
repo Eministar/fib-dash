@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, Users, ArrowUpDown, UserX, StickyNote, ScrollText,
+  LayoutDashboard, Users, Warehouse, ArrowUpDown, UserX, StickyNote, ScrollText,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Download,
   FileText, FileSignature, Gavel, FolderSearch, Map,
@@ -175,12 +175,14 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
   const pinFor = (href: string): PinControl => ({ pinned: favorites.includes(href), toggle })
   const allowed = (item: NavItem) => !item.permission || hasPermission(user, item.permission)
   const leadershipItem: NavItem = { name: 'Ermittlungsgruppen', href: '/leadership/groups', icon: Users }
+  const storageItem: NavItem = { name: 'Lagerlogs', href: '/leadership/storage', icon: Warehouse, permission: 'storage-logs:view' }
+  const leadershipItems = [...(leadershipAccess?.allowed ? [leadershipItem] : []), ...(allowed(storageItem) ? [storageItem] : [])]
   const bodycamItem: NavItem = { name: 'Bodycams', href: '/investigations/clips', icon: FolderSearch }
   const reachable: NavItem[] = [
     ...mainNav.filter(allowed),
     ...(!hasPermission(user, 'investigations:view') && bodycamAccess?.allowed ? [bodycamItem] : []),
     ...unitNav,
-    ...(leadershipAccess?.allowed ? [leadershipItem] : []),
+    ...leadershipItems,
     ...adminNav.filter(allowed),
     ...accountNav,
   ]
@@ -240,9 +242,9 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
           </SavedSection>
         )}
 
-        {leadershipAccess?.allowed && (
+        {leadershipItems.length > 0 && (
           <SavedSection name="Leadership" compact={compact}>
-            <NavLink item={leadershipItem} pathname={pathname} onNavigate={onNavigate} compact={compact} pin={pinFor(leadershipItem.href)} />
+            {leadershipItems.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} compact={compact} pin={pinFor(item.href)} />)}
           </SavedSection>
         )}
 

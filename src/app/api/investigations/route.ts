@@ -187,6 +187,17 @@ export async function POST(req: NextRequest) {
         { label: 'Zugewiesen', value: assigneeIds.length ? `${assigneeIds.length} Ermittler` : null },
       ],
     })
+    if (photoIds.length) {
+      queueDiscordInvestigationEvent({
+        type: 'photos',
+        investigationId: investigation.id,
+        caseNumber,
+        title,
+        actorName: user.displayName,
+        photoIds,
+        rows: [{ label: 'Anzahl', value: String(photoIds.length) }],
+      })
+    }
 
     return success(serializeBigInts(investigation), 201)
   } catch (cause: unknown) {

@@ -135,8 +135,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data.mapSpots = { set: mapSpotIds.map((id) => ({ id })) }
     }
 
+    let addedPhotoIds: string[] = []
     if (body.photoIds !== undefined) {
       const photoIds = validateIdList(body.photoIds)
+      const before = new Set((await prisma.investigationPhoto.findMany({ where: { investigations: { some: { id } } }, select: { id: true } })).map((photo) => photo.id))
+      addedPhotoIds = photoIds.filter((photoId) => !before.has(photoId))
       if (photoIds.length && (await prisma.investigationPhoto.count({ where: { id: { in: photoIds } } })) !== photoIds.length) {
         return notFound('Bild')
       }
@@ -173,6 +176,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           { label: 'Jetzt', value: INVESTIGATION_STATUS_LABELS[investigation.status] },
           { label: 'Priorität', value: INVESTIGATION_PRIORITY_LABELS[investigation.priority] },
         ],
+      })
+    } else if (addedPhotoIds.length) {
+      queueDiscordInvestigationEvent({
+        type: 'photos',
+        investigationId: investigation.id,
+        caseNumber: investigation.caseNumber,
+        title: investigation.title,
+        actorName: user.displayName,
+        photoIds: addedPhotoIds,
+        rows: [{ label: 'Anzahl', value: String(addedPhotoIds.length) }],
       })
     } else {
       // Titel, Fallführung, Priorität …: nur die Aktenkarte im Forum nachziehen.

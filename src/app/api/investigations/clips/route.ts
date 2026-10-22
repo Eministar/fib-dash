@@ -207,6 +207,7 @@ async function uploadClip(req: NextRequest) {
     queueDiscordInvestigationEvent({
       type: 'clip',
       investigationId: investigation.id,
+      clipId: clip.id,
       caseNumber: investigation.caseNumber,
       title: investigation.title,
       leadAgentName: agentDisplayName(investigation.leadAgent),

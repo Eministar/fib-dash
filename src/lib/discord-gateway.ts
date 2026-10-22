@@ -6,14 +6,19 @@ import { findAgentForDiscord, getOpenDutySession } from '@/lib/manual-duty'
 import { GameReminderTracker, trackedGameName, type PresenceActivity } from '@/lib/game-presence'
 
 /**
- * Schlanker Discord-Gateway-Client, nur für Statusmeldungen (Presence).
- * Alles andere läuft weiter über REST und den Interactions-Endpoint.
- * Voraussetzung: „Presence Intent“ ist im Developer Portal aktiviert.
+ * Schlanker Discord-Gateway-Client für Statusmeldungen (Presence) und neue
+ * Nachrichten (Lagerlogs, Antworten in Akten-Beiträgen). Alles andere läuft
+ * weiter über REST und den Interactions-Endpoint.
+ * Voraussetzung: „Presence Intent“ und „Message Content Intent“ sind im
+ * Developer Portal aktiviert. Fehlt der Message Content Intent, verbindet der
+ * Client ohne Nachrichten neu, damit Statusmeldungen weiterlaufen.
  */
 
 const GATEWAY_URL = 'wss://gateway.discord.gg/?v=10&encoding=json'
 const INTENT_GUILDS = 1 << 0
 const INTENT_GUILD_PRESENCES = 1 << 8
+const INTENT_GUILD_MESSAGES = 1 << 9
+const INTENT_MESSAGE_CONTENT = 1 << 15
 const REMINDER_COOLDOWN_MS = 60 * 60_000
 const GUILD_REFRESH_MS = 10 * 60_000
 /** Diese Close-Codes lassen sich durch Neuverbinden nicht beheben (Token, Intents). */
@@ -37,6 +42,9 @@ let resumeUrl: string | null = null
 let reconnectDelayMs = 1_000
 let guildId = ''
 let guildCheckedAt = 0
+/** Wird abgeschaltet, wenn Discord den privilegierten Intent ablehnt (4014). */
+let withMessages = process.env.FIB_DISCORD_MESSAGE_INTENT !== 'off'
+let botUserId = ''
 
 function botToken() {
   return process.env.DISCORD_BOT_TOKEN?.trim() || process.env.FIB_DISCORD_BOT_TOKEN?.trim() || ''
@@ -121,7 +129,7 @@ function identify() {
     d: {
       ...(ownsPresence ? { presence: botPresence.current() } : {}),
       token: botToken(),
-      intents: INTENT_GUILDS | INTENT_GUILD_PRESENCES,
+      intents: INTENT_GUILDS | INTENT_GUILD_PRESENCES | (withMessages ? INTENT_GUILD_MESSAGES | INTENT_MESSAGE_CONTENT : 0),
       properties: { os: process.platform, browser: 'fib-dashboard', device: 'fib-dashboard' },
     },
   })
@@ -145,19 +153,26 @@ function scheduleReconnect() {
 
 function onDispatch(type: string | null, data: unknown) {
   if (type === 'READY') {
-    const ready = data as { session_id: string; resume_gateway_url: string }
+    const ready = data as { session_id: string; resume_gateway_url: string; user?: { id?: string } }
     sessionId = ready.session_id
+    botUserId = ready.user?.id ?? ''
     resumeUrl = ready.resume_gateway_url
     reconnectDelayMs = 1_000
     guildCheckedAt = 0
     if (ownsPresence) botPresence.start()
-    console.log(`${LOG} Verbunden`)
+    console.log(`${LOG} Verbunden${withMessages ? ' (mit Nachrichten)' : ''}`)
+    // Was während der Trennung im Lager-Channel kam, per REST nachholen.
+    void import('@/lib/storage-logs-server').then(({ queueStorageLogSync }) => queueStorageLogSync())
   } else if (type === 'RESUMED') {
     if (ownsPresence) botPresence.start()
     reconnectDelayMs = 1_000
   } else if (type === 'GUILD_CREATE') {
     void handleGuildCreate(data as { id?: string; presences?: Presence[] }).catch((error) => {
       console.error(`${LOG} GUILD_CREATE fehlgeschlagen:`, error)
+    })
+  } else if (type === 'MESSAGE_CREATE') {
+    void import('@/lib/discord-message-router').then(({ routeDiscordMessage }) => routeDiscordMessage(data, botUserId)).catch((error) => {
+      console.error(`${LOG} Nachricht konnte nicht verarbeitet werden:`, error)
     })
   } else if (type === 'PRESENCE_UPDATE') {
     void handlePresence(data as Presence).catch((error) => {
@@ -202,6 +217,14 @@ function connect() {
     if (socket === ws) socket = null
     stopHeartbeat()
     botPresence.stop()
+    if (event.code === 4014 && withMessages) {
+      // Message Content Intent fehlt: ohne Nachrichten weiter, Statusmeldungen bleiben.
+      withMessages = false
+      forgetSession()
+      console.error(`${LOG} „Message Content Intent“ ist im Developer Portal nicht aktiviert – Lagerlogs und Antworten aus Akten-Beiträgen werden nur per Abruf bzw. gar nicht übernommen. Verbinde ohne Nachrichten neu.`)
+      scheduleReconnect()
+      return
+    }
     if (FATAL_CLOSE_CODES.has(event.code)) {
       console.error(`${LOG} Verbindung dauerhaft abgelehnt (${event.code} ${event.reason}). ` +
         (event.code === 4014 ? 'Bitte im Discord Developer Portal den „Presence Intent“ aktivieren.' : 'Bot-Token prüfen.'))

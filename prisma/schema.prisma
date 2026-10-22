@@ -764,6 +764,8 @@ model Agent {
   legalCases               LegalCase[]             @relation("AgentLegalCases")
   investigationsLed        Investigation[]         @relation("InvestigationLeadAgent")
   investigationAssignments InvestigationAssignee[] @relation("InvestigationAssigneeAgent")
+  storageLogEntries        StorageLogEntry[]
+  storageAlerts            StorageAlert[]
   bodycamClips             BodycamClip[]           @relation("BodycamClipRecorder")
   evidenceSeized           Evidence[]              @relation("EvidenceSeizedBy")
   agentOfMonthVotes        AgentOfMonthVote[]      @relation("AgentOfMonthNominee")
@@ -1878,19 +1880,21 @@ model InvestigationAssignee {
 
 /// Ein Einsatz oder Ermittlungsschritt in der Chronologie einer Akte.
 model InvestigationEntry {
-  id              String                 @id @default(cuid())
-  investigationId String
-  investigation   Investigation          @relation(fields: [investigationId], references: [id], onDelete: Cascade)
-  kind            InvestigationEntryKind @default(OPERATION)
-  title           String                 @db.VarChar(200)
+  id               String                 @id @default(cuid())
+  investigationId  String
+  investigation    Investigation          @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  kind             InvestigationEntryKind @default(OPERATION)
+  title            String                 @db.VarChar(200)
   /// Hergang / Feststellungen (Markdown).
-  content         String?                @db.Text
+  content          String?                @db.Text
   /// Zeitpunkt des Einsatzes – bewusst getrennt von `createdAt`, weil Akten
   /// regelmäßig nachträglich gepflegt werden.
-  occurredAt      DateTime
-  location        String?                @db.VarChar(200)
+  occurredAt       DateTime
+  location         String?                @db.VarChar(200)
   /// Snapshot der beteiligten Agents: `[{ agentId, name, badgeNumber, rank }]`.
-  participants    Json                   @default("[]")
+  participants     Json                   @default("[]")
+  /// Aus einer Discord-Antwort im Akten-Beitrag übernommen (verhindert Doppelte und Rückspiegeln).
+  discordMessageId String?                @unique @db.VarChar(32)
 
   createdById String?
   createdBy   User?    @relation("InvestigationEntryCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -2881,4 +2885,54 @@ model AgentOfMonthVote {
   @@unique([month, voterId])
   @@index([month, agentId])
   @@index([agentId])
+}
+
+/// Ein Lagervorgang aus dem Discord-Lagerlog (Webhook „Fraklager“). Je Embed
+/// einer Nachricht ein Eintrag; `sourceKey` = Nachricht + Embed-Index, damit
+/// ein erneuter Abruf nichts doppelt anlegt.
+model StorageLogEntry {
+  id         String   @id @default(cuid())
+  /// Kurzer, teilbarer Link-Schlüssel, z. B. "LAG-7K3F9Q".
+  slug       String   @unique @db.VarChar(16)
+  sourceKey  String   @unique @db.VarChar(64)
+  channelId  String   @db.VarChar(32)
+  messageId  String   @db.VarChar(32)
+  /// IN = eingelagert, OUT = ausgelagert/entnommen
+  direction  String   @db.VarChar(4)
+  actorName  String   @db.VarChar(120)
+  agentId    String?
+  agent      Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  item       String   @db.VarChar(120)
+  quantity   Int
+  isWeapon   Boolean  @default(false)
+  storage    String   @db.VarChar(120)
+  occurredAt DateTime
+  rawText    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([agentId, occurredAt])
+  @@index([actorName, occurredAt])
+  @@index([direction, occurredAt])
+  @@index([occurredAt])
+}
+
+/// Warnung bei auffälliger Entnahme (viele Waffen oder Gegenstände in kurzer Zeit).
+model StorageAlert {
+  id          String   @id @default(cuid())
+  slug        String   @unique @db.VarChar(16)
+  agentId     String?
+  agent       Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  actorName   String   @db.VarChar(120)
+  windowStart DateTime
+  windowEnd   DateTime
+  weaponCount Int
+  itemCount   Int
+  /// Slugs der Einträge, die die Warnung ausgelöst haben.
+  entrySlugs  Json
+  messageId   String?  @db.VarChar(32)
+  createdAt   DateTime @default(now())
+
+  @@index([actorName, createdAt])
+  @@index([agentId, createdAt])
+  @@index([createdAt])
 }

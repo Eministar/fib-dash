@@ -14,6 +14,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { cn } from '@/lib/utils'
 import { PERMISSIONS, PERMISSION_LABELS, type Permission } from '@/lib/permissions'
+import { StorageLogSettings } from '@/components/settings/storage-log-settings'
 
 interface DiscordRole {
   id: string
@@ -893,6 +894,10 @@ export default function SettingsPage() {
                 >
                   Testbericht jetzt senden
                 </Button>
+              </div>
+              <div className="sm:col-span-2 border-t border-white/[0.06] pt-4">
+                <h3 className="mb-3 text-[13px] font-semibold text-white">Lagerlogs</h3>
+                <StorageLogSettings settings={settings ?? null} channelOptions={textChannelOptions} onSaved={() => void refetch()} />
               </div>
               <div className="sm:col-span-2">
                 <Select
