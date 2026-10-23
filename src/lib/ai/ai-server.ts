@@ -7,12 +7,13 @@ import {
   contextText,
   maxInputLength,
   parseSuggestion,
+  parseThreadPlan,
   reviewSuggestion,
   type AiFamilyContext,
   type AiInvestigationContext,
-  type AiSource,
   type AiSuggestion,
   type AiSuggestionKind,
+  type AiThreadPlan,
 } from './ai-prompts'
 
 /**
@@ -120,11 +121,31 @@ async function investigationContext(investigationId: string, user: CurrentUser) 
   return { context, dossierId: investigation.dossiers[0]?.id ?? null }
 }
 
+/**
+ * Anfrage mit Prüfung: Beanstandet `review` den ersten Vorschlag, bekommt die KI
+ * genau einen zweiten Versuch mit den konkreten Punkten.
+ */
+async function generate<T>(messages: ChatMessage[], parse: (raw: string) => T, review: (result: T) => string[]) {
+  const raw = await completeJson(messages)
+  const first = parse(raw)
+  const problems = review(first)
+  if (!problems.length) return first
+
+  const retry = parse(await completeJson([
+    ...messages,
+    { role: 'assistant', content: raw },
+    { role: 'user', content: `Überarbeite den Vorschlag: ${problems.join(' ')} Halte dich strikt an die Regeln.` },
+  ]))
+  // Erfundene Zahlen sind ein Ausschlussgrund; ein etwas zu langer Text nicht.
+  if (review(retry).some((problem) => problem.startsWith('Die Zahlen'))) {
+    throw new AiError('Die KI hat Angaben ergänzt, die nicht in der Eingabe stehen. Bitte noch einmal versuchen oder selbst formulieren.', 422)
+  }
+  return retry
+}
+
 export type SuggestInput = {
   kind: AiSuggestionKind
   keywords: string
-  /** `message`: ganze Discord-Nachricht statt Stichwörter. */
-  source?: AiSource
   investigationId?: string | null
   dossierId?: string | null
 }
@@ -132,10 +153,9 @@ export type SuggestInput = {
 /** Vorschlag erzeugen. Wirft `AiError` mit einer Meldung, die der Nutzer sehen darf. */
 export async function suggestText(input: SuggestInput, user: CurrentUser): Promise<AiSuggestion> {
   if (!await isAiEnabled()) throw new AiError('Der KI-Assistent ist ausgeschaltet.', 403)
-  const source = input.source ?? 'keywords'
   const keywords = input.keywords.trim()
   if (!keywords) throw new AiError('Bitte mindestens ein Stichwort angeben.')
-  if (keywords.length > maxInputLength(source)) throw new AiError(`Höchstens ${maxInputLength(source)} Zeichen.`)
+  if (keywords.length > maxInputLength('keywords')) throw new AiError(`Höchstens ${maxInputLength('keywords')} Zeichen.`)
   if (input.kind === 'entry' && !input.investigationId) throw new AiError('Für einen Chronologie-Eintrag fehlt die Akte.')
   checkRateLimit(user.id)
 
@@ -143,28 +163,41 @@ export async function suggestText(input: SuggestInput, user: CurrentUser): Promi
   const dossierId = input.dossierId || investigation?.dossierId || null
   const family = dossierId ? await familyContext(dossierId) : null
 
-  const promptInput = { kind: input.kind, source, keywords, investigation: investigation?.context, family }
-  const messages: ChatMessage[] = [
-    { role: 'system', content: buildSystemPrompt(input.kind) },
-    { role: 'user', content: buildUserPrompt(promptInput) },
-  ]
-  const review = (suggestion: AiSuggestion) => reviewSuggestion(suggestion, { keywords, context: contextText(promptInput) })
+  const promptInput = { kind: input.kind, keywords, investigation: investigation?.context, family }
+  return generate(
+    [{ role: 'system', content: buildSystemPrompt(input.kind) }, { role: 'user', content: buildUserPrompt(promptInput) }],
+    parseSuggestion,
+    (suggestion) => reviewSuggestion(suggestion, { keywords, context: contextText(promptInput) }),
+  )
+}
 
-  const raw = await completeJson(messages)
-  const first = parseSuggestion(raw)
-  const problems = review(first)
-  if (!problems.length) return first
+export type ThreadPlanInput = {
+  text: string
+  investigationId: string
+  authorName: string
+  attachments: { images: number; videos: number }
+}
 
-  // Ein zweiter Versuch mit den konkreten Beanstandungen.
-  const retry = parseSuggestion(await completeJson([
-    ...messages,
-    { role: 'assistant', content: raw },
-    { role: 'user', content: `Überarbeite den Vorschlag: ${problems.join(' ')} Halte dich strikt an die Regeln.` },
-  ]))
-  const remaining = review(retry)
-  // Erfundene Zahlen sind ein Ausschlussgrund; ein etwas zu langer Text nicht.
-  if (remaining.some((problem) => problem.startsWith('Die Zahlen'))) {
-    throw new AiError('Die KI hat Angaben ergänzt, die nicht in der Eingabe stehen. Bitte noch einmal versuchen oder selbst formulieren.', 422)
+/** Nachricht aus dem Akten-Beitrag: Eintrag plus Änderungen an der Akte. */
+export async function planFromMessage(input: ThreadPlanInput, user: CurrentUser): Promise<AiThreadPlan> {
+  if (!await isAiEnabled()) throw new AiError('Der KI-Assistent ist ausgeschaltet.', 403)
+  const text = input.text.trim()
+  if (!text) throw new AiError('Die Nachricht ist leer.')
+  if (text.length > maxInputLength('message')) throw new AiError(`Höchstens ${maxInputLength('message')} Zeichen.`)
+  checkRateLimit(user.id)
+
+  const investigation = await investigationContext(input.investigationId, user)
+  const family = investigation.dossierId ? await familyContext(investigation.dossierId) : null
+  const promptInput = {
+    kind: 'entry' as const, source: 'message' as const, keywords: text,
+    authorName: input.authorName, attachments: input.attachments, investigation: investigation.context, family,
   }
-  return retry
+  return generate(
+    [{ role: 'system', content: buildSystemPrompt('entry', 'message') }, { role: 'user', content: buildUserPrompt(promptInput) }],
+    parseThreadPlan,
+    (plan) => reviewSuggestion(
+      { title: [plan.title, plan.changes.title].filter(Boolean).join(' '), content: plan.content },
+      { keywords: text, context: contextText(promptInput) },
+    ),
+  )
 }

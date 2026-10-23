@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildSystemPrompt, buildUserPrompt, parseSuggestion, reviewSuggestion, MAX_KEYWORDS_LENGTH, MAX_MESSAGE_LENGTH } from '../src/lib/ai/ai-prompts'
+import { buildSystemPrompt, buildUserPrompt, parseSuggestion, parseThreadPlan, reviewSuggestion, MAX_KEYWORDS_LENGTH, MAX_MESSAGE_LENGTH } from '../src/lib/ai/ai-prompts'
 import { aiProposalMessage, AI_ACCEPT_PREFIX, AI_REJECT_PREFIX } from '../src/lib/ai/ai-discord'
+import { describeActions, hasChanges, NO_ACTIONS, splitName, type ProposalActions } from '../src/lib/ai/ai-proposal-actions'
 
 test('Systemprompt verbietet Erfindungen und Ausschmückung, verlangt JSON und behandelt Eingaben als Daten', () => {
   for (const kind of ['entry', 'investigation'] as const) {
@@ -79,4 +80,62 @@ test('Vorschlag in Discord ist knapp, hat Übernehmen und Verwerfen und pingt ni
   assert.ok(json.includes('<@42>'))
   assert.ok(json.includes('Fehlt: Ort'))
   assert.equal(message.components[0].components.filter((component) => component.type === 10).length, 1, 'ein einziger Textblock')
+})
+
+test('Thread-Prompt kennt alle Änderungen und nennt den Verfasser nur für „ich“', () => {
+  const system = buildSystemPrompt('entry', 'message')
+  for (const word of ['"status"', '"priority"', '"leadAgent"', '"addAssignees"', '"removeAssignees"', '"persons"', '"vehicles"', 'CLOSED', 'SUSPECT']) {
+    assert.ok(system.includes(word), word)
+  }
+  assert.match(system, /Erfinde nichts/)
+  const prompt = buildUserPrompt({ kind: 'entry', source: 'message', keywords: 'ich übernehme', authorName: 'Max Muster', attachments: { images: 2, videos: 0 } })
+  assert.ok(prompt.includes('Verfasser („ich“): Max Muster'))
+  assert.ok(prompt.includes('Anhänge: 2 Bilder, 0 Videos'))
+  assert.ok(!buildUserPrompt({ kind: 'entry', keywords: 'x', authorName: 'Max Muster' }).includes('Max Muster'), 'bei Stichwörtern kein Verfasser')
+})
+
+test('Thread-Antwort wird tolerant gelesen: unbekannte Werte werden zu null, leerer Eintrag ist erlaubt', () => {
+  const plan = parseThreadPlan(JSON.stringify({
+    title: '', content: '', kind: 'quatsch', missing: [],
+    changes: { status: 'closed', priority: 'SEHR HOCH', leadAgent: 'ich', addAssignees: ['Anna Beispiel', 3, ''], persons: [{ name: 'Diego Vasquez', role: 'suspect' }, { name: 'X', role: 'Boss' }, { role: 'WITNESS' }], vehicles: ['LS 1234'] },
+  }))
+  assert.equal(plan.content, '')
+  assert.equal(plan.kind, null)
+  assert.equal(plan.changes.status, 'CLOSED')
+  assert.equal(plan.changes.priority, null)
+  assert.equal(plan.changes.leadAgent, 'ich')
+  assert.deepEqual(plan.changes.addAssignees, ['Anna Beispiel'])
+  assert.deepEqual(plan.changes.persons, [{ name: 'Diego Vasquez', role: 'SUSPECT' }, { name: 'X', role: 'OTHER' }])
+  assert.deepEqual(plan.changes.vehicles, ['LS 1234'])
+  assert.deepEqual(parseThreadPlan('{"title":"T","content":"C"}').changes.persons, [], 'ohne changes')
+})
+
+test('Änderungen werden in der Vorschlagsnachricht aufgelistet', () => {
+  const actions = {
+    ...NO_ACTIONS,
+    status: { from: 'OPEN', to: 'CLOSED' },
+    leadAgent: { id: 'a1', name: 'Max Muster' },
+    addAssignees: [{ id: 'a2', name: 'Anna Beispiel' }],
+    persons: [{ personId: null, firstName: 'Diego', lastName: 'Vasquez', role: 'SUSPECT' }],
+    attachments: { images: 2, videos: 1 },
+    unresolved: ['Agent „Paul“'],
+  } satisfies ProposalActions
+  const lines = describeActions(actions).join('\n')
+  assert.match(lines, /Status: Offen → \*\*Abgeschlossen\*\*/)
+  assert.match(lines, /Fallführung: \*\*Max Muster\*\*/)
+  assert.match(lines, /Ermittler hinzu: Anna Beispiel/)
+  assert.match(lines, /Diego Vasquez \(Verdächtiger\) · neu im Register/)
+  assert.match(lines, /2 Bilder, 1 Video/)
+  assert.equal(hasChanges(actions), true)
+  assert.equal(hasChanges({ ...NO_ACTIONS, attachments: { images: 3, videos: 0 } }), false, 'Anhänge allein sind keine Aktenänderung')
+
+  const json = JSON.stringify(aiProposalMessage({ id: 'p', requesterDiscordId: '1', title: '', content: '', missing: [], actions }))
+  assert.ok(json.includes('Änderungen'))
+  assert.ok(json.includes('Nicht zugeordnet: Agent „Paul“'))
+})
+
+test('Namen werden in Vor- und Nachname zerlegt', () => {
+  assert.deepEqual(splitName('  Diego   Vasquez '), { firstName: 'Diego', lastName: 'Vasquez' })
+  assert.deepEqual(splitName('Anna Maria Beispiel'), { firstName: 'Anna Maria', lastName: 'Beispiel' })
+  assert.equal(splitName('Rosa'), null)
 })

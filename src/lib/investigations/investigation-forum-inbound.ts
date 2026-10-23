@@ -21,9 +21,9 @@ import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
  * Videos als Bodycam-Clips. Übernommen wird nur von Discord-Konten, die im
  * Dashboard Akten bearbeiten dürfen; die Nachricht bekommt ✅ bzw. ⛔.
  *
- * Ist die KI an, wird reiner Text nicht direkt übernommen: Der Bot antwortet
- * mit einem ausformulierten Vorschlag, den der Verfasser übernimmt oder
- * verwirft (siehe `ai-discord.ts`). Nachrichten mit Anhängen gehen weiter direkt.
+ * Ist die KI an, wird nichts direkt übernommen: Der Bot antwortet mit einem
+ * Vorschlag – Eintrag, Änderungen an der Akte, Anhänge –, den der Verfasser
+ * übernimmt oder verwirft (siehe `ai-discord.ts`).
  */
 
 type Attachment = { id: string; filename: string; url: string; size?: number; content_type?: string }
@@ -85,7 +85,7 @@ async function importImage(investigationId: string, message: ForumThreadMessage,
   }
 }
 
-async function importVideo(investigationId: string, entryId: string, attachment: Attachment, mimeType: string, uploadedById: string, title: string) {
+async function importVideo(investigationId: string, entryId: string | null, attachment: Attachment, mimeType: string, uploadedById: string, title: string) {
   if (!isDiscordImageUrl(attachment.url)) return false
   if (attachment.size && attachment.size > clipMaxBytes()) return false
   const extension = clipExtensionFor(mimeType)
@@ -117,7 +117,39 @@ async function importVideo(investigationId: string, entryId: string, attachment:
   }
 }
 
-function authorName(message: ForumThreadMessage) {
+/** Wie viele Anhänge als Bild bzw. Video übernommen würden. */
+export function countAttachments(message: Pick<ForumThreadMessage, 'attachments'>) {
+  const attachments = message.attachments ?? []
+  const images = attachments.filter((attachment) => IMAGE_FILE.test(attachment.filename)).length
+  const videos = attachments.filter((attachment) => !IMAGE_FILE.test(attachment.filename) && videoMimeType(attachment)).length
+  return { images, videos }
+}
+
+/** Bilder in den Bildkatalog der Akte, Videos als Bodycam-Clips (am Eintrag, falls es einen gibt). */
+export async function importMessageAttachments(investigationId: string, message: ForumThreadMessage, entryId: string | null, uploadedById: string) {
+  const text = message.content?.trim() ?? ''
+  let images = 0
+  let videos = 0
+  const failed: string[] = []
+  for (const attachment of message.attachments ?? []) {
+    const title = text ? `${text.slice(0, 120)} (${attachment.filename})` : attachment.filename
+    try {
+      if (IMAGE_FILE.test(attachment.filename)) {
+        if (await importImage(investigationId, message, attachment, uploadedById, title)) images++
+      } else {
+        const mimeType = videoMimeType(attachment)
+        if (mimeType && await importVideo(investigationId, entryId, attachment, mimeType, uploadedById, title)) videos++
+        else if (!mimeType) failed.push(attachment.filename)
+      }
+    } catch (error) {
+      console.error(`[ForumInbound] Anhang ${attachment.filename} nicht übernommen:`, error)
+      failed.push(attachment.filename)
+    }
+  }
+  return { images, videos, failed }
+}
+
+export function authorName(message: ForumThreadMessage) {
   return message.member?.nick || message.author?.global_name || message.author?.username || 'Discord'
 }
 
@@ -141,18 +173,17 @@ export async function importForumThreadMessage(message: ForumThreadMessage) {
   }
 
   const name = authorName(message)
-  if (text && attachments.length === 0) {
-    const { proposeThreadEntry } = await import('@/lib/ai/ai-discord')
-    const proposed = await proposeThreadEntry({
-      id: message.id,
-      channelId: message.channel_id,
-      text,
-      authorDiscordId: message.author!.id!,
-      authorName: name,
-      timestamp: new Date(message.timestamp ?? Date.now()),
-    }, investigation.id, user)
-    if (proposed) return
-  }
+  const { proposeThreadEntry } = await import('@/lib/ai/ai-discord')
+  const proposed = await proposeThreadEntry({
+    id: message.id,
+    channelId: message.channel_id,
+    text,
+    authorDiscordId: message.author!.id!,
+    authorName: name,
+    timestamp: new Date(message.timestamp ?? Date.now()),
+    attachments: countAttachments(message),
+  }, investigation.id, user)
+  if (proposed) return
 
   let entryId: string
   try {
@@ -175,24 +206,7 @@ export async function importForumThreadMessage(message: ForumThreadMessage) {
     throw error
   }
 
-  let images = 0
-  let videos = 0
-  const failed: string[] = []
-  for (const attachment of attachments) {
-    const title = text ? `${text.slice(0, 120)} (${attachment.filename})` : attachment.filename
-    try {
-      if (IMAGE_FILE.test(attachment.filename)) {
-        if (await importImage(investigation.id, message, attachment, user.id, title)) images++
-      } else {
-        const mimeType = videoMimeType(attachment)
-        if (mimeType && await importVideo(investigation.id, entryId, attachment, mimeType, user.id, title)) videos++
-        else if (!mimeType) failed.push(attachment.filename)
-      }
-    } catch (error) {
-      console.error(`[ForumInbound] Anhang ${attachment.filename} nicht übernommen:`, error)
-      failed.push(attachment.filename)
-    }
-  }
+  const { images, videos, failed } = await importMessageAttachments(investigation.id, message, entryId, user.id)
 
   await prisma.investigation.update({ where: { id: investigation.id }, data: { updatedAt: new Date() }, select: { id: true } })
   await createAuditLog({
@@ -223,6 +237,7 @@ export async function updateForumThreadMessage(message: ForumThreadMessage) {
       authorDiscordId: message.author.id,
       authorName: authorName(message),
       timestamp: new Date(message.timestamp ?? Date.now()),
+      attachments: countAttachments(message),
     })
     if (handled) return
   }

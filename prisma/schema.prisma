@@ -2963,7 +2963,10 @@ model AiProposal {
   /// PENDING, ACCEPTED oder REJECTED – bleibt stehen, damit dieselbe Nachricht nie zweimal vorgeschlagen wird.
   status             String        @default("PENDING") @db.VarChar(16)
   title              String        @db.VarChar(200)
+  /// Eintragstext; leer, wenn der Vorschlag nur die Akte ändert.
   content            String        @db.Text
+  /// Aufgelöste Änderungen an der Akte (siehe `ProposalActions` in `ai-actions.ts`).
+  actions            Json?
   /// Zeitpunkt der Ursprungsnachricht; wird zum Zeitpunkt des Eintrags.
   occurredAt         DateTime?
   decidedAt          DateTime?
