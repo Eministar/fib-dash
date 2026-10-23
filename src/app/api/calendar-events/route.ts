@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { queueDiscordHrEvent } from '@/lib/discord-integration'
-import { isTaskModule, taskModuleOrNull, requireCalendarModuleManage, requireCalendarModuleView } from '@/lib/module-permissions'
+import { createAuditLog } from '@/lib/audit/audit'
+import { queueDiscordHrEvent } from '@/lib/discord/discord-integration'
+import { isTaskModule, taskModuleOrNull, requireCalendarModuleManage, requireCalendarModuleView } from '@/lib/units/module-permissions'
 
 const EVENT_TYPES = new Set(['TRAINING', 'MEETING', 'ACADEMY', 'EXAM', 'HR_DEADLINE', 'SRU_TRAINING', 'SRU_OPERATION', 'AIR_SUPPORT_TRAINING', 'AIR_SUPPORT_OPERATION', 'OTHER'])
 type CalendarEventTypeValue = 'TRAINING' | 'MEETING' | 'ACADEMY' | 'EXAM' | 'HR_DEADLINE' | 'SRU_TRAINING' | 'SRU_OPERATION' | 'AIR_SUPPORT_TRAINING' | 'AIR_SUPPORT_OPERATION' | 'OTHER'

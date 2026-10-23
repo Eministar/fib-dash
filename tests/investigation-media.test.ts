@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { dossierSchema } from '../src/lib/dossiers-server'
-import { validateIdList } from '../src/lib/investigations'
-import { detectPhotoType, isDiscordImageUrl, photoPath } from '../src/lib/investigation-photos'
-import { activateChangeTracking, currentChangeTracking, withoutChangeTracking } from '../src/lib/change-history-context'
+import { dossierSchema } from '../src/lib/investigations/dossiers-server'
+import { validateIdList } from '../src/lib/investigations/investigations'
+import { detectPhotoType, isDiscordImageUrl, photoPath } from '../src/lib/investigations/investigation-photos'
+import { activateChangeTracking, currentChangeTracking, withoutChangeTracking } from '../src/lib/audit/change-history-context'
 
 test('Background jobs do not become part of a request undo snapshot', async () => {
   activateChangeTracking({ changeSetId: 'request', userId: 'user' })
@@ -65,4 +65,12 @@ test('ID-Listen für Kartenpunkte und Bilder werden entdoppelt und begrenzt', ()
   assert.throws(() => validateIdList([1]), /Liste/)
   assert.throws(() => validateIdList(['']), /Liste/)
   assert.throws(() => validateIdList(Array(201).fill('x')), /zu viele/i)
+})
+
+test('Familienakten brauchen keine Kategorie mehr und nehmen einen Fraktionsleiter an', () => {
+  const parsed = dossierSchema.parse({ title: 'Familie Vasquez', leaderId: 'person-1', address: 'Vinewood Hills 12' })
+  assert.equal(parsed.leaderId, 'person-1')
+  assert.equal(parsed.address, 'Vinewood Hills 12')
+  assert.equal(dossierSchema.parse({ title: 'A', leaderId: null }).leaderId, null)
+  assert.equal(dossierSchema.safeParse({ title: 'A', leaderId: '' }).success, false)
 })

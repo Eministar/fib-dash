@@ -14,7 +14,7 @@ import { InvestigationsNavigation } from '@/components/investigations/investigat
 import { useAuth } from '@/context/auth-context'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useFetch } from '@/hooks/use-fetch'
-import { isSearchable, type SearchHit } from '@/lib/global-search'
+import { isSearchable, type SearchHit } from '@/lib/core/global-search'
 import {
   GRAPH_NODE_KIND_LABELS,
   layoutGraph,
@@ -24,7 +24,7 @@ import {
   type GraphNodeKind,
   type LinkGraph,
   type Point,
-} from '@/lib/link-graph'
+} from '@/lib/investigations/link-graph'
 import { hasPermission } from '@/lib/permissions'
 
 const WIDTH = 1000

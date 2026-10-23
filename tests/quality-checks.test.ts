@@ -11,7 +11,7 @@ import {
   qcShareCovers,
   qcShareIsActive,
   suggestRating,
-} from '../src/lib/quality-checks'
+} from '../src/lib/lspd/quality-checks'
 import {
   qcCompleteSchema,
   qcEntrySchema,
@@ -20,9 +20,9 @@ import {
   qcReportSchema,
   qcCreateSchema,
   qcShareSchema,
-} from '../src/lib/quality-checks-schemas'
-import { lspdConfig } from '../src/lib/lspd-hr-client-config'
-import { readLspdSnapshot } from '../src/lib/lspd-officers'
+} from '../src/lib/lspd/quality-checks-schemas'
+import { lspdConfig } from '../src/lib/lspd/lspd-hr-client-config'
+import { readLspdSnapshot } from '../src/lib/lspd/lspd-officers'
 
 const entries = [
   { id: 'a', kind: 'POSITIVE', correctsId: null },
@@ -129,7 +129,7 @@ test('LSPD-Konfiguration und Momentaufnahmen', () => {
 })
 
 test('Beamtenliste: Gekündigte nur mit Kontrolle, Dienstnummer ohne interne Markierung', async () => {
-  const { buildOfficerDirectory } = await import('../src/lib/quality-checks')
+  const { buildOfficerDirectory } = await import('../src/lib/lspd/quality-checks')
   const officer = (id: string, status: string, badgeNumber: string) => ({
     id, firstName: 'Max', lastName: id, badgeNumber, discordId: null, status,
     rank: { name: 'Officer', color: '#fff', sortOrder: 1 }, units: [], hireDate: '2026-01-01T00:00:00.000Z',

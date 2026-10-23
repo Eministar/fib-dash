@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth'
 import { error, success, unauthorized, forbidden } from '@/lib/api-response'
-import { applyChangeHistory, ChangeHistoryConflictError } from '@/lib/change-history'
+import { applyChangeHistory, ChangeHistoryConflictError } from '@/lib/audit/change-history'
 
 export async function POST() {
   try {
@@ -21,7 +21,7 @@ export async function POST() {
 
 async function queueAffectedSyncs(models: string[]) {
   const set = new Set(models)
-  const discord = await import('@/lib/discord-integration')
+  const discord = await import('@/lib/discord/discord-integration')
   if ([
     'Agent', 'AgentTraining', 'Rank', 'Training', 'Tier', 'TierRank', 'Unit',
     'UserUnitAssignment', 'SystemSetting', 'RankChangeListEntry', 'PromotionLog', 'Termination',

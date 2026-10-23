@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { OrdnungOutline } from '@/components/ordnungen/ordnung-outline'
-import { buildSectionOutline, renderMarkdownDocument } from '@/lib/markdown'
+import { buildSectionOutline, renderMarkdownDocument } from '@/lib/core/markdown'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
 

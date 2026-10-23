@@ -3,9 +3,6 @@ import { z } from 'zod'
 export const AGENT_FLAG_VALUES = ['RED', 'ORANGE', 'YELLOW', 'BLUE', 'PURPLE'] as const
 export const AGENT_UNIT_VALUES = ['HR_LEITUNG', 'HR_TRAINEE', 'HR_OFFICER', 'ACADEMY', 'SRU', 'AIR_SUPPORT'] as const
 
-export type AgentFlagValue = (typeof AGENT_FLAG_VALUES)[number]
-export type AgentUnitValue = (typeof AGENT_UNIT_VALUES)[number]
-
 /** Discord Snowflake-Ziffernkette (ohne Bot; nur Speicher auf dem Agent). */
 export const discordIdSchema = z
   .union([z.string(), z.literal(''), z.null()])

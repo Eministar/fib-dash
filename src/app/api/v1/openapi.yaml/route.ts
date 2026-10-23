@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { buildOpenApiSpec } from '@/lib/openapi-spec'
+import { buildOpenApiSpec } from '@/lib/core/openapi-spec'
 
 /**
  * OpenAPI 3.1 als YAML. Wird zur Compile-Time aus dem JSON-Spec generiert.

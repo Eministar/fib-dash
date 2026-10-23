@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { requirePermission } from '@/lib/auth'
 import { success, error } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { routeError } from '@/lib/investigations-server'
+import { routeError } from '@/lib/investigations/investigations-server'
 
 export async function GET(req: Request) {
   try {

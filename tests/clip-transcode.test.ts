@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { transcodeClip, probeClip, runMediaTool, compressionOptions, validCompressedDuration, transcodeArgs, verificationArgs } from '../src/lib/clip-transcode'
+import { transcodeClip, probeClip, runMediaTool, compressionOptions, validCompressedDuration, transcodeArgs, verificationArgs } from '../src/lib/media/clip-transcode'
 
 test('Encoding and verification bound decoder, filter and output thread pools', () => {
   const options = { ...compressionOptions(), threads: 1 }
@@ -78,7 +78,7 @@ test('silent portrait video keeps its orientation; invalid input preserves sourc
 })
 
 test('Der Grund eines Fehlschlags landet im Datensatz, nicht nur im Log', async () => {
-  const { compressionFailureText } = await import('../src/lib/clip-compression')
+  const { compressionFailureText } = await import('../src/lib/media/clip-compression')
 
   // Der echte ffmpeg-Text muss durchkommen - vorher stand hier ein fester
   // Satz, und jeder Fehlschlag sah von aussen gleich aus.
@@ -107,7 +107,7 @@ test('Der Grund eines Fehlschlags landet im Datensatz, nicht nur im Log', async 
 })
 
 test('Der Encoder wird aus dem gewaehlt, was ffmpeg tatsaechlich kann', async () => {
-  const { pickCodec } = await import('../src/lib/clip-transcode')
+  const { pickCodec } = await import('../src/lib/media/clip-transcode')
 
   const alles = ' V..... libsvtav1  SVT-AV1\n V....D libvpx-vp9  VP9\n A....D libopus  Opus\n'
   const ohneAv1 = ' V....D libvpx-vp9  VP9\n A....D libopus  Opus\n'

@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
 
 import { forbidden, notFound } from '@/lib/api-response'
-import { bodycamAccess, canAccessBodycamClip } from '@/lib/bodycam-access'
-import { clipFileResponse } from '@/lib/clips'
+import { bodycamAccess, canAccessBodycamClip } from '@/lib/investigations/bodycam-access'
+import { clipFileResponse } from '@/lib/media/clips'
 import { prisma } from '@/lib/prisma'
-import { routeError } from '@/lib/investigations-server'
+import { routeError } from '@/lib/investigations/investigations-server'
 
 export const dynamic = 'force-dynamic'
 

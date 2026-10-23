@@ -4,17 +4,17 @@ import { prisma } from '@/lib/prisma'
 import { success, error, notFound } from '@/lib/api-response'
 import { getCurrentUser } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
-import { createAuditLog } from '@/lib/audit'
-import { normalizeLinkToken } from '@/lib/link-tokens'
-import { cleanContractLongText, cleanContractText, readContractFields, validateContractValues } from '@/lib/contracts'
+import { createAuditLog } from '@/lib/audit/audit'
+import { normalizeLinkToken } from '@/lib/core/link-tokens'
+import { cleanContractLongText, cleanContractText, readContractFields, validateContractValues } from '@/lib/contracts/contracts'
 import {
   deriveTransferStatus,
   loadTransferRequestByToken,
   serializeTransferRequest,
   transferRequestSelect,
   type TransferRequestRecord,
-} from '@/lib/transfer-request-service'
-import { SIGNATURE_ROLE_META, isSignatureRole, type SignatureRole } from '@/lib/transfer-requests'
+} from '@/lib/hr/transfer-request-service'
+import { SIGNATURE_ROLE_META, isSignatureRole, type SignatureRole } from '@/lib/hr/transfer-requests'
 
 function clientIp(req: NextRequest) {
   const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()

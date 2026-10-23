@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth'
 import { error, success, unauthorized, forbidden } from '@/lib/api-response'
-import { discardChangeSet } from '@/lib/change-history'
+import { discardChangeSet } from '@/lib/audit/change-history'
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

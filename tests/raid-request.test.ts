@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { emptyRaidRequest, raidDocument, raidReference } from '../src/lib/raid-request'
-import { raidRequestSchema, readRaidRequest } from '../src/lib/raid-request-schema'
-import { shareSchema } from '../src/lib/record-share-validation'
+import { emptyRaidRequest, raidDocument, raidReference } from '../src/lib/investigations/raid-request'
+import { raidRequestSchema, readRaidRequest } from '../src/lib/investigations/raid-request-schema'
+import { shareSchema } from '../src/lib/investigations/record-share-validation'
 
 const filled = () => ({
   ...emptyRaidRequest('Max Muster'),

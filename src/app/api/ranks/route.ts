@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 
 export async function GET() {
   try {

@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server'
 import { success, error, notFound } from '@/lib/api-response'
 import { getCurrentUser } from '@/lib/auth'
-import { normalizeLinkToken } from '@/lib/contracts'
+import { normalizeLinkToken } from '@/lib/contracts/contracts'
 import {
   loadContractLinkByToken,
   resolveSignatureAccess,
   serializeContractDocument,
   serializeParties,
-} from '@/lib/contract-links'
+} from '@/lib/contracts/contract-links'
 
 /**
  * Vertragslink.

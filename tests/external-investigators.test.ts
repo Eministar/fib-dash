@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { normalizePermissions, resolveEffectivePermissions } from '../src/lib/permissions'
-import { investigationVisibilityWhere } from '../src/lib/investigations'
+import { investigationVisibilityWhere } from '../src/lib/investigations/investigations'
 import type { CurrentUser } from '../src/lib/auth'
 
 test('Externer Ermittlungszugriff: Akten ansehen und bearbeiten', () => {

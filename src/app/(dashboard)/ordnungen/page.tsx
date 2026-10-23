@@ -7,11 +7,11 @@ import { PageHeader } from '@/components/layout/page-header'
 import { SearchInput } from '@/components/ui/filter-bar'
 import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
-import { ordnungIcon } from '@/lib/ordnungen-icons'
-import type { OrdnungenPayload } from '@/lib/ordnungen'
+import { ordnungIcon } from '@/lib/publications/ordnungen-icons'
+import type { OrdnungenPayload } from '@/lib/publications/ordnungen'
 import { OrdnungenManager, type OrdnungenManagerHandle } from '@/components/ordnungen/ordnungen-manager'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 function IconButton({ label, danger, onClick, children }: { label: string; danger?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

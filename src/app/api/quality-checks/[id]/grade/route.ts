@@ -4,8 +4,8 @@ import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import {
   qcGradeSchema,
-} from '@/lib/quality-checks-schemas'
-import { gradeQualityCheck, qcRouteError } from '@/lib/quality-checks-server'
+} from '@/lib/lspd/quality-checks-schemas'
+import { gradeQualityCheck, qcRouteError } from '@/lib/lspd/quality-checks-server'
 
 export const dynamic = 'force-dynamic'
 

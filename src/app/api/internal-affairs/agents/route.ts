@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { error, success, unauthorized } from '@/lib/api-response'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
 
 export const dynamic = 'force-dynamic'
 

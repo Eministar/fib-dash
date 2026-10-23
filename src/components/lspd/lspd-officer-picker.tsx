@@ -5,7 +5,7 @@ import { Search, ShieldUser, X } from 'lucide-react'
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useFetch } from '@/hooks/use-fetch'
-import { LSPD_ACTIVE_STATUSES, lspdOfficerName, lspdStatusLabel, type LspdOfficer } from '@/lib/lspd-officers'
+import { LSPD_ACTIVE_STATUSES, lspdOfficerName, lspdStatusLabel, type LspdOfficer } from '@/lib/lspd/lspd-officers'
 import { cn } from '@/lib/utils'
 
 /**

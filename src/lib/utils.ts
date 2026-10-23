@@ -77,17 +77,6 @@ export function getStatusDot(status: string): string {
   return colors[status] || 'bg-[#aaa]'
 }
 
-export function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    ACTIVE: 'text-[#111] dark:text-[#eee]',
-    AWAY: 'text-[#888]',
-    ON_LEAVE: 'text-[#888]',
-    INACTIVE: 'text-[#aaa]',
-    TERMINATED: 'text-[#aaa]',
-  }
-  return colors[status] || 'text-[#888]'
-}
-
 export function getUnitLabel(unit: string | null | undefined): string {
   if (!unit) return '—'
   const labels: Record<string, string> = {
@@ -141,18 +130,6 @@ export function getFlagColor(flag: string | null | undefined): string {
     PURPLE: '#a855f7',
   }
   return colors[flag] || 'transparent'
-}
-
-export function getFlagDotClass(flag: string | null | undefined): string {
-  const map: Record<string, string> = {
-    RED: 'bg-[#ef4444]',
-    ORANGE: 'bg-[#f97316]',
-    YELLOW: 'bg-[#facc15]',
-    BLUE: 'bg-[#38bdf8]',
-    PURPLE: 'bg-[#a855f7]',
-  }
-  if (!flag) return 'bg-transparent'
-  return map[flag] || 'bg-transparent'
 }
 
 export function getFlagRowClass(flag: string | null | undefined): string {

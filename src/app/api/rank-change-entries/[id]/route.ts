@@ -3,16 +3,16 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { error, success, unauthorized } from '@/lib/api-response'
 import { hasPermission } from '@/lib/permissions'
-import { summarizeRankChangeVotes } from '@/lib/rank-change-votes'
+import { summarizeRankChangeVotes } from '@/lib/agents/rank-change-votes'
 import {
   rankChangeEntryInclude,
   rankChangeSnapshot,
   snapshotJson,
   snapshotsEqual,
   validateRankChangeDesiredState,
-} from '@/lib/rank-change-entry'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
-import { storedDiscordAvatarUrl } from '@/lib/discord-auth'
+} from '@/lib/agents/rank-change-entry'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
+import { storedDiscordAvatarUrl } from '@/lib/core/discord-auth'
 
 const personSelect = {
   id: true,

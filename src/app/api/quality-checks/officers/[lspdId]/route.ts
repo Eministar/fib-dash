@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { linkedCorruptionFile, qcDetailInclude, qcRouteError } from '@/lib/quality-checks-server'
+import { linkedCorruptionFile, qcDetailInclude, qcRouteError } from '@/lib/lspd/quality-checks-server'
 
 export const dynamic = 'force-dynamic'
 

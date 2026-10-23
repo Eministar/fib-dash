@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { agentRecordInput, listAgentRecords } from '@/lib/agent-records'
+import { agentRecordInput, listAgentRecords } from '@/lib/agents/agent-records'
 
 function failure(e: unknown) {
   if (e instanceof z.ZodError) return error(e.issues[0]?.message ?? 'Ungültige Eingabe')

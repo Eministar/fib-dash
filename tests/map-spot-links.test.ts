@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { CurrentUser } from '../src/lib/auth'
-import { serializeSpot, visibleSpotInclude } from '../src/lib/map-server'
+import { serializeSpot, visibleSpotInclude } from '../src/lib/investigations/map-server'
 
 const baseUser: CurrentUser = {
   id: 'user-1',

@@ -2,11 +2,11 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
-import { canAccessInvestigation, investigationAccessInclude } from '@/lib/investigations'
-import { cleanText, routeError } from '@/lib/investigations-server'
-import { TEMPLATE_LIMITS, newChecklistItem, readChecklist } from '@/lib/investigation-templates'
+import { canAccessInvestigation, investigationAccessInclude } from '@/lib/investigations/investigations'
+import { cleanText, routeError } from '@/lib/investigations/investigations-server'
+import { TEMPLATE_LIMITS, newChecklistItem, readChecklist } from '@/lib/investigations/investigation-templates'
 
 export const dynamic = 'force-dynamic'
 

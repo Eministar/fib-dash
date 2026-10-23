@@ -12,7 +12,7 @@
 ## Bereitstellung
 
 1. Datenbank sichern.
-2. `npm run db:push` **oder** einmalig `prisma/patches/2026-10-01-notifications-custody.sql` anwenden (nur neue Tabellen, nicht beides).
+2. `npm run db:push` ausführen.
 3. `npm run build`, Server neu starten.
 
 Asservate, die vor dem Update erfasst wurden, haben keinen Kettenanfang. Ihre Kette beginnt mit dem ersten Ereignis nach dem Update.

@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import { Select, type SelectOption } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { useApi } from '@/hooks/use-api'
-import { DEFAULT_ALERT_SETTINGS } from '@/lib/storage-logs'
+import { DEFAULT_ALERT_SETTINGS } from '@/lib/storage-logs/storage-logs'
 
 const DEFAULT_ALERT_USER_ID = '928021462386892830'
 
@@ -41,7 +41,7 @@ function formFrom(settings: Record<string, string> | null): Form {
 /** Lagerlogs: Quell-Channel des Webhooks, Warn-Channel, wer gepingt wird und ab wann. */
 export function StorageLogSettings({ settings, channelOptions, onSaved }: {
   settings: Record<string, string> | null
-  channelOptions: { value: string; label: string }[]
+  channelOptions: SelectOption[]
   onSaved: () => void
 }) {
   const { execute, loading } = useApi()

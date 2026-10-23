@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server'
-import { error, success, unauthorized , forbidden } from '@/lib/api-response'
-import { runAgentStatusAutomation } from '@/lib/absence-status'
-import { syncDiscordAbsenceStatusMessage, syncDiscordDutyStatusMessage } from '@/lib/discord-integration'
-import { queueDiscordWebhookEvent } from '@/lib/discord-webhook'
-import { runSanctionSuspensionAutomation } from '@/lib/sanctions'
-import { runAuditLogCleanup } from '@/lib/audit-log-retention'
-import { syncProbationReminders } from '@/lib/notifications-server'
+import { error, success, unauthorized } from '@/lib/api-response'
+import { runAgentStatusAutomation } from '@/lib/agents/absence-status'
+import { syncDiscordAbsenceStatusMessage, syncDiscordDutyStatusMessage } from '@/lib/discord/discord-integration'
+import { queueDiscordWebhookEvent } from '@/lib/discord/discord-webhook'
+import { runSanctionSuspensionAutomation } from '@/lib/sanctions/sanctions'
+import { runAuditLogCleanup } from '@/lib/audit/audit-log-retention'
+import { syncProbationReminders } from '@/lib/core/notifications-server'
 
 export const runtime = 'nodejs'
 

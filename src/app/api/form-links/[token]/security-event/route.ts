@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { requirePortalAuth } from '@/lib/auth'
-import { cleanFormText } from '@/lib/form-tests'
-import { isFormTestSessionWriteConflict, recordFormTestSessionSecurityEvent } from '@/lib/form-test-sessions'
-import { findFormTestByToken } from '@/lib/form-links'
+import { cleanFormText } from '@/lib/hr/form-tests'
+import { isFormTestSessionWriteConflict, recordFormTestSessionSecurityEvent } from '@/lib/hr/form-test-sessions'
+import { findFormTestByToken } from '@/lib/hr/form-links'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {

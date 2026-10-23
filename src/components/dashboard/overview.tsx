@@ -1,6 +1,6 @@
 'use client'
 
-import { auditActionLabel, auditDetails } from '@/lib/audit-display'
+import { auditActionLabel, auditDetails } from '@/lib/audit/audit-display'
 import { DutyClockCard } from '@/components/duty/duty-clock-card'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
@@ -22,13 +22,13 @@ import { cn, formatDate, formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { AlertTriangle, ArrowRight, CalendarPlus, ChevronRight, Info, RefreshCw, Send } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission, type Permission } from '@/lib/permissions'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import { notifyLiveUpdate } from '@/lib/live-updates'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import { notifyLiveUpdate } from '@/lib/core/live-updates'
 import { RecentItemsCard } from '@/components/dashboard/recent-items-card'
 import { AgentOfMonthCard } from '@/components/dashboard/agent-of-month-card'
 import { LiveNumber } from '@/components/ui/live-number'
-import { checklistProgress } from '@/lib/investigation-templates'
-import { INVESTIGATION_STATUS_LABELS } from '@/lib/investigations'
+import { checklistProgress } from '@/lib/investigations/investigation-templates'
+import { INVESTIGATION_STATUS_LABELS } from '@/lib/investigations/investigations'
 
 interface RankSummary {
   name: string

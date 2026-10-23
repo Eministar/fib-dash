@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/auth'
-import { success , forbidden } from '@/lib/api-response'
+import { success } from '@/lib/api-response'
 
 export async function GET() {
   const user = await getCurrentUser()

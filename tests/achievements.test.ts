@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { computeAchievements, fullMonthsBetween } from '../src/lib/achievements'
-import { isMonthKey, monthKey, monthKeyLabel, monthWinners, shiftMonthKey, voteRejection } from '../src/lib/agent-of-month'
+import { computeAchievements, fullMonthsBetween } from '../src/lib/agents/achievements'
+import { isMonthKey, monthKey, monthKeyLabel, monthWinners, shiftMonthKey, voteRejection } from '../src/lib/agents/agent-of-month'
 
 const HOUR = 3_600_000
 const base = { hireDate: new Date(2026, 9, 3), totalDutyMs: 0, completedTrainings: 0, closedCasesLed: 0, agentOfMonthWins: [] }

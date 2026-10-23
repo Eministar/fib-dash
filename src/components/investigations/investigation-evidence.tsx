@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useState } from 'react'
 import { Boxes, Link2, MapPin, Package, Plus, Trash2 } from 'lucide-react'
@@ -18,7 +18,7 @@ import {
   EVIDENCE_KIND_LABELS,
   EVIDENCE_STATUS_LABELS,
   type EvidenceStatusKey,
-} from '@/lib/investigations'
+} from '@/lib/investigations/investigations'
 import { formatDateTime } from '@/lib/utils'
 import type { AgentLite, Evidence, InvestigationEntry } from '@/components/investigations/types'
 import { useConfirm } from '@/components/ui/confirm-dialog'

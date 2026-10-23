@@ -9,7 +9,7 @@ import {
   type InvestigationPersonRoleKey,
   type InvestigationPriorityKey,
   type InvestigationStatusKey,
-} from '@/lib/investigations'
+} from '@/lib/investigations/investigations'
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info'
 

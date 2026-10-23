@@ -3,8 +3,8 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, forbidden } from '@/lib/api-response'
-import { getApiTokensMaxPerUser } from '@/lib/settings-helpers'
-import { createAuditLog } from '@/lib/audit'
+import { getApiTokensMaxPerUser } from '@/lib/core/settings-helpers'
+import { createAuditLog } from '@/lib/audit/audit'
 
 const updateSchema = z.object({
   /**

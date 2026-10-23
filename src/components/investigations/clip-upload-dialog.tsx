@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { FileVideo, UploadCloud, X } from 'lucide-react'
@@ -18,7 +18,7 @@ import {
   formatRemaining,
   uploadInChunks,
   type UploadProgress,
-} from '@/lib/chunked-upload'
+} from '@/lib/media/chunked-upload'
 import type { AgentLite, BodycamClip, InvestigationEntry } from '@/components/investigations/types'
 
 const ACCEPTED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska']

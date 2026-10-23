@@ -13,7 +13,7 @@ import {
   qcBaseGrade,
   type QcEntryKind,
   type QcRating,
-} from '@/lib/quality-checks'
+} from '@/lib/lspd/quality-checks'
 import { cn, formatDateTime } from '@/lib/utils'
 
 export interface QcEntry {

@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 
 import { error, success } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { requirePermission } from '@/lib/auth'
-import { mapRouteError, serializeSpot, spotInclude, updateSpotSchema } from '@/lib/map-server'
+import { mapRouteError, serializeSpot, spotInclude, updateSpotSchema } from '@/lib/investigations/map-server'
 import { prisma } from '@/lib/prisma'
 
 type Context = { params: Promise<{ id: string }> }

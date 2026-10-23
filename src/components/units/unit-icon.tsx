@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { createElement } from 'react'
 
-import { sanitizeUnitIcon, type UnitIconKey } from '@/lib/unit-modules'
+import { sanitizeUnitIcon, type UnitIconKey } from '@/lib/units/unit-modules'
 
 const ICONS: Record<UnitIconKey, LucideIcon> = {
   briefcase: Briefcase,

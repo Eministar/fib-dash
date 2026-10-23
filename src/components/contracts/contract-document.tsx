@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { renderMarkdown } from '@/lib/markdown'
-import { formatContractDate, type ContractClause, type ContractStatusValue } from '@/lib/contracts'
+import { renderMarkdown } from '@/lib/core/markdown'
+import { formatContractDate, type ContractClause, type ContractStatusValue } from '@/lib/contracts/contracts'
 
 /** Eine Partei, die den Vertrag unterschreibt. */
 export interface ContractDocumentParty {

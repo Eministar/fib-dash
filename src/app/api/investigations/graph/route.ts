@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 
 import { error, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { routeError } from '@/lib/investigations-server'
-import { parseNodeKey } from '@/lib/link-graph'
-import { buildLinkGraph } from '@/lib/link-graph-server'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { parseNodeKey } from '@/lib/investigations/link-graph'
+import { buildLinkGraph } from '@/lib/investigations/link-graph-server'
 
 export const dynamic = 'force-dynamic'
 

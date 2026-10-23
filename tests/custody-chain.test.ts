@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { custodyHash, orderCustodyChain, type StoredCustodyEvent } from '../src/lib/custody-chain'
-import { currentHolder } from '../src/lib/custody'
+import { custodyHash, orderCustodyChain, type StoredCustodyEvent } from '../src/lib/investigations/custody-chain'
+import { currentHolder } from '../src/lib/investigations/custody'
 
 function chain(actions: { action: string; toHolder?: string; at: string }[]): StoredCustodyEvent[] {
   const events: StoredCustodyEvent[] = []

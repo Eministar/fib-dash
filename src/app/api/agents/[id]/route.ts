@@ -1,18 +1,18 @@
-import { getDutyMode } from '@/lib/duty-mode'
-import { detachTerminatedAgent } from '@/lib/terminated-memberships'
+import { getDutyMode } from '@/lib/duty/duty-mode'
+import { detachTerminatedAgent } from '@/lib/agents/terminated-memberships'
 import { NextRequest } from 'next/server'
-import { releaseTerminatedCodename, codenameTransaction } from '@/lib/codenames'
-import { queueCodenameBoardUpdate } from '@/lib/discord-integration'
+import { releaseTerminatedCodename, codenameTransaction } from '@/lib/codenames/codenames'
+import { queueCodenameBoardUpdate } from '@/lib/discord/discord-integration'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { updateAgentSchema } from '@/lib/validations/agent'
-import { createAuditLog } from '@/lib/audit'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { createAuditLog } from '@/lib/audit/audit'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import { hasPermission } from '@/lib/permissions'
-import { normalizeUnitKeys, agentUnitKeys } from '@/lib/agent-units'
-import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, hasAgentWriteAccess, unitLeadershipChangeError } from '@/lib/unit-leadership'
-import { findBadgeNumberConflict, releaseTerminatedBadgeNumber, releaseTerminatedBadgeNumberConflicts } from '@/lib/badge-blacklist'
+import { normalizeUnitKeys, agentUnitKeys } from '@/lib/agents/agent-units'
+import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, hasAgentWriteAccess, unitLeadershipChangeError } from '@/lib/units/unit-leadership'
+import { findBadgeNumberConflict, releaseTerminatedBadgeNumber, releaseTerminatedBadgeNumberConflicts } from '@/lib/agents/badge-blacklist'
 import {
   collectUsedBadgeInts,
   findNextFreeBadgeFrom,
@@ -22,16 +22,16 @@ import {
   parseBadgeNumberToInt,
   rankHasBadgeRange,
   stripTerminatedBadgeNumber,
-} from '@/lib/badge-number'
-import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/settings-helpers'
-import { canCheckDiscordGuildMembers, getDiscordGuildMember, queueDiscordHrEvent, queueAgentRoleSync, syncFormerAgentDiscordMember, syncAgentDiscordRoles } from '@/lib/discord-integration'
-import { getAgentDutyTime, getAgentPlaytimeReport } from '@/lib/duty-times'
-import { syncAgentPlayerPlaytime } from '@/lib/player-online'
-import { getAgentAbsenceReport, runAgentStatusAutomation } from '@/lib/absence-status'
-import { runSanctionSuspensionAutomation } from '@/lib/sanctions'
-import { withAgentTrainingRows } from '@/lib/agent-trainings'
-import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+} from '@/lib/agents/badge-number'
+import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/core/settings-helpers'
+import { canCheckDiscordGuildMembers, getDiscordGuildMember, queueDiscordHrEvent, queueAgentRoleSync, syncFormerAgentDiscordMember, syncAgentDiscordRoles } from '@/lib/discord/discord-integration'
+import { getAgentDutyTime, getAgentPlaytimeReport } from '@/lib/duty/duty-times'
+import { syncAgentPlayerPlaytime } from '@/lib/duty/player-online'
+import { getAgentAbsenceReport, runAgentStatusAutomation } from '@/lib/agents/absence-status'
+import { runSanctionSuspensionAutomation } from '@/lib/sanctions/sanctions'
+import { withAgentTrainingRows } from '@/lib/agents/agent-trainings'
+import { syncLinkedUserDisplayNameForAgent } from '@/lib/agents/user-display-name'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
 
 function validDiscordId(value: string | null | undefined) {
   const id = value?.trim()

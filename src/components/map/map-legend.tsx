@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 
-import { MAP_CATEGORIES, type MapSpot } from '@/lib/map-spots'
+import { MAP_CATEGORIES, type MapSpot } from '@/lib/investigations/map-spots'
 
 export function MapLegend({ spots }: { spots: MapSpot[] }) {
   const counts = useMemo(() => {

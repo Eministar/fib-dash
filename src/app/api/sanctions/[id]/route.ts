@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { hasAnyPermission } from '@/lib/permissions'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { error, notFound, success, unauthorized } from '@/lib/api-response'
-import { checkSanctionAuthority } from '@/lib/sanction-authority'
-import { assessRepeat } from '@/lib/sanction-repeat'
+import { checkSanctionAuthority } from '@/lib/sanctions/sanction-authority'
+import { assessRepeat } from '@/lib/sanctions/sanction-repeat'
 import {
   cleanSanctionText,
   deleteSanctionDiscordMessage,
@@ -25,7 +25,7 @@ import {
   sanctionStatusLabel,
   suspendedUntilFromHours,
   syncSanctionDiscordMessage,
-} from '@/lib/sanctions'
+} from '@/lib/sanctions/sanctions'
 
 type RouteContext = { params: Promise<{ id: string }> }
 

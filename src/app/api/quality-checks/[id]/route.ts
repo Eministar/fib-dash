@@ -5,8 +5,8 @@ import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
   qcCompleteSchema,
-} from '@/lib/quality-checks-schemas'
-import { completeQualityCheck, qcDetailInclude, qcRouteError } from '@/lib/quality-checks-server'
+} from '@/lib/lspd/quality-checks-schemas'
+import { completeQualityCheck, qcDetailInclude, qcRouteError } from '@/lib/lspd/quality-checks-server'
 
 export const dynamic = 'force-dynamic'
 

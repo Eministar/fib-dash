@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isTaskModule, requireTaskModuleManage, requireTaskModuleView } from '@/lib/module-permissions'
+import { isTaskModule, requireTaskModuleManage, requireTaskModuleView } from '@/lib/units/module-permissions'
 import { success, error, unauthorized } from '@/lib/api-response'
 
 const taskListInclude = {

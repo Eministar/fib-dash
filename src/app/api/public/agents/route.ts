@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { success } from '@/lib/api-response'
-import { agentUnitKeys } from '@/lib/agent-units'
+import { agentUnitKeys } from '@/lib/agents/agent-units'
 
 export async function GET() {
   const [agents, units] = await Promise.all([

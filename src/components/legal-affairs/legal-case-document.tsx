@@ -1,15 +1,15 @@
 'use client'
 
 import { useMemo } from 'react'
-import { renderMarkdown } from '@/lib/markdown'
-import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
+import { renderMarkdown } from '@/lib/core/markdown'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanctions/sanction-catalog'
 import {
   CONTRACT_CLAUSE_6_BODY,
   CONTRACT_CLAUSE_6_TITLE,
   type LegalCaseKindValue,
   type LegalCaseStatusValue,
   type LegalCaseSanctionSnapshot,
-} from '@/lib/legal-cases'
+} from '@/lib/publications/legal-cases'
 
 export interface LegalCaseAccused {
   name: string | null

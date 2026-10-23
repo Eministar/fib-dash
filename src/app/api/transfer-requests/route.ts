@@ -2,15 +2,15 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { cleanContractText } from '@/lib/contracts'
+import { createAuditLog } from '@/lib/audit/audit'
+import { cleanContractText } from '@/lib/contracts/contracts'
 import { resolveBaseUrl, transferRequestUrl } from '@/lib/site'
 import {
   createTransferRequest,
   deriveTransferStatus,
   transferRequestSelect,
   transferSignatures,
-} from '@/lib/transfer-request-service'
+} from '@/lib/hr/transfer-request-service'
 
 function toListRow(request: Awaited<ReturnType<typeof createTransferRequest>>, baseUrl: string) {
   return {

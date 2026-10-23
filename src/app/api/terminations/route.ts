@@ -1,13 +1,13 @@
-import { detachTerminatedAgent } from '@/lib/terminated-memberships'
+import { detachTerminatedAgent } from '@/lib/agents/terminated-memberships'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { queueDiscordHrEvent, queueAgentRoleSync } from '@/lib/discord-integration'
-import { releaseTerminatedBadgeNumber } from '@/lib/badge-blacklist'
-import { releaseTerminatedCodename, codenameTransaction } from '@/lib/codenames'
-import { queueCodenameBoardUpdate } from '@/lib/discord-integration'
+import { createAuditLog } from '@/lib/audit/audit'
+import { queueDiscordHrEvent, queueAgentRoleSync } from '@/lib/discord/discord-integration'
+import { releaseTerminatedBadgeNumber } from '@/lib/agents/badge-blacklist'
+import { releaseTerminatedCodename, codenameTransaction } from '@/lib/codenames/codenames'
+import { queueCodenameBoardUpdate } from '@/lib/discord/discord-integration'
 
 export async function GET() {
   try {

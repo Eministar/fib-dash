@@ -3,16 +3,16 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { getFileUploadMaxBytes } from '@/lib/settings-helpers'
+import { createAuditLog } from '@/lib/audit/audit'
+import { getFileUploadMaxBytes } from '@/lib/core/settings-helpers'
 import {
   FileUploadError,
   deleteStoredFile,
   metaFromFormData,
   storeUploadedFile,
-} from '@/lib/file-uploads'
-import { authenticateUploadKey, extractUploadKey, recordUploadKeyUsage } from '@/lib/upload-keys'
-import { fileUploadRouteError, fileUploadSelect, serializeUpload, uploadListWhere } from '@/lib/file-upload-queries'
+} from '@/lib/media/file-uploads'
+import { authenticateUploadKey, extractUploadKey, recordUploadKeyUsage } from '@/lib/media/upload-keys'
+import { fileUploadRouteError, fileUploadSelect, serializeUpload, uploadListWhere } from '@/lib/media/file-upload-queries'
 
 export const dynamic = 'force-dynamic'
 

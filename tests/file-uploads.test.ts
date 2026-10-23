@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { contentMatchesType, FileUploadError, fileUploadPath, metaFromFormData } from '../src/lib/file-uploads'
-import { extractUploadKey, generateUploadKey, hashUploadKey, UPLOAD_KEY_PREFIX } from '../src/lib/upload-keys'
-import { normalizeUploadMime, previewKind } from '../src/lib/file-upload-types'
-import { uploadListWhere } from '../src/lib/file-upload-queries'
+import { contentMatchesType, FileUploadError, fileUploadPath, metaFromFormData } from '../src/lib/media/file-uploads'
+import { extractUploadKey, generateUploadKey, hashUploadKey, UPLOAD_KEY_PREFIX } from '../src/lib/media/upload-keys'
+import { normalizeUploadMime, previewKind } from '../src/lib/media/file-upload-types'
+import { uploadListWhere } from '../src/lib/media/file-upload-queries'
 
 test('Ein erzeugter Schlüssel ist lang, trägt das Präfix und wird nur als Hash gespeichert', () => {
   const key = generateUploadKey()

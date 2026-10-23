@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useMemo, useState } from 'react'
 import { Video } from 'lucide-react'

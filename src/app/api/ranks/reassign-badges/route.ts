@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { formatBadgeNumber, parseBadgeNumberToInt, rankHasBadgeRange } from '@/lib/badge-number'
-import { getBlacklistedBadgeRows } from '@/lib/badge-blacklist'
-import { getBadgePrefix } from '@/lib/settings-helpers'
-import { queueAgentRoleSync } from '@/lib/discord-integration'
-import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
+import { createAuditLog } from '@/lib/audit/audit'
+import { formatBadgeNumber, parseBadgeNumberToInt, rankHasBadgeRange } from '@/lib/agents/badge-number'
+import { getBlacklistedBadgeRows } from '@/lib/agents/badge-blacklist'
+import { getBadgePrefix } from '@/lib/core/settings-helpers'
+import { queueAgentRoleSync } from '@/lib/discord/discord-integration'
+import { syncLinkedUserDisplayNameForAgent } from '@/lib/agents/user-display-name'
 
 type PlannedBadgeChange = {
   agentId: string

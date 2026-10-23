@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma'
-import { resolveShare, shareError, publicShareHeaders, ShareError } from '@/lib/record-shares'
-import { expandSharedItems, sharedHeading, sharedPhotos, requireSharedSelection } from '@/lib/shared-records-public'
-import { clipFileResponse } from '@/lib/clips'
-import { investigationPhotoResponse } from '@/lib/investigation-photos'
+import { resolveShare, shareError, publicShareHeaders, ShareError } from '@/lib/investigations/record-shares'
+import { expandSharedItems, sharedHeading, sharedPhotos, requireSharedSelection } from '@/lib/investigations/shared-records-public'
+import { clipFileResponse } from '@/lib/media/clips'
+import { investigationPhotoResponse } from '@/lib/investigations/investigation-photos'
 export async function GET(req: Request, { params }: { params: Promise<{ token: string; kind: string; recordId: string }> }) {
   try {
     const { token, kind, recordId } = await params

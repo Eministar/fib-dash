@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -13,7 +13,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useFetch } from '@/hooks/use-fetch'
 import { useInvestigationMutation } from '@/components/investigations/use-investigation-mutation'
-import { custodyActionLabel, type CustodyEventDto, type CustodyReport } from '@/lib/custody'
+import { custodyActionLabel, type CustodyEventDto, type CustodyReport } from '@/lib/investigations/custody'
 import { cn, formatDateTime } from '@/lib/utils'
 import type { AgentLite } from '@/components/investigations/types'
 

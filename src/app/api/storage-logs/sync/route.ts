@@ -1,6 +1,6 @@
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { relinkUnassignedStorageEntries, syncStorageLogChannel, storageRouteError } from '@/lib/storage-logs-server'
+import { relinkUnassignedStorageEntries, syncStorageLogChannel, storageRouteError } from '@/lib/storage-logs/storage-logs-server'
 
 export const dynamic = 'force-dynamic'
 

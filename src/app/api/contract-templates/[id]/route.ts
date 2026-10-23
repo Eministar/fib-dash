@@ -3,13 +3,13 @@ import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import {
   cleanContractLongText,
   cleanContractText,
   sanitizeContractClauses,
   sanitizeContractFields,
-} from '@/lib/contracts'
+} from '@/lib/contracts/contracts'
 
 const templateInclude = {
   createdBy: { select: { id: true, displayName: true } },

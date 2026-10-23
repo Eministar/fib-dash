@@ -2,13 +2,13 @@ import { NextRequest } from 'next/server'
 import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { success, error, notFound } from '@/lib/api-response'
-import { normalizeLinkToken } from '@/lib/link-tokens'
-import { readContractFields, readContractValues } from '@/lib/contracts'
+import { normalizeLinkToken } from '@/lib/core/link-tokens'
+import { readContractFields, readContractValues } from '@/lib/contracts/contracts'
 import {
   loadTransferRequestByToken,
   serializeTransferRequest,
   transferRequestSelect,
-} from '@/lib/transfer-request-service'
+} from '@/lib/hr/transfer-request-service'
 
 /**
  * Antragsfelder speichern. Bewusst ohne Anmeldung: den Antrag füllt der Beamte

@@ -16,9 +16,9 @@ import { useApi } from '@/hooks/use-api'
 import { cn, formatDate } from '@/lib/utils'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 interface Agent {
   id: string

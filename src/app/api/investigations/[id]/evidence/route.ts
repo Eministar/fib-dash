@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
@@ -10,15 +10,15 @@ import {
   investigationAccessInclude,
   isEvidenceKind,
   isEvidenceStatus,
-} from '@/lib/investigations'
+} from '@/lib/investigations/investigations'
 import {
   cleanText,
   nextEvidenceNumber,
   parseDate,
   parseQuantity,
   routeError,
-} from '@/lib/investigations-server'
-import { appendCustodyEvent } from '@/lib/custody-server'
+} from '@/lib/investigations/investigations-server'
+import { appendCustodyEvent } from '@/lib/investigations/custody-server'
 
 export const dynamic = 'force-dynamic'
 

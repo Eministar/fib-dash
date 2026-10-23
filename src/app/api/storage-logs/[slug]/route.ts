@@ -1,6 +1,6 @@
 import { notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { storageEntryWithContext, storageRouteError } from '@/lib/storage-logs-server'
+import { storageEntryWithContext, storageRouteError } from '@/lib/storage-logs/storage-logs-server'
 
 export const dynamic = 'force-dynamic'
 

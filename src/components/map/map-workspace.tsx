@@ -12,7 +12,7 @@ import { useAuth } from '@/context/auth-context'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { hasPermission } from '@/lib/permissions'
-import type { MapSpot } from '@/lib/map-spots'
+import type { MapSpot } from '@/lib/investigations/map-spots'
 import { CityMap, type CityMapHandle } from '@/components/map/city-map'
 import { MapLegend } from '@/components/map/map-legend'
 import { SpotDetailDialog } from '@/components/map/spot-detail-dialog'
@@ -220,7 +220,7 @@ export function MapWorkspace() {
 
       {spots.length === 0 && !loading && dossierId && (
         <p className="mt-3 text-[12px] text-[#8e8e93]">
-          Diese Dauerakte hat keine Kartenpunkte.{' '}
+          Diese Familienakte hat keine Kartenpunkte.{' '}
           <button type="button" className="text-[#c4b5fd] hover:underline" onClick={() => setDossierId(null)}>
             Filter lösen
           </button>

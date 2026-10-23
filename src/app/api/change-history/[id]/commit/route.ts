@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth'
 import { error, success, unauthorized, forbidden } from '@/lib/api-response'
-import { commitChangeSet } from '@/lib/change-history'
+import { commitChangeSet } from '@/lib/audit/change-history'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

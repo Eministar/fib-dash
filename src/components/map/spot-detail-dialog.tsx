@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Textarea } from '@/components/ui/textarea'
 import { useApi } from '@/hooks/use-api'
-import { MAP_SPOT_LIMITS, mapCategory, type MapSpot } from '@/lib/map-spots'
+import { MAP_SPOT_LIMITS, mapCategory, type MapSpot } from '@/lib/investigations/map-spots'
 import { formatDateTime } from '@/lib/utils'
 
 function localDateTimeValue(date = new Date()) {

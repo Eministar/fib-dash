@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { getCommitHistory } from '@/lib/release-history'
+import { getCommitHistory } from '@/lib/core/release-history'
 
 export const dynamic = 'force-dynamic'
 

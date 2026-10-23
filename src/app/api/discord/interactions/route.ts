@@ -1,17 +1,17 @@
-import { detachTerminatedAgent } from '@/lib/terminated-memberships'
+import { detachTerminatedAgent } from '@/lib/agents/terminated-memberships'
 import { NextRequest, NextResponse, after } from 'next/server'
 import crypto from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { getUserByDiscordId } from '@/lib/auth'
-import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/settings-helpers'
+import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/core/settings-helpers'
 import {
   findBadgeNumberConflict,
   getBlacklistedBadgeRows,
   releaseTerminatedBadgeNumber,
   releaseTerminatedBadgeNumberConflicts,
-} from '@/lib/badge-blacklist'
-import { nextBadgeForRank, normalizeBadgeNumber, rankHasBadgeRange } from '@/lib/badge-number'
-import { normalizeUnitKeys } from '@/lib/agent-units'
+} from '@/lib/agents/badge-blacklist'
+import { nextBadgeForRank, normalizeBadgeNumber, rankHasBadgeRange } from '@/lib/agents/badge-number'
+import { normalizeUnitKeys } from '@/lib/agents/agent-units'
 import {
   getDiscordApplicationId,
   DUTY_GAME_CLOCK_IN_PREFIX,
@@ -21,15 +21,15 @@ import {
   queueDiscordHrEvent,
   queueAgentRoleSync,
   resolveDutyActivityCheck,
-} from '@/lib/discord-integration'
-import { clockIn, clockOut, confirmDutyActivity, DutyClockError, findAgentForDiscord } from '@/lib/manual-duty'
-import { cancelAbsenceNotice, createAbsenceNotice, formatAbsenceDate, parseAbsenceDate } from '@/lib/absence-status'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
-import { queueDiscordWebhookEvent } from '@/lib/discord-webhook'
-import { DISCORD_COMMANDS } from '@/lib/discord-commands'
-import { eligibleTrainingsForRank, isTrainingAvailableForRank } from '@/lib/agent-trainings'
-import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
-import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/unit-leadership'
+} from '@/lib/discord/discord-integration'
+import { clockIn, clockOut, confirmDutyActivity, DutyClockError, findAgentForDiscord } from '@/lib/duty/manual-duty'
+import { cancelAbsenceNotice, createAbsenceNotice, formatAbsenceDate, parseAbsenceDate } from '@/lib/agents/absence-status'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
+import { queueDiscordWebhookEvent } from '@/lib/discord/discord-webhook'
+import { DISCORD_COMMANDS } from '@/lib/discord/discord-commands'
+import { eligibleTrainingsForRank, isTrainingAvailableForRank } from '@/lib/agents/agent-trainings'
+import { syncLinkedUserDisplayNameForAgent } from '@/lib/agents/user-display-name'
+import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/units/unit-leadership'
 
 export const runtime = 'nodejs'
 

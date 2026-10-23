@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { readFileSync } from 'node:fs'
 import type { Prisma } from '../src/generated/prisma'
-import { assignCodenameInTransaction, closeCodenameAssignment, releaseTerminatedCodename } from '../src/lib/codenames'
-import { codenameBoardPages, reconcileCodenameMessages } from '../src/lib/codename-board'
-import { assignCodenameSchema, codenameQuerySchema, createCodenameSchema, releaseCodenameSchema } from '../src/lib/codename-validation'
+import { assignCodenameInTransaction, closeCodenameAssignment, releaseTerminatedCodename } from '../src/lib/codenames/codenames'
+import { codenameBoardPages, reconcileCodenameMessages } from '../src/lib/codenames/codename-board'
+import { assignCodenameSchema, codenameQuerySchema, createCodenameSchema, releaseCodenameSchema } from '../src/lib/codenames/codename-validation'
 import { normalizePermissions } from '../src/lib/permissions'
 
 // Small transaction double: tests execute the production transition functions.
@@ -104,9 +104,22 @@ test('board renders 0, 30, 31 and 91 holders without dropping entries', () => {
     const rows = Array.from({ length: count }, (_, n) => ({ name: `Alias-${n}`, currentAgent: { firstName: 'Sam', lastName: 'Reyes', badgeNumber: `FIB-${n}` } }))
     const pages = codenameBoardPages(rows, 'Agent')
     assert.equal(pages.length, Math.max(1, Math.ceil(count / 30)))
-    for (const row of rows) assert.ok(pages.join('\n').includes(`Agent ${row.name}  |`))
+    for (const row of rows) assert.ok(pages.join('\n').includes(`Agent ${row.name} `))
     for (const page of pages) assert.ok(page.length < 4000)
   }
+})
+
+test('board pads columns to one width across all pages', () => {
+  const rows = [
+    { name: 'Ghost', currentAgent: { firstName: 'Sam', lastName: 'Reyes', badgeNumber: '12' } },
+    { name: 'Nightingale', currentAgent: { firstName: 'Alex', lastName: 'Kim', badgeNumber: '345' } },
+  ]
+  const [page] = codenameBoardPages(rows, '')
+  const lines = page.split('\n').filter(line => line.includes(' | '))
+  assert.equal(lines.length, 3)
+  assert.equal(new Set(lines.map(line => line.indexOf(' | '))).size, 1)
+  assert.equal(new Set(lines.map(line => line.lastIndexOf(' | '))).size, 1)
+  assert.equal(codenameBoardPages([], '')[0], 'Derzeit sind keine Decknamen vergeben.')
 })
 
 test('long board rows split by character budget and cannot break code blocks', () => {
@@ -114,7 +127,7 @@ test('long board rows split by character budget and cannot break code blocks', (
   const pages = codenameBoardPages(rows, 'P'.repeat(40))
   assert.ok(pages.length > 1)
   for (const page of pages) { assert.ok(page.length < 4000); assert.equal(page.match(/```/g)?.length, 2) }
-  assert.equal(pages.join('\n').match(/  \|  /g)?.length, 60)
+  assert.equal(pages.join('\n').split('\n').filter(line => line.startsWith('P')).length, 30)
 })
 
 test('input validation rejects coerced booleans, invalid pagination and unsafe names', () => {

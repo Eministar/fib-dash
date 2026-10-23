@@ -1,9 +1,9 @@
 import { requireAuth } from '@/lib/auth'
 import { success, notFound, error } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { officialEditSchema, parseOfficialNumber } from '@/lib/corruption-validation'
-import { corruptionError, resolveOfficial } from '@/lib/corruption-server'
-import { editOfficial } from '@/lib/corruption-edits'
+import { officialEditSchema, parseOfficialNumber } from '@/lib/lspd/corruption-validation'
+import { corruptionError, resolveOfficial } from '@/lib/lspd/corruption-server'
+import { editOfficial } from '@/lib/lspd/corruption-edits'
 
 type Context = { params: Promise<{ id: string }> }
 

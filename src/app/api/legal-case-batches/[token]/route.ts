@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
 import { success, error, notFound } from '@/lib/api-response'
-import { normalizeLinkToken } from '@/lib/link-tokens'
+import { normalizeLinkToken } from '@/lib/core/link-tokens'
 import {
   loadLegalCaseBatchByToken,
   serializeLegalCaseBatch,
-} from '@/lib/legal-case-service'
+} from '@/lib/publications/legal-case-service'
 
 /**
  * Geteilter Sammelklage-Link: Übersicht aller enthaltenen Klageschriften.

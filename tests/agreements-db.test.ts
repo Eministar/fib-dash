@@ -20,8 +20,8 @@ import {
   signParty,
   updateAgreement,
   updateTemplate,
-} from '../src/lib/agreement-service'
-import type { AgreementInput } from '../src/lib/agreements'
+} from '../src/lib/contracts/agreement-service'
+import type { AgreementInput } from '../src/lib/contracts/agreements'
 
 const created: string[] = []
 const templates: string[] = []

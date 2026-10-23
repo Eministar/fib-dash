@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { summarizeAgentContracts } from '@/lib/contract-service'
+import { summarizeAgentContracts } from '@/lib/contracts/contract-service'
 
 /**
  * Alle aktiven Mitarbeiter ohne unterschriebenen Arbeitsvertrag.

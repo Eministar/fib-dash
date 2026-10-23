@@ -10,7 +10,7 @@ import {
   parseStorageEmbed,
   snowflakeAt,
   storageSlug,
-} from '../src/lib/storage-logs'
+} from '../src/lib/storage-logs/storage-logs'
 
 test('liest die echten Fraklager-Embeds', () => {
   assert.deepEqual(parseStorageEmbed({ title: 'Eingelagert', description: 'Niklas Dior hat 1x WEAPON_PISTOL50 in Lager eingelagert.' }), {
@@ -90,7 +90,7 @@ test('Auffälligkeit: Menge im Zeitfenster zählt, alte Einträge nicht', () => 
 })
 
 test('Warnung pingt genau die eingestellte Person und verlinkt die Einträge', async () => {
-  const { storageAlertMessage } = await import('../src/lib/storage-logs')
+  const { storageAlertMessage } = await import('../src/lib/storage-logs/storage-logs')
   const message = storageAlertMessage({
     userId: '928021462386892830', actorName: 'Niklas Dior', agentLabel: 'Niklas Dior (FIB-12)',
     weaponCount: 6, itemCount: 6, windowMinutes: 15, reasons: ['weapons'], alertSlug: 'WARN-ABCDEF',

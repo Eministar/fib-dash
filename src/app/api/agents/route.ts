@@ -3,14 +3,14 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { createAgentSchema } from '@/lib/validations/agent'
-import { createAuditLog } from '@/lib/audit'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
-import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/settings-helpers'
-import { nextBadgeForRank, normalizeBadgeNumber } from '@/lib/badge-number'
-import { findBadgeNumberConflict, getBlacklistedBadgeRows, releaseTerminatedBadgeNumberConflicts } from '@/lib/badge-blacklist'
-import { normalizeUnitKeys } from '@/lib/agent-units'
-import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/unit-leadership'
-import { eligibleTrainingsForRank, withAgentTrainingRows } from '@/lib/agent-trainings'
+import { createAuditLog } from '@/lib/audit/audit'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
+import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/core/settings-helpers'
+import { nextBadgeForRank, normalizeBadgeNumber } from '@/lib/agents/badge-number'
+import { findBadgeNumberConflict, getBlacklistedBadgeRows, releaseTerminatedBadgeNumberConflicts } from '@/lib/agents/badge-blacklist'
+import { normalizeUnitKeys } from '@/lib/agents/agent-units'
+import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/units/unit-leadership'
+import { eligibleTrainingsForRank, withAgentTrainingRows } from '@/lib/agents/agent-trainings'
 import {
   canCheckDiscordGuildMembers,
   getCachedDiscordGuildMembers,
@@ -18,12 +18,12 @@ import {
   queueDiscordHrEvent,
   queueAgentRoleSync,
   refreshDiscordGuildMembers,
-} from '@/lib/discord-integration'
-import { runAgentStatusAutomation } from '@/lib/absence-status'
-import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
-import { queueContractForNewAgent } from '@/lib/contract-service'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
-import { agentMatchScore, matchesAgent } from '@/lib/search-match'
+} from '@/lib/discord/discord-integration'
+import { runAgentStatusAutomation } from '@/lib/agents/absence-status'
+import { syncLinkedUserDisplayNameForAgent } from '@/lib/agents/user-display-name'
+import { queueContractForNewAgent } from '@/lib/contracts/contract-service'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
+import { agentMatchScore, matchesAgent } from '@/lib/core/search-match'
 
 function validDiscordId(value: string | null | undefined) {
   const id = value?.trim()

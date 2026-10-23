@@ -1,8 +1,8 @@
 import { success } from '@/lib/api-response'
-import { resolveShare, shareError, publicShareHeaders } from '@/lib/record-shares'
-import { expandSharedItems, sharedHeading } from '@/lib/shared-records-public'
-import { raidReference } from '@/lib/raid-request'
-import { readRaidRequest } from '@/lib/raid-request-schema'
+import { resolveShare, shareError, publicShareHeaders } from '@/lib/investigations/record-shares'
+import { expandSharedItems, sharedHeading } from '@/lib/investigations/shared-records-public'
+import { raidReference } from '@/lib/investigations/raid-request'
+import { readRaidRequest } from '@/lib/investigations/raid-request-schema'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
   try {

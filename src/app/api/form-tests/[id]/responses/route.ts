@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { requireTaskModuleFormTestManage } from '@/lib/module-permissions'
+import { requireTaskModuleFormTestManage } from '@/lib/units/module-permissions'
 
 const responseInclude = {
   respondent: { select: { id: true, displayName: true, username: true, discordId: true } },

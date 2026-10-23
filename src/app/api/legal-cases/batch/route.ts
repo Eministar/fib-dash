@@ -1,7 +1,7 @@
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { createLegalCaseBatch } from '@/lib/legal-case-service'
+import { createAuditLog } from '@/lib/audit/audit'
+import { createLegalCaseBatch } from '@/lib/publications/legal-case-service'
 
 /**
  * Erzeugt für alle gekündigten Mitarbeiter mit offenen Sanktionen eine

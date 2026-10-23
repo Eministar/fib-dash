@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server'
 
 import { error, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
-import { routeError } from '@/lib/investigations-server'
-import { parseTemplateInput, toTemplateData } from '@/lib/investigation-templates'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { parseTemplateInput, toTemplateData } from '@/lib/investigations/investigation-templates'
 
 export const dynamic = 'force-dynamic'
 

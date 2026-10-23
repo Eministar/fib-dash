@@ -7,7 +7,7 @@ import {
   lastCompletedWeek,
   weeklyReportMessage,
   type WeeklyReportData,
-} from '../src/lib/weekly-report'
+} from '../src/lib/duty/weekly-report'
 
 // Mittwoch, 22.10.2026 – lokale Zeit wie auf dem Server.
 const wednesday = new Date(2026, 9, 22, 14, 0)

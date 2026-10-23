@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { queueCodenameBoardUpdate } from '@/lib/discord-integration'
+import { queueCodenameBoardUpdate } from '@/lib/discord/discord-integration'
 
 export async function GET() {
   try {

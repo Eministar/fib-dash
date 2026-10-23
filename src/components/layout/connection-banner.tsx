@@ -3,8 +3,8 @@
 import { useSyncExternalStore } from 'react'
 import { RefreshCw, WifiOff } from 'lucide-react'
 
-import { getConnectionState, subscribeConnection, type ConnectionState } from '@/lib/connection-status'
-import { notifyLiveUpdate } from '@/lib/live-updates'
+import { getConnectionState, subscribeConnection, type ConnectionState } from '@/lib/core/connection-status'
+import { notifyLiveUpdate } from '@/lib/core/live-updates'
 
 const SERVER_STATE: ConnectionState = { failing: false, lastOkAt: null }
 

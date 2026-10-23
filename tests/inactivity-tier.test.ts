@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { inactivityTier, nextAgentFlag, shouldCreateInactivityEntry } from '../src/lib/inactivity-tier'
+import { inactivityTier, nextAgentFlag, shouldCreateInactivityEntry } from '../src/lib/agents/inactivity-tier'
 
 const DAY = 24 * 60 * 60_000
 const now = new Date('2026-09-30T12:00:00Z')

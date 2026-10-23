@@ -1,8 +1,8 @@
 import { requireAuth } from '@/lib/auth'
 import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { corruptionCheckSchema, corruptionQuerySchema } from '@/lib/corruption-validation'
-import { corruptionError, corruptionInclude, officialSearch, saveCorruptionCheck, resolveOfficial } from '@/lib/corruption-server'
+import { corruptionCheckSchema, corruptionQuerySchema } from '@/lib/lspd/corruption-validation'
+import { corruptionError, corruptionInclude, officialSearch, saveCorruptionCheck, resolveOfficial } from '@/lib/lspd/corruption-server'
 import type { Prisma } from '@/generated/prisma'
 
 export async function GET(req: Request) {

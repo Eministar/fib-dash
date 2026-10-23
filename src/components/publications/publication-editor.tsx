@@ -13,7 +13,7 @@ import { Modal } from '@/components/ui/modal'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { useToast } from '@/components/ui/toast'
-import { renderMarkdown } from '@/lib/markdown'
+import { renderMarkdown } from '@/lib/core/markdown'
 import {
   MAX_TABLE_COLUMNS,
   PUBLICATION_STATUS,
@@ -23,7 +23,7 @@ import {
   type PublicationKind,
   type PublicationStatus,
   type PublicationTable,
-} from '@/lib/publications'
+} from '@/lib/publications/publications'
 import { cn } from '@/lib/utils'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import { useDraft } from '@/hooks/use-draft'

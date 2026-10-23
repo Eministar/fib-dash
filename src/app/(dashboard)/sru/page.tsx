@@ -47,8 +47,8 @@ import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { cn, formatDateTime, toLocalDateTimeInput } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import { renderMarkdown } from '@/lib/markdown'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import { renderMarkdown } from '@/lib/core/markdown'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 const TaskBoard = dynamic(() => import('@/components/tasks/task-board').then(mod => mod.TaskBoard), { loading: () => <PageLoader /> })

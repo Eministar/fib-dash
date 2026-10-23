@@ -9,7 +9,7 @@ import { usePersistentBoolean } from '@/hooks/use-persistent-boolean'
 export type InvestigationsSection = 'cases' | 'clips' | 'persons' | 'vehicles' | 'photos' | 'dossiers' | 'shares' | 'graph'
 const sections = [
   { id: 'cases', label: 'Einsatzakten', href: '/investigations', icon: FolderOpen, group: 'Akten' },
-  { id: 'dossiers', label: 'Dauerakten', href: '/investigations/dossiers', icon: Library, group: 'Akten' },
+  { id: 'dossiers', label: 'Familienregister', href: '/investigations/dossiers', icon: Library, group: 'Akten' },
   { id: 'persons', label: 'Personen', href: '/investigations/persons', icon: UserSearch, group: 'Akten' },
   { id: 'vehicles', label: 'Fahrzeuge', href: '/investigations/vehicles', icon: Car, group: 'Akten' },
   { id: 'graph', label: 'Netzwerk', href: '/investigations/graph', icon: Network, group: 'Akten' },
@@ -34,7 +34,7 @@ export function InvestigationsNavigation({ active }: { active: InvestigationsSec
     <button type="button" onClick={() => setGuideOpen(!guideOpen)} aria-expanded={guideOpen} className="mt-3 flex items-center gap-2 text-xs text-[#98989d] hover:text-white">Welche Akte brauche ich?<ChevronDown size={13} className={guideOpen ? '' : '-rotate-90'} /></button>
     {guideOpen && <div className="mt-3 grid gap-3 text-xs leading-5 sm:grid-cols-3">
       <p><strong className="font-medium text-[#e5e5e5]">Einsatzakte: ein konkreter Vorfall.</strong><br /><span className="text-[#8e8e93]">Ablauf, Beteiligte, Beweise und Ergebnis dokumentieren.</span></p>
-      <p><strong className="font-medium text-[#e5e5e5]">Dauerakte: der größere Zusammenhang.</strong><br /><span className="text-[#8e8e93]">Einsätze einer Fraktion, Familie oder eines Anwesens bündeln.</span></p>
+      <p><strong className="font-medium text-[#e5e5e5]">Familienakte: der größere Zusammenhang.</strong><br /><span className="text-[#8e8e93]">Alle Einsätze, Mitglieder und Orte einer Familie oder Fraktion bündeln.</span></p>
       <p><strong className="font-medium text-[#e5e5e5]">Register: Personen und Fahrzeuge.</strong><br /><span className="text-[#8e8e93]">Einmal erfassen und mit den passenden Akten verknüpfen.</span></p>
     </div>}
   </div>

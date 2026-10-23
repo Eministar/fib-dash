@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Prisma } from '../src/generated/prisma'
-import { corruptionCheckSchema, corruptionQuerySchema, officialNumber, parseOfficialNumber } from '../src/lib/corruption-validation'
-import { createCorruptionCheck, officialListWhere, officialSearch } from '../src/lib/corruption-server'
+import { corruptionCheckSchema, corruptionQuerySchema, officialNumber, parseOfficialNumber } from '../src/lib/lspd/corruption-validation'
+import { createCorruptionCheck, officialListWhere, officialSearch } from '../src/lib/lspd/corruption-server'
 
 const input = () => corruptionCheckSchema.parse({
   requestId: '12bd0238-36f6-42d3-882a-ce9048a5d60a',

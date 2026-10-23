@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { ListTree } from 'lucide-react'
-import type { OutlineEntry } from '@/lib/markdown'
+import type { OutlineEntry } from '@/lib/core/markdown'
 import { cn } from '@/lib/utils'
 
 function OutlineLinks({ entries, active, onNavigate }: { entries: OutlineEntry[]; active: string | null; onNavigate?: () => void }) {

@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { createRequire } from 'node:module'
 
 import { config } from '../src/proxy'
-import { uploadOptions } from '../src/lib/upload-cors'
+import { uploadOptions } from '../src/lib/media/upload-cors'
 
 const { pathToRegexp } = createRequire(import.meta.url)('next/dist/compiled/path-to-regexp') as {
   pathToRegexp: (pattern: string) => RegExp

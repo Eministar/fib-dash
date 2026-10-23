@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { renderMarkdown } from '../src/lib/markdown'
-import { markdownCode, markdownHeader, markdownPlain, markdownRows } from '../src/lib/discord-components'
+import { renderMarkdown } from '../src/lib/core/markdown'
+import { markdownCode, markdownHeader, markdownPlain, markdownRows } from '../src/lib/discord/discord-components'
 
 test('reference definitions cannot break out of href or title attributes', () => {
   const html = renderMarkdown([

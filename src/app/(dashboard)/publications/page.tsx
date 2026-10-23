@@ -10,10 +10,10 @@ import { Badge } from '@/components/ui/badge'
 import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { PUBLICATION_STATUS, type PublicationKind, type PublicationStatus } from '@/lib/publications'
+import { PUBLICATION_STATUS, type PublicationKind, type PublicationStatus } from '@/lib/publications/publications'
 import { formatDate } from '@/lib/utils'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 interface PublicationListItem {
   id: string

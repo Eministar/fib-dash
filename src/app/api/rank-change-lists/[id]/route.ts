@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { summarizeRankChangeVotes } from '@/lib/rank-change-votes'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+import { summarizeRankChangeVotes } from '@/lib/agents/rank-change-votes'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let currentUser

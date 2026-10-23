@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { readFile } from 'node:fs/promises'
 import { PrismaClient } from '../src/generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-import { createCodenameSchema } from '../src/lib/codename-validation'
+import { createCodenameSchema } from '../src/lib/codenames/codename-validation'
 
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL fehlt')

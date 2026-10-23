@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server'
 
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { error, notFound, success, unauthorized } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@/generated/prisma'
-import { tokenizedWhere } from '@/lib/search-match'
+import { tokenizedWhere } from '@/lib/core/search-match'
 
 export const dynamic = 'force-dynamic'
 

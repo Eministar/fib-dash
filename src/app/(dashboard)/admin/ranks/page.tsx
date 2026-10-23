@@ -13,7 +13,7 @@ import { PageLoader } from '@/components/ui/loading'
 import { useToast } from '@/components/ui/toast'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
-import { displayBadgeNumber, formatBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber, formatBadgeNumber } from '@/lib/agents/badge-number'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 

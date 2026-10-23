@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 
 import { useAuth } from '@/context/auth-context'
 import { startPageAction } from '@/hooks/use-page-action'
-import { isPlainShortcut, newActionForPath } from '@/lib/palette-actions'
+import { isPlainShortcut, newActionForPath } from '@/lib/core/palette-actions'
 
 function isTyping() {
   const el = document.activeElement as HTMLElement | null

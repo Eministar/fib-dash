@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/loading'
 
 import { useFetch } from '@/hooks/use-fetch'
-import type { Achievement, AchievementCategory } from '@/lib/achievements'
+import type { Achievement, AchievementCategory } from '@/lib/agents/achievements'
 import { cn } from '@/lib/utils'
 
 const ICONS: Record<AchievementCategory, LucideIcon> = {

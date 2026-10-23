@@ -3,9 +3,9 @@ import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { normalizeTable, publicationInput } from '@/lib/publications'
-import { publicationFailure } from '@/lib/publications-server'
+import { createAuditLog } from '@/lib/audit/audit'
+import { normalizeTable, publicationInput } from '@/lib/publications/publications'
+import { publicationFailure } from '@/lib/publications/publications-server'
 
 type Params = { params: Promise<{ id: string }> }
 

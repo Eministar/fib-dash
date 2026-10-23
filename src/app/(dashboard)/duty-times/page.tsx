@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Activity, AlertTriangle, BarChart3, Clock3, Database, LogOut, RefreshCw, Signal, Timer, Trophy, Users, Wifi } from 'lucide-react'
+import { AlertTriangle, Clock3, LogOut, RefreshCw, Signal, Timer, Trophy, Users, Wifi } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageLoader } from '@/components/ui/loading'
@@ -15,7 +15,7 @@ import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { hasPermission } from '@/lib/permissions'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
 import { DutyClockCard } from '@/components/duty/duty-clock-card'
 import { DutyLeaderboard } from '@/components/duty/duty-leaderboard'
@@ -153,7 +153,7 @@ export default function DutyTimesPage() {
         <div className="max-w-6xl mx-auto">
           <PageHeader title="Dienstzeiten" description="Live-Übersicht der aktiven Police-Spielzeit" />
           <div className="glass-panel-elevated rounded-[14px] p-8 text-center">
-            <AlertTriangle size={26} className="mx-auto text-[#f87171] mb-3" />
+            <AlertTriangle size={26} className="mx-auto text-[#f87171] mb-3" aria-hidden />
             <p className="text-[13px] text-[#98989d] mb-4">{error || 'Dienstzeiten konnten nicht geladen werden'}</p>
             <Button size="sm" onClick={refetch}><RefreshCw size={13} /> Erneut laden</Button>
           </div>
@@ -161,16 +161,27 @@ export default function DutyTimesPage() {
     )
   }
 
+  const apiMode = data.mode === 'api'
+  const apiState = data.sync.errorCount > 0 ? 'err' : data.sync.configured ? 'ok' : 'warn'
+  const description = apiMode
+    ? `Automatische Police-Spielzeit · Sync ${formatRelativeTime(data.sync.checkedAt)} · Woche seit ${formatDateTime(data.weekStart)}`
+    : 'Manuelle Erfassung: Agents stempeln selbst ein und aus'
+
   return (
       <div className="max-w-6xl mx-auto space-y-5">
         <PageHeader
             title="Dienstzeiten"
-            description={data.mode === 'manual' ? 'Manuelle Erfassung: Agents stempeln selbst ein und aus' : 'Automatische Police-Spielzeit über die Player-Online-API'}
+            description={description}
             action={
-              <div className="flex items-center gap-2">
-            <span className="health-pill ok">
-              <span className="live-pulse" /> {data.activeCount} live
-            </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="health-pill ok">
+                  <span className="live-pulse" /> {data.activeCount} im Dienst
+                </span>
+                {apiMode && apiState !== 'ok' && (
+                    <span className={cn('health-pill', apiState)}>
+                      <Signal size={12} aria-hidden /> {apiState === 'err' ? `API: ${data.sync.errorCount} Fehler` : 'API nicht konfiguriert'}
+                    </span>
+                )}
                 <Button variant="secondary" size="sm" onClick={refetch}><RefreshCw size={13} /> Aktualisieren</Button>
               </div>
             }
@@ -178,37 +189,13 @@ export default function DutyTimesPage() {
 
         <DutyClockCard onChange={refetch} />
 
-        {/* Live status bar */}
-        {data.mode === 'api' && <>
-        <div className="glass-panel-elevated rounded-[14px] px-5 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="icon-tile h-11 w-11 rounded-[12px] flex items-center justify-center">
-              <Wifi size={20} strokeWidth={1.8} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[13.5px] font-semibold text-white truncate">
-                {data.activeCount > 0 ? `${data.activeCount} ${data.activeCount === 1 ? 'Agent' : 'Agents'} aktuell im Dienst` : 'Aktuell niemand im Dienst'}
-              </p>
-              <p className="text-[11.5px] text-[#8e8e93] mt-0.5">
-                Sync {formatRelativeTime(data.sync.checkedAt)} · Woche seit {formatDateTime(data.weekStart)}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-          <span className={cn('health-pill', data.sync.errorCount > 0 ? 'err' : data.sync.configured ? 'ok' : 'warn')}>
-            <Signal size={12} /> API {data.sync.errorCount > 0 ? 'fehlerhaft' : data.sync.configured ? 'abgefragt' : 'nicht konfiguriert'}
-          </span>
-            {data.sync.errorCount > 0 && <span className="health-pill err">{data.sync.errorCount} Fehler</span>}
-          </div>
-        </div>
-
-        {!data.sync.configured && (
+        {apiMode && !data.sync.configured && (
             <div className="rounded-[12px] border border-[#3d2d12] bg-[#1d1608]/80 px-4 py-3 text-[12.5px] text-[#c7c7cc]">
               Player-Online API ist nicht konfiguriert. Historische Spielzeit bleibt sichtbar, Live-Status wird erst mit Server-Env <code>PLAYER_ONLINE_API_SECRET</code> synchronisiert.
             </div>
         )}
 
-        {data.sync.errorCount > 0 && (
+        {apiMode && data.sync.errorCount > 0 && (
             <div className="rounded-[12px] border border-[#3b1616] bg-[#1c1111]/80 px-4 py-3 text-[12.5px] text-[#fca5a5]">
               <p>{data.sync.errorCount} Player-Online-Abfragen sind fehlgeschlagen.</p>
               {data.sync.errorSummary.length > 0 && (
@@ -221,67 +208,105 @@ export default function DutyTimesPage() {
             </div>
         )}
 
-        {data.sync.configured && data.sync.onlineCount === 0 && data.sync.errorCount === 0 && (
+        {apiMode && data.sync.configured && data.sync.onlineCount === 0 && data.sync.errorCount === 0 && (
             <div className="rounded-[12px] border border-[#454545] bg-[#1c1c1e]/70 px-4 py-3 text-[12px] text-[#98989d]">
               Die API antwortet, meldet aber keinen aktiven Police-Spieler: {data.sync.statusCounts.offline} offline, {data.sync.statusCounts['ignored-job']} mit anderem Job und {data.sync.statusCounts['not-linked']} ohne Discord-Verknüpfung.
             </div>
         )}
 
-        </>}
-
-        {/* KPI grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-3.5">
-          <KpiCard icon={Users} label="Im Dienst" value={String(data.activeCount)} accent="#22c55e" />
-          <KpiCard icon={Timer} label="Aktiv jetzt" value={formatDuration(data.totalActiveDurationMs)} />
-          <KpiCard icon={Clock3} label="Spielzeit Woche" value={formatDuration(data.totalWeekDurationMs)} accent="#d4d4d4" />
-          <KpiCard icon={Trophy} label="Gesamt-Dienstzeit" value={formatDuration(data.totalAllTimeDurationMs)} accent="#38bdf8" />
-          <KpiCard icon={Activity} label="Sessions" value={String(data.totalSessionCount)} />
-          <KpiCard icon={BarChart3} label="Ø Session" value={formatDuration(data.averageSessionMs)} />
-          <KpiCard icon={Database} label="Längste Session" value={formatDuration(data.longestSessionMs)} />
-        </div>
+        {/* Kennzahlen: vier Hauptwerte groß, Sessions-Statistik als Fußzeile */}
+        <section className="glass-panel-elevated rounded-[14px] p-5" aria-label="Kennzahlen">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
+            <KpiValue icon={Users} label="Im Dienst" value={String(data.activeCount)} live={data.activeCount > 0} />
+            <KpiValue icon={Timer} label="Aktiv jetzt" value={formatDuration(data.totalActiveDurationMs)} />
+            <KpiValue icon={Clock3} label="Spielzeit diese Woche" value={formatDuration(data.totalWeekDurationMs)} />
+            <KpiValue icon={Trophy} label="Gesamt-Dienstzeit" value={formatDuration(data.totalAllTimeDurationMs)} />
+          </div>
+          <dl className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-[#38383a]/60 pt-4 text-[12px]">
+            <InlineStat label="Sessions" value={String(data.totalSessionCount)} />
+            <InlineStat label="Ø Session" value={formatDuration(data.averageSessionMs)} />
+            <InlineStat label="Längste Session" value={formatDuration(data.longestSessionMs)} />
+          </dl>
+        </section>
 
         <DutyLeaderboard
-            note={`Sync ${formatRelativeTime(data.sync.checkedAt)}`}
+            note={apiMode ? `Sync ${formatRelativeTime(data.sync.checkedAt)}` : undefined}
             weekRows={data.topRows.map((agent) => ({
               ...agent,
               durationMs: agent.weekDurationMs,
               detail: `${agent.sessionCount} Sessions`,
-              aside: <StatusPill status={agent.apiStatus} />,
+              aside: <StatusPill status={agent.apiStatus} compact />,
             }))}
         />
 
         <section className="glass-panel-elevated rounded-[14px] p-5">
-          <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-2">
               <span className="live-pulse" />
               <h3 className="text-[13.5px] font-semibold text-[#fafafa]">Aktuell im Dienst</h3>
+              <span className="text-[12px] tabular-nums text-[#8e8e93]">{data.activeRows.length}</span>
             </div>
-            <span className="text-[11.5px] text-[#8e8e93]">Online · Script verbunden · Job police</span>
+            {apiMode && <span className="text-[11.5px] text-[#8e8e93]">Online, Script verbunden und Job police</span>}
           </div>
 
           {data.activeRows.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {data.activeRows.map((agent, index) => (
-                    <motion.div
+                    <motion.article
                         key={agent.id}
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.25, delay: index * 0.03 }}
-                        className="rounded-[12px] border border-[#22c55e]/15 bg-[#1c1c1e]/85 p-4 hover:border-[#22c55e]/30 transition-colors"
+                        className="rounded-[12px] border border-[#38383a]/60 bg-[#1c1c1e]/80 p-4 transition-colors hover:border-[#48484a]"
                     >
                       <div className="flex items-start gap-3">
-                        <AgentAvatar agent={agent} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <Link href={`/agents/${agent.id}`} className="text-[14px] font-semibold text-white transition-colors hover:text-[#d4d4d4]">
-                              {agentName(agent)}
-                              <span className="ml-1 font-mono text-[#d4d4d4]">#{displayBadgeNumber(agent.badgeNumber)}</span>
-                            </Link>
-                            <StatusPill status={agent.apiStatus} />
-                          </div>
-                          <p className="text-[11.5px] text-[#98989d] mt-0.5">{agent.rank.name}</p>
+                        <AgentAvatar agent={agent} ringColor={agent.rank.color} />
+                        <div className="min-w-0 flex-1">
+                          <Link href={`/agents/${agent.id}`} className="block truncate text-[14px] font-semibold text-white transition-colors hover:text-[#d4d4d4]">
+                            {agentName(agent)}
+                          </Link>
+                          <p className="mt-0.5 truncate text-[11.5px] text-[#98989d]">
+                            <span className="font-mono">#{displayBadgeNumber(agent.badgeNumber)}</span> · {agent.rank.name}
+                          </p>
                         </div>
-                        {data.mode === 'manual' && canManage && (
+                        <div className="shrink-0 text-right">
+                          <p className="text-[20px] font-semibold leading-none tabular-nums text-[#86efac]">
+                            {formatDuration(agent.activePlaySession?.currentDurationMs ?? agent.activeSession?.currentDurationMs ?? 0)}
+                          </p>
+                          <p className="mt-1 text-[11px] text-[#8e8e93]">
+                            {agent.activePlaySession ? `seit ${formatRelativeTime(agent.activePlaySession.startedAt).replace(/^vor /, '')}` : 'im Dienst'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-[#38383a]/50 pt-3">
+                        <InlineStat stacked label="Woche" value={formatDuration(agent.weekDurationMs)} />
+                        <InlineStat stacked label="Gesamt" value={formatDuration(agent.totalDurationMs)} />
+                        <InlineStat stacked label="Sessions" value={String(agent.sessionCount)} />
+                      </dl>
+
+                      {apiMode && (
+                          <p className="mt-3 truncate text-[11.5px] text-[#8e8e93]">
+                            {[
+                              agent.currentPlayer?.name ?? agent.activePlaySession?.playerName,
+                              agent.currentPlayer?.ping != null ? `${agent.currentPlayer.ping} ms` : null,
+                              agent.lastHeartbeat ? `Heartbeat ${formatRelativeTime(agent.lastHeartbeat)}` : null,
+                            ].filter(Boolean).join(' · ') || '—'}
+                          </p>
+                      )}
+
+                      {apiMode && (agent.currentPlayer?.identifier || agent.activePlaySession?.license || agent.currentPlayer?.steamId) && (
+                          <details className="group mt-2">
+                            <summary className="w-fit cursor-pointer rounded text-[11.5px] text-[#98989d] hover:text-white">Kennungen anzeigen</summary>
+                            <dl className="mt-2 space-y-1.5 rounded-[8px] bg-[#000000]/50 px-3 py-2.5">
+                              <IdentityRow label="Identifier" value={agent.currentPlayer?.identifier ?? agent.activePlaySession?.license} />
+                              <IdentityRow label="Steam-ID" value={agent.currentPlayer?.steamId} />
+                            </dl>
+                          </details>
+                      )}
+
+                      {data.mode === 'manual' && canManage && (
+                          <div className="mt-3 flex justify-end">
                             <Button
                                 variant="secondary"
                                 size="sm"
@@ -290,28 +315,9 @@ export default function DutyTimesPage() {
                             >
                               <LogOut size={13} /> Ausstempeln
                             </Button>
-                        )}
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <Metric label="Spieler" value={agent.currentPlayer?.name ?? agent.activePlaySession?.playerName} />
-                        <Metric label="Seit" value={agent.activePlaySession ? formatRelativeTime(agent.activePlaySession.startedAt) : '—'} />
-                        <Metric label="Aktiv" value={formatDuration(agent.activePlaySession?.currentDurationMs ?? 0)} strong />
-                        <Metric label="Ping" value={agent.currentPlayer?.ping !== null && agent.currentPlayer?.ping !== undefined ? `${agent.currentPlayer.ping}ms` : '—'} />
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <IdentityMetric label="Identifier" value={agent.currentPlayer?.identifier ?? agent.activePlaySession?.license} />
-                        <IdentityMetric label="Steam-ID" value={agent.currentPlayer?.steamId} />
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#8e8e93]">
-                        <span>Woche: <strong className="text-[#d4d4d4] tabular-nums">{formatDuration(agent.weekDurationMs)}</strong></span>
-                        <span>Gesamt: <strong className="text-[#38bdf8] tabular-nums">{formatDuration(agent.totalDurationMs)}</strong></span>
-                        <span>Sessions: <strong className="text-[#d2d2d2] tabular-nums">{agent.sessionCount}</strong></span>
-                        <span>Heartbeat: <strong className="text-[#d2d2d2]">{formatRelativeTime(agent.lastHeartbeat ?? '')}</strong></span>
-                      </div>
-                    </motion.div>
+                          </div>
+                      )}
+                    </motion.article>
                 ))}
               </div>
           ) : (
@@ -325,45 +331,37 @@ export default function DutyTimesPage() {
             <span className="text-[11.5px] text-[#8e8e93]">{data.rows.length} Agents</span>
           </div>
           <p className="text-[12px] text-[#8e8e93] mb-4">
-            Alle nicht gekündigten Agents mit Live-Status, IDs und Spielzeitstatistik.
+            Alle nicht gekündigten Agents mit Live-Status und Spielzeit der letzten sieben Tage.
           </p>
           <div className="divide-y divide-[#38383a]/40">
             {data.rows.map((agent) => (
-                <div key={agent.id} className="grid grid-cols-1 gap-3 py-3 first:pt-0 last:pb-0 xl:grid-cols-[minmax(0,1fr)_260px_420px] xl:items-center">
+                <div key={agent.id} className="grid grid-cols-1 gap-3 py-3.5 first:pt-0 last:pb-0 lg:grid-cols-[minmax(0,1fr)_220px_minmax(0,340px)] lg:items-center lg:gap-6">
                   <div className="min-w-0 flex items-start gap-3">
                     <AgentAvatar agent={agent} size="sm" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Link href={`/agents/${agent.id}`} className="text-[13px] font-medium text-white transition-colors hover:text-[#d4d4d4]">
-                          {agentName(agent)} <span className="font-mono text-[#d4d4d4]">#{displayBadgeNumber(agent.badgeNumber)}</span>
+                        <Link href={`/agents/${agent.id}`} className="truncate text-[13px] font-medium text-white transition-colors hover:text-[#d4d4d4]">
+                          {agentName(agent)}
                         </Link>
                         <StatusPill status={agent.apiStatus} compact />
                       </div>
-                      <p className="mt-0.5 text-[11.5px] text-[#8e8e93]">{agent.rank.name}</p>
-                      {agent.currentPlayer && (
-                          <p className="mt-1 truncate text-[11px] text-[#8e8e93]">
-                            {agent.currentPlayer.name}
-                            {agent.currentPlayer.identifier ? ` · ${agent.currentPlayer.identifier}` : ''}
-                          </p>
-                      )}
-                      {agent.apiStatus !== 'online' && agent.lastSeenAt && (
-                          <p className="mt-1 text-[11px] text-[#8e8e93]">
-                            Zuletzt: <span className="text-[#d2d2d2]">{formatRelativeTime(agent.lastSeenAt)}</span>
-                          </p>
-                      )}
+                      <p className="mt-0.5 truncate text-[11.5px] text-[#8e8e93]">
+                        <span className="font-mono">#{displayBadgeNumber(agent.badgeNumber)}</span> · {agent.rank.name}
+                        {agent.apiStatus !== 'online' && agent.lastSeenAt && <> · zuletzt {formatRelativeTime(agent.lastSeenAt)}</>}
+                      </p>
                       {agent.apiError && <p className="mt-1 truncate text-[11px] text-[#fca5a5]">{agent.apiError}</p>}
                     </div>
                   </div>
 
                   <MiniBars daily={agent.daily} />
 
-                  <div className="grid grid-cols-2 sm:grid-cols-5 xl:grid-cols-5 gap-2">
-                    <Metric label="Woche" value={formatDuration(agent.weekDurationMs)} strong />
-                    <Metric label="Gesamt" value={formatDuration(agent.totalDurationMs)} strong />
-                    <Metric label="Jetzt" value={agent.activePlaySession ? formatDuration(agent.activePlaySession.currentDurationMs) : 'offline'} />
-                    <Metric label="Ø" value={formatDuration(agent.averageSessionMs)} />
-                    <Metric label="Längste" value={formatDuration(agent.longestSessionMs)} />
-                  </div>
+                  <dl className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+                    <InlineStat stacked strong label="Woche" value={formatDuration(agent.weekDurationMs)} />
+                    <InlineStat stacked label="Gesamt" value={formatDuration(agent.totalDurationMs)} />
+                    <InlineStat stacked label="Jetzt" value={agent.activePlaySession ? formatDuration(agent.activePlaySession.currentDurationMs) : '—'} />
+                    <InlineStat stacked label="Ø" value={formatDuration(agent.averageSessionMs)} />
+                    <InlineStat stacked label="Längste" value={formatDuration(agent.longestSessionMs)} />
+                  </dl>
                 </div>
             ))}
           </div>
@@ -372,36 +370,42 @@ export default function DutyTimesPage() {
   )
 }
 
-function KpiCard({ icon: Icon, label, value, accent }: { icon: LucideIcon; label: string; value: string; accent?: string }) {
+function KpiValue({ icon: Icon, label, value, live }: { icon: LucideIcon; label: string; value: string; live?: boolean }) {
   return (
-      <div className="stat-card">
-        <div className="flex items-center gap-3">
-          <div className="stat-icon" style={accent ? { color: accent, borderColor: `${accent}33`, background: `linear-gradient(135deg, ${accent}22, ${accent}05)` } : undefined}>
-            <Icon size={17} strokeWidth={1.8} />
-          </div>
-          <div className="min-w-0">
-            <p className="stat-value truncate">{value}</p>
-            <p className="stat-label">{label}</p>
-          </div>
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 text-[12px] text-[#98989d]">
+          <Icon size={13} strokeWidth={1.8} aria-hidden />
+          {label}
+        </p>
+        <p className={cn('mt-1.5 text-[24px] font-semibold leading-tight tracking-[-0.01em] tabular-nums', live ? 'text-[#86efac]' : 'text-white')}>
+          {value}
+        </p>
+      </div>
+  )
+}
+
+function InlineStat({ label, value, stacked, strong }: { label: string; value: string; stacked?: boolean; strong?: boolean }) {
+  if (stacked) {
+    return (
+        <div className="min-w-0">
+          <dt className="text-[11px] text-[#8e8e93]">{label}</dt>
+          <dd className={cn('mt-0.5 truncate text-[12.5px] tabular-nums', strong ? 'font-semibold text-white' : 'text-[#d2d2d2]')}>{value}</dd>
         </div>
+    )
+  }
+  return (
+      <div className="flex items-baseline gap-1.5">
+        <dt className="text-[#8e8e93]">{label}</dt>
+        <dd className="font-medium tabular-nums text-[#d2d2d2]">{value}</dd>
       </div>
   )
 }
 
-function Metric({ label, value, strong }: { label: string; value?: string; strong?: boolean }) {
+function IdentityRow({ label, value }: { label: string; value?: string | null }) {
   return (
-      <div className="rounded-[8px] bg-[#000000]/60 border border-[#38383a]/30 px-3 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e8e93]">{label}</p>
-        <p className={cn('mt-1 truncate text-[12.5px] tabular-nums', strong ? 'font-semibold text-[#d4d4d4]' : 'text-[#d2d2d2]')}>{value || '—'}</p>
-      </div>
-  )
-}
-
-function IdentityMetric({ label, value }: { label: string; value?: string | null }) {
-  return (
-      <div className="rounded-[8px] bg-[#000000]/60 border border-[#38383a]/30 px-3 py-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-[#8e8e93]">{label}</p>
-        <p className="mt-1 truncate font-mono text-[11.5px] text-[#d2d2d2]" title={value || undefined}>{value || '—'}</p>
+      <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-2 text-[11.5px]">
+        <dt className="text-[#8e8e93]">{label}</dt>
+        <dd className="truncate font-mono text-[#d2d2d2]" title={value || undefined}>{value || '—'}</dd>
       </div>
   )
 }
@@ -427,25 +431,20 @@ function StatusPill({ status, compact }: { status: ApiStatus; compact?: boolean 
 
 function MiniBars({ daily }: { daily: DailyPoint[] }) {
   const max = Math.max(...daily.map((day) => day.durationMs), 1)
+  const total = daily.reduce((sum, day) => sum + day.durationMs, 0)
   return (
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className="grid grid-cols-7 gap-1.5" role="img" aria-label={`Spielzeit der letzten sieben Tage: ${daily.map((day) => `${day.label} ${day.durationLabel}`).join(', ')}`}>
         {daily.map((day) => {
           const isToday = new Date(day.date).toDateString() === new Date().toDateString()
           return (
-              <div key={`${day.date}-${day.label}`} className="min-w-0 group">
-                <div className="flex h-[38px] items-end rounded-[6px] bg-[#000000]/60 border border-[#38383a]/30 px-1 transition-colors group-hover:border-[#d4d4d4]/30">
+              <div key={`${day.date}-${day.label}`} className="min-w-0" title={`${day.label}: ${day.durationLabel}`}>
+                <div className="flex h-[32px] items-end rounded-[5px] bg-[#000000]/50 px-[3px]">
                   <div
-                      className={cn(
-                          'w-full rounded-t-[4px] transition-all',
-                          isToday
-                              ? 'bg-[#ff9f0a]'
-                              : 'bg-[#0a84ff]',
-                      )}
-                      style={{ height: Math.max(4, Math.round((day.durationMs / max) * 32)) }}
-                      title={`${day.label}: ${day.durationLabel}`}
+                      className={cn('w-full rounded-t-[3px]', day.durationMs > 0 ? (isToday ? 'bg-[#64d2ff]' : 'bg-[#0a84ff]/80') : 'bg-transparent')}
+                      style={{ height: total > 0 && day.durationMs > 0 ? Math.max(3, Math.round((day.durationMs / max) * 28)) : 0 }}
                   />
                 </div>
-                <p className={cn('mt-1 truncate text-center text-[11px]', isToday ? 'text-[#d4d4d4] font-semibold' : 'text-[#8e8e93]')}>{day.label}</p>
+                <p className={cn('mt-1 truncate text-center text-[10.5px]', isToday ? 'font-semibold text-white' : 'text-[#8e8e93]')}>{day.label}</p>
               </div>
           )
         })}
@@ -456,7 +455,7 @@ function MiniBars({ daily }: { daily: DailyPoint[] }) {
 function EmptyState({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   return (
       <div className="rounded-[12px] border border-dashed border-[#38383a]/55 bg-[#1c1c1e]/35 px-4 py-12 text-center">
-        <Icon size={28} className="mx-auto text-[#d4d4d4]/40 mb-3" />
+        <Icon size={28} className="mx-auto text-[#d4d4d4]/40 mb-3" aria-hidden />
         <p className="text-[13px] text-[#98989d]">{text}</p>
       </div>
   )

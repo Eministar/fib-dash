@@ -1,9 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { regeneratePartyToken } from '@/lib/agreement-service'
-import { agreementErrorResponse } from '@/lib/agreement-http'
+import { createAuditLog } from '@/lib/audit/audit'
+import { regeneratePartyToken } from '@/lib/contracts/agreement-service'
+import { agreementErrorResponse } from '@/lib/contracts/agreement-http'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string; partyId: string }> }) {
   try {

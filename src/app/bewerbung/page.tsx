@@ -18,7 +18,7 @@ import {
   applicationAnswerText,
   type ApplicationQuestion,
   type JobApplicationStatusValue,
-} from '@/lib/job-applications'
+} from '@/lib/hr/job-applications'
 
 interface PortalApplicationAnswer {
   id: string

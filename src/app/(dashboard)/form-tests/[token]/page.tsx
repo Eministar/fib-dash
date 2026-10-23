@@ -12,7 +12,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/context/auth-context'
-import { notifyLiveUpdate } from '@/lib/live-updates'
+import { notifyLiveUpdate } from '@/lib/core/live-updates'
 import { cn, formatDateTime } from '@/lib/utils'
 
 type QuestionType = 'SHORT_TEXT' | 'LONG_TEXT' | 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'SCALE'

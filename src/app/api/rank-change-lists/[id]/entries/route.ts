@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/settings-helpers'
-import { normalizeBadgeNumber, rankHasBadgeRange, resolveEntryBadgeNumbers } from '@/lib/badge-number'
-import { findBadgeNumberConflict, getBlacklistedBadgeRows } from '@/lib/badge-blacklist'
-import { rankChangeSnapshot, snapshotJson } from '@/lib/rank-change-entry'
+import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/core/settings-helpers'
+import { normalizeBadgeNumber, rankHasBadgeRange, resolveEntryBadgeNumbers } from '@/lib/agents/badge-number'
+import { findBadgeNumberConflict, getBlacklistedBadgeRows } from '@/lib/agents/badge-blacklist'
+import { rankChangeSnapshot, snapshotJson } from '@/lib/agents/rank-change-entry'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

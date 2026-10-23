@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { sendContractMessage } from '@/lib/contract-service'
-import { cleanContractLongText } from '@/lib/contracts'
+import { createAuditLog } from '@/lib/audit/audit'
+import { sendContractMessage } from '@/lib/contracts/contract-service'
+import { cleanContractLongText } from '@/lib/contracts/contracts'
 
 /**
  * „Vertragsnachricht senden“ — verschickt den persönlichen Vertragslink erneut

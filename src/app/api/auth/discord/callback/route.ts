@@ -8,7 +8,7 @@ import {
   syncDiscordApplicantProfile,
   syncDiscordContractSignerProfile,
   syncDiscordUserProfile,
-} from '@/lib/discord-auth'
+} from '@/lib/core/discord-auth'
 
 type LoginMode = 'dashboard' | 'application' | 'contract'
 

@@ -12,9 +12,9 @@ import { after, test } from 'node:test'
 import { randomUUID } from 'node:crypto'
 
 import { prisma } from '../src/lib/prisma'
-import { createContractForAgent } from '../src/lib/contract-service'
-import { loadContractByToken } from '../src/lib/contract-links'
-import { readContractClauses } from '../src/lib/contracts'
+import { createContractForAgent } from '../src/lib/contracts/contract-service'
+import { loadContractByToken } from '../src/lib/contracts/contract-links'
+import { readContractClauses } from '../src/lib/contracts/contracts'
 
 after(() => prisma.$disconnect())
 
@@ -142,7 +142,7 @@ test('Die Migration uebertraegt Token und Signaturdaten unveraendert', async (t)
     },
   })
 
-  const { migrateContractSignatures } = await import('../src/lib/contract-signature-migration')
+  const { migrateContractSignatures } = await import('../src/lib/contracts/contract-signature-migration')
   const written = await migrateContractSignatures()
   assert.ok(written >= 1)
 
@@ -167,7 +167,7 @@ test('Die Migration uebertraegt Token und Signaturdaten unveraendert', async (t)
 
 test('Zwei Parteien: erst beide Unterschriften schliessen den Vertrag', async (t) => {
   const { createAgencyContract, loadSignatureByToken, signWithToken } = await import(
-    '../src/lib/contract-signature-service'
+    '../src/lib/contracts/contract-signature-service'
   )
 
   const contract = await createAgencyContract({
@@ -234,7 +234,7 @@ test('Zwei Parteien: erst beide Unterschriften schliessen den Vertrag', async (t
 
 test('Lehnt eine Partei ab, kommt der Vertrag nicht zustande', async (t) => {
   const { createAgencyContract, declineWithToken, signWithToken } = await import(
-    '../src/lib/contract-signature-service'
+    '../src/lib/contracts/contract-signature-service'
   )
 
   const contract = await createAgencyContract({
@@ -273,7 +273,7 @@ test('Lehnt eine Partei ab, kommt der Vertrag nicht zustande', async (t) => {
 })
 
 test('Ein unbekannter oder falsch geschriebener Token findet nichts', async () => {
-  const { loadSignatureByToken } = await import('../src/lib/contract-signature-service')
+  const { loadSignatureByToken } = await import('../src/lib/contracts/contract-signature-service')
   assert.equal(await loadSignatureByToken(''), null)
   assert.equal(await loadSignatureByToken('gibtesnicht'), null)
 })
@@ -282,7 +282,7 @@ test('Eine Vorlage laesst sich als Startpunkt nehmen, ohne den Vertrag zu binden
   const { template, cleanup } = await scaffold()
   t.after(cleanup)
 
-  const { createAgencyContract } = await import('../src/lib/contract-signature-service')
+  const { createAgencyContract } = await import('../src/lib/contracts/contract-signature-service')
 
   const contract = await createAgencyContract({
     title: 'Aus Vorlage',
@@ -312,7 +312,7 @@ test('Eine Vorlage laesst sich als Startpunkt nehmen, ohne den Vertrag zu binden
 
 test('Eine Ruecknahme des Vertrags ueberstimmt die Unterschriften', async (t) => {
   const { createAgencyContract, signWithToken, refreshContractStatus } = await import(
-    '../src/lib/contract-signature-service'
+    '../src/lib/contracts/contract-signature-service'
   )
 
   const contract = await createAgencyContract({

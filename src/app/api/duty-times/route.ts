@@ -1,8 +1,8 @@
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { getDutyTimesSnapshot } from '@/lib/duty-times'
-import { runAgentStatusAutomation } from '@/lib/absence-status'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+import { getDutyTimesSnapshot } from '@/lib/duty/duty-times'
+import { runAgentStatusAutomation } from '@/lib/agents/absence-status'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
 
 export async function GET() {
   try {

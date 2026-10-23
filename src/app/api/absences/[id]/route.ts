@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { hasPermission } from '@/lib/permissions'
-import { cancelAbsenceNotice, formatAbsenceDate } from '@/lib/absence-status'
-import { queueDiscordAbsenceStatusUpdate, queueDiscordHrEvent } from '@/lib/discord-integration'
+import { cancelAbsenceNotice, formatAbsenceDate } from '@/lib/agents/absence-status'
+import { queueDiscordAbsenceStatusUpdate, queueDiscordHrEvent } from '@/lib/discord/discord-integration'
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

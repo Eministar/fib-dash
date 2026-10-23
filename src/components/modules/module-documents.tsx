@@ -20,12 +20,12 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
-import { renderMarkdown } from '@/lib/markdown'
+import { renderMarkdown } from '@/lib/core/markdown'
 import type { ModuleCalendarKey } from '@/components/modules/module-calendar'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
-import { matchesSearch as textMatches } from '@/lib/search-match'
+import { matchesSearch as textMatches } from '@/lib/core/search-match'
 
 interface UserLite { id: string; displayName: string }
 interface ModuleDocument {

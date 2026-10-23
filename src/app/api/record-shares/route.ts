@@ -1,10 +1,10 @@
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { createAuditLog } from '@/lib/audit'
-import { shareSchema } from '@/lib/record-share-validation'
+import { createAuditLog } from '@/lib/audit/audit'
+import { shareSchema } from '@/lib/investigations/record-share-validation'
 import { Prisma } from '@/generated/prisma'
-import { createShareToken, managedSharesWhere, shareError, sharePath, validateShareItems } from '@/lib/record-shares'
+import { createShareToken, managedSharesWhere, shareError, sharePath, validateShareItems } from '@/lib/investigations/record-shares'
 
 export async function GET() {
   try {

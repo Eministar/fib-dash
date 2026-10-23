@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Prisma } from '../src/generated/prisma'
-import { correctReport, correctionSchema, editOfficial, mergeOfficials } from '../src/lib/corruption-edits'
-import { resolveOfficial } from '../src/lib/corruption-server'
-import { matchesEvidenceType, evidencePath } from '../src/lib/corruption-evidence'
-import { officialEditSchema } from '../src/lib/corruption-validation'
-import { canAccessBodycamClip, resolveBodycamAccess } from '../src/lib/bodycam-access'
+import { correctReport, correctionSchema, editOfficial, mergeOfficials } from '../src/lib/lspd/corruption-edits'
+import { resolveOfficial } from '../src/lib/lspd/corruption-server'
+import { matchesEvidenceType, evidencePath } from '../src/lib/lspd/corruption-evidence'
+import { officialEditSchema } from '../src/lib/lspd/corruption-validation'
+import { canAccessBodycamClip, resolveBodycamAccess } from '../src/lib/investigations/bodycam-access'
 import type { CurrentAuth } from '../src/lib/auth'
 
 test('Bodycam role is read-only, sees the whole catalog and cannot bypass token scopes', async () => {

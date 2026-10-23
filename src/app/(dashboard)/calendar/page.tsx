@@ -17,7 +17,7 @@ import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { cn, formatDateTime, toLocalDateTimeInput } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 interface Agent {
   id: string

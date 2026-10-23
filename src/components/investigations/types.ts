@@ -6,8 +6,8 @@ import type {
   InvestigationPriorityKey,
   InvestigationStatusKey,
   PersonLinkTypeKey,
-} from '@/lib/investigations'
-import type { CaseCrossHits } from '@/lib/cross-hits'
+} from '@/lib/investigations/investigations'
+import type { CaseCrossHits } from '@/lib/investigations/cross-hits'
 
 export type RankLite = { id: string; name: string; color: string }
 

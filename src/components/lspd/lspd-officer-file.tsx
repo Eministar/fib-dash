@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { TabBar, type TabItem } from '@/components/ui/tab-bar'
 import { useFetch } from '@/hooks/use-fetch'
-import { lspdOfficerName, lspdStatusLabel, type LspdOfficerFile } from '@/lib/lspd-officers'
+import { lspdOfficerName, lspdStatusLabel, type LspdOfficerFile } from '@/lib/lspd/lspd-officers'
 import { formatDate } from '@/lib/utils'
 
 /** Stammdaten und Laufbahn eines LSPD-Beamten, live aus dem lspd-hr-Panel. */

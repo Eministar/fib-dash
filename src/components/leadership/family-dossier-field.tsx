@@ -19,10 +19,10 @@ export function FamilyDossierField({ dossierId, disabled, onChange }: {
   const [page, setPage] = useState(1)
   const query = useDebouncedValue(search)
   const selected = useFetch<{ title: string }>(dossierId ? `/api/investigations/dossiers/${encodeURIComponent(dossierId)}` : null)
-  const list = useFetch<{ items: { id: string; title: string }[]; total: number }>(open ? `/api/investigations/dossiers?kind=FAMILY&search=${encodeURIComponent(query)}&page=${page}` : null)
+  const list = useFetch<{ items: { id: string; title: string }[]; total: number }>(open ? `/api/investigations/dossiers?sort=name&search=${encodeURIComponent(query)}&page=${page}` : null)
   return <div className="space-y-2 sm:col-span-full">
     <div className="flex flex-wrap items-center gap-2 text-xs">
-      <span className="text-neutral-400">Dauerakte</span>
+      <span className="text-neutral-400">Familienakte</span>
       {dossierId && <Link className="text-white underline underline-offset-4" href={`/investigations/dossiers?id=${encodeURIComponent(dossierId)}`}>{selected.data?.title ?? 'Verknüpfte Akte öffnen'}</Link>}
       <Button type="button" size="sm" variant="outline" disabled={disabled} onClick={() => setOpen(true)}>{dossierId ? 'Andere Akte wählen' : 'Familienakte verknüpfen'}</Button>
       {dossierId && <Button type="button" size="sm" variant="ghost" disabled={disabled} onClick={() => onChange(null)}>Verknüpfung entfernen</Button>}

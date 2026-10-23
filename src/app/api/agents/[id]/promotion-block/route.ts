@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { queueAgentRoleSync } from '@/lib/discord-integration'
-import { syncLinkedUserDisplayNameForAgent } from '@/lib/user-display-name'
+import { createAuditLog } from '@/lib/audit/audit'
+import { queueAgentRoleSync } from '@/lib/discord/discord-integration'
+import { syncLinkedUserDisplayNameForAgent } from '@/lib/agents/user-display-name'
 
 const NOTE_TITLE = 'Uprank-Sperre'
 

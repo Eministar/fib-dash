@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { AlertTriangle, ArrowRight, Gavel, Printer, Scale } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DocumentSkeleton } from '@/components/ui/loading'
-import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanctions/sanction-catalog'
 import { formatDateTime } from '@/lib/utils'
 
 interface BatchCase {

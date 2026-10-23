@@ -15,7 +15,7 @@ import {
 
 import { PageHeader } from '@/components/layout/page-header'
 import { useFetch } from '@/hooks/use-fetch'
-import type { CommitHistoryResponse, CommitLegendEntry } from '@/lib/release-history'
+import type { CommitHistoryResponse, CommitLegendEntry } from '@/lib/core/release-history'
 
 function formatDate(value: string) {
   const date = new Date(value)

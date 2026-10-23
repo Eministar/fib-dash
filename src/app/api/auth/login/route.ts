@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { success, error , forbidden } from '@/lib/api-response'
+import { success, error } from '@/lib/api-response'
 
 export async function POST() {
   return error('Passwort-Login ist deaktiviert. Bitte Discord-Login nutzen.', 410)

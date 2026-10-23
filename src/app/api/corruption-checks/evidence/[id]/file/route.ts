@@ -1,9 +1,9 @@
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound } from '@/lib/api-response'
-import { corruptionError } from '@/lib/corruption-server'
-import { evidenceResponse } from '@/lib/corruption-evidence'
-import { bodycamAccess } from '@/lib/bodycam-access'
+import { corruptionError } from '@/lib/lspd/corruption-server'
+import { evidenceResponse } from '@/lib/lspd/corruption-evidence'
+import { bodycamAccess } from '@/lib/investigations/bodycam-access'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

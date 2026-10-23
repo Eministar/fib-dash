@@ -1,6 +1,6 @@
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { routeError } from '@/lib/investigations-server'
+import { routeError } from '@/lib/investigations/investigations-server'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'

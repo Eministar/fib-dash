@@ -16,8 +16,8 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import type { RankChangeVoteSummary, RankChangeVoteValue } from '@/lib/rank-change-votes'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import type { RankChangeVoteSummary, RankChangeVoteValue } from '@/lib/agents/rank-change-votes'
 import {
   RankChangeListCard,
   entryDirection,
@@ -27,7 +27,7 @@ import {
   type RankChangeList,
 } from '@/components/rank-changes/rank-change-list-card'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesAgent, matchesSearch } from '@/lib/search-match'
+import { matchesAgent, matchesSearch } from '@/lib/core/search-match'
 
 interface Rank { id: string; name: string; sortOrder: number; color: string }
 interface Agent {

@@ -34,7 +34,7 @@ import {
   suggestRating,
   type QcEntryKind,
   type QcRating,
-} from '@/lib/quality-checks'
+} from '@/lib/lspd/quality-checks'
 import { cn, formatDateTime } from '@/lib/utils'
 import { BalanceChips, GradeBadge, KIND_STYLE, QcEntryList, RatingBadge, type QcCheck, type QcEntry } from './qc-shared'
 import { ShareDialog } from './qc-dialogs'

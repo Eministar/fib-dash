@@ -9,8 +9,8 @@ import {
   getActiveAbsenceNotices,
   parseAbsenceDate,
   runAgentStatusAutomation,
-} from '@/lib/absence-status'
-import { queueDiscordAbsenceStatusUpdate, queueDiscordHrEvent } from '@/lib/discord-integration'
+} from '@/lib/agents/absence-status'
+import { queueDiscordAbsenceStatusUpdate, queueDiscordHrEvent } from '@/lib/discord/discord-integration'
 
 export async function GET() {
   try {

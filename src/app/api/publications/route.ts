@@ -3,9 +3,9 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { publicationFailure } from '@/lib/publications-server'
-import { createAuditLog } from '@/lib/audit'
-import { normalizeTable, publicationInput, publicationSlug } from '@/lib/publications'
+import { publicationFailure } from '@/lib/publications/publications-server'
+import { createAuditLog } from '@/lib/audit/audit'
+import { normalizeTable, publicationInput, publicationSlug } from '@/lib/publications/publications'
 
 export async function GET() {
   try {

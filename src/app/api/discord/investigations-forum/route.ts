@@ -1,6 +1,6 @@
 import { error, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { investigationForum, queueForumTask, rebuildInvestigationForum } from '@/lib/investigation-forum'
+import { investigationForum, queueForumTask, rebuildInvestigationForum } from '@/lib/investigations/investigation-forum'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +14,7 @@ export async function POST() {
     if (!await investigationForum()) return error('Der eingestellte Ermittlungs-Channel ist kein Forum (erst speichern)')
     queueForumTask('Forum aufbauen', async () => {
       const result = await rebuildInvestigationForum()
-      console.log(`[InvestigationForum] Aufgebaut: ${result.investigations} laufende Akten, ${result.dossiers} Dauerakten`)
+      console.log(`[InvestigationForum] Aufgebaut: ${result.investigations} laufende Akten, ${result.dossiers} Familienakten`)
     })
     return success({ started: true })
   } catch (cause) {

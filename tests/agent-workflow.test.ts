@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { visibleAgentTaskModules, missingAgentTrainings } from '../src/lib/agent-open-tasks'
-import { emptyAgentFilters, readAgentViews, sameAgentFilters } from '../src/lib/agent-saved-views'
-import { leadershipGroupSchema, remapFamilyLeads } from '../src/lib/leadership-groups'
+import { visibleAgentTaskModules, missingAgentTrainings } from '../src/lib/agents/agent-open-tasks'
+import { emptyAgentFilters, readAgentViews, sameAgentFilters } from '../src/lib/agents/agent-saved-views'
+import { leadershipGroupSchema, remapFamilyLeads } from '../src/lib/units/leadership-groups'
 
 test('Agent tasks never include modules without view permission', () => {
   assert.deepEqual(visibleAgentTaskModules({ permissions: ['agents:view'] }), [])

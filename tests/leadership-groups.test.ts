@@ -1,9 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, groupCandidates, agentDiscordId, remapFamilyLeads } from '../src/lib/leadership-groups'
-import { DISCORD_COMPONENTS_V2_FLAG } from '../src/lib/discord-components'
-import { activateChangeTracking } from '../src/lib/change-history-context'
-import { prepareMutationCapture, type SnapshotClient } from '../src/lib/change-history-tracking'
+import { leadershipGroupSchema, leadershipGroupVisibility, canManageLeadershipGroups, privateChannelOverwrites, groupEventMessage, groupOverviewMessage, groupCandidates, agentDiscordId, remapFamilyLeads } from '../src/lib/units/leadership-groups'
+import { DISCORD_COMPONENTS_V2_FLAG } from '../src/lib/discord/discord-components'
+import { activateChangeTracking } from '../src/lib/audit/change-history-context'
+import { prepareMutationCapture, type SnapshotClient } from '../src/lib/audit/change-history-tracking'
 
 /** Collects the text of every text display inside the message container. */
 function renderComponents(message: { components: unknown[] }): string {

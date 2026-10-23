@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/select'
 import { useFetch } from '@/hooks/use-fetch'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 interface Agent {
   id: string

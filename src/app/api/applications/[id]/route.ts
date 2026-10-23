@@ -8,7 +8,7 @@ import {
   cleanApplicationStatusText,
   isJobApplicationStatus,
   type JobApplicationStatusValue,
-} from '@/lib/job-applications'
+} from '@/lib/hr/job-applications'
 
 const applicationInclude = {
   applicant: { select: { id: true, displayName: true, username: true, discordId: true } },

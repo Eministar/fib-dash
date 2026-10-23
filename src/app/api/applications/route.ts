@@ -3,14 +3,14 @@ import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, requirePortalAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import {
   APPLICATION_DEFAULT_STATUS_TEXT,
   normalizeApplicationAnswers,
   pickApplicantName,
-} from '@/lib/job-applications'
-import { getApplicationFormConfig } from '@/lib/job-application-settings'
-import { applyApplicantIdentity } from '@/lib/application-identity'
+} from '@/lib/hr/job-applications'
+import { getApplicationFormConfig } from '@/lib/hr/job-application-settings'
+import { applyApplicantIdentity } from '@/lib/hr/application-identity'
 
 export async function GET() {
   try {

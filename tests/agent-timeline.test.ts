@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { DEFAULT_TIMELINE_CATEGORIES, formatDuration, parseTimelineCategories } from '../src/lib/agent-timeline'
+import { DEFAULT_TIMELINE_CATEGORIES, formatDuration, parseTimelineCategories } from '../src/lib/agents/agent-timeline'
 
 test('Kategorien aus der URL: Standard ohne Dienstzeit/Protokoll, Unbekanntes wird ignoriert', () => {
   assert.deepEqual(parseTimelineCategories(null), DEFAULT_TIMELINE_CATEGORIES)

@@ -1,7 +1,7 @@
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { error, success, unauthorized } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { getActorRank, getLevelAuthorities } from '@/lib/sanction-authority'
+import { getActorRank, getLevelAuthorities } from '@/lib/sanctions/sanction-authority'
 import {
   AGGRAVATING_CIRCUMSTANCES,
   CATALOG_PRINCIPLE,
@@ -15,7 +15,7 @@ import {
   SANCTION_LEVELS,
   SANCTION_LEVEL_ORDER,
   SANCTION_VIOLATIONS,
-} from '@/lib/sanctions'
+} from '@/lib/sanctions/sanctions'
 
 /**
  * Der vollständige Sanktionskatalog inklusive der in der Datenbank

@@ -1,7 +1,7 @@
 'use client'
 
 import { cn, getUnitBadgeClass, getUnitLabel } from '@/lib/utils'
-import { agentUnitKeys } from '@/lib/agent-units'
+import { agentUnitKeys } from '@/lib/agents/agent-units'
 
 interface UnitInfo {
   key: string

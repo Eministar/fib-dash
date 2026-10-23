@@ -13,8 +13,8 @@ import {
   type TimelineCustodyEvent,
   type TimelineItem,
   type TimelineKind,
-} from '@/lib/case-timeline'
-import { INVESTIGATION_ENTRY_KIND_LABELS } from '@/lib/investigations'
+} from '@/lib/investigations/case-timeline'
+import { INVESTIGATION_ENTRY_KIND_LABELS } from '@/lib/investigations/investigations'
 import { cn } from '@/lib/utils'
 import type { InvestigationDetail } from '@/components/investigations/types'
 

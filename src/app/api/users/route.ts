@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized , forbidden } from '@/lib/api-response'
-import { userGroupDelegate } from '@/lib/prisma-delegates'
-import { listDiscordAuthMembers, serializeDiscordBackedUser } from '@/lib/discord-auth'
+import { userGroupDelegate } from '@/lib/core/prisma-delegates'
+import { listDiscordAuthMembers, serializeDiscordBackedUser } from '@/lib/core/discord-auth'
 
 function serializeUser<T extends {
   permissions: unknown

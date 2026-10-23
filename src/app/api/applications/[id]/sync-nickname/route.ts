@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { refreshApplicantIdentity } from '@/lib/application-identity'
+import { refreshApplicantIdentity } from '@/lib/hr/application-identity'
 
 /**
  * Setzt Anzeigename und Discord-Nickname des Bewerbers neu auf

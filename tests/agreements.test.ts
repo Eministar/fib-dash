@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { agreementInputSchema, deriveAgreementStatus, linkActionSchema } from '../src/lib/agreements'
-import { loadPartyByToken, type LinkParty } from '../src/lib/agreement-service'
+import { agreementInputSchema, deriveAgreementStatus, linkActionSchema } from '../src/lib/contracts/agreements'
+import { loadPartyByToken, type LinkParty } from '../src/lib/contracts/agreement-service'
 
 const open = { signedAt: null, declinedAt: null }
 const signed = { signedAt: new Date(), declinedAt: null }

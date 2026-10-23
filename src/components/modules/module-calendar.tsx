@@ -15,7 +15,7 @@ import { useApi } from '@/hooks/use-api'
 import { useHiddenIds, useUndoable } from '@/hooks/use-undoable'
 import { useToast } from '@/components/ui/toast'
 import { cn, toLocalDateTimeInput } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { useUrlState } from '@/hooks/use-url-state'
 
 export type ModuleCalendarKey = 'ACADEMY' | 'HR' | 'SRU' | 'AIR_SUPPORT' | 'DETECTIVE' | 'INTERNAL_AFFAIRS' | 'LAD'

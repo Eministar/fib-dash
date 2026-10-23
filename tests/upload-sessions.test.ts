@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
 import { Readable } from 'node:stream'
 
-import { matchesFileSignature } from '../src/lib/upload-signatures'
+import { matchesFileSignature } from '../src/lib/media/upload-signatures'
 import {
   chunkCountFor,
   chunkPath,
@@ -16,7 +16,7 @@ import {
   uploadKindRules,
   UploadSessionError,
   storeChunk,
-} from '../src/lib/upload-sessions'
+} from '../src/lib/media/upload-sessions'
 
 function streamOf(buffer: Buffer) {
   return Readable.toWeb(Readable.from([buffer])) as ReadableStream<Uint8Array>
@@ -122,7 +122,7 @@ test('Chunks werden nur bei passender Länge und Prüfsumme abgelegt', async () 
 })
 
 test('Fingerabdruck und Anzeigeformate', async () => {
-  const { fingerprintFor, formatRate, formatRemaining } = await import('../src/lib/chunked-upload')
+  const { fingerprintFor, formatRate, formatRemaining } = await import('../src/lib/media/chunked-upload')
 
   const file = { name: 'zugriff.mp4', size: 214958080, lastModified: 1757320145000 } as File
   const printed = await fingerprintFor(file)

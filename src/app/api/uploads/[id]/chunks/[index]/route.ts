@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 
 import { error, success } from '@/lib/api-response'
-import { routeError } from '@/lib/investigations-server'
-import { uploadCors, uploadOptions } from '@/lib/upload-cors'
-import { authorizeUploadKind } from '@/lib/upload-authorization'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { uploadCors, uploadOptions } from '@/lib/media/upload-cors'
+import { authorizeUploadKind } from '@/lib/media/upload-authorization'
 import {
   loadOwnedSession,
   loadOwnedSessionUnchecked,
@@ -11,7 +11,7 @@ import {
   storeChunk,
   UploadSessionError,
   type UploadKind,
-} from '@/lib/upload-sessions'
+} from '@/lib/media/upload-sessions'
 
 export const dynamic = 'force-dynamic'
 export const OPTIONS = uploadOptions

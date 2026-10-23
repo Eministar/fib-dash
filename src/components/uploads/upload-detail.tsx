@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Modal } from '@/components/ui/modal'
 import { useApi } from '@/hooks/use-api'
 import { formatDateTime } from '@/lib/utils'
-import { formatBytes, previewKind } from '@/lib/file-upload-types'
+import { formatBytes, previewKind } from '@/lib/media/file-upload-types'
 import type { Upload } from './upload-types'
 
 /**

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { canManageLeadershipGroups } from '@/lib/leadership-groups'
-import { groupError, groupResponse, groupUser, viewerAgentIds } from '@/lib/leadership-groups-server'
+import { canManageLeadershipGroups } from '@/lib/units/leadership-groups'
+import { groupError, groupResponse, groupUser, viewerAgentIds } from '@/lib/units/leadership-groups-server'
 
 export async function GET() {
   try {

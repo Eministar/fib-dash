@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 
 import { notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
-import { routeError } from '@/lib/investigations-server'
+import { routeError } from '@/lib/investigations/investigations-server'
 
 export const dynamic = 'force-dynamic'
 

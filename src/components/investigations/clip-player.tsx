@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import Link from 'next/link'
 import { Clock3, MapPin, Trash2, User } from 'lucide-react'

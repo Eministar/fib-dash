@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { requirePortalAuth } from '@/lib/auth'
-import { activeSessionWhere, closeStaleFormTestSessions } from '@/lib/form-links'
+import { activeSessionWhere, closeStaleFormTestSessions } from '@/lib/hr/form-links'
 
 export async function GET() {
   try {

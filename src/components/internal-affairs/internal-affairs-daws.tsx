@@ -13,7 +13,7 @@ import {
   Trash2,
 } from 'lucide-react'
 
-import { PENAL_GRADE_ORDER, PENAL_GRADE_RULES } from '@/lib/sanction-catalog'
+import { PENAL_GRADE_ORDER, PENAL_GRADE_RULES } from '@/lib/sanctions/sanction-catalog'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -26,10 +26,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { formatDateTime, toLocalDateTimeInput } from '@/lib/utils'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesAgent } from '@/lib/search-match'
+import { matchesAgent } from '@/lib/core/search-match'
 
 export interface DawEvidence {
   url: string

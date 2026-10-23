@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { error, success, unauthorized, forbidden } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
-import { LspdUnavailableError, searchLspdOfficers } from '@/lib/lspd-hr-client'
+import { LspdUnavailableError, searchLspdOfficers } from '@/lib/lspd/lspd-hr-client'
 
 export const dynamic = 'force-dynamic'
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { SEARCH_MIN_LENGTH, excerpt } from '../src/lib/global-search'
+import { SEARCH_MIN_LENGTH, excerpt } from '../src/lib/core/global-search'
 
 test('Der Ausschnitt zentriert die Fundstelle statt den Feldanfang zu zeigen', () => {
   const text = `${'a'.repeat(200)} Moretti ${'b'.repeat(200)}`

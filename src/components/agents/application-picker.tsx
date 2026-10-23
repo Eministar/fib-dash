@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import { Check, Search } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
-import { stripApplicationCaseNumber } from '@/lib/application-case-number'
-import { matchesSearch } from '@/lib/search-match'
+import { stripApplicationCaseNumber } from '@/lib/hr/application-case-number'
+import { matchesSearch } from '@/lib/core/search-match'
 
 export interface LinkableApplication {
   id: string

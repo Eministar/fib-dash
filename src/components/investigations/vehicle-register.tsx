@@ -189,7 +189,7 @@ export function VehicleRegister() {
           hint={
             search || flaggedOnly
               ? 'Andere Schreibweise probieren oder den Filter zurücksetzen.'
-              : 'Fahrzeugakten lassen sich an Einsatzakten und Dauerakten hängen.'
+              : 'Fahrzeugakten lassen sich an Einsatzakten und Familienakten hängen.'
           }
           action={
             search || flaggedOnly ? (

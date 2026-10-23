@@ -1,6 +1,6 @@
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { qcRouteError, qualityOfficerStats } from '@/lib/quality-checks-server'
+import { qcRouteError, qualityOfficerStats } from '@/lib/lspd/quality-checks-server'
 
 export const dynamic = 'force-dynamic'
 

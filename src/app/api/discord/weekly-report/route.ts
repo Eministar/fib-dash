@@ -1,7 +1,7 @@
 import { error, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { getDiscordConfig } from '@/lib/discord-integration'
-import { sendWeeklyReport } from '@/lib/weekly-report-server'
+import { getDiscordConfig } from '@/lib/discord/discord-integration'
+import { sendWeeklyReport } from '@/lib/duty/weekly-report-server'
 
 export const dynamic = 'force-dynamic'
 

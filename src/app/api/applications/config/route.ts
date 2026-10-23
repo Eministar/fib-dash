@@ -5,7 +5,7 @@ import { success, error, unauthorized } from '@/lib/api-response'
 import {
   getApplicationFormConfig,
   saveApplicationFormConfig,
-} from '@/lib/job-application-settings'
+} from '@/lib/hr/job-application-settings'
 
 export async function GET() {
   try {

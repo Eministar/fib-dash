@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, forbidden } from '@/lib/api-response'
-import { listAgentRecords } from '@/lib/agent-records'
-import { findAgentForUser } from '@/lib/manual-duty'
+import { listAgentRecords } from '@/lib/agents/agent-records'
+import { findAgentForUser } from '@/lib/duty/manual-duty'
 
 /** Eigene Akten-Einträge des angemeldeten Agents (nur lesend). */
 export async function GET() {

@@ -4,9 +4,9 @@ import {
   defaultInvestigationFilters,
   readInvestigationViews,
   sameInvestigationFilters,
-} from '../src/lib/investigation-saved-views'
-import { checklistProgress } from '../src/lib/investigation-templates'
-import { myInvestigationsWhere } from '../src/lib/investigations'
+} from '../src/lib/investigations/investigation-saved-views'
+import { checklistProgress } from '../src/lib/investigations/investigation-templates'
+import { myInvestigationsWhere } from '../src/lib/investigations/investigations'
 import type { CurrentUser } from '../src/lib/auth'
 
 test('Gespeicherte Aktenansichten: gültige bleiben, kaputte fallen weg', () => {
@@ -36,7 +36,7 @@ test('Meine Akten: Fallführung oder Zuweisung über das eigene Agent-Profil', (
 })
 
 test('Übergabe: Chronologie-Text mit und ohne bisherige Fallführung', async () => {
-  const { handoverEntryContent } = await import('../src/lib/investigations')
+  const { handoverEntryContent } = await import('../src/lib/investigations/investigations')
   assert.equal(handoverEntryContent('A (1)', 'B (2)', '  Spur X offen  '), 'Fallführung von A (1) an B (2) übergeben.\n\nSpur X offen')
   assert.equal(handoverEntryContent(null, 'B (2)', 'Neu'), 'Fallführung an B (2) übergeben.\n\nNeu')
 })

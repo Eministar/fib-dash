@@ -45,10 +45,10 @@ import {
   type UnitModuleAccess,
   type UnitModuleKey,
   type UnitModuleSelection,
-} from '@/lib/unit-modules'
+} from '@/lib/units/unit-modules'
 import { cn } from '@/lib/utils'
 import { useConfirm } from '@/components/ui/confirm-dialog'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 const MODULE_PERMISSIONS = moduleControlledPermissions()
 const EXTRA_PERMISSIONS = PERMISSIONS.filter((permission) => !MODULE_PERMISSIONS.has(permission))

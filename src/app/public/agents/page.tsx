@@ -6,8 +6,8 @@ import { Search, Shield } from 'lucide-react'
 import { PageLoader } from '@/components/ui/loading'
 import { useFetch } from '@/hooks/use-fetch'
 import { formatDate } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import { matchesAgent } from '@/lib/search-match'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import { matchesAgent } from '@/lib/core/search-match'
 
 interface Agent {
   badgeNumber: string

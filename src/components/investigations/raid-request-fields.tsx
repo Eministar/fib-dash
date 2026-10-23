@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { RAID_MEASURES, RAID_URGENCY, type RaidAttachment, type RaidMeasure, type RaidRequest, type RaidUrgency } from '@/lib/raid-request'
-import { raidRequestSchema } from '@/lib/raid-request-schema'
+import { RAID_MEASURES, RAID_URGENCY, type RaidAttachment, type RaidMeasure, type RaidRequest, type RaidUrgency } from '@/lib/investigations/raid-request'
+import { raidRequestSchema } from '@/lib/investigations/raid-request-schema'
 import { RaidRequestDocument } from './raid-request-document'
 
 /** Eingaben für den Razzia-Antrag. Der förmliche Text entsteht daraus automatisch. */

@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -23,7 +23,7 @@ import { hasPermission } from '@/lib/permissions'
 import {
   INVESTIGATION_PRIORITY_LABELS,
   INVESTIGATION_STATUS_LABELS,
-} from '@/lib/investigations'
+} from '@/lib/investigations/investigations'
 import { cn, formatDateTime } from '@/lib/utils'
 import {
   PriorityBadge,
@@ -41,7 +41,7 @@ import { useInvestigationToast } from '@/components/investigations/use-investiga
 import type { AgentLite, InvestigationListItem } from '@/components/investigations/types'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { checklistProgress, composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigation-templates'
+import { checklistProgress, composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigations/investigation-templates'
 import { SavedViews } from '@/components/ui/saved-views'
 import {
   defaultInvestigationFilters,
@@ -49,7 +49,7 @@ import {
   sameInvestigationFilters,
   validInvestigationViews,
   type InvestigationViewFilters,
-} from '@/lib/investigation-saved-views'
+} from '@/lib/investigations/investigation-saved-views'
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'Alle Status' },
@@ -260,22 +260,22 @@ export function InvestigationsWorkspace() {
     },
     {
       id: 'zusammenhang', label: 'Zusammenhang',
-      invalid: !form.affiliation ? 'Bitte wähle, ob der Vorfall zu einer bestehenden Dauerakte gehört.' : form.affiliation === 'yes' && !form.dossierId ? 'Bitte die zugehörige Dauerakte auswählen.' : undefined,
+      invalid: !form.affiliation ? 'Bitte wähle, ob der Vorfall zu einer bekannten Familie gehört.' : form.affiliation === 'yes' && !form.dossierId ? 'Bitte die zugehörige Familienakte auswählen.' : undefined,
       content: <div className="space-y-4">
         <h2 className="text-base font-semibold">Gehört der Vorfall zu einer Fraktion, Familie oder einem bekannten Anwesen?</h2>
-        <p className="text-sm leading-6 text-[#98989d]">Die Einsatzakte dokumentiert diesen konkreten Vorfall. Eine Dauerakte sammelt alle zugehörigen Einsätze, Personen und Fahrzeuge über längere Zeit.</p>
+        <p className="text-sm leading-6 text-[#98989d]">Die Einsatzakte dokumentiert diesen konkreten Vorfall. Eine Familienakte sammelt alle Einsätze, Mitglieder und Fahrzeuge einer Familie über längere Zeit.</p>
         <div className="grid gap-2 sm:grid-cols-2">{[
-          { id: 'yes' as const, label: 'Ja, einer Dauerakte zuordnen' },
+          { id: 'yes' as const, label: 'Ja, einer Familienakte zuordnen' },
           { id: 'no' as const, label: 'Nein oder noch unbekannt' },
         ].map(option => <button type="button" key={option.id} aria-pressed={form.affiliation === option.id}
           className={`rounded-lg border p-3 text-left text-sm ${form.affiliation === option.id ? 'border-[#98989d] bg-[#3a3a3c]' : 'border-[#38383a]'}`}
           onClick={() => setForm(previous => ({ ...previous, affiliation: option.id }))}>{option.label}</button>)}</div>
         {form.affiliation === 'yes' && <>
-          <Input label="Fraktion oder Dauerakte suchen" value={dossierSearch} onChange={event => setDossierSearch(event.target.value)} placeholder="Name der Fraktion, Familie oder des Anwesens" />
+          <Input label="Familie suchen" value={dossierSearch} onChange={event => setDossierSearch(event.target.value)} placeholder="Name der Familie, des Leiters oder eines Mitglieds" />
           {dossiers.error && <p role="alert" className="text-sm text-red-300">{dossiers.error}</p>}
-          <Select label="Zugehörige Dauerakte" value={form.dossierId} onValueChange={value => setForm(previous => ({ ...previous, dossierId: value }))}
-            options={[{ value: '', label: dossiers.loading ? 'Akten werden geladen …' : 'Dauerakte auswählen' }, ...(dossiers.data?.items ?? []).map(item => ({ value: item.id, label: item.title }))]} />
-          <Link href="/investigations/dossiers?new=1&kind=FAMILY" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-[#c4b5fd] underline">Neue Fraktionsakte in einem weiteren Tab anlegen</Link>
+          <Select label="Zugehörige Familienakte" value={form.dossierId} onValueChange={value => setForm(previous => ({ ...previous, dossierId: value }))}
+            options={[{ value: '', label: dossiers.loading ? 'Akten werden geladen …' : 'Familienakte auswählen' }, ...(dossiers.data?.items ?? []).map(item => ({ value: item.id, label: item.title }))]} />
+          <Link href="/investigations/dossiers?new=1" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-[#c4b5fd] underline">Neue Familienakte in einem weiteren Tab anlegen</Link>
         </>}
       </div>,
     },
@@ -418,7 +418,7 @@ export function InvestigationsWorkspace() {
       {chooseType && <Modal open onClose={() => setChooseType(false)} title="Was möchtest du dokumentieren?" size="lg">
         <div className="space-y-3">
           <button type="button" onClick={() => { setChooseType(false); setCreateOpen(true) }} className="block w-full rounded-lg border border-[#48484a] p-4 text-left hover:bg-[#2c2c2e]"><span className="block font-medium">Einen konkreten Einsatz oder Vorfall</span><span className="mt-1 block text-sm text-[#98989d]">Einsatzakte mit Ablauf, Beteiligten und Beweisen anlegen.</span></button>
-          <Link href="/investigations/dossiers?new=1" className="block rounded-lg border border-[#48484a] p-4 hover:bg-[#2c2c2e]"><span className="block font-medium">Informationen langfristig sammeln</span><span className="mt-1 block text-sm text-[#98989d]">Dauerakte für eine Fraktion, Familie, ein Anwesen oder Thema anlegen.</span></Link>
+          <Link href="/investigations/dossiers?new=1" className="block rounded-lg border border-[#48484a] p-4 hover:bg-[#2c2c2e]"><span className="block font-medium">Informationen langfristig sammeln</span><span className="mt-1 block text-sm text-[#98989d]">Familienakte für eine Familie oder Fraktion anlegen.</span></Link>
         </div>
       </Modal>}
 

@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, forbidden } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { getDiscordConfig, getDiscordGuildRoles } from '@/lib/discord-integration'
+import { getDiscordConfig, getDiscordGuildRoles } from '@/lib/discord/discord-integration'
 
 export async function GET() {
   try {

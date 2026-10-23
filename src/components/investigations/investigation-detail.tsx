@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -36,7 +36,7 @@ import {
   INVESTIGATION_PERSON_ROLE_LABELS,
   INVESTIGATION_PRIORITY_LABELS,
   INVESTIGATION_STATUS_LABELS,
-} from '@/lib/investigations'
+} from '@/lib/investigations/investigations'
 import { formatDateTime } from '@/lib/utils'
 import { ClipCard, ClipPlayer } from '@/components/investigations/clip-player'
 import { ClipUploadDialog } from '@/components/investigations/clip-upload-dialog'
@@ -52,7 +52,7 @@ import { ImageLightbox, LightboxThumb } from '@/components/ui/image-lightbox'
 import { SectionCard } from '@/components/ui/section-card'
 import { TabBar, resolveTab, type TabItem } from '@/components/ui/tab-bar'
 import { PhotoPicker } from '@/components/investigations/photo-catalog'
-import { mapCategory } from '@/lib/map-spots'
+import { mapCategory } from '@/lib/investigations/map-spots'
 import {
   EntryKindBadge,
   PriorityBadge,

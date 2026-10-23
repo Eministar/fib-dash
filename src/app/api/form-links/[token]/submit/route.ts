@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma/client'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { requirePortalAuth } from '@/lib/auth'
-import { buildFormSubmitterHash, calculateResponseScore, normalizeSubmittedAnswers } from '@/lib/form-tests'
-import { completeFormTestSessionById, isFormTestSessionWriteConflict } from '@/lib/form-test-sessions'
-import { FORM_LINK_ERRORS, resolveFormLink } from '@/lib/form-links'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { buildFormSubmitterHash, calculateResponseScore, normalizeSubmittedAnswers } from '@/lib/hr/form-tests'
+import { completeFormTestSessionById, isFormTestSessionWriteConflict } from '@/lib/hr/form-test-sessions'
+import { FORM_LINK_ERRORS, resolveFormLink } from '@/lib/hr/form-links'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {

@@ -4,7 +4,7 @@ import { ChevronRight, FileText, Lock, Pin, Table2 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { PublicPageTitle, PublicShell } from '@/components/portal/public-shell'
 import { formatDate } from '@/lib/utils'
-import { publicationAccess, publicationViewer } from '@/lib/publications-server'
+import { publicationAccess, publicationViewer } from '@/lib/publications/publications-server'
 
 export const dynamic = 'force-dynamic'
 

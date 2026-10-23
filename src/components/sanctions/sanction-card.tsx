@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { BadgeCheck, CheckCircle2, Edit, Gavel, ShieldCheck, Trash2, Undo2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import {
   penalGradeLabel,
   requiresDualControl,
   resolveSanctionLevel,
   resolveViolation,
   sanctionLevelLabel,
-} from '@/lib/sanction-catalog'
+} from '@/lib/sanctions/sanction-catalog'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
 
 export type SanctionStatusValue = 'ISSUED' | 'EXECUTED' | 'IN_COURT' | 'UPHELD' | 'REVOKED'

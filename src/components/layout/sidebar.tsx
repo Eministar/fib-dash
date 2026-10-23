@@ -21,7 +21,7 @@ import Image from 'next/image'
 import { useFetch } from '@/hooks/use-fetch'
 import { useNavFavorites } from '@/hooks/use-nav-favorites'
 import { unitIconComponent } from '@/components/units/unit-icon'
-import type { NavigationUnit } from '@/lib/unit-navigation'
+import type { NavigationUnit } from '@/lib/units/unit-navigation'
 
 export interface NavItem {
   name: string

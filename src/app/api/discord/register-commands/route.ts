@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { registerDiscordCommands } from '@/lib/discord-commands'
+import { registerDiscordCommands } from '@/lib/discord/discord-commands'
 
 export async function POST() {
   try {

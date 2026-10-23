@@ -7,7 +7,7 @@ import {
   personProbeIsSearchable,
   plateIsSearchable,
   plateSearchChunk,
-} from '../src/lib/cross-hits'
+} from '../src/lib/investigations/cross-hits'
 
 test('Kennzeichen werden unabhängig von Schreibweise verglichen', () => {
   assert.equal(normalizePlate(' ls-123 ab '), 'LS123AB')

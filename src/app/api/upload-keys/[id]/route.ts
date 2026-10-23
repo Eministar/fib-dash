@@ -3,8 +3,8 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { notFound, success } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { fileUploadRouteError } from '@/lib/file-upload-queries'
+import { createAuditLog } from '@/lib/audit/audit'
+import { fileUploadRouteError } from '@/lib/media/file-upload-queries'
 
 export const dynamic = 'force-dynamic'
 

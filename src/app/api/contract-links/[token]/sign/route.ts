@@ -2,22 +2,22 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, notFound } from '@/lib/api-response'
 import { getCurrentUser } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
-import { queueDiscordHrEvent } from '@/lib/discord-integration'
+import { createAuditLog } from '@/lib/audit/audit'
+import { queueDiscordHrEvent } from '@/lib/discord/discord-integration'
 import {
   loadContractLinkByToken,
   resolveSignatureAccess,
   serializeContractDocument,
   serializeParties,
-} from '@/lib/contract-links'
-import { declineWithToken, signWithToken } from '@/lib/contract-signature-service'
+} from '@/lib/contracts/contract-links'
+import { declineWithToken, signWithToken } from '@/lib/contracts/contract-signature-service'
 import {
   cleanContractLongText,
   normalizeLinkToken,
   primarySignatureField,
   readContractFields,
   validateContractValues,
-} from '@/lib/contracts'
+} from '@/lib/contracts/contracts'
 
 function clientIp(req: NextRequest) {
   const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()

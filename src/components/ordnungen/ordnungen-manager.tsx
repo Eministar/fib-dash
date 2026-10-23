@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input'
 import { ColorField } from '@/components/ui/color-field'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
-import { ORDNUNG_ICON_NAMES, ordnungIcon } from '@/lib/ordnungen-icons'
+import { ORDNUNG_ICON_NAMES, ordnungIcon } from '@/lib/publications/ordnungen-icons'
 import { OrdnungEditor } from '@/components/ordnungen/ordnung-editor'
-import type { OrdnungCategoryDTO, OrdnungenPayload } from '@/lib/ordnungen'
+import type { OrdnungCategoryDTO, OrdnungenPayload } from '@/lib/publications/ordnungen'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 
 export interface OrdnungenManagerHandle {

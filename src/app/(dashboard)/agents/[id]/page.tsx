@@ -30,10 +30,11 @@ import {
   getFlagColor,
 } from '@/lib/utils'
 import { hasPermission, PERMISSIONS } from '@/lib/permissions'
-import { agentUnitKeys } from '@/lib/agent-units'
-import { notifyLiveUpdate } from '@/lib/live-updates'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { agentUnitKeys } from '@/lib/agents/agent-units'
+import { notifyLiveUpdate } from '@/lib/core/live-updates'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
+import { OnLeaveBadge } from '@/components/agents/on-leave-badge'
 import {
   DECISION_CHECKLIST,
   AGGRAVATING_CIRCUMSTANCES,
@@ -47,8 +48,8 @@ import {
   penalGradeLabel,
   sanctionLevelLabel,
   violationsForGrade,
-} from '@/lib/sanction-catalog'
-import { CONTRACT_STATUS_META, type ContractStatusValue } from '@/lib/contracts'
+} from '@/lib/sanctions/sanction-catalog'
+import { CONTRACT_STATUS_META, type ContractStatusValue } from '@/lib/contracts/contracts'
 import { SanctionCard, type SanctionRecord } from '@/components/sanctions/sanction-card'
 import { Badge } from '@/components/ui/badge'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
@@ -58,6 +59,7 @@ import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { AgentAchievements } from '@/components/agents/agent-achievements'
 import { usePageAction } from '@/hooks/use-page-action'
 import { TabBar } from '@/components/ui/tab-bar'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface Rank { id: string; name: string; sortOrder: number; internalNumber: number | null; color: string }
 interface Unit { id: string; key: string; name: string; color: string; active: boolean }
@@ -282,12 +284,6 @@ function DiscordMemberStatus({ agent }: { agent: Pick<AgentDetail, 'discordId' |
   )
 }
 
-function fmt(seconds: number) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return h > 0 ? `${h}h ${m}m` : `${m}m`
-}
-
 function formatDuration(ms: number) {
   const totalMinutes = Math.max(0, Math.floor(ms / 60000))
   const hours = Math.floor(totalMinutes / 60)
@@ -313,6 +309,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params)
   const router = useRouter()
   const { addToast } = useToast()
+  const confirm = useConfirm()
   const { user } = useAuth()
   const { execute } = useApi()
   const canViewAgent = hasPermission(user, 'agents:view')
@@ -423,6 +420,22 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     setEditingMode(mode)
   }
 
+  // Das Formular lebt im Profil-Reiter. Wer während der Bearbeitung wegwechselt,
+  // verwirft die Änderungen bewusst, statt im Header blind zu speichern.
+  const selectDetailTab = async (tab: string) => {
+    if (tab === detailTab) return
+    if (editing) {
+      if (!(await confirm({
+        title: 'Bearbeitung verwerfen?',
+        description: 'Die ungespeicherten Änderungen gehen verloren, wenn du den Bereich wechselst.',
+        confirmLabel: 'Verwerfen',
+        tone: 'danger',
+      }))) return
+      setEditingMode(null)
+    }
+    setDetailTab(tab)
+  }
+
   const handleSave = async () => {
     try {
       const payload = unitOnlyEditing
@@ -458,6 +471,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const handleTogglePromotionBlock = async () => {
     if (!agent) return
     const blocking = !agent.promotionBlocked
+    if (!blocking && !(await confirm({
+      title: 'Uprank-Sperre aufheben?',
+      description: `${agent.firstName} ${agent.lastName} kann danach wieder befördert werden.`,
+      confirmLabel: 'Sperre aufheben',
+    }))) return
     try {
       await execute(`/api/agents/${id}/promotion-block`, { method: blocking ? 'POST' : 'DELETE' })
       addToast({ type: 'success', title: blocking ? 'Uprank-Sperre gesetzt' : 'Uprank-Sperre aufgehoben' })
@@ -483,6 +501,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleEndLeave = async () => {
+    if (!(await confirm({
+      title: 'Beurlaubung aufheben?',
+      description: agent ? `Die Beurlaubung von ${agent.firstName} ${agent.lastName} endet sofort.` : undefined,
+      confirmLabel: 'Beurlaubung aufheben',
+    }))) return
     try {
       await execute(`/api/agents/${id}/leave`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Beurlaubung aufgehoben' })
@@ -693,8 +716,15 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const handleConfirmSanction = (sanctionId: string) =>
     patchSanction(sanctionId, 'CONFIRM', 'Sanktion bestätigt')
 
-  const handleRevokeSanction = (sanctionId: string) =>
-    patchSanction(sanctionId, 'REVOKE', 'Sanktion aufgehoben')
+  const handleRevokeSanction = async (sanctionId: string) => {
+    if (!(await confirm({
+      title: 'Sanktion aufheben?',
+      description: 'Die Sanktion wird als aufgehoben vermerkt und gilt nicht mehr als laufend.',
+      confirmLabel: 'Sanktion aufheben',
+      tone: 'danger',
+    }))) return
+    await patchSanction(sanctionId, 'REVOKE', 'Sanktion aufgehoben')
+  }
 
   const handleDeleteSanction = async (sanctionId: string) => {
     try {
@@ -708,6 +738,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleReactivate = async () => {
+    if (!(await confirm({
+      title: 'Agent reaktivieren?',
+      description: 'Der Status wird wieder auf „Aktiv“ gesetzt.',
+      confirmLabel: 'Reaktivieren',
+    }))) return
     try {
       await execute(`/api/agents/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'ACTIVE' }) })
       addToast({ type: 'success', title: 'Agent reaktiviert' })
@@ -758,6 +793,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleDeleteNote = async (noteId: string) => {
+    if (!(await confirm({
+      title: 'Notiz löschen?',
+      description: 'Die Notiz wird endgültig entfernt.',
+      confirmLabel: 'Löschen',
+      tone: 'danger',
+    }))) return
     try {
       await execute(`/api/notes/${noteId}`, { method: 'DELETE' })
       addToast({ type: 'success', title: 'Notiz gelöscht' })
@@ -892,11 +933,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     <div className="mx-auto w-full max-w-[1200px] min-w-0">
       <PageHeader
         breadcrumbs={[{ label: 'Agents', href: '/agents' }, { label: `${agent.firstName} ${agent.lastName}` }]}
-        title={`${agent.onLeave ? '[X] ' : ''}${agent.firstName} ${agent.lastName}`}
+        title={`${agent.firstName} ${agent.lastName}`}
+        badge={agent.onLeave ? <OnLeaveBadge /> : undefined}
+        leading={<AgentAvatar agent={agent} size="lg" ringColor={agent.rank?.color} />}
         description={`DN: ${displayBadgeNumber(agent.badgeNumber)} · ${agent.rank?.name}${agent.rank?.internalNumber != null ? ` · Rang ${agent.rank.internalNumber}` : ''}`}
         action={
           <div className="flex gap-1.5 flex-wrap">
-            <AgentAvatar agent={agent} size="sm" ringColor={agent.rank?.color} className="mr-1" />
             <Link href={`/agents/${id}/timeline`}>
               <Button variant="secondary" size="sm"><History size={14} strokeWidth={1.75} /> Personalakte</Button>
             </Link>
@@ -922,7 +964,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         }
       />
 
-      <TabBar label="Agent-Bereiche" active={detailTab} onSelect={setDetailTab} tabs={[
+      <TabBar label="Agent-Bereiche" active={detailTab} onSelect={selectDetailTab} tabs={[
         { id: 'profile', label: 'Profil' },
         { id: 'activity', label: 'Dienst & Abwesenheit' },
         { id: 'career', label: 'Ausbildung & Laufbahn' },
@@ -987,7 +1029,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                     <div>
                       <label className="block text-[12.5px] font-medium text-[#98989d] mb-1.5">Markierung</label>
-                      <FlagPicker value={form.flag ?? null} onChange={(v) => setForm({ ...form, flag: v ?? '' })} />
+                      <FlagPicker value={form.flag || null} onChange={(v) => setForm({ ...form, flag: v ?? '' })} />
                     </div>
                     <Textarea label="Notizen" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
                   </>
@@ -1228,6 +1270,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               {agent.trainings?.map((t) => (
                 <button
                   key={t.id}
+                  type="button"
+                  aria-pressed={t.completed}
                   disabled={!canEditTrainings}
                   onClick={() => canEditTrainings && handleTrainingToggle(t.trainingId, !t.completed)}
                   title={!trainingAvailableForAgent(t.training, agent) ? `${t.training.label} ist erst ab ${t.training.minRank?.name ?? 'Mindestrang'} vorgesehen` : t.training.label}
@@ -1262,28 +1306,32 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               className="border-b border-[#38383a]/60 py-4">
               <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4">Ranghistorie</h3>
               <div className="space-y-3">
-                {agent.promotionLogs.map((log) => (
-                  <div key={log.id} className="flex items-start gap-3">
-                    <div className={cn(
-                      'h-7 w-7 rounded-[6px] flex items-center justify-center shrink-0 mt-0.5',
-                      log.oldRank.sortOrder > log.newRank.sortOrder
-                        ? 'bg-[#2c2c2e]'
-                        : 'bg-[#2c2c2e]'
-                    )}>
-                      {log.oldRank.sortOrder > log.newRank.sortOrder
-                        ? <TrendingUp size={13} className="text-[#8e8e93]" strokeWidth={1.75} />
-                        : <TrendingDown size={13} className="text-[#8e8e93]" strokeWidth={1.75} />
-                      }
+                {agent.promotionLogs.map((log) => {
+                  const promoted = log.oldRank.sortOrder > log.newRank.sortOrder
+                  return (
+                    <div key={log.id} className="flex items-start gap-3">
+                      <div className={cn(
+                        'h-7 w-7 rounded-[6px] flex items-center justify-center shrink-0 mt-0.5',
+                        promoted ? 'bg-[#052e1a]/70 text-[#86efac]' : 'bg-[#2a1212]/70 text-[#fca5a5]'
+                      )}>
+                        {promoted
+                          ? <TrendingUp size={13} strokeWidth={1.75} aria-hidden />
+                          : <TrendingDown size={13} strokeWidth={1.75} aria-hidden />
+                        }
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[13px] font-medium text-[#eee]">
+                          <span className={cn('mr-1.5 text-[11.5px] font-medium', promoted ? 'text-[#86efac]' : 'text-[#fca5a5]')}>
+                            {promoted ? 'Beförderung' : 'Degradierung'}
+                          </span>
+                          {log.oldRank.name} → {log.newRank.name}
+                        </p>
+                        <p className="text-[11.5px] text-[#8e8e93] mt-0.5">{formatDate(log.createdAt)} · {log.performedBy?.displayName ?? 'Gelöscht'}</p>
+                        {log.note && <p className="text-[11.5px] text-[#8e8e93] mt-0.5">{log.note}</p>}
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-[13px] font-medium text-[#eee]">
-                        {log.oldRank.name} → {log.newRank.name}
-                      </p>
-                      <p className="text-[11.5px] text-[#8e8e93] mt-0.5">{formatDate(log.createdAt)} · {log.performedBy?.displayName ?? 'Gelöscht'}</p>
-                      {log.note && <p className="text-[11.5px] text-[#8e8e93] mt-0.5">{log.note}</p>}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
@@ -1424,24 +1472,33 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                     {agent.onLeave ? 'Beurlaubung aufheben' : 'Beurlauben'}
                   </button>
                 )}
-                {canEditAgent && agent.status === 'TERMINATED' ? (
+                {canEditAgent && agent.status === 'TERMINATED' && (
                   <button onClick={handleReactivate}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#34d399] hover:bg-[#2c2c2e] transition-colors text-left">
                     <UserCheck size={15} strokeWidth={1.75} /> Reaktivieren
                   </button>
-                ) : canTerminate ? (
-                  <button onClick={() => { setTerminateReason(''); setTerminateModal(true) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#f87171] hover:bg-[#1c1111] transition-colors text-left">
-                    <UserX size={15} strokeWidth={1.75} /> Kündigen
-                  </button>
-                ) : null}
-                {canDeleteAgent && (
-                  <button onClick={() => setDeleteModal(true)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] text-[13px] text-[#f87171] hover:bg-[#1c1111] transition-colors text-left">
-                    <Trash2 size={15} strokeWidth={1.75} /> Löschen
-                  </button>
                 )}
               </div>
+              {((canTerminate && agent.status !== 'TERMINATED') || canDeleteAgent) && (
+                <>
+                  <div className="silver-line my-3" />
+                  <h3 className="text-[12px] font-medium text-[#98989d] mb-2">Endgültige Aktionen</h3>
+                  <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                    {canTerminate && agent.status !== 'TERMINATED' && (
+                      <button onClick={() => { setTerminateReason(''); setTerminateModal(true) }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] border border-[#7f1d1d]/40 text-[13px] text-[#f87171] hover:bg-[#1c1111] transition-colors text-left">
+                        <UserX size={15} strokeWidth={1.75} /> Kündigen
+                      </button>
+                    )}
+                    {canDeleteAgent && (
+                      <button onClick={() => setDeleteModal(true)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[8px] border border-[#7f1d1d]/40 text-[13px] text-[#f87171] hover:bg-[#1c1111] transition-colors text-left">
+                        <Trash2 size={15} strokeWidth={1.75} /> Löschen
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -1804,7 +1861,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         <div className="space-y-4">
           <p className="text-[13px] text-[#98989d]">
             <strong className="text-[#eee]">{agent.firstName} {agent.lastName}</strong> wird bis auf Weiteres beurlaubt.
-            Die Beurlaubung gilt wie eine Abmeldung, setzt ein [X] vor den Namen und vergibt die Beurlaubungs-Rolle.
+            Die Beurlaubung gilt wie eine Abmeldung, setzt ein [X] vor den Discord-Namen und vergibt die Beurlaubungs-Rolle.
           </p>
           <Textarea
             label="Grund"

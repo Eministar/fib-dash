@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { GameReminderTracker, trackedGameName } from '../src/lib/game-presence'
+import { GameReminderTracker, trackedGameName } from '../src/lib/duty/game-presence'
 
 test('erkennt FiveM, GTA V with Medal und NERO-V ROLEPLAY unabhängig von Groß-/Kleinschreibung', () => {
   assert.equal(trackedGameName([{ name: 'FiveM' }]), 'FiveM')

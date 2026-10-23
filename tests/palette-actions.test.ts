@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { agentHitActions, allowedAgentActions, allowedPageActions, isPlainShortcut, newActionForPath } from '../src/lib/palette-actions'
+import { agentHitActions, allowedAgentActions, allowedPageActions, isPlainShortcut, newActionForPath } from '../src/lib/core/palette-actions'
 
 test('Aktionen erscheinen nur mit dem passenden Recht', () => {
   assert.deepEqual(allowedPageActions({ permissions: [] }), [])

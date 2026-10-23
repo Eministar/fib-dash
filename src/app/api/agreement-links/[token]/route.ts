@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
 import { success, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { publicShareHeaders } from '@/lib/record-shares'
-import { linkActionSchema } from '@/lib/agreements'
-import { declineParty, loadPartyByToken, serializeLink, signParty } from '@/lib/agreement-service'
-import { agreementErrorResponse } from '@/lib/agreement-http'
+import { createAuditLog } from '@/lib/audit/audit'
+import { publicShareHeaders } from '@/lib/investigations/record-shares'
+import { linkActionSchema } from '@/lib/contracts/agreements'
+import { declineParty, loadPartyByToken, serializeLink, signParty } from '@/lib/contracts/agreement-service'
+import { agreementErrorResponse } from '@/lib/contracts/agreement-http'
 
 export const dynamic = 'force-dynamic'
 type Params = { params: Promise<{ token: string }> }

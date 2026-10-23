@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, forbidden, notFound } from '@/lib/api-response'
-import { findApiTokenById, revokeApiToken } from '@/lib/api-tokens'
-import { createAuditLog } from '@/lib/audit'
+import { findApiTokenById, revokeApiToken } from '@/lib/core/api-tokens'
+import { createAuditLog } from '@/lib/audit/audit'
 
 interface Ctx { params: Promise<{ id: string }> }
 

@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 import { prisma } from '@/lib/prisma'
-import { getDiscordConfig } from '@/lib/discord-integration'
+import { getDiscordConfig } from '@/lib/discord/discord-integration'
 
 /**
  * Recovery nach einem Discord-Server-Wechsel.

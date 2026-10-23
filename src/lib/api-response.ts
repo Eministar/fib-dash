@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { queueDiscordWebhookEvent } from './discord-webhook'
+import { queueDiscordWebhookEvent } from './discord/discord-webhook'
 
 export function success<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status })

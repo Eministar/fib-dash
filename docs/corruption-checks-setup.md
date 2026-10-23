@@ -23,7 +23,7 @@ Namen und Dienstnummern der durchführenden Agents bleiben als Momentaufnahme er
 - Im Bericht unter **Beweise** Bilder (JPG, PNG, GIF, WebP), PDFs oder Videos (MP4, WebM, MOV) hochladen, maximal 500 MB je Datei. Beweisanlagen liegen privat unter `<UPLOAD_DIR>/corruption-evidence`; sie sind für angemeldete Dashboard-Nutzer sichtbar. PDFs werden heruntergeladen. Diese Original-Beweisanlagen werden nicht automatisch neu komprimiert.
 - Nutzer mit Bodycam-Zugriff können vorhandene Clips direkt verknüpfen. Die Rechte der ursprünglichen Aufnahme werden bei jedem Aufruf erneut geprüft; die Verknüpfung gibt keine zusätzlichen Rechte. Wird der ursprüngliche Clip gelöscht, ist die Verknüpfung nicht mehr abspielbar.
 
-Die Erweiterung benötigt den zusätzlichen Patch `prisma/patches/2026-09-08-corruption-extensions.sql` oder einen Schema-Abgleich mit `npm run db:push` (vorher sichern). Patches nicht zusätzlich zu einem bereits ausgeführten Schema-Abgleich anwenden.
+Die Erweiterung benötigt einen Schema-Abgleich mit `npm run db:push` (sichert vorher die Datenbank).
 
 ## Bodycam-Zugriff über Discord
 
@@ -33,9 +33,7 @@ Die Rolle schaltet den **Bodycam-Katalog** in der Hauptnavigation frei und erlau
 
 ## Datenbank und Bereitstellung
 
-Vor dem Start der neuen Version die Datenbank sichern und mit `npm run db:push` erweitern. Alternativ den additiven Patch `prisma/patches/2026-09-08-corruption-checks.sql` einmalig auf den vorherigen Schema-Stand anwenden. Die beiden Wege nicht kombinieren. Anschließend `npm run build` und Server neu starten.
-
-Der Patch wurde lokal generiert, nicht auf einer produktiven Datenbank ausgeführt. Die bestehenden Personenakten und Agent-Personalakten werden nicht verändert.
+Vor dem Start der neuen Version die Datenbank sichern und mit `npm run db:push` erweitern. Anschließend `npm run build` und Server neu starten. Die bestehenden Personenakten und Agent-Personalakten werden nicht verändert.
 
 ## Prüfung
 

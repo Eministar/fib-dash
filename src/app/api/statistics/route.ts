@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { error, success, unauthorized } from '@/lib/api-response'
-import { storedDiscordAvatarUrl } from '@/lib/discord-auth'
+import { storedDiscordAvatarUrl } from '@/lib/core/discord-auth'
 import {
   createStatisticsBuckets,
   isInCurrentPeriod,
@@ -13,7 +13,7 @@ import {
   type StatisticsPayload,
   type StatisticsSeriesPoint,
   type StatisticsStaffRow,
-} from '@/lib/statistics'
+} from '@/lib/core/statistics'
 
 const actorSelect = {
   id: true,

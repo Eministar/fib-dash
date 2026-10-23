@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { GraphBuilder, layoutGraph, nodeKey, parseNodeKey, type GraphNode } from '../src/lib/link-graph'
+import { GraphBuilder, layoutGraph, nodeKey, parseNodeKey, type GraphNode } from '../src/lib/investigations/link-graph'
 
 const node = (kind: GraphNode['kind'], id: string, depth = 1): GraphNode => ({
   key: nodeKey(kind, id),

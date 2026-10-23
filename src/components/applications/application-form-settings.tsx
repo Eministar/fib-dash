@@ -23,7 +23,7 @@ import {
   type ApplicationQuestion,
   type ApplicationQuestionOptions,
   type ApplicationQuestionType,
-} from '@/lib/job-applications'
+} from '@/lib/hr/job-applications'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 interface ApplicationFormSettingsProps {

@@ -23,7 +23,7 @@ import {
   cleanupUploadSessions,
   incomingDir,
   UploadSessionError,
-} from '../src/lib/upload-sessions'
+} from '../src/lib/media/upload-sessions'
 
 // Ohne dies bleibt der Testprozess nach dem letzten Test an der offenen
 // Datenbankverbindung hängen.

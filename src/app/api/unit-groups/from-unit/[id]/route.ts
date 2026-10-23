@@ -2,15 +2,15 @@ import { NextRequest } from 'next/server'
 
 import { error, notFound, success, unauthorized } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
-import { queueAllAgentRoleSync } from '@/lib/discord-integration'
+import { queueAllAgentRoleSync } from '@/lib/discord/discord-integration'
 import { automaticPermissionsForRoleNames } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import {
   composeUnitPermissions,
   sanitizeUnitIcon,
   sanitizeUnitModules,
-} from '@/lib/unit-modules'
+} from '@/lib/units/unit-modules'
 
 function createGroupKey(name: string) {
   return name

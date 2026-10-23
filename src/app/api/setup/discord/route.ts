@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getSetupStatus, inspectDiscordBot } from '@/lib/setup'
+import { getSetupStatus, inspectDiscordBot } from '@/lib/core/setup'
 
 export const runtime = 'nodejs'
 

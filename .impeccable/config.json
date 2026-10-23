@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/178-1792765407/content/familienakte-layout.html"
+        ],
+        "createdAt": "2026-10-23T14:24:08.309Z",
+        "reason": "Claude: Wegwerf-Wireframe fürs Brainstorming, 11.5px-Metatext entspricht dem bestehenden Dashboard-Stil"
+      }
+    ]
+  }
+}

@@ -2,8 +2,8 @@ import type { NextRequest } from 'next/server'
 
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { getDutyLeaderboard, isLeaderboardPeriod } from '@/lib/duty-times'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+import { getDutyLeaderboard, isLeaderboardPeriod } from '@/lib/duty/duty-times'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
 
 export async function GET(request: NextRequest) {
   try {

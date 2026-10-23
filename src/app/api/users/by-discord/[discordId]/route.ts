@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, forbidden, notFound } from '@/lib/api-response'
 import { resolveEffectivePermissions } from '@/lib/permissions'
-import { storedDiscordAvatarUrl } from '@/lib/discord-auth'
+import { storedDiscordAvatarUrl } from '@/lib/core/discord-auth'
 
 interface Ctx { params: Promise<{ discordId: string }> }
 

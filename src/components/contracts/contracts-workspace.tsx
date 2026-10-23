@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -33,7 +33,7 @@ import {
   readContractClauses,
   readContractFields,
   type ContractStatusValue,
-} from '@/lib/contracts'
+} from '@/lib/contracts/contracts'
 import {
   ContractTemplateEditor,
   type ContractTemplateForm,

@@ -2,8 +2,8 @@ import { z } from 'zod'
 import { requirePermission } from '@/lib/auth'
 import { success, notFound } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { createAuditLog } from '@/lib/audit'
-import { dossierRouteError } from '@/lib/dossiers-server'
+import { createAuditLog } from '@/lib/audit/audit'
+import { dossierRouteError } from '@/lib/investigations/dossiers-server'
 
 type Context = { params: Promise<{ id: string }> }
 const groupId = z.string().trim().min(1).max(191)
@@ -30,7 +30,7 @@ export async function POST(req: Request, { params }: Context) {
         create: { dossierId: id, groupId: group.id, addedById: user.id },
         update: {},
       })
-      await createAuditLog({ action: 'DOSSIER_ACCESS_GRANTED', userId: user.id, details: `Dauerakte „${dossier.title}“: Ermittlungsgruppe freigegeben`, newValue: group.id }, tx)
+      await createAuditLog({ action: 'DOSSIER_ACCESS_GRANTED', userId: user.id, details: `Familienakte „${dossier.title}“: Ermittlungsgruppe freigegeben`, newValue: group.id }, tx)
     })
     return success({ dossierId: id, groupId: group.id }, 201)
   } catch (cause) { return dossierRouteError(cause) }
@@ -45,7 +45,7 @@ export async function DELETE(req: Request, { params }: Context) {
     if (!dossier) return notFound('Akte')
     await prisma.$transaction(async tx => {
       const removed = await tx.dossierAccessGroup.deleteMany({ where: { dossierId: id, groupId: removedId } })
-      if (removed.count) await createAuditLog({ action: 'DOSSIER_ACCESS_REVOKED', userId: user.id, details: `Dauerakte „${dossier.title}“: Ermittlungsgruppe entfernt`, oldValue: removedId }, tx)
+      if (removed.count) await createAuditLog({ action: 'DOSSIER_ACCESS_REVOKED', userId: user.id, details: `Familienakte „${dossier.title}“: Ermittlungsgruppe entfernt`, oldValue: removedId }, tx)
     })
     return success({ dossierId: id, groupId: removedId })
   } catch (cause) { return dossierRouteError(cause) }

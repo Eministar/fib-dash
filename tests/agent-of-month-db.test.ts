@@ -12,8 +12,8 @@ import {
   getAgentOfMonthState,
   getAgentOfMonthWins,
   withdrawAgentOfMonthVote,
-} from '../src/lib/agent-of-month-server'
-import { monthKey, shiftMonthKey } from '../src/lib/agent-of-month'
+} from '../src/lib/agents/agent-of-month-server'
+import { monthKey, shiftMonthKey } from '../src/lib/agents/agent-of-month'
 
 after(() => prisma.$disconnect())
 

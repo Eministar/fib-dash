@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { requirePortalAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { getApplicationFormConfig } from '@/lib/job-application-settings'
+import { getApplicationFormConfig } from '@/lib/hr/job-application-settings'
 
 const applicationSelect = {
   id: true,

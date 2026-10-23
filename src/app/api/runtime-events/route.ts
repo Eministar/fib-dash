@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { sendDiscordWebhookEvent } from '@/lib/discord-webhook'
+import { sendDiscordWebhookEvent } from '@/lib/discord/discord-webhook'
 import { success, error } from '@/lib/api-response'
 
 const runtimeEventSchema = z.object({

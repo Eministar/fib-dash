@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized , forbidden } from '@/lib/api-response'
-import { actionsForGroup, allGroupedActions } from '@/lib/audit-log-groups'
+import { actionsForGroup, allGroupedActions } from '@/lib/audit/audit-log-groups'
 import type { Prisma } from '@/generated/prisma/client'
-import { runAuditLogCleanup } from '@/lib/audit-log-retention'
-import { tokenizedWhere } from '@/lib/search-match'
+import { runAuditLogCleanup } from '@/lib/audit/audit-log-retention'
+import { tokenizedWhere } from '@/lib/core/search-match'
 
 function clampNumber(raw: string | null, fallback: number, min: number, max: number) {
   const parsed = Number.parseInt(raw ?? '', 10)

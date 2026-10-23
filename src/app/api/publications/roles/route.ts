@@ -1,7 +1,7 @@
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { getDiscordGuildRoles } from '@/lib/discord-integration'
-import { publicationFailure } from '@/lib/publications-server'
+import { getDiscordGuildRoles } from '@/lib/discord/discord-integration'
+import { publicationFailure } from '@/lib/publications/publications-server'
 
 /** Discord-Rollen zur Auswahl für geschlossene Aushänge. */
 export async function GET() {

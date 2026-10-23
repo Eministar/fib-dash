@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useApi } from '@/hooks/use-api'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import type { AgentLite } from './types'
 
 const NOTE_MAX = 5000

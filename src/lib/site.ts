@@ -43,12 +43,3 @@ export function contractUrl(baseUrl: string, token: string) {
 export function transferRequestUrl(baseUrl: string, token: string) {
   return `${baseUrl.replace(/\/$/, '')}/versetzung/${token}`
 }
-
-/**
- * Link zu einer Klageschrift der Legal Affairs Division. Anders als ein
- * Vertragslink ist dieser bewusst ohne Anmeldung erreichbar — jeder mit dem
- * Link darf die Klageschrift einsehen.
- */
-export function legalCaseUrl(baseUrl: string, token: string) {
-  return `${baseUrl.replace(/\/$/, '')}/klage/${token}`
-}

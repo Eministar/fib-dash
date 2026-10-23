@@ -12,7 +12,7 @@ Unter **Leadership → Ermittlungsgruppen** können berechtigte Nutzer benannte 
 
 Bleibt das Feld **Discord-Kanal-ID** leer, legt das Modul einen eigenen privaten Kanal an und verwaltet ihn vollständig. Wird eine Kanal-ID eingetragen, nutzt die Gruppe diesen bestehenden Textkanal: Name, Thema und Verlauf bleiben unverändert, die **Berechtigungsüberschreibungen werden jedoch vollständig durch die Gruppenfreigabe ersetzt** (`@everyone` gesperrt, Einzelfreigaben für Bot und Mitglieder). Vorher dort vergebene Rollen- und Nutzerrechte gehen damit verloren. Ein Kanal kann nur einer Gruppe zugeordnet sein. Wird die ID später wieder geleert, legt das Modul einen neuen eigenen Kanal an; der zuvor genutzte Kanal bleibt unangetastet.
 
-Nachrichten nutzen dasselbe Components-V2-Design wie der Rest der App (`src/lib/discord-components.ts`): Container mit `# Icon Titel · Gruppenname`, Zitatzeile und `-#`-Fußzeile mit Discord-Zeitstempel. Ereignisarten: 🗂️ Ermittlungsgruppe erstellt, ✏️ Gruppe umbenannt, ➕ Mitglied hinzugefügt, ➖ Mitglied entfernt, 👪 Familien & Leitungen aktualisiert, 🗑️ Gruppe aufgelöst.
+Nachrichten nutzen dasselbe Components-V2-Design wie der Rest der App (`src/lib/discord/discord-components.ts`): Container mit `# Icon Titel · Gruppenname`, Zitatzeile und `-#`-Fußzeile mit Discord-Zeitstempel. Ereignisarten: 🗂️ Ermittlungsgruppe erstellt, ✏️ Gruppe umbenannt, ➕ Mitglied hinzugefügt, ➖ Mitglied entfernt, 👪 Familien & Leitungen aktualisiert, 🗑️ Gruppe aufgelöst.
 
 ## Angepinnte Übersicht
 

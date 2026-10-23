@@ -1,6 +1,6 @@
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { syncDiscordDutyStatusMessage } from '@/lib/discord-integration'
+import { syncDiscordDutyStatusMessage } from '@/lib/discord/discord-integration'
 
 export async function POST() {
   try {

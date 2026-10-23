@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { getDutyMode } from '@/lib/duty-mode'
-import { setDutyMode } from '@/lib/manual-duty'
+import { getDutyMode } from '@/lib/duty/duty-mode'
+import { setDutyMode } from '@/lib/duty/manual-duty'
 
 function failure(e: unknown) {
   const msg = e instanceof Error ? e.message : 'Serverfehler'

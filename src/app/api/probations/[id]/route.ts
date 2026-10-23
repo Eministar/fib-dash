@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { PROBATION_STATUS_LABELS, PROBATION_TYPE_LABELS, probationStatus, probationType } from '@/lib/probations'
+import { createAuditLog } from '@/lib/audit/audit'
+import { PROBATION_STATUS_LABELS, PROBATION_TYPE_LABELS, probationStatus, probationType } from '@/lib/hr/probations'
 
 function parseDate(value: unknown) {
   if (typeof value !== 'string' || !value.trim()) return undefined

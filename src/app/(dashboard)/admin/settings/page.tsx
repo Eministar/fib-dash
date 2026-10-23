@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Building2, CalendarDays, CheckCircle2, Clock, Hash, Link2, MessagesSquare, RefreshCw, Save, ShieldCheck, Tag, Terminal, Users, XCircle } from 'lucide-react'
+import { Building2, CalendarDays, CheckCircle2, Clock, Hash, Link2, MessagesSquare, RefreshCw, Save, ShieldCheck, Tag, Users, X, XCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import { Select, type SelectOption } from '@/components/ui/select'
 import { PageHeader } from '@/components/layout/page-header'
 import { PageLoader } from '@/components/ui/loading'
 import { useToast } from '@/components/ui/toast'
@@ -26,6 +27,7 @@ interface DiscordChannel {
   name?: string
   /** 0 Text, 5 Ankündigung, 15 Forum. */
   type?: number
+  parent_id?: string | null
 }
 
 interface DiscordRank {
@@ -417,9 +419,15 @@ export default function SettingsPage() {
     { value: '', label: 'Keine Rolle' },
     ...(discordData?.roles.map((role) => ({ value: role.id, label: role.name })) || []),
   ]
-  const channelOptions = [
+  // Channels kommen in Discord-Reihenfolge; die Kategorie wird zur Gruppenüberschrift.
+  const categoryName = new Map((discordData?.categories ?? []).map((category) => [category.id, category.name || category.id]))
+  const channelOptions: SelectOption[] = [
     { value: '', label: 'Kein Channel' },
-    ...(discordData?.channels.map((channel) => ({ value: channel.id, label: `#${channel.name || channel.id}${channel.type === 15 ? ' (Forum)' : ''}` })) || []),
+    ...(discordData?.channels.map((channel) => ({
+      value: channel.id,
+      label: `#${channel.name || channel.id}${channel.type === 15 ? ' (Forum)' : ''}`,
+      group: channel.parent_id ? categoryName.get(channel.parent_id) ?? 'Unbekannte Kategorie' : 'Ohne Kategorie',
+    })) || []),
   ]
   // Nur das Ermittlungs-Forum legt Beiträge an; alle anderen Meldungen posten direkt und brauchen einen Text-Channel.
   const textChannelOptions = channelOptions.filter((option) => !option.label.endsWith(' (Forum)'))
@@ -452,26 +460,41 @@ export default function SettingsPage() {
               options={options}
               size="sm"
           />
-          <div className="flex flex-wrap gap-2 min-h-[34px]">
-            {selected.map((roleId) => (
-                <button
-                    key={roleId}
-                    type="button"
-                    onClick={() => removeRole(field, roleId)}
-                    className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#48484a] bg-[#1c1c1e]/70 px-2.5 py-1.5 text-[12px] text-[#f5f5f7] hover:border-[#d4d4d4]/50"
-                    title="Rolle entfernen"
-                >
-                  {roleName(roleId)}
-                  <span className="text-[#8e8e93]">×</span>
-                </button>
-            ))}
-            {selected.length === 0 && (
-                <span className="text-[12px] text-[#8e8e93] py-1.5">Keine Rollen ausgewählt</span>
-            )}
-          </div>
+          <RoleChips roleIds={selected} roleName={roleName} onRemove={(roleId) => removeRole(field, roleId)} />
         </div>
     )
   }
+
+  const channelField = (
+      label: string,
+      field: ChannelField,
+      hint: string,
+      options: SelectOption[] = textChannelOptions,
+      extra?: React.ReactNode,
+  ) => (
+      <div>
+        <Select
+            label={label}
+            value={discordForm[field] ?? ''}
+            onValueChange={(value) => setDiscordForm({ ...discordForm, [field]: value })}
+            options={options}
+        />
+        <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#8e8e93]">{hint}</p>
+        {extra}
+      </div>
+  )
+
+  const roleField = (label: string, field: RoleField, hint: string) => (
+      <div>
+        <Select
+            label={label}
+            value={discordForm[field]}
+            onValueChange={(value) => setDiscordForm({ ...discordForm, [field]: value })}
+            options={roleOptions}
+        />
+        <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#8e8e93]">{hint}</p>
+      </div>
+  )
 
   const diag = discordData?.diagnostics
   const healthItems: { ok: boolean; label: string }[] = diag ? [
@@ -479,123 +502,95 @@ export default function SettingsPage() {
     { ok: diag.guildConfigured, label: 'Guild-ID' },
     { ok: diag.applicationConfigured, label: 'Application-ID' },
     { ok: diag.publicKeyConfigured, label: 'Public-Key' },
-    { ok: diag.announcementsChannelConfigured, label: 'Announce-Channel' },
+    { ok: diag.announcementsChannelConfigured, label: 'Ankündigungs-Channel' },
     { ok: diag.sanctionsChannelConfigured, label: 'Sanktions-Channel' },
     { ok: diag.absenceStatusChannelConfigured, label: 'Abmeldungs-Channel' },
   ] : []
+  const healthIssues = healthItems.filter((item) => !item.ok).length
 
   return (
       <div className="pb-20">
         <PageHeader title="Einstellungen" description="Systemweite Konfiguration für Organisation und Discord-Bot" />
 
-        {/* Section nav */}
-        <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-5 backdrop-blur-md bg-[#000000]/85 border-b border-[#38383a]/40">
+        {/* Bereichsnavigation */}
+        <nav aria-label="Bereiche" className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 mb-5 backdrop-blur-md bg-[#000000]/85 border-b border-[#38383a]/40">
           <div className="flex items-center gap-1.5 overflow-x-auto max-w-4xl">
             {[
               { id: 'general', label: 'Allgemein', icon: Building2 },
-              { id: 'badges', label: 'Dienstnummern', icon: Hash },
               { id: 'duty-mode', label: 'Dienstzeiten', icon: Clock },
               { id: 'discord-basics', label: 'Discord', icon: MessagesSquare },
-              { id: 'channels', label: 'Channels', icon: Terminal },
+              { id: 'channels', label: 'Channels', icon: Hash },
               { id: 'roles', label: 'Rollen', icon: ShieldCheck },
-              { id: 'mappings', label: 'Mappings', icon: Tag },
+              { id: 'mappings', label: 'Zuordnungen', icon: Tag },
             ].map((item) => (
                 <a
                     key={item.id}
                     href={`#${item.id}`}
                     className="inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12px] font-medium text-[#98989d] hover:text-white hover:bg-[#2c2c2e] transition-colors whitespace-nowrap"
                 >
-                  <item.icon size={13} /> {item.label}
+                  <item.icon size={13} aria-hidden /> {item.label}
                 </a>
             ))}
           </div>
-        </div>
+        </nav>
 
         <div className="space-y-4 max-w-4xl">
-          {/* Health card */}
           {discordData && (
-              <div className="glass-panel-elevated rounded-[14px] p-5">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <h3 className="text-[13.5px] font-semibold text-[#eee] flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-[#22c55e]" /> System-Status
-                  </h3>
-                  <Button variant="secondary" size="sm" onClick={refetchDiscord}><RefreshCw size={13} /> Neu prüfen</Button>
-                </div>
+              <SettingsSection
+                  icon={healthIssues ? XCircle : CheckCircle2}
+                  iconClassName={healthIssues ? 'text-[#fbbf24]' : 'text-[#22c55e]'}
+                  title="System-Status"
+                  description={healthIssues ? `${healthIssues} ${healthIssues === 1 ? 'Punkt braucht' : 'Punkte brauchen'} Aufmerksamkeit` : 'Alles eingerichtet'}
+                  action={<Button variant="secondary" size="sm" onClick={refetchDiscord}><RefreshCw size={13} /> Neu prüfen</Button>}
+              >
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                   {healthItems.map((h) => (
                       <div key={h.label} className={cn('health-pill justify-start', h.ok ? 'ok' : 'warn')}>
-                        {h.ok ? <CheckCircle2 size={12} /> : <XCircle size={12} />} {h.label}
+                        {h.ok ? <CheckCircle2 size={12} aria-hidden /> : <XCircle size={12} aria-hidden />} {h.label}
                       </div>
                   ))}
                 </div>
                 {diag?.interactionEndpointUrl && (
                     <div className="mt-3 rounded-[10px] border border-[#3a3a3c] bg-[#161617] px-3 py-2 text-[11.5px] text-[#98989d] flex items-center gap-2">
-                      <Link2 size={13} className="text-[#d4d4d4] shrink-0" />
-                      <span className="truncate">Interactions Endpoint: <code className="text-[#f5f5f7]">{diag.interactionEndpointUrl}</code></span>
+                      <Link2 size={13} className="text-[#d4d4d4] shrink-0" aria-hidden />
+                      <span className="truncate">Interactions Endpoint URL in Discord: <code className="text-[#f5f5f7]">{diag.interactionEndpointUrl}</code></span>
                     </div>
                 )}
-              </div>
+              </SettingsSection>
           )}
 
-          <div id="general" className="glass-panel-elevated rounded-[14px] p-5 scroll-mt-section">
-            <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4 flex items-center gap-2">
-              <Building2 size={15} className="text-[#d4d4d4]" /> Allgemein
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Input label="Organisationsname" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
-                </div>
-                <Button variant="secondary" size="sm" onClick={() => saveSetting('orgName', orgName)}><Save size={13} /></Button>
-              </div>
+          <SettingsSection id="general" icon={Building2} title="Allgemein" description="Name der Organisation, Präfixe für Decknamen und Dienstnummern.">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <InlineSave label="Organisationsname" value={orgName} onChange={setOrgName} onSave={() => saveSetting('orgName', orgName)} />
+              <InlineSave label="Decknamen-Präfix" value={codenamePrefix} onChange={setCodenamePrefix} onSave={() => saveSetting('codenames.prefix', codenamePrefix)} placeholder="Agent" maxLength={40} />
+              <InlineSave label="Dienstnummer-Präfix" value={badgePrefix} onChange={setBadgePrefix} onSave={() => saveSetting('badgePrefix', badgePrefix)} placeholder="z.B. FIB-" />
             </div>
-          </div>
-
-          <div id="badges" className="glass-panel-elevated rounded-[14px] p-5 scroll-mt-section">
-            <h3 className="text-[13.5px] font-semibold text-[#eee] mb-4 flex items-center gap-2">
-              <Hash size={15} className="text-[#d4d4d4]" /> Dienstnummern
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Input label="Decknamen-Präfix" value={codenamePrefix} onChange={(e) => setCodenamePrefix(e.target.value)} maxLength={40} placeholder="Agent" />
-                </div>
-                <Button aria-label="Decknamen-Präfix speichern" variant="secondary" size="sm" onClick={() => saveSetting('codenames.prefix', codenamePrefix)}><Save size={13} /></Button>
-              </div>
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  <Input label="Dienstnummer-Prefix" value={badgePrefix} onChange={(e) => setBadgePrefix(e.target.value)} placeholder="z.B. FIB-" />
-                </div>
-                <Button variant="secondary" size="sm" onClick={() => saveSetting('badgePrefix', badgePrefix)}><Save size={13} /></Button>
-              </div>
-              <div className="rounded-[10px] border border-[#3d2d12] bg-[#1d1608]/70 p-3">
-                <Checkbox
-                  checked={allowDuplicateBadgeNumbers}
-                  onCheckedChange={setAllowDuplicateBadgeNumbers}
-                  label="Temporär doppelte Dienstnummern erlauben"
-                />
-                <p className="mt-2 text-[11.5px] leading-5 text-[#c7c7cc]">
-                  Nur als Übergang nutzen, um Agents sauber in Ränge zu sortieren. Gesperrte Dienstnummern bleiben weiterhin blockiert.
-                </p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => saveSetting('allowDuplicateBadgeNumbers', allowDuplicateBadgeNumbers ? 'true' : 'false')}
-                >
-                  <Save size={13} /> Speichern
-                </Button>
-              </div>
+            <div className="mt-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608]/70 p-3">
+              <Checkbox
+                checked={allowDuplicateBadgeNumbers}
+                onCheckedChange={setAllowDuplicateBadgeNumbers}
+                label="Temporär doppelte Dienstnummern erlauben"
+              />
+              <p className="mt-2 text-[11.5px] leading-5 text-[#c7c7cc]">
+                Nur als Übergang nutzen, um Agents sauber in Ränge zu sortieren. Gesperrte Dienstnummern bleiben weiterhin blockiert.
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-3"
+                onClick={() => saveSetting('allowDuplicateBadgeNumbers', allowDuplicateBadgeNumbers ? 'true' : 'false')}
+              >
+                <Save size={13} /> Speichern
+              </Button>
             </div>
-          </div>
+          </SettingsSection>
 
-          <div id="duty-mode" className="glass-panel-elevated rounded-[14px] p-5 scroll-mt-section">
-            <h3 className="text-[13.5px] font-semibold text-[#eee] mb-1 flex items-center gap-2">
-              <Clock size={15} className="text-[#d4d4d4]" /> Dienstzeit-Erfassung
-            </h3>
-            <p className="text-[11.5px] text-[#8e8e93] mb-4">
-              Falls die Dienstzeiten-API ausfällt, auf manuelles Einstempeln umschalten. Beim Umschalten werden offene Sitzungen beendet, eine Ankündigung ohne Ping in den Dienstzeiten-Channel gestellt und das Panel neu gesetzt.
-            </p>
+          <SettingsSection
+              id="duty-mode"
+              icon={Clock}
+              title="Dienstzeit-Erfassung"
+              description="Falls die Dienstzeiten-API ausfällt, auf manuelles Einstempeln umschalten. Beim Umschalten werden offene Sitzungen beendet, eine Ankündigung ohne Ping in den Dienstzeiten-Channel gestellt und das Panel neu gesetzt."
+          >
             <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Dienstzeit-Erfassung">
               {([
                 { mode: 'api', title: 'Automatisch (API)', text: 'Dienstzeit kommt aus der Player-Online-API.' },
@@ -618,32 +613,56 @@ export default function SettingsPage() {
                 )
               })}
             </div>
-          </div>
+          </SettingsSection>
 
-          <div id="discord-basics" className="glass-panel-elevated rounded-[14px] p-5 scroll-mt-section">
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div>
-                <h3 className="text-[13.5px] font-semibold text-[#eee] flex items-center gap-2">
-                  <MessagesSquare size={15} className="text-[#d4d4d4]" /> Discord Integration
-                </h3>
-                <p className="text-[11.5px] text-[#8e8e93] mt-1">
-                  Bot-Token wird über die Umgebung gesetzt. Rollen, Channel und Command-Rechte werden hier gepflegt.
-                </p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
+          <SettingsSection
+              id="discord-basics"
+              icon={MessagesSquare}
+              title="Discord-Verbindung"
+              description="Der Bot-Token kommt aus der Umgebung. Server, Channels, Rollen und Command-Rechte werden hier gepflegt."
+          >
+            {!discordData?.botConfigured && (
+                <Notice tone="warn">DISCORD_BOT_TOKEN ist nicht gesetzt. Die Oberfläche kann gespeichert werden, Discord-Rollen und Channel werden aber erst mit Bot-Token geladen.</Notice>
+            )}
+            {discordData && !discordData.diagnostics.guildConfigured && (
+                <Notice tone="warn">Guild-ID fehlt. Setze sie hier oder über DISCORD_GUILD_ID, sonst können Rollen und Commands nicht geladen werden.</Notice>
+            )}
+            {discordData && !discordData.diagnostics.publicKeyConfigured && (
+                <Notice tone="warn">DISCORD_PUBLIC_KEY fehlt. Discord-Buttons und Modals werden ohne diesen Public Key von der App abgelehnt.</Notice>
+            )}
+            {discordData?.diagnostics.rolesError && <Notice tone="error">Rollen konnten nicht geladen werden: {discordData.diagnostics.rolesError}</Notice>}
+            {discordData?.diagnostics.channelsError && <Notice tone="error">Channel konnten nicht geladen werden: {discordData.diagnostics.channelsError}</Notice>}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                  label="Guild-ID"
+                  value={discordForm.guildId}
+                  onChange={(e) => setDiscordForm({ ...discordForm, guildId: e.target.value })}
+                  placeholder="Discord Server-ID"
+              />
+              <Input
+                  label="Application-ID"
+                  value={discordForm.applicationId}
+                  onChange={(e) => setDiscordForm({ ...discordForm, applicationId: e.target.value })}
+                  placeholder="Discord App-ID"
+              />
+            </div>
+
+            <div className="mt-5 border-t border-[#38383a]/50 pt-4">
+              <p className="text-[12.5px] font-medium text-[#d2d2d2]">Werkzeuge</p>
+              <p className="mt-0.5 mb-3 text-[11.5px] text-[#8e8e93]">Wirken sofort, unabhängig vom Speichern.</p>
+              <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" size="sm" onClick={fullSync} disabled={fullSyncLoading}>
-                  {fullSyncLoading ? <><RefreshCw size={13} className="animate-spin" /> Synchronisiere…</> : <><Users size={13} /> Alles synchronisieren</>}
+                  {fullSyncLoading ? <><RefreshCw size={13} className="animate-spin" /> Synchronisiere…</> : <><Users size={13} /> Alle Agents synchronisieren</>}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={refetchDiscord}><RefreshCw size={13} /> Neu laden</Button>
-                <Button variant="secondary" size="sm" onClick={registerCommands}><ShieldCheck size={13} /> Commands</Button>
-                <Button variant="secondary" size="sm" onClick={publishDutyEmbed}><Clock size={13} /> Dienstzeiten</Button>
-                <Button variant="secondary" size="sm" onClick={publishAbsenceEmbed}><CalendarDays size={13} /> Abmeldungen</Button>
-                <Button size="sm" onClick={saveDiscordConfig}><Save size={13} /> Speichern</Button>
+                <Button variant="secondary" size="sm" onClick={registerCommands}><ShieldCheck size={13} /> Commands registrieren</Button>
+                <Button variant="secondary" size="sm" onClick={publishDutyEmbed}><Clock size={13} /> Dienstzeiten-Panel neu setzen</Button>
+                <Button variant="secondary" size="sm" onClick={publishAbsenceEmbed}><CalendarDays size={13} /> Abmeldungs-Panel neu setzen</Button>
               </div>
             </div>
 
             {(fullSyncProgress || fullSyncResult) && (
-              <div className="mb-4 rounded-[10px] border border-[#3a3a3c] bg-[#161617] px-3 py-3">
+              <div className="mt-4 rounded-[10px] border border-[#3a3a3c] bg-[#161617] px-3 py-3" aria-live="polite">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-[12.5px] font-semibold text-[#f5f5f7]">
@@ -673,121 +692,65 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
+          </SettingsSection>
 
-            {!discordData?.botConfigured && (
-                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#c7c7cc]">
-                  DISCORD_BOT_TOKEN ist nicht gesetzt. Die Oberfläche kann gespeichert werden, Discord-Rollen und Channel werden aber erst mit Bot-Token geladen.
-                </div>
-            )}
-            {discordData && !discordData.diagnostics.guildConfigured && (
-                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#c7c7cc]">
-                  Guild-ID fehlt. Setze sie hier oder über DISCORD_GUILD_ID, sonst können Rollen und Commands nicht geladen werden.
-                </div>
-            )}
-            {discordData && !discordData.diagnostics.publicKeyConfigured && (
-                <div className="mb-4 rounded-[10px] border border-[#3d2d12] bg-[#1d1608] px-3 py-2 text-[12px] text-[#c7c7cc]">
-                  DISCORD_PUBLIC_KEY fehlt. Discord-Buttons und Modals werden ohne diesen Public Key von der App abgelehnt.
-                </div>
-            )}
-            {discordData?.diagnostics.interactionEndpointUrl && (
-                <div className="mb-4 rounded-[10px] border border-[#3a3a3c] bg-[#161617] px-3 py-2 text-[12px] text-[#98989d]">
-                  Interactions Endpoint URL in Discord: <code className="text-[#f5f5f7]">{discordData.diagnostics.interactionEndpointUrl}</code>
-                </div>
-            )}
-            {discordData?.diagnostics.rolesError && (
-                <div className="mb-4 rounded-[10px] border border-[#3b1616] bg-[#1c1111] px-3 py-2 text-[12px] text-[#fca5a5]">
-                  Rollen konnten nicht geladen werden: {discordData.diagnostics.rolesError}
-                </div>
-            )}
-            {discordData?.diagnostics.channelsError && (
-                <div className="mb-4 rounded-[10px] border border-[#3b1616] bg-[#1c1111] px-3 py-2 text-[12px] text-[#fca5a5]">
-                  Channel konnten nicht geladen werden: {discordData.diagnostics.channelsError}
-                </div>
-            )}
+          <SettingsSection id="channels" icon={Hash} title="Channels" description="Die Auswahl zeigt die Channels in der Reihenfolge und unter den Kategorien wie in Discord.">
+            <ChannelGroup title="Meldungen">
+              {channelField('Ankündigungs-Channel', 'announcementsChannelId', 'Personalmeldungen wie Einstellungen, Rangänderungen und Kündigungen.')}
+              {channelField('Update-Channel', 'updateChannelId', 'Update-Mitteilungen. Leer lassen, um den Ankündigungs-Channel zu nutzen.')}
+              {channelField('Sanktions-Channel', 'sanctionsChannelId', 'Neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.')}
+              {channelField('Neueinstellung: Kurz-Ping', 'hirePingChannelId', 'Ein neu angelegter Agent wird hier einmal kurz erwähnt; die Nachricht verschwindet nach etwa einer Sekunde. Ohne Discord-ID passiert nichts. Leer bedeutet deaktiviert.')}
+            </ChannelGroup>
 
-            <div id="channels" className="grid grid-cols-1 sm:grid-cols-2 gap-3 scroll-mt-section">
-              <Input
-                  label="Guild-ID"
-                  value={discordForm.guildId}
-                  onChange={(e) => setDiscordForm({ ...discordForm, guildId: e.target.value })}
-                  placeholder="Discord Server-ID"
-              />
-              <Input
-                  label="Application-ID"
-                  value={discordForm.applicationId}
-                  onChange={(e) => setDiscordForm({ ...discordForm, applicationId: e.target.value })}
-                  placeholder="Discord App-ID"
-              />
-              <div className="sm:col-span-2">
-                <Select
-                    label="Ankündigungs-Channel"
-                    value={discordForm.announcementsChannelId}
-                    onValueChange={(announcementsChannelId) => setDiscordForm({ ...discordForm, announcementsChannelId })}
-                    options={textChannelOptions}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Update-Channel"
-                    value={discordForm.updateChannelId}
-                    onValueChange={(updateChannelId) => setDiscordForm({ ...discordForm, updateChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Channel für Update-Mitteilungen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Sanktions-Channel"
-                    value={discordForm.sanctionsChannelId}
-                    onValueChange={(sanctionsChannelId) => setDiscordForm({ ...discordForm, sanctionsChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Channel für neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Ermittlungs-Channel"
-                    value={discordForm.investigationsChannelId}
-                    onValueChange={(investigationsChannelId) => setDiscordForm({ ...discordForm, investigationsChannelId })}
-                    options={channelOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Am besten ein Forum: Jede Einsatzakte bekommt einen eigenen Beitrag mit Aktenkarte und Verlauf, jede Dauerakte einen Beitrag mit Tag „Dauerakte“ und Links zu ihren Ermittlungen, dazu eine angepinnte Übersicht. Bei einem normalen Text-Channel kommt je Ereignis eine Nachricht. Leer lassen, um die Meldungen abzuschalten.
-                </p>
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="mt-2"
-                    disabled={!discordForm.investigationsChannelId}
-                    onClick={async () => {
-                      try {
-                        await execute('/api/discord/investigations-forum', { method: 'POST' })
-                        addToast({ type: 'success', title: 'Forum wird aufgebaut', message: 'Beiträge für laufende Akten und alle Dauerakten entstehen im Hintergrund.' })
-                      } catch (err) {
-                        addToast({ type: 'error', title: 'Forum nicht aufgebaut', message: err instanceof Error ? err.message : '' })
-                      }
-                    }}
-                >
-                  Forum aufbauen
-                </Button>
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Der Bot braucht im Forum „Beiträge erstellen“, „In Threads schreiben“ und „Kanäle verwalten“ (für Tags und das Anpinnen).
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Neueinstellung: Channel für Kurz-Ping"
-                    value={discordForm.hirePingChannelId}
-                    onValueChange={(hirePingChannelId) => setDiscordForm({ ...discordForm, hirePingChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Bei einem neu angelegten Agent wird er selbst einmal kurz erwähnt; die Nachricht wird nach etwa einer Sekunde wieder gelöscht. Ohne hinterlegte Discord-ID des Agents passiert nichts. Leer bedeutet deaktiviert.</p>
-              </div>
-              <div className="sm:col-span-2">
+            <ChannelGroup title="Dienst & Abwesenheit">
+              {channelField('Dienstzeiten-Channel', 'dutyStatusChannelId', 'Öffentliches Panel mit allen Agents im Dienst. Im manuellen Modus mit Ein-/Ausstempel-Buttons.')}
+              {channelField('Dienstzeit-Protokoll (Admin)', 'dutyAdminLogChannelId', 'Optionaler Admin-Channel für Dienstzeit-Hinweise. Leer lassen, um den Ankündigungs-Channel zu nutzen.')}
+              {channelField('Abmeldungs-Channel', 'absenceStatusChannelId', 'Öffentliches Panel mit allen aktuell abgemeldeten Agents. Leer lassen, um den Dienstzeiten- oder Ankündigungs-Channel zu nutzen.')}
+              {channelField('Wochenbericht an die Leitung', 'weeklyReportChannelId', 'Jeden Montag ab 8 Uhr: Einstellungen, Kündigungen, Rangänderungen, Sanktionen und Dienststunden der Vorwoche im Vergleich zur Woche davor. Leer lassen, um keinen Bericht zu senden.', textChannelOptions, (
+                  <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-2"
+                      disabled={!discordForm.weeklyReportChannelId}
+                      onClick={async () => {
+                        try {
+                          await execute('/api/discord/weekly-report', { method: 'POST' })
+                          addToast({ type: 'success', title: 'Testbericht gesendet', message: 'Bericht der Vorwoche im eingestellten Channel.' })
+                        } catch (err) {
+                          addToast({ type: 'error', title: 'Wochenbericht fehlgeschlagen', message: err instanceof Error ? err.message : '' })
+                        }
+                      }}
+                  >
+                    Testbericht jetzt senden
+                  </Button>
+              ))}
+            </ChannelGroup>
+
+            <ChannelGroup title="Ermittlungen">
+              {channelField('Ermittlungs-Channel', 'investigationsChannelId', 'Am besten ein Forum: Jede Einsatzakte bekommt einen eigenen Beitrag mit Aktenkarte und Verlauf, jede Familienakte einen Beitrag mit Tag „Familienakte“, dazu eine angepinnte Übersicht. Der Bot braucht dort „Beiträge erstellen“, „In Threads schreiben“ und „Kanäle verwalten“. Leer lassen, um die Meldungen abzuschalten.', channelOptions, (
+                  <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-2"
+                      disabled={!discordForm.investigationsChannelId}
+                      onClick={async () => {
+                        try {
+                          await execute('/api/discord/investigations-forum', { method: 'POST' })
+                          addToast({ type: 'success', title: 'Forum wird aufgebaut', message: 'Beiträge für laufende Akten und alle Familienakten entstehen im Hintergrund.' })
+                        } catch (err) {
+                          addToast({ type: 'error', title: 'Forum nicht aufgebaut', message: err instanceof Error ? err.message : '' })
+                        }
+                      }}
+                  >
+                    Forum aufbauen
+                  </Button>
+              ))}
+              {channelField('Bildkatalog-Channel', 'photoCatalogChannelId', 'Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot braucht Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Eine Umgebungsvariable hat Vorrang.')}
+            </ChannelGroup>
+
+            <ChannelGroup title="Decknamen & Clips">
+              {channelField('Decknamen-Board', 'codenameBoardChannelId', 'Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.')}
+              <div>
                 <Select
                     label="Clips-Channels: Kategorie"
                     value={discordForm.clipsCategoryId}
@@ -797,182 +760,51 @@ export default function SettingsPage() {
                       ...(discordData?.categories?.map(category => ({ value: category.id, label: category.name || category.id })) || []),
                     ]}
                 />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Neue Clips-Channels werden in dieser Kategorie erstellt. Beim Speichern werden auch bestehende Clips-Channels dorthin verschoben. Discord erlaubt maximal 50 Channels pro Kategorie.</p>
+                <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#8e8e93]">Jeder Agent mit Discord-Verknüpfung bekommt hier einen privaten Clips-Channel, sortiert wie die Mitarbeiterliste. Beim Speichern werden bestehende Channels dorthin verschoben. Discord erlaubt höchstens 50 Channels pro Kategorie.</p>
               </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Clips-Channels: Analysten-Rolle"
-                    value={discordForm.clipsAnalystRoleId}
-                    onValueChange={(clipsAnalystRoleId) => setDiscordForm({ ...discordForm, clipsAnalystRoleId })}
-                    options={roleOptions}
-                />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Der Agent-Sync erstellt für jeden Agent mit Discord-Verknüpfung einen privaten 🔍│nachname-clips Channel. Der Agent und diese Rolle dürfen Videos hochladen und den Verlauf lesen. Alle Channels liegen in der oben ausgewählten Kategorie. Der Bot benötigt „Kanäle verwalten“ und „Rollen verwalten“. Speichern startet den Sync für alle Agents; neue Agents werden automatisch berücksichtigt. Namensänderungen aktualisieren den Channelnamen. Bei Kündigung wird der Channel samt Videos endgültig gelöscht. Ohne Analysten-Rolle werden keine Channels angelegt oder aktualisiert; Kündigungen löschen bestehende Channels weiterhin.</p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Bodycam-Katalog: Discord-Rolle für Lesezugriff"
-                    value={discordForm.bodycamViewerRoleId}
-                    onValueChange={(bodycamViewerRoleId) => setDiscordForm({ ...discordForm, bodycamViewerRoleId })}
-                    options={roleOptions}
-                />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Gewährt angemeldeten Rollenmitgliedern Lesezugriff auf den gesamten Bodycam-Katalog. Die Akten selbst bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.</p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Bildkatalog-Channel"
-                    value={discordForm.photoCatalogChannelId}
-                    onValueChange={(photoCatalogChannelId) => setDiscordForm({ ...discordForm, photoCatalogChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot benötigt Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Leer lassen zum Abschalten; eine Umgebungsvariable hat Vorrang.</p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Decknamen-Board"
-                    value={discordForm.codenameBoardChannelId}
-                    onValueChange={(codenameBoardChannelId) => setDiscordForm({ ...discordForm, codenameBoardChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="mt-1.5 text-[11px] text-[#8e8e93]">Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.</p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Dienstzeiten-Channel"
-                    value={discordForm.dutyStatusChannelId}
-                    onValueChange={(dutyStatusChannelId) => setDiscordForm({ ...discordForm, dutyStatusChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Öffentliches Panel mit allen Agents im Dienst. Im manuellen Modus mit Ein-/Ausstempel-Buttons.
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Dienstzeit-Protokoll (Admin)"
-                    value={discordForm.dutyAdminLogChannelId}
-                    onValueChange={(dutyAdminLogChannelId) => setDiscordForm({ ...discordForm, dutyAdminLogChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Optionaler Admin-Channel für Dienstzeit-Hinweise. Leer lassen, um den Ankündigungs-Channel zu nutzen.
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Abmeldungs-Channel"
-                    value={discordForm.absenceStatusChannelId}
-                    onValueChange={(absenceStatusChannelId) => setDiscordForm({ ...discordForm, absenceStatusChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Öffentliches Panel mit allen aktuell abgemeldeten Agents. Leer lassen, um den Dienstzeiten- oder Ankündigungs-Channel zu nutzen.
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Wochenbericht an die Leitung"
-                    value={discordForm.weeklyReportChannelId ?? ''}
-                    onValueChange={(weeklyReportChannelId) => setDiscordForm({ ...discordForm, weeklyReportChannelId })}
-                    options={textChannelOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Jeden Montag ab 8 Uhr: Einstellungen, Kündigungen, Rangänderungen, Sanktionen und Dienststunden der Vorwoche im Vergleich zur Woche davor. Leer lassen, um keinen Bericht zu senden.
-                </p>
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="mt-2"
-                    disabled={!discordForm.weeklyReportChannelId}
-                    onClick={async () => {
-                      try {
-                        await execute('/api/discord/weekly-report', { method: 'POST' })
-                        addToast({ type: 'success', title: 'Testbericht gesendet', message: 'Bericht der Vorwoche im eingestellten Channel.' })
-                      } catch (err) {
-                        addToast({ type: 'error', title: 'Wochenbericht fehlgeschlagen', message: err instanceof Error ? err.message : '' })
-                      }
-                    }}
-                >
-                  Testbericht jetzt senden
-                </Button>
-              </div>
-              <div className="sm:col-span-2 border-t border-white/[0.06] pt-4">
-                <h3 className="mb-3 text-[13px] font-semibold text-white">Lagerlogs</h3>
-                <StorageLogSettings settings={settings ?? null} channelOptions={textChannelOptions} onSaved={() => void refetch()} />
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Human-Resources-Rolle"
-                    value={discordForm.humanResourcesRoleId}
-                    onValueChange={(humanResourcesRoleId) => setDiscordForm({ ...discordForm, humanResourcesRoleId })}
-                    options={roleOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Diese Rolle wird in Mitteilungen zu Sanktionen als Human Resources erwähnt.
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Uprank-Sperre-Rolle"
-                    value={discordForm.promotionBlockRoleId}
-                    onValueChange={(promotionBlockRoleId) => setDiscordForm({ ...discordForm, promotionBlockRoleId })}
-                    options={roleOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Agent mit aktiver Uprank-Sperre erhalten diese Rolle automatisch (und verlieren sie beim Aufheben).
-                </p>
-              </div>
-              <div className="sm:col-span-2">
-                <Select
-                    label="Beurlaubungs-Rolle"
-                    value={discordForm.leaveRoleId}
-                    onValueChange={(leaveRoleId) => setDiscordForm({ ...discordForm, leaveRoleId })}
-                    options={roleOptions}
-                />
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Beurlaubte Agents erhalten diese Rolle automatisch (und verlieren sie beim Aufheben der Beurlaubung).
-                </p>
-              </div>
+            </ChannelGroup>
+
+            <ChannelGroup title="Lagerlogs" single>
+              <StorageLogSettings settings={settings ?? null} channelOptions={textChannelOptions} onSaved={() => void refetch()} />
+            </ChannelGroup>
+          </SettingsSection>
+
+          <SettingsSection id="roles" icon={ShieldCheck} title="Rollen" description="Rollen, die der Bot vergibt oder erwähnt, und wer was darf.">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {roleField('Human-Resources-Rolle', 'humanResourcesRoleId', 'Wird in Mitteilungen zu Sanktionen als Human Resources erwähnt.')}
+              {roleField('Uprank-Sperre-Rolle', 'promotionBlockRoleId', 'Agents mit aktiver Uprank-Sperre erhalten diese Rolle automatisch und verlieren sie beim Aufheben.')}
+              {roleField('Beurlaubungs-Rolle', 'leaveRoleId', 'Beurlaubte Agents erhalten diese Rolle automatisch und verlieren sie beim Aufheben der Beurlaubung.')}
+              {roleField('Bodycam-Katalog: Lesezugriff', 'bodycamViewerRoleId', 'Gewährt Lesezugriff auf den gesamten Bodycam-Katalog. Akten bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.')}
+              {roleField('Clips-Channels: Analysten-Rolle', 'clipsAnalystRoleId', 'Darf in allen Clips-Channels Videos hochladen und lesen. Ohne diese Rolle werden keine Clips-Channels angelegt; bei Kündigung wird der Channel samt Videos gelöscht. Der Bot braucht „Kanäle verwalten“ und „Rollen verwalten“.')}
             </div>
 
-            <div id="roles" className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5 scroll-mt-section">
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Dashboard Login-Rollen</p>
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 border-t border-[#38383a]/50 pt-5">
+              <RolePickerField title="Dashboard Login-Rollen" hint="Mitglieder mit mindestens einer dieser Rollen dürfen sich anmelden. Rollen, die bei Benutzergruppen hinterlegt sind, zählen ebenfalls als Login-Rollen.">
                 {renderRolePicker('authLoginRoleIds')}
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Mitglieder mit mindestens einer dieser Rollen dürfen sich anmelden. Rollen, die bei Benutzergruppen hinterlegt sind, zählen ebenfalls als Login-Rollen.
-                </p>
-              </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Bewerberportal-Rollen</p>
+              </RolePickerField>
+              <RolePickerField title="Bewerberportal-Rollen" hint="Dürfen das Bewerberportal öffnen, erhalten dadurch aber keine Dashboard-Rechte.">
                 {renderRolePicker('applicantRoleIds')}
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Mitglieder mit mindestens einer dieser Rollen dürfen das Bewerberportal öffnen, erhalten dadurch aber keine Dashboard-Rechte.
-                </p>
-              </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Vertragseinsicht</p>
+              </RolePickerField>
+              <RolePickerField title="Vertragseinsicht" hint="Dürfen jeden Arbeitsvertrag über dessen Link einsehen (nur lesend, ohne Dashboard-Rechte). Unterschreiben kann weiterhin nur der Agent selbst.">
                 {renderRolePicker('contractAuditorRoleIds')}
-                <p className="text-[11px] text-[#8e8e93] mt-1.5">
-                  Mitglieder mit mindestens einer dieser Rollen dürfen jeden Arbeitsvertrag über dessen Link einsehen (nur lesend, ohne Dashboard-Rechte). Unterschreiben kann weiterhin nur der Agent selbst.
-                </p>
-              </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Feste Mitarbeiterrollen</p>
+              </RolePickerField>
+              <RolePickerField title="Feste Mitarbeiterrollen" hint="Bekommt jeder Agent beim Sync.">
                 {renderRolePicker('employeeRoleIds')}
-              </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Rollen, die Discord-Commands ausführen dürfen</p>
+              </RolePickerField>
+              <RolePickerField title="Discord-Commands" hint="Rollen, die Discord-Commands ausführen dürfen.">
                 {renderRolePicker('commandRoleIds')}
-              </div>
+              </RolePickerField>
             </div>
+          </SettingsSection>
 
-            <div id="mappings" className="mt-5 space-y-5 scroll-mt-section">
+          <SettingsSection id="mappings" icon={Tag} title="Zuordnungen" description="Welche Discord-Rolle zu welcher Benutzergruppe, welchem Rang, welcher Ausbildung und welcher Unit gehört.">
+            <div className="space-y-6">
               <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Benutzergruppen zu Discord-Rollen</p>
-                <p className="text-[11px] text-[#8e8e93] mb-3">
+                <p className="block text-[12.5px] font-medium text-[#d2d2d2] mb-1">Benutzergruppen zu Discord-Rollen</p>
+                <p className="text-[11.5px] text-[#8e8e93] mb-3">
                   Beim Login werden alle passenden Benutzergruppen gestapelt. Eine Benutzergruppe passt, sobald ein Mitglied mindestens eine der hinterlegten Rollen hat.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {discordData?.userGroups.map((group) => {
                     const selectedRoleIds = discordForm.authGroupRoleMap[group.id] ?? []
                     const addOptions = [
@@ -991,35 +823,20 @@ export default function SettingsPage() {
                               options={addOptions}
                               size="sm"
                           />
-                          <div className="flex flex-wrap gap-2 min-h-[34px]">
-                            {selectedRoleIds.map((roleId) => (
-                                <button
-                                    key={roleId}
-                                    type="button"
-                                    onClick={() => removeAuthGroupRole(group.id, roleId)}
-                                    className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#48484a] bg-[#1c1c1e]/70 px-2.5 py-1.5 text-[12px] text-[#f5f5f7] hover:border-[#d4d4d4]/50"
-                                    title="Rolle entfernen"
-                                >
-                                  {roleName(roleId)}
-                                  <span className="text-[#8e8e93]">×</span>
-                                </button>
-                            ))}
-                            {selectedRoleIds.length === 0 && (
-                                <span className="text-[12px] text-[#8e8e93] py-1.5">Keine Rollen ausgewählt</span>
-                            )}
-                          </div>
+                          <RoleChips roleIds={selectedRoleIds} roleName={roleName} onRemove={(roleId) => removeAuthGroupRole(group.id, roleId)} />
                         </div>
                     )
                   })}
                 </div>
               </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Rechte direkt an Discord-Rollen</p>
-                <p className="text-[11px] text-[#8e8e93] mb-3">
-                  Rollen mit hinterlegten Rechten zählen automatisch als Login-Rollen: eine separate Login-Rolle ist dann nicht nötig. Die Rechte gelten zusätzlich zu Gruppen- und Unit-Rechten und werden bei jedem Discord-Login neu übernommen.
+              <div className="border-t border-[#38383a]/50 pt-5">
+                <p className="block text-[12.5px] font-medium text-[#d2d2d2] mb-1">Rechte direkt an Discord-Rollen</p>
+                <p className="text-[11.5px] text-[#8e8e93] mb-3">
+                  Rollen mit hinterlegten Rechten zählen automatisch als Login-Rollen. Die Rechte gelten zusätzlich zu Gruppen- und Unit-Rechten und werden bei jedem Discord-Login neu übernommen.
                 </p>
                 <div className="max-w-md">
                   <Select
+                      aria-label="Rolle für direkte Rechte hinzufügen"
                       value=""
                       onValueChange={addRolePermissionRole}
                       options={[
@@ -1044,14 +861,9 @@ export default function SettingsPage() {
                               {permissions.length > 0 ? `${permissions.length} Recht(e)` : 'Noch keine Rechte – die Rolle gewährt dann keinen Zugriff'}
                             </p>
                           </div>
-                          <button
-                              type="button"
-                              onClick={() => removeRolePermissionRole(roleId)}
-                              className="rounded-[7px] border border-[#48484a] bg-[#1c1c1e]/70 px-2.5 py-1.5 text-[12px] text-[#f5f5f7] hover:border-[#d4d4d4]/50"
-                              title="Rolle entfernen"
-                          >
+                          <Button variant="secondary" size="sm" onClick={() => removeRolePermissionRole(roleId)}>
                             Entfernen
-                          </button>
+                          </Button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                           {PERMISSIONS.map((permission) => (
@@ -1068,70 +880,163 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Rangrollen</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {discordData?.ranks.map((rank) => (
-                      <Select
-                          key={rank.id}
-                          label={rank.name}
-                          value={discordForm.rankRoleMap[rank.id] || ''}
-                          onValueChange={(roleId) => setRoleMap('rankRoleMap', rank.id, roleId)}
-                          options={roleOptions}
-                          size="sm"
-                      />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Ausbildungsrollen</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {discordData?.trainings.map((training) => (
-                      <Select
-                          key={training.id}
-                          label={training.label}
-                          value={discordForm.trainingRoleMap[training.id] || ''}
-                          onValueChange={(roleId) => setRoleMap('trainingRoleMap', training.id, roleId)}
-                          options={roleOptions}
-                          size="sm"
-                      />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="block text-[12.5px] font-medium text-[#98989d] mb-2">Individuelle Unit-Rollen</p>
-                <p className="mb-3 text-[11px] leading-5 text-[#8e8e93]">
-                  Für gruppierte Units pflegst du die Rangrolle direkt unter „Units verwalten“. Diese Liste bleibt für eigenständige oder ältere Units verfügbar.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {discordData?.units.map((unit) => (
-                      <Select
-                          key={unit.key}
-                          label={unit.name}
-                          value={discordForm.unitRoleMap[unit.key] || ''}
-                          onValueChange={(roleId) => setRoleMap('unitRoleMap', unit.key, roleId)}
-                          options={roleOptions}
-                          size="sm"
-                      />
-                  ))}
-                </div>
-              </div>
-              <div className="border-t border-[#38383a]/40 pt-5">
+              <RoleMapGroup title="Rangrollen" items={(discordData?.ranks ?? []).map((rank) => ({ key: rank.id, label: rank.name }))} value={discordForm.rankRoleMap} options={roleOptions} onChange={(key, roleId) => setRoleMap('rankRoleMap', key, roleId)} />
+              <RoleMapGroup title="Ausbildungsrollen" items={(discordData?.trainings ?? []).map((training) => ({ key: training.id, label: training.label }))} value={discordForm.trainingRoleMap} options={roleOptions} onChange={(key, roleId) => setRoleMap('trainingRoleMap', key, roleId)} />
+              <RoleMapGroup
+                  title="Individuelle Unit-Rollen"
+                  hint="Für gruppierte Units pflegst du die Rangrolle direkt unter „Units verwalten“. Diese Liste bleibt für eigenständige oder ältere Units verfügbar."
+                  items={(discordData?.units ?? []).map((unit) => ({ key: unit.key, label: unit.name }))}
+                  value={discordForm.unitRoleMap}
+                  options={roleOptions}
+                  onChange={(key, roleId) => setRoleMap('unitRoleMap', key, roleId)}
+              />
+              <div className="border-t border-[#38383a]/50 pt-5">
                 <TierManager roles={discordData?.roles ?? []} ranks={discordData?.ranks ?? []} />
               </div>
             </div>
-          </div>
-
+          </SettingsSection>
         </div>
 
-        {/* Sticky save bar */}
+        {/* Speicherleiste */}
         <div className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#000000]/85 border-t border-[#38383a]/50 px-4 sm:px-6 py-3">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
             <p className="text-[12px] text-[#8e8e93] truncate">
-              Discord-Konfiguration · Änderungen werden erst nach Speichern aktiv
+              Discord-Verbindung, Channels, Rollen und Zuordnungen werden erst nach dem Speichern aktiv.
             </p>
             <Button size="sm" onClick={saveDiscordConfig}><Save size={13} /> Discord speichern</Button>
           </div>
+        </div>
+      </div>
+  )
+}
+
+type ChannelField =
+  | 'announcementsChannelId' | 'updateChannelId' | 'sanctionsChannelId' | 'investigationsChannelId'
+  | 'photoCatalogChannelId' | 'dutyStatusChannelId' | 'codenameBoardChannelId' | 'dutyAdminLogChannelId'
+  | 'absenceStatusChannelId' | 'weeklyReportChannelId' | 'hirePingChannelId'
+type RoleField = 'humanResourcesRoleId' | 'promotionBlockRoleId' | 'leaveRoleId' | 'bodycamViewerRoleId' | 'clipsAnalystRoleId'
+
+function SettingsSection({ id, icon: Icon, iconClassName, title, description, action, children }: {
+  id?: string
+  icon: LucideIcon
+  iconClassName?: string
+  title: string
+  description?: string
+  action?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+      <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="glass-panel-elevated rounded-[14px] p-5 scroll-mt-section">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id={id ? `${id}-title` : undefined} className="flex items-center gap-2 text-[14px] font-semibold text-[#eee]">
+              <Icon size={15} className={iconClassName ?? 'text-[#d4d4d4]'} aria-hidden /> {title}
+            </h2>
+            {description && <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[#8e8e93]">{description}</p>}
+          </div>
+          {action}
+        </div>
+        {children}
+      </section>
+  )
+}
+
+function ChannelGroup({ title, single, children }: { title: string; single?: boolean; children: React.ReactNode }) {
+  return (
+      <div className="border-t border-[#38383a]/50 py-5 first:border-t-0 first:pt-0 last:pb-0">
+        <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.05em] text-[#98989d]">{title}</h3>
+        <div className={cn('grid gap-x-4 gap-y-5', !single && 'sm:grid-cols-2')}>{children}</div>
+      </div>
+  )
+}
+
+function InlineSave({ label, value, onChange, onSave, placeholder, maxLength }: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  onSave: () => void
+  placeholder?: string
+  maxLength?: number
+}) {
+  return (
+      <div className="flex items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <Input label={label} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} maxLength={maxLength} />
+        </div>
+        <Button aria-label={`${label} speichern`} variant="secondary" size="sm" onClick={onSave}><Save size={13} /></Button>
+      </div>
+  )
+}
+
+function Notice({ tone, children }: { tone: 'warn' | 'error'; children: React.ReactNode }) {
+  return (
+      <div
+          role={tone === 'error' ? 'alert' : undefined}
+          className={cn(
+              'mb-4 rounded-[10px] border px-3 py-2 text-[12px]',
+              tone === 'error' ? 'border-[#3b1616] bg-[#1c1111] text-[#fca5a5]' : 'border-[#3d2d12] bg-[#1d1608] text-[#c7c7cc]',
+          )}
+      >
+        {children}
+      </div>
+  )
+}
+
+function RoleChips({ roleIds, roleName, onRemove }: { roleIds: string[]; roleName: (id: string) => string; onRemove: (id: string) => void }) {
+  return (
+      <div className="flex flex-wrap gap-2 min-h-[34px]">
+        {roleIds.map((roleId) => (
+            <button
+                key={roleId}
+                type="button"
+                onClick={() => onRemove(roleId)}
+                aria-label={`${roleName(roleId)} entfernen`}
+                className="inline-flex min-h-[30px] items-center gap-1.5 rounded-[7px] border border-[#48484a] bg-[#1c1c1e]/70 px-2.5 py-1 text-[12px] text-[#f5f5f7] hover:border-[#d4d4d4]/50"
+            >
+              {roleName(roleId)}
+              <X size={12} className="text-[#8e8e93]" aria-hidden />
+            </button>
+        ))}
+        {roleIds.length === 0 && (
+            <span className="text-[12px] text-[#8e8e93] py-1.5">Keine Rollen ausgewählt</span>
+        )}
+      </div>
+  )
+}
+
+function RolePickerField({ title, hint, children }: { title: string; hint: string; children: React.ReactNode }) {
+  return (
+      <div>
+        <p className="mb-1 text-[12.5px] font-medium text-[#d2d2d2]">{title}</p>
+        <p className="mb-2 text-[11.5px] leading-relaxed text-[#8e8e93]">{hint}</p>
+        {children}
+      </div>
+  )
+}
+
+function RoleMapGroup({ title, hint, items, value, options, onChange }: {
+  title: string
+  hint?: string
+  items: { key: string; label: string }[]
+  value: Record<string, string>
+  options: SelectOption[]
+  onChange: (key: string, roleId: string) => void
+}) {
+  return (
+      <div className="border-t border-[#38383a]/50 pt-5">
+        <p className="mb-1 text-[12.5px] font-medium text-[#d2d2d2]">{title}</p>
+        {hint && <p className="mb-3 text-[11.5px] leading-relaxed text-[#8e8e93]">{hint}</p>}
+        <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-3', !hint && 'mt-2')}>
+          {items.map((item) => (
+              <Select
+                  key={item.key}
+                  label={item.label}
+                  value={value[item.key] || ''}
+                  onValueChange={(roleId) => onChange(item.key, roleId)}
+                  options={options}
+                  size="sm"
+              />
+          ))}
         </div>
       </div>
   )

@@ -5,7 +5,7 @@ import { Link2, SearchCheck } from 'lucide-react'
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useFetch } from '@/hooks/use-fetch'
-import type { CaseRef, CrossHit } from '@/lib/cross-hits'
+import type { CaseRef, CrossHit } from '@/lib/investigations/cross-hits'
 
 function hitHref(hit: CrossHit) {
   return hit.kind === 'person'

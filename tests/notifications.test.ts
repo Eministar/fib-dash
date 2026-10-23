@@ -6,7 +6,7 @@ import {
   notificationVisibilityWhere,
   recipientDedupeKey,
   resolveRecipients,
-} from '../src/lib/notifications'
+} from '../src/lib/core/notifications'
 
 const now = new Date('2026-10-01T12:00:00Z')
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { canAccessInvestigation, investigationVisibilityWhere } from '../src/lib/investigations'
+import { canAccessInvestigation, investigationVisibilityWhere } from '../src/lib/investigations/investigations'
 import type { CurrentUser } from '../src/lib/auth'
 
 const user = (overrides: Partial<CurrentUser> = {}): CurrentUser => ({

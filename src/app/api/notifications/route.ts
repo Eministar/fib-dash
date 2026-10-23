@@ -1,6 +1,6 @@
 import { error, success, unauthorized } from '@/lib/api-response'
 import { requirePortalAuth } from '@/lib/auth'
-import { getInbox, syncProbationReminders } from '@/lib/notifications-server'
+import { getInbox, syncProbationReminders } from '@/lib/core/notifications-server'
 
 export const dynamic = 'force-dynamic'
 

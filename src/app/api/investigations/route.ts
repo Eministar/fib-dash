@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 
 import { error, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
-import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
-import { notifyInvestigationTeam } from '@/lib/notifications-server'
+import { createAuditLog } from '@/lib/audit/audit'
+import { queueDiscordInvestigationEvent } from '@/lib/discord/discord-integration'
+import { notifyInvestigationTeam } from '@/lib/core/notifications-server'
 import { prisma } from '@/lib/prisma'
 import {
   INVESTIGATION_PRIORITY_LABELS,
@@ -16,17 +16,17 @@ import {
   myInvestigationsWhere,
   serializeBigInts,
   validateIdList,
-} from '@/lib/investigations'
+} from '@/lib/investigations/investigations'
 import {
   agentDisplayName,
   cleanText,
   nextInvestigationCaseNumber,
   routeError,
   validateAgentIds,
-} from '@/lib/investigations-server'
+} from '@/lib/investigations/investigations-server'
 import type { Prisma } from '@/generated/prisma'
-import { tokenizedWhere } from '@/lib/search-match'
-import { checklistFromTemplate, openRolesFromTemplate, toTemplateData } from '@/lib/investigation-templates'
+import { tokenizedWhere } from '@/lib/core/search-match'
+import { checklistFromTemplate, openRolesFromTemplate, toTemplateData } from '@/lib/investigations/investigation-templates'
 
 export const dynamic = 'force-dynamic'
 
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     }
 
     const dossierId = cleanText(body.dossierId) || null
-    if (dossierId && !await prisma.dossier.findUnique({ where: { id: dossierId }, select: { id: true } })) return error('Dauerakte wurde nicht gefunden', 404)
+    if (dossierId && !await prisma.dossier.findUnique({ where: { id: dossierId }, select: { id: true } })) return error('Familienakte wurde nicht gefunden', 404)
 
     // Vorlage: Checkliste und offene Rollen werden in die Akte kopiert, damit
     // spätere Änderungen an der Vorlage laufende Akten nicht verändern.

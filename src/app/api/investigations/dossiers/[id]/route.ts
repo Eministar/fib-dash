@@ -1,10 +1,10 @@
 import { requirePermission } from '@/lib/auth'
 import { success, notFound } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { createAuditLog } from '@/lib/audit'
-import { dossierRouteError, dossierSchema, saveDossier, DossierError } from '@/lib/dossiers-server'
-import { investigationVisibilityWhere } from '@/lib/investigations'
-import { queueForumTask, removeForumPost, syncDossierForum } from '@/lib/investigation-forum'
+import { createAuditLog } from '@/lib/audit/audit'
+import { dossierRouteError, dossierSchema, saveDossier } from '@/lib/investigations/dossiers-server'
+import { investigationVisibilityWhere } from '@/lib/investigations/investigations'
+import { queueForumTask, removeForumPost, syncDossierForum } from '@/lib/investigations/investigation-forum'
 
 type Context = { params: Promise<{ id: string }> }
 export async function GET(_req: Request, { params }: Context) {
@@ -12,6 +12,7 @@ export async function GET(_req: Request, { params }: Context) {
     const user = await requirePermission('investigations:view')
     const item = await prisma.dossier.findUnique({ where: { id: (await params).id }, include: {
       photo: { select: { id: true, title: true } },
+      leader: { select: { id: true, firstName: true, lastName: true, personNumber: true } },
       photos: { select: { id: true, title: true }, orderBy: { createdAt: 'desc' } },
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
       investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
@@ -27,7 +28,7 @@ export async function PATCH(req: Request, { params }: Context) {
   try {
     const user = await requirePermission('investigations:manage')
     const dossier = await saveDossier((await params).id, dossierSchema.partial().parse(await req.json()), user)
-    queueForumTask('Dauerakte im Forum', () => syncDossierForum(dossier.id))
+    queueForumTask('Familienakte im Forum', () => syncDossierForum(dossier.id))
     return success(dossier)
   } catch (cause) { return dossierRouteError(cause) }
 }
@@ -40,7 +41,7 @@ export async function DELETE(_req: Request, { params }: Context) {
       await createAuditLog({ action: 'DOSSIER_DELETED', userId: user.id, oldValue: JSON.stringify(row) }, tx)
       return row
     })
-    queueForumTask('Dauerakte aus dem Forum entfernen', () => removeForumPost(deleted.discordThreadId))
+    queueForumTask('Familienakte aus dem Forum entfernen', () => removeForumPost(deleted.discordThreadId))
     return success({ id })
   } catch (cause) { return dossierRouteError(cause) }
 }

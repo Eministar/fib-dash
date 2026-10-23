@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server'
 
 import { error, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
-import { investigationVisibilityWhere } from '@/lib/investigations'
-import { cleanText, nextVehicleNumber, routeError } from '@/lib/investigations-server'
+import { investigationVisibilityWhere } from '@/lib/investigations/investigations'
+import { cleanText, nextVehicleNumber, routeError } from '@/lib/investigations/investigations-server'
 import type { Prisma } from '@/generated/prisma'
-import { tokenizedWhere } from '@/lib/search-match'
+import { tokenizedWhere } from '@/lib/core/search-match'
 
 export const dynamic = 'force-dynamic'
 

@@ -3,9 +3,9 @@ import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { computeAchievements } from '@/lib/achievements'
-import { getAgentOfMonthWins } from '@/lib/agent-of-month-server'
-import { getAgentAllTimePlaytimeMs } from '@/lib/duty-times'
+import { computeAchievements } from '@/lib/agents/achievements'
+import { getAgentOfMonthWins } from '@/lib/agents/agent-of-month-server'
+import { getAgentAllTimePlaytimeMs } from '@/lib/duty/duty-times'
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

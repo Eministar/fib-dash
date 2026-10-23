@@ -262,11 +262,6 @@ export function normalizePermissions(value: unknown): Permission[] {
   return Array.from(permissions)
 }
 
-export function resolvePermissions(groupPermissions?: unknown): Permission[] {
-  return normalizePermissions(groupPermissions)
-}
-
-
 /**
  * Feste Rechte fuer Rollen/Units, deren Zugriff nicht von einer optionalen
  * Checkbox in der Administration abhaengen darf.

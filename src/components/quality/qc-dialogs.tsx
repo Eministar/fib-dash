@@ -12,8 +12,8 @@ import { Select } from '@/components/ui/select'
 import { useToast } from '@/components/ui/toast'
 import { LspdOfficerPicker } from '@/components/lspd/lspd-officer-picker'
 import { useApi } from '@/hooks/use-api'
-import { QC_CHECK_TYPES, QC_CHECK_TYPE_LABELS, QC_SHARE_SCOPE_LABELS, type QcCheckType, type QcShareScope } from '@/lib/quality-checks'
-import type { LspdOfficer } from '@/lib/lspd-officers'
+import { QC_CHECK_TYPES, QC_CHECK_TYPE_LABELS, QC_SHARE_SCOPE_LABELS, type QcCheckType, type QcShareScope } from '@/lib/lspd/quality-checks'
+import type { LspdOfficer } from '@/lib/lspd/lspd-officers'
 
 /** Kontrolle beginnen: Beamten aus dem LSPD-Panel wählen, optional Ort. */
 export function StartCheckDialog({

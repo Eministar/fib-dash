@@ -1,4 +1,4 @@
-import { APP_VERSION_LABEL, releaseBuildShort } from '@/lib/release'
+import { APP_VERSION_LABEL, releaseBuildShort } from '@/lib/core/release'
 import { GITHUB_REPO_URL } from '@/lib/site'
 import Link from 'next/link'
 import { History } from 'lucide-react'

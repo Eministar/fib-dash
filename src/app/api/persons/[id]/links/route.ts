@@ -2,11 +2,11 @@ import { NextRequest } from 'next/server'
 
 import { error, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
-import { PERSON_LINK_TYPE_LABELS, isPersonLinkType } from '@/lib/investigations'
-import { cleanText, routeError } from '@/lib/investigations-server'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { PERSON_LINK_TYPE_LABELS, isPersonLinkType } from '@/lib/investigations/investigations'
+import { cleanText, routeError } from '@/lib/investigations/investigations-server'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 
 export const dynamic = 'force-dynamic'
 

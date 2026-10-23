@@ -1,10 +1,10 @@
-# Ermittlungen: Medien und Dauerakten
+# Ermittlungen: Medien und Familienakten
 
 ## Bereitstellung
 
 1. Datenbank und persistente Uploads sichern (`npm run db:backup` sichert die Datenbank).
-2. Vor dem Start der neuen Version `npm run db:push` ausführen. Alternativ den geprüften SQL-Patch `prisma/patches/2026-09-08-investigation-media-dossiers.sql` einmalig auf den bisherigen Schema-Stand anwenden. Nicht beide Wege kombinieren.
-3. `npm run build` und Server neu starten. Die SQL-Datei wurde nur erzeugt, nicht auf eine Datenbank angewendet.
+2. Vor dem Start der neuen Version `npm run db:push` ausführen.
+3. `npm run build` und Server neu starten.
 4. `UPLOAD_DIR` und gegebenenfalls `CLIP_DIR` müssen persistent sein. Alle App-Instanzen benötigen denselben Dateispeicher.
 
 ## Bodycam-Komprimierung
@@ -31,11 +31,11 @@ Unterstützt werden hochgeladene JPG-, PNG-, WebP- und GIF-Anhänge bis 20 MB. D
 
 In einer **Personenakte unter Ermittlungen** lässt sich das Foto direkt aus dem Bildkatalog auswählen oder entfernen. Eigene Agent-Personalakten sind davon unabhängig.
 
-## Dauerakten
+## Familienakten
 
-**Ermittlungen → Dauerakten** bietet die festen Kategorien Familienakte, Sammelakte, Anwesen und Unterakte. Jede Akte hat Titel, Informationen, Adresse/Standort und ein optionales Katalogfoto. Personen bzw. Familienmitglieder und zugängliche Einsatzakten lassen sich verknüpfen.
+**Ermittlungen → Familienakten** bietet die festen Kategorien Familienakte, Sammelakte, Anwesen und Unterakte. Jede Akte hat Titel, Informationen, Adresse/Standort und ein optionales Katalogfoto. Personen bzw. Familienmitglieder und zugängliche Einsatzakten lassen sich verknüpfen.
 
-Über **Unterakte hinzufügen** können beispielsweise Anwesen und einzelne Sachverhalte einer Familien- oder Sammelakte untergeordnet werden. Beim Bearbeiten kann die übergeordnete Akte geändert werden. Zyklen werden serverseitig verhindert. Verknüpfte Dauerakten erscheinen auch in der jeweiligen Personenakte.
+Über **Unterakte hinzufügen** können beispielsweise Anwesen und einzelne Sachverhalte einer Familien- oder Sammelakte untergeordnet werden. Beim Bearbeiten kann die übergeordnete Akte geändert werden. Zyklen werden serverseitig verhindert. Verknüpfte Familienakten erscheinen auch in der jeweiligen Personenakte.
 
 Lesen erfordert `investigations:view`, Anlegen/Bearbeiten `investigations:manage`, Löschen `investigations:delete`. Eine Akte mit Unterakten kann erst gelöscht werden, nachdem diese verschoben oder entfernt wurden. Verknüpfte Personen und Einsatzakten bleiben bestehen. Vertrauliche Einsatzakten werden anhand der bestehenden Ermittlungsberechtigungen gefiltert.
 
@@ -60,8 +60,8 @@ umbenannte Datei ändert daran nichts.
 
 ## Kartenpunkte an Akten
 
-Dauerakten und Einsatzakten verknüpfen Kartenpunkte (`/map`). Bei
-Dauerakten sind das die Routen, Sammler und Anwesen einer Familie; bei
+Familienakten und Einsatzakten verknüpfen Kartenpunkte (`/map`). Bei
+Familienakten sind das die Routen, Sammler und Anwesen einer Familie; bei
 Einsatzakten die Orte, an denen der Einsatz stattfand.
 
 Der Punkt selbst bleibt für alle mit `map:view` sichtbar. Gefiltert werden

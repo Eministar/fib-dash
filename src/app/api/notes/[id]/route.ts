@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { hasPermission } from '@/lib/permissions'
-import { INACTIVITY_NOTE_DISMISSED_ACTION, SYSTEM_NOTE_TITLE, runAgentStatusAutomation } from '@/lib/absence-status'
-import { cleanNoteContent, cleanNotePinned, cleanNoteTitle } from '@/lib/notes'
+import { INACTIVITY_NOTE_DISMISSED_ACTION, SYSTEM_NOTE_TITLE, runAgentStatusAutomation } from '@/lib/agents/absence-status'
+import { cleanNoteContent, cleanNotePinned, cleanNoteTitle } from '@/lib/core/notes'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()

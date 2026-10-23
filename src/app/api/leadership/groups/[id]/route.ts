@@ -1,5 +1,5 @@
-import { leadershipGroupSchema } from '@/lib/leadership-groups'
-import { deleteGroup, groupError, groupResponse, groupUser, saveGroup } from '@/lib/leadership-groups-server'
+import { leadershipGroupSchema } from '@/lib/units/leadership-groups'
+import { deleteGroup, groupError, groupResponse, groupUser, saveGroup } from '@/lib/units/leadership-groups-server'
 
 export const maxDuration = 120
 

@@ -20,7 +20,7 @@ import {
   type ContractField,
   type ContractStatusValue,
   type ContractValues,
-} from '@/lib/contracts'
+} from '@/lib/contracts/contracts'
 
 interface ContractPayload extends ContractDocumentData {
   id: string

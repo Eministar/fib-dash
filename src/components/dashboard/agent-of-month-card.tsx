@@ -10,8 +10,8 @@ import { Select } from '@/components/ui/select'
 import { useToast } from '@/components/ui/toast'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
-import { monthKeyLabel } from '@/lib/agent-of-month'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { monthKeyLabel } from '@/lib/agents/agent-of-month'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 type MonthAgent = {
   id: string

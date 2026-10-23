@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Plus, Link2, Gavel } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { SHARE_KINDS, type ShareKind } from '@/lib/record-share-kinds'
+import { SHARE_KINDS, type ShareKind } from '@/lib/investigations/record-share-kinds'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { PageHeader } from '@/components/layout/page-header'
@@ -15,8 +15,8 @@ import { Select } from '@/components/ui/select'
 import { Modal } from '@/components/ui/modal'
 import { InvestigationsNavigation } from './investigations-navigation'
 import { ListSkeleton } from '@/components/ui/loading'
-import { emptyRaidRequest, type RaidRequest } from '@/lib/raid-request'
-import { readRaidRequest } from '@/lib/raid-request-schema'
+import { emptyRaidRequest, type RaidRequest } from '@/lib/investigations/raid-request'
+import { readRaidRequest } from '@/lib/investigations/raid-request-schema'
 import { RaidRequestFields } from './raid-request-fields'
 
 type Item = { kind: ShareKind; recordId: string; title: string }
@@ -75,7 +75,7 @@ function ShareEditor({ existing, raid = false, applicantName, onClose, onSaved }
     <label className="flex items-center gap-2 text-sm text-[#c7c7cc]"><input type="checkbox" checked={!!raidRequest} onChange={e => setRaidRequest(e.target.checked ? emptyRaidRequest(applicantName) : null)} />Als Razzia-Antrag aufbereiten (förmliches Anschreiben an das Gericht)</label>
     {raidRequest && <RaidRequestFields value={raidRequest} onChange={setRaidRequest} attachments={selected.map(item => ({ label: SHARE_KINDS[item.kind], title: item.title }))} />}
     <div className="grid gap-3 sm:grid-cols-2"><Input label="Ablaufdatum (optional, lokale Zeit)" type="datetime-local" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} /><label className="flex items-center gap-2 text-sm text-[#c7c7cc]"><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />Link aktiv</label></div>
-    <section className="space-y-2 rounded-lg border border-[#38383a] p-3"><h3 className="text-sm font-semibold text-white">{selected.length} von maximal 100 Einträgen ausgewählt</h3><p className="text-xs text-[#8e8e93]">Nur diese Inhalte werden veröffentlicht. Fotos der gewählten Akten und die Chronologie gewählter Einsatzakten gehören dazu. Eine Dauerakte gibt ihre Einsatzakten, Personen und Fahrzeuge automatisch mit frei, jede Einsatzakte ihre Clips.</p><div className="max-h-40 space-y-1 overflow-auto">{selected.map(item => <div key={itemKey(item)} className="flex items-center justify-between gap-2 text-xs text-[#c7c7cc]"><span>{SHARE_KINDS[item.kind]} · {item.title}</span><Button type="button" variant="ghost" size="sm" onClick={() => setSelected(selected.filter(i => itemKey(i) !== itemKey(item)))}>Entfernen</Button></div>)}</div></section>
+    <section className="space-y-2 rounded-lg border border-[#38383a] p-3"><h3 className="text-sm font-semibold text-white">{selected.length} von maximal 100 Einträgen ausgewählt</h3><p className="text-xs text-[#8e8e93]">Nur diese Inhalte werden veröffentlicht. Fotos der gewählten Akten und die Chronologie gewählter Einsatzakten gehören dazu. Eine Familienakte gibt ihre Einsatzakten, Personen und Fahrzeuge automatisch mit frei, jede Einsatzakte ihre Clips.</p><div className="max-h-40 space-y-1 overflow-auto">{selected.map(item => <div key={itemKey(item)} className="flex items-center justify-between gap-2 text-xs text-[#c7c7cc]"><span>{SHARE_KINDS[item.kind]} · {item.title}</span><Button type="button" variant="ghost" size="sm" onClick={() => setSelected(selected.filter(i => itemKey(i) !== itemKey(item)))}>Entfernen</Button></div>)}</div></section>
     <div className="grid gap-3 sm:grid-cols-2"><Select label="Bereich" value={kind} onValueChange={value => { setKind(value as ShareKind); setPage(1); setSearch('') }} options={Object.entries(SHARE_KINDS).map(([value,label]) => ({ value,label }))} /><Input label="Eintrag suchen" maxLength={200} value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Titel, Name, Nummer oder Kennzeichen" /></div>
     {(failure || candidates.error) && <p role="alert" className="text-sm text-red-300">{failure || candidates.error}</p>}
     <div className="max-h-64 space-y-1 overflow-auto rounded-lg border border-[#38383a] p-2">{candidates.loading ? <ListSkeleton compact /> : candidates.data?.items.map(item => { const checked = selected.some(i => itemKey(i) === itemKey(item)); return <label key={itemKey(item)} className="flex cursor-pointer items-start gap-3 rounded px-2 py-2 text-sm text-[#c7c7cc] hover:bg-[#2c2c2e]"><input type="checkbox" className="mt-1" checked={checked} disabled={!checked && selected.length >= 100} onChange={e => setSelected(e.target.checked ? [...selected, item] : selected.filter(i => itemKey(i) !== itemKey(item)))} /><span>{item.title}</span></label> })}{!candidates.loading && !candidates.data?.items.length && <p className="p-3 text-sm text-[#8e8e93]">Keine passenden Einträge.</p>}</div>

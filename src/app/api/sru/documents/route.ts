@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { taskModuleOrNull, requireTaskModuleManage } from '@/lib/module-permissions'
+import { taskModuleOrNull, requireTaskModuleManage } from '@/lib/units/module-permissions'
 
 const documentInclude = {
   folder: { select: { id: true, name: true } },

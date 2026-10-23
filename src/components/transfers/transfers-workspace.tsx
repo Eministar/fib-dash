@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -30,11 +30,11 @@ import {
   type SignatureRole,
   type TransferRequestStatusValue,
   type TransferSignatureState,
-} from '@/lib/transfer-requests'
+} from '@/lib/hr/transfer-requests'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useUrlState } from '@/hooks/use-url-state'
-import { agentMatchScore, matchesAgent, matchesSearch } from '@/lib/search-match'
+import { agentMatchScore, matchesAgent, matchesSearch } from '@/lib/core/search-match'
 
 interface AgentOption {
   id: string

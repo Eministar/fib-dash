@@ -3,9 +3,9 @@ import { z } from 'zod'
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { createAuditLog } from '@/lib/audit'
-import { shareUpdateSchema, type ShareSelection } from '@/lib/record-share-validation'
-import { createShareToken, managedSharesWhere, ShareError, shareError, sharePath, validateShareItems } from '@/lib/record-shares'
+import { createAuditLog } from '@/lib/audit/audit'
+import { shareUpdateSchema, type ShareSelection } from '@/lib/investigations/record-share-validation'
+import { createShareToken, managedSharesWhere, ShareError, shareError, sharePath, validateShareItems } from '@/lib/investigations/record-shares'
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

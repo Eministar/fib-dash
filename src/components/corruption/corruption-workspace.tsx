@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -19,14 +19,14 @@ import { useApi } from '@/hooks/use-api'
 import { usePersistentBoolean } from '@/hooks/use-persistent-boolean'
 import { useAuth } from '@/context/auth-context'
 import { formatDateTime, cn } from '@/lib/utils'
-import { officialNumber } from '@/lib/corruption-numbers'
+import { officialNumber } from '@/lib/lspd/corruption-numbers'
 import { ReportDetail, MergeOfficial, EditOfficial, OfficialHistory } from './report-tools'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesAgent } from '@/lib/search-match'
+import { matchesAgent } from '@/lib/core/search-match'
 import { ListSkeleton } from '@/components/ui/loading'
 import { LspdOfficerPicker } from '@/components/lspd/lspd-officer-picker'
 import { LspdOfficerFilePanel } from '@/components/lspd/lspd-officer-file'
-import { LSPD_AGENCY, lspdOfficerName, type LspdOfficer } from '@/lib/lspd-officers'
+import { LSPD_AGENCY, lspdOfficerName, type LspdOfficer } from '@/lib/lspd/lspd-officers'
 
 export type Agent = { id: string; firstName: string; lastName: string; badgeNumber: string; status: string }
 export type OfficialSnapshot = { firstName: string; lastName: string; agency: string; badgeNumber: string | null }

@@ -3,11 +3,11 @@
 import { useMemo } from 'react'
 import { Library, X } from 'lucide-react'
 
-import type { MapSpot } from '@/lib/map-spots'
+import type { MapSpot } from '@/lib/investigations/map-spots'
 import { cn } from '@/lib/utils'
 
 /**
- * Filtert die Karte auf die Punkte einer Dauerakte – „zeig mir alle Routen
+ * Filtert die Karte auf die Punkte einer Familienakte – „zeig mir alle Routen
  * und Sammler der Familie Moretti". Die Verknüpfungen liefert
  * `GET /api/map/spots` bereits mit, deshalb rein clientseitig.
  */
@@ -17,7 +17,7 @@ export function DossierFilter({
   onChange,
 }: {
   spots: MapSpot[]
-  /** Id der gewählten Dauerakte, `null` = alle Punkte. */
+  /** Id der gewählten Familienakte, `null` = alle Punkte. */
   value: string | null
   onChange: (dossierId: string | null) => void
 }) {
@@ -41,7 +41,7 @@ export function DossierFilter({
       <div className="mb-2 flex items-baseline justify-between px-1">
         <h2 className="flex items-center gap-1.5 text-[12px] font-semibold text-white">
           <Library size={13} />
-          Dauerakten
+          Familienakten
         </h2>
         {value && (
           <button
@@ -79,7 +79,7 @@ export function DossierFilter({
   )
 }
 
-/** Punkte einer Dauerakte. `null` lässt alles durch. */
+/** Punkte einer Familienakte. `null` lässt alles durch. */
 export function filterSpotsByDossier(spots: MapSpot[], dossierId: string | null) {
   if (!dossierId) return spots
   return spots.filter((spot) => spot.dossiers.some((dossier) => dossier.id === dossierId))

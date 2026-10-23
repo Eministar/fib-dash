@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
-import { deleteClipFile } from '@/lib/clips'
-import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
-import { queueForumTask, refreshInvestigationForumCard, removeForumPost } from '@/lib/investigation-forum'
-import { notifyInvestigationTeam } from '@/lib/notifications-server'
-import { caseCrossHits } from '@/lib/cross-hits-server'
+import { createAuditLog } from '@/lib/audit/audit'
+import { deleteClipFile } from '@/lib/media/clips'
+import { queueDiscordInvestigationEvent } from '@/lib/discord/discord-integration'
+import { queueForumTask, refreshInvestigationForumCard, removeForumPost } from '@/lib/investigations/investigation-forum'
+import { notifyInvestigationTeam } from '@/lib/core/notifications-server'
+import { caseCrossHits } from '@/lib/investigations/cross-hits-server'
 import { prisma } from '@/lib/prisma'
 import {
   INVESTIGATION_PRIORITY_LABELS,
@@ -19,13 +19,13 @@ import {
   isInvestigationStatus,
   serializeBigInts,
   validateIdList,
-} from '@/lib/investigations'
+} from '@/lib/investigations/investigations'
 import {
   agentDisplayName,
   cleanText,
   routeError,
   validateAgentIds,
-} from '@/lib/investigations-server'
+} from '@/lib/investigations/investigations-server'
 import type { Prisma } from '@/generated/prisma'
 
 export const dynamic = 'force-dynamic'

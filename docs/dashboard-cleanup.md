@@ -10,7 +10,7 @@ Bestehende FIB-Farbwelt beibehalten: Hintergrund #181818, Flächen #1b1b1b, Tren
 | --- | --- |
 | Dashboard / Statistik | Ein Einstieg, Ansichten Übersicht und Statistiken. Rangverteilung und ausführlicher Ausbildungsstand nur in der Statistik. |
 | Kalender | Aus der Hauptnavigation entfernt; Unit-Kalender bleiben der reguläre Einstieg. Bestehende globale Termine und direkte Links bleiben unter /calendar erreichbar, damit Einträge ohne Unit nicht verschwinden. |
-| Ermittlungen / Bodycams / Personen / Fahrzeuge / Bilder / Dauerakten / Freigaben | Gemeinsamer Ermittlungsbereich; kein zweiter Bodycam-Link für Ermittler. Konten mit ausschließlich Bodycam-Leserechten behalten ihren Einstieg. |
+| Ermittlungen / Bodycams / Personen / Fahrzeuge / Bilder / Familienakten / Freigaben | Gemeinsamer Ermittlungsbereich; kein zweiter Bodycam-Link für Ermittler. Konten mit ausschließlich Bodycam-Leserechten behalten ihren Einstieg. |
 | Sanktionen / Katalog | Sanktionen und Nachschlagewerk als Ansichten desselben Bereichs; alte Katalog-URL leitet weiter. |
 | Agents / Decknamen / Rangänderungen / Kündigungen | In der aufklappbaren Personalgruppe. Eigene Berechtigungen und spezialisierte Bearbeitungsabläufe bleiben erhalten. |
 | Dienstzeiten | Beim Arbeitsplatz; aktives Ein-/Ausstempeln ist eine eigenständige Funktion. |

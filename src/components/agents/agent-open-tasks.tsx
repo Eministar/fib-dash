@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useFetch } from '@/hooks/use-fetch'
 import { Button } from '@/components/ui/button'
 import { ListSkeleton } from '@/components/ui/loading'
-import { notifyLiveUpdate } from '@/lib/live-updates'
+import { notifyLiveUpdate } from '@/lib/core/live-updates'
 import { formatDate } from '@/lib/utils'
-import type { AgentOpenTask } from '@/lib/agent-open-tasks'
+import type { AgentOpenTask } from '@/lib/agents/agent-open-tasks'
 
 export function AgentOpenTasks({ agentId, onNavigate }: { agentId: string; onNavigate: (tab: string) => void }) {
   const { data, error, loading, refetch } = useFetch<AgentOpenTask[]>(`/api/agents/${agentId}/open-tasks`)

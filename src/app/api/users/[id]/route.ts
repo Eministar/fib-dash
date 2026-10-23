@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { invalidateAuthCache, requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, notFound, forbidden } from '@/lib/api-response'
 import { sanitizePermissions } from '@/lib/permissions'
-import { getDiscordConfig, getDiscordGuildMember, addDiscordRoleToMember, removeDiscordRoleFromMember } from '@/lib/discord-integration'
-import { serializeDiscordBackedUser, upsertDiscordUser } from '@/lib/discord-auth'
-import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/unit-leadership'
+import { getDiscordConfig, getDiscordGuildMember, addDiscordRoleToMember, removeDiscordRoleFromMember } from '@/lib/discord/discord-integration'
+import { serializeDiscordBackedUser, upsertDiscordUser } from '@/lib/core/discord-auth'
+import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/units/unit-leadership'
 
 function serializeUser<T extends {
   permissions: unknown

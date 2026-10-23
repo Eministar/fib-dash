@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth'
 import { error, success, unauthorized, forbidden } from '@/lib/api-response'
-import { getChangeHistoryStatus } from '@/lib/change-history'
+import { getChangeHistoryStatus } from '@/lib/audit/change-history'
 
 export async function GET() {
   try {

@@ -8,7 +8,7 @@ import {
   forumEventMessage,
   forumThreadName,
   investigationCard,
-} from '../src/lib/investigation-forum-messages'
+} from '../src/lib/investigations/investigation-forum-messages'
 
 const text = (message: unknown) => JSON.stringify(message)
 const box = (message: { components: Array<Record<string, unknown>> }) => message.components[0]
@@ -42,34 +42,36 @@ test('Aktenkarte ohne Fallführung und ohne Zusammenfassung', () => {
   assert.ok(!json.includes('Akte im Dashboard öffnen'))
 })
 
-test('Dauerakte: laufende und abgeschlossene Akten getrennt, Thread-Links klickbar', () => {
+test('Familienakte: Leiter, Anwesen, laufende und abgeschlossene Akten getrennt, Thread-Links klickbar', () => {
   const json = text(dossierCard({
-    title: 'Familie Moretti', kind: 'FAMILY', description: null, address: 'Vinewood Hills', personCount: 4, vehicleCount: 2,
+    title: 'Familie Moretti', leader: 'Paolo Moretti', description: null, address: 'Vinewood Hills', personCount: 4, vehicleCount: 2,
     cases: [
       { caseNumber: 'ERM-1', title: 'Drogen', status: 'ACTIVE', threadId: '111' },
       { caseNumber: 'ERM-2', title: 'Raub', status: 'CLOSED', threadId: '222' },
       { caseNumber: 'ERM-3', title: 'Ohne Beitrag', status: 'OPEN', threadId: null },
     ],
   }))
-  assert.ok(json.includes('Fraktion / Familie'))
+  assert.ok(json.includes('Familienakte'))
+  assert.ok(json.includes('Fraktionsleiter: Paolo Moretti'))
+  assert.ok(json.includes('Anwesen: Vinewood Hills'))
   assert.ok(json.includes('<#111>') && json.includes('<#222>'))
   assert.ok(json.includes('`ERM-3` Ohne Beitrag'))
   assert.ok(json.indexOf('Laufende Ermittlungen') < json.indexOf('Abgeschlossen'))
 })
 
-test('Dauerakte mit sehr vielen Akten bleibt unter der Grenze', () => {
+test('Familienakte mit sehr vielen Akten bleibt unter der Grenze', () => {
   const cases = Array.from({ length: DOSSIER_LINK_LIMIT + 5 }, (_, i) => ({ caseNumber: `ERM-${i}`, title: 'Akte', status: 'OPEN' as const, threadId: String(1e17 + i) }))
-  const json = text(dossierCard({ title: 'Groß', kind: 'COLLECTION', description: null, address: null, personCount: 0, vehicleCount: 0, cases }))
+  const json = text(dossierCard({ title: 'Groß', leader: null, description: null, address: null, personCount: 0, vehicleCount: 0, cases }))
   assert.ok(json.includes('und 5 weitere'))
   assert.ok(json.length < 6000)
 })
 
-test('Übersicht gruppiert nach Art', () => {
+test('Übersicht listet alle Familienakten', () => {
   const json = text(dossierOverview([
-    { title: 'Moretti', kind: 'FAMILY', threadId: '1', caseCount: 3 },
-    { title: 'Hafen', kind: 'PROPERTY', threadId: null, caseCount: 0 },
+    { title: 'Moretti', threadId: '1', caseCount: 3 },
+    { title: 'Hafen', threadId: null, caseCount: 0 },
   ]))
-  assert.ok(json.includes('Fraktion / Familie') && json.includes('Anwesen'))
+  assert.ok(json.includes('Familienregister'))
   assert.ok(json.includes('<#1> · 3 Akten'))
   assert.ok(json.includes('Hafen · 0 Akten'))
 })

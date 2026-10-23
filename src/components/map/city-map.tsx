@@ -19,7 +19,7 @@ import {
 import { LocateFixed, Minus, Move, Plus, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { MAP_HEIGHT, MAP_WIDTH, mapCategory, type MapSpot } from '@/lib/map-spots'
+import { MAP_HEIGHT, MAP_WIDTH, mapCategory, type MapSpot } from '@/lib/investigations/map-spots'
 import { MapNeedle } from '@/components/map/map-needle'
 
 const MIN_SCALE = 1

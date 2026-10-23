@@ -2,13 +2,13 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { requirePortalAuth } from '@/lib/auth'
-import { buildFormSubmitterHash, stripCorrectAnswersFromQuestion } from '@/lib/form-tests'
+import { buildFormSubmitterHash, stripCorrectAnswersFromQuestion } from '@/lib/hr/form-tests'
 import {
   completeOpenFormTestSessions,
   isFormTestSessionWriteConflict,
   securityEventCount,
-} from '@/lib/form-test-sessions'
-import { FORM_LINK_ERRORS, closeStaleFormTestSessions, resolveFormLink } from '@/lib/form-links'
+} from '@/lib/hr/form-test-sessions'
+import { FORM_LINK_ERRORS, closeStaleFormTestSessions, resolveFormLink } from '@/lib/hr/form-links'
 
 const sessionSelect = {
   id: true,

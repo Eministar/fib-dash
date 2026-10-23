@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { SAVED_VIEWS_LIMIT, type SavedView } from '@/lib/saved-views'
+import { SAVED_VIEWS_LIMIT, type SavedView } from '@/lib/core/saved-views'
 
 const eventName = 'saved-views-changed'
 function subscribe(callback: () => void) {

@@ -9,9 +9,9 @@ import { Card } from '@/components/ui/card'
 import { PageLoader } from '@/components/ui/loading'
 import { useAuth } from '@/context/auth-context'
 import { useFetch } from '@/hooks/use-fetch'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { hasPermission } from '@/lib/permissions'
-import { itemLabel } from '@/lib/storage-logs'
+import { itemLabel } from '@/lib/storage-logs/storage-logs'
 import { cn, formatDateTime } from '@/lib/utils'
 
 type ContextEntry = { slug: string; direction: 'IN' | 'OUT'; item: string; quantity: number; isWeapon: boolean; storage: string; occurredAt: string }

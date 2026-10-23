@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
-import { mapCategory, type MapSpot } from '@/lib/map-spots'
+import { mapCategory, type MapSpot } from '@/lib/investigations/map-spots'
 import { CityMap } from '@/components/map/city-map'
 import { SpotEditorDialog, type SpotFormValues } from '@/components/map/spot-editor-dialog'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 /** Was eine Akte von einem Kartenpunkt braucht. Absichtlich weniger als ein
  *  volles `MapSpot`, damit auch Ansichten mit verkürzter Auswahl den Picker

@@ -1,8 +1,8 @@
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { releaseCodename } from '@/lib/codenames'
-import { releaseCodenameSchema } from '@/lib/codename-validation'
-import { codenameRouteError } from '@/lib/codename-route-error'
+import { releaseCodename } from '@/lib/codenames/codenames'
+import { releaseCodenameSchema } from '@/lib/codenames/codename-validation'
+import { codenameRouteError } from '@/lib/codenames/codename-route-error'
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

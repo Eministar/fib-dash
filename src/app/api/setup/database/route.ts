@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getSetupStatus, testSetupDatabase } from '@/lib/setup'
+import { getSetupStatus, testSetupDatabase } from '@/lib/core/setup'
 
 export const runtime = 'nodejs'
 

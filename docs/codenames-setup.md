@@ -1,30 +1,19 @@
 # Decknamen-System: Einrichtung und Prüfung
 
-Implementiert nach `docs/superpowers/specs/2026-09-08-decknamen-system-design.md`.
-Es gelten die Entwurfsannahmen: intern sichtbare Zuordnung, sofortige Wiederverwendung
+Es gelten folgende Annahmen: intern sichtbare Zuordnung, sofortige Wiederverwendung
 freier Namen, maximal ein aktueller Deckname pro Agent. Gesperrte Namen werden bei
 Sperrung freigegeben und können erst nach Entsperrung erneut zugewiesen werden.
 
 ## Datenbank und Katalog
 
-Das Repository verwendet bisher `prisma db push` und hat keine Migrationshistorie.
-Der additive SQL-Patch `prisma/patches/2026-09-08-codenames.sql` wurde aus dem
-Schema-Diff generiert. Er erstellt ausschließlich die zwei neuen Tabellen samt
-Indizes und Fremdschlüsseln. Er ist einmalig auf eine bestehende Installation ohne
-diese Tabellen anzuwenden; nicht zusätzlich zu einem bereits erfolgten Schema-Push.
-
-Vor der Inbetriebnahme mit der vorgesehenen Datenbank:
+Das Schema wird mit `prisma db push` abgeglichen. Vor der Inbetriebnahme:
 
 ```sh
-npm run db:backup
-npx prisma db execute --file prisma/patches/2026-09-08-codenames.sql
-npm run db:generate
+npm run db:push
 npm run db:seed-codenames
 ```
 
-Alternativ lässt sich das Schema im bisherigen Projektablauf mit `npm run db:push`
-abgleichen. Vorher den gesamten Schema-Diff der jeweiligen Installation prüfen.
-Für eine neue Datenbank zuerst die bestehende Projektinitialisierung durchführen.
+`npm run db:push` sichert die Datenbank vorher automatisch.
 
 `prisma/data/codenames.json` enthält 2.100 eindeutige **Namensvorschläge**.
 Alle Namen bestehen aus genau einem Wort mit höchstens acht Buchstaben;

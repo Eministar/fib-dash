@@ -2,8 +2,8 @@ import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { notFound } from '@/lib/api-response'
-import { fileUploadResponse } from '@/lib/file-uploads'
-import { fileUploadRouteError } from '@/lib/file-upload-queries'
+import { fileUploadResponse } from '@/lib/media/file-uploads'
+import { fileUploadRouteError } from '@/lib/media/file-upload-queries'
 
 export const dynamic = 'force-dynamic'
 

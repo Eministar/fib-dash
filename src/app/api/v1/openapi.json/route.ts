@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { buildOpenApiSpec } from '@/lib/openapi-spec'
+import { buildOpenApiSpec } from '@/lib/core/openapi-spec'
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)

@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import {
   loadLegalCaseById,
   serializeLegalCase,
-} from '@/lib/legal-case-service'
-import { LEGAL_CASE_STATUSES, type LegalCaseStatusValue } from '@/lib/legal-cases'
+} from '@/lib/publications/legal-case-service'
+import { LEGAL_CASE_STATUSES, type LegalCaseStatusValue } from '@/lib/publications/legal-cases'
 
 type RouteContext = { params: Promise<{ id: string }> }
 

@@ -3,7 +3,7 @@ import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import {
   DEFAULT_CONTRACT_TEMPLATE_CLAUSES,
   DEFAULT_CONTRACT_TEMPLATE_CLOSING,
@@ -13,7 +13,7 @@ import {
   cleanContractText,
   sanitizeContractClauses,
   sanitizeContractFields,
-} from '@/lib/contracts'
+} from '@/lib/contracts/contracts'
 
 const templateInclude = {
   createdBy: { select: { id: true, displayName: true } },

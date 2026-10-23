@@ -2,8 +2,8 @@ import { z } from 'zod'
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { shareKindSchema } from '@/lib/record-share-validation'
-import { shareCandidates, shareError } from '@/lib/record-shares'
+import { shareKindSchema } from '@/lib/investigations/record-share-validation'
+import { shareCandidates, shareError } from '@/lib/investigations/record-shares'
 export async function GET(req: Request) {
   try {
     const user = await requirePermission('investigations:manage')

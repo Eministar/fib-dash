@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import type { Prisma } from '../src/generated/prisma'
-import { createShareToken, resolveShare, tokenHash, validateShareItems, publicShareHeaders } from '../src/lib/record-shares'
-import { expandSharedItems, requireSharedSelection, publicRecord, sharedHeading, sharedPhoto } from '../src/lib/shared-records-public'
-import { shareSchema } from '../src/lib/record-share-validation'
+import { createShareToken, resolveShare, tokenHash, validateShareItems, publicShareHeaders } from '../src/lib/investigations/record-shares'
+import { expandSharedItems, requireSharedSelection, publicRecord, sharedHeading, sharedPhoto } from '../src/lib/investigations/shared-records-public'
+import { shareSchema } from '../src/lib/investigations/record-share-validation'
 import type { CurrentUser } from '../src/lib/auth'
 
 test('Share tokens are random and hashed; expired, disabled, replaced and invalid links cannot resolve', async () => {

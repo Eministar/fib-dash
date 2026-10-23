@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { hasAnyPermission } from '@/lib/permissions'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { checkSanctionAuthority } from '@/lib/sanction-authority'
-import { assessRepeat } from '@/lib/sanction-repeat'
+import { createAuditLog } from '@/lib/audit/audit'
+import { checkSanctionAuthority } from '@/lib/sanctions/sanction-authority'
+import { assessRepeat } from '@/lib/sanctions/sanction-repeat'
 import {
   cleanSanctionText,
   isChecklistComplete,
@@ -23,7 +23,7 @@ import {
   sanctionLevelLabel,
   suspendedUntilFromHours,
   syncSanctionDiscordMessage,
-} from '@/lib/sanctions'
+} from '@/lib/sanctions/sanctions'
 
 /** Obergrenze der Liste — die Seite filtert clientseitig, der Payload bleibt so beschränkt. */
 const SANCTION_LIST_LIMIT = 1000

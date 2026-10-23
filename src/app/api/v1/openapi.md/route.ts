@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { ENDPOINTS } from '@/lib/openapi-spec'
+import { ENDPOINTS } from '@/lib/core/openapi-spec'
 import { PERMISSION_LABELS } from '@/lib/permissions'
 
 /**

@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { templateInputSchema } from '@/lib/agreements'
-import { deleteTemplate, updateTemplate } from '@/lib/agreement-service'
-import { agreementErrorResponse } from '@/lib/agreement-http'
+import { templateInputSchema } from '@/lib/contracts/agreements'
+import { deleteTemplate, updateTemplate } from '@/lib/contracts/agreement-service'
+import { agreementErrorResponse } from '@/lib/contracts/agreement-http'
 
 type Params = { params: Promise<{ id: string }> }
 

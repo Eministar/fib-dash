@@ -9,7 +9,7 @@ import {
   normalizeRankIds,
   queueSyncAfterTierChange,
   serializeTier,
-} from '@/lib/discord-tiers'
+} from '@/lib/discord/discord-tiers'
 
 export async function GET() {
   try {

@@ -1,9 +1,9 @@
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { codenameAgentSelect, createCodename, formatCodename } from '@/lib/codenames'
-import { codenameQuerySchema, createCodenameSchema } from '@/lib/codename-validation'
-import { codenameRouteError } from '@/lib/codename-route-error'
+import { codenameAgentSelect, createCodename, formatCodename } from '@/lib/codenames/codenames'
+import { codenameQuerySchema, createCodenameSchema } from '@/lib/codenames/codename-validation'
+import { codenameRouteError } from '@/lib/codenames/codename-route-error'
 import type { Prisma } from '@/generated/prisma'
 
 export async function GET(req: Request) {

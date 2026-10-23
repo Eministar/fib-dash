@@ -1,0 +1,85 @@
+<h2>Familienakte: Wie soll eine einzelne Akte aufgebaut sein?</h2>
+<p class="subtitle">Beispiel „Familie Vasquez“. Neu sind die Felder Fraktionsleiter und Anwesen, und alle Einsatzakten stehen direkt sichtbar darunter (nicht mehr hinter einem Reiter).</p>
+
+<style>
+  .fa { background:#0b0b0b; color:#e5e5e7; font:13px/1.45 system-ui, sans-serif; border-radius:10px; padding:16px; }
+  .fa .muted { color:#8e8e93; font-size:11.5px; }
+  .fa .panel { background:#161617; border:1px solid #2c2c2e; border-radius:10px; padding:12px; }
+  .fa .h { font-weight:600; font-size:13px; margin-bottom:8px; display:flex; justify-content:space-between; }
+  .fa .row { display:flex; gap:10px; align-items:center; padding:7px 0; border-top:1px solid #222; }
+  .fa .row:first-of-type { border-top:0; }
+  .fa .badge { font-size:11px; padding:2px 7px; border-radius:6px; }
+  .fa .open { background:#0a2a1a; color:#86efac; } .fa .closed { background:#222; color:#98989d; } .fa .prio { background:#2a1212; color:#fca5a5; }
+  .fa .code { font-family:ui-monospace,monospace; color:#d4af37; font-size:11px; }
+  .fa .chip { display:inline-block; border:1px solid #38383a; border-radius:999px; padding:2px 9px; font-size:11.5px; margin:2px 3px 2px 0; }
+  .fa .photo { background:linear-gradient(135deg,#2c2c2e,#1c1c1e); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#a1a1a6; }
+  .fa .kv dt { color:#8e8e93; font-size:11px; } .fa .kv dd { margin:0 0 8px; }
+</style>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="fa">
+        <div style="display:flex; gap:14px; align-items:flex-start;">
+          <div class="photo" style="width:120px;height:80px;">Titelbild</div>
+          <div style="flex:1">
+            <div style="font-size:17px;font-weight:600;">Familie Vasquez</div>
+            <div class="muted">Familienakte · zuletzt aktiv vor 2 Tagen</div>
+            <div style="display:flex;gap:18px;margin-top:8px;">
+              <div><div class="muted">Fraktionsleiter</div>Diego Vasquez</div>
+              <div><div class="muted">Anwesen</div>Vinewood Hills 12</div>
+              <div><div class="muted">Akten</div>3 offen · 7 gesamt</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px;">
+          <div class="h">Einsatzakten <span class="muted">neueste zuerst</span></div>
+          <div class="row"><span class="code">EA-0142</span><span style="flex:1">Waffenlieferung Hafen</span><span class="badge prio">Hoch</span><span class="badge open">Offen</span></div>
+          <div class="row"><span class="code">EA-0131</span><span style="flex:1">Observation Anwesen</span><span class="badge open">Offen</span></div>
+          <div class="row"><span class="code">EA-0098</span><span style="flex:1">Geldwäsche Autohaus</span><span class="badge closed">Abgeschlossen</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+          <div class="panel"><div class="h">Mitglieder <span class="muted">6</span></div><span class="chip">Diego V. (Leiter)</span><span class="chip">Rosa V.</span><span class="chip">Marco S.</span><span class="chip">+3</span></div>
+          <div class="panel"><div class="h">Fahrzeuge & Orte <span class="muted">4</span></div><span class="chip">LS-4821</span><span class="chip">Lagerhalle Elysian</span><span class="chip">+2</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Akten im Mittelpunkt</h3>
+      <p>Stammdaten kompakt oben, darunter sofort die Liste aller Einsatzakten. Mitglieder, Fahrzeuge und Orte als kleinere Kästen am Ende.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="fa" style="display:grid;grid-template-columns:150px 1fr;gap:12px;">
+        <div class="panel">
+          <div class="photo" style="height:80px;margin-bottom:10px;">Titelbild</div>
+          <dl class="kv">
+            <dt>Fraktionsleiter</dt><dd>Diego Vasquez</dd>
+            <dt>Anwesen</dt><dd>Vinewood Hills 12</dd>
+            <dt>Mitglieder</dt><dd>6 Personen</dd>
+            <dt>Fahrzeuge</dt><dd>3</dd>
+            <dt>Zuletzt aktiv</dt><dd>vor 2 Tagen</dd>
+          </dl>
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:600;">Familie Vasquez</div>
+          <div class="muted" style="margin-bottom:10px;">Familienakte · 3 offen · 7 gesamt</div>
+          <div class="panel">
+            <div class="h">Einsatzakten</div>
+            <div class="row"><span class="code">EA-0142</span><span style="flex:1">Waffenlieferung Hafen</span><span class="badge open">Offen</span></div>
+            <div class="row"><span class="code">EA-0131</span><span style="flex:1">Observation Anwesen</span><span class="badge open">Offen</span></div>
+            <div class="row"><span class="code">EA-0120</span><span style="flex:1">Schießerei Grove St.</span><span class="badge open">Offen</span></div>
+            <div class="row"><span class="code">EA-0098</span><span style="flex:1">Geldwäsche Autohaus</span><span class="badge closed">Abgeschlossen</span></div>
+          </div>
+          <div class="muted" style="margin-top:8px;">Reiter: Akten · Mitglieder · Fahrzeuge · Bilder & Orte</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Steckbrief links, Akten rechts</h3>
+      <p>Die Stammdaten stehen dauerhaft als Steckbrief in einer Seitenspalte, rechts der Hauptbereich mit den Akten (weitere Bereiche als Reiter).</p>
+    </div>
+  </div>
+</div>

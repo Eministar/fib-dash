@@ -2,8 +2,8 @@ import { z } from 'zod'
 import { requireAuth } from '@/lib/auth'
 import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { corruptionError } from '@/lib/corruption-server'
-import { mergeOfficials } from '@/lib/corruption-edits'
+import { corruptionError } from '@/lib/lspd/corruption-server'
+import { mergeOfficials } from '@/lib/lspd/corruption-edits'
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

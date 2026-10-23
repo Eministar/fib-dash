@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, Search } from 'lucide-react'
-import type { PublicationTable } from '@/lib/publications'
+import type { PublicationTable } from '@/lib/publications/publications'
 
 const collator = new Intl.Collator('de', { numeric: true, sensitivity: 'base' })
 

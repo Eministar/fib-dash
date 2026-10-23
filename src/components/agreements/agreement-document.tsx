@@ -1,9 +1,9 @@
 'use client'
 
 import { useMemo } from 'react'
-import { renderMarkdown } from '@/lib/markdown'
-import { CONTRACT_PLACE, formatContractDate, type ContractClause } from '@/lib/contracts'
-import type { AgreementLetterhead, AgreementStatus } from '@/lib/agreements'
+import { renderMarkdown } from '@/lib/core/markdown'
+import { CONTRACT_PLACE, formatContractDate, type ContractClause } from '@/lib/contracts/contracts'
+import type { AgreementLetterhead, AgreementStatus } from '@/lib/contracts/agreements'
 
 export interface AgreementDocumentParty {
   id: string

@@ -9,7 +9,7 @@ import {
   snapshotJson,
   validateRankChangeDesiredState,
   type RankChangeEntrySnapshot,
-} from '@/lib/rank-change-entry'
+} from '@/lib/agents/rank-change-entry'
 
 export async function PATCH(
   req: NextRequest,

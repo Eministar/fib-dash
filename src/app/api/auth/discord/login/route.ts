@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { getDiscordConfig } from '@/lib/discord-integration'
+import { getDiscordConfig } from '@/lib/discord/discord-integration'
 
 function firstForwardedValue(value: string | null) {
   return value?.split(',')[0]?.trim() || ''

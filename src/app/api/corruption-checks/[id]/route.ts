@@ -1,8 +1,8 @@
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { success, notFound } from '@/lib/api-response'
-import { corruptionError, corruptionInclude } from '@/lib/corruption-server'
-import { correctionSchema, correctReport } from '@/lib/corruption-edits'
+import { corruptionError, corruptionInclude } from '@/lib/lspd/corruption-server'
+import { correctionSchema, correctReport } from '@/lib/lspd/corruption-edits'
 type Context = { params: Promise<{ id: string }> }
 export async function GET(_req: Request, { params }: Context) {
   try {

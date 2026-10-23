@@ -28,7 +28,7 @@ import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import {
   PROBATION_ENTRY_RATING_LABELS,
   PROBATION_STATUS_LABELS,
@@ -37,7 +37,7 @@ import {
   type ProbationEntryRatingValue,
   type ProbationStatusValue,
   type ProbationTypeValue,
-} from '@/lib/probations'
+} from '@/lib/hr/probations'
 
 interface Agent {
   id: string

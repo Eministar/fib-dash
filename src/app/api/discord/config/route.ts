@@ -13,7 +13,7 @@ import {
   queueAllAgentRoleSync,
   saveDiscordConfig,
   queueCodenameBoardUpdate,
-} from '@/lib/discord-integration'
+} from '@/lib/discord/discord-integration'
 
 function discordPublicKeyConfigured() {
   return !!(process.env.DISCORD_PUBLIC_KEY?.trim() || process.env.FIB_DISCORD_PUBLIC_KEY?.trim())

@@ -2,14 +2,14 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { cleanContractText } from '@/lib/contracts'
+import { createAuditLog } from '@/lib/audit/audit'
+import { cleanContractText } from '@/lib/contracts/contracts'
 import { resolveBaseUrl, transferRequestUrl } from '@/lib/site'
 import {
   deriveTransferStatus,
   serializeTransferRequest,
   transferRequestSelect,
-} from '@/lib/transfer-request-service'
+} from '@/lib/hr/transfer-request-service'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

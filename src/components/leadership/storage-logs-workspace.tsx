@@ -11,9 +11,9 @@ import { ListSkeleton } from '@/components/ui/loading'
 import { useAuth } from '@/context/auth-context'
 import { useFetch } from '@/hooks/use-fetch'
 import { useUrlState } from '@/hooks/use-url-state'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { hasPermission } from '@/lib/permissions'
-import { itemLabel } from '@/lib/storage-logs'
+import { itemLabel } from '@/lib/storage-logs/storage-logs'
 import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
 
 type AgentInfo = { id: string; firstName: string; lastName: string; badgeNumber: string; status: string; rank: { name: string; color: string } }

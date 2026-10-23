@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildCaseTimeline, groupTimelineByDay, type TimelineSource } from '../src/lib/case-timeline'
+import { buildCaseTimeline, groupTimelineByDay, type TimelineSource } from '../src/lib/investigations/case-timeline'
 
 const source: TimelineSource = {
   createdAt: '2026-09-01T08:00:00.000Z',

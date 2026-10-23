@@ -15,12 +15,12 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
-import { renderMarkdown } from '@/lib/markdown'
+import { renderMarkdown } from '@/lib/core/markdown'
 import {
   PRESS_RELEASE_STATUS_META,
   pressReleaseExcerpt,
   type PressReleaseStatusValue,
-} from '@/lib/press-releases'
+} from '@/lib/publications/press-releases'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import { useDraft } from '@/hooks/use-draft'

@@ -4,8 +4,8 @@ import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import {
   qcShareUpdateSchema,
-} from '@/lib/quality-checks-schemas'
-import { qcRouteError, updateQcShare } from '@/lib/quality-checks-server'
+} from '@/lib/lspd/quality-checks-schemas'
+import { qcRouteError, updateQcShare } from '@/lib/lspd/quality-checks-server'
 
 export const dynamic = 'force-dynamic'
 

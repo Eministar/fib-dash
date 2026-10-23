@@ -1,15 +1,15 @@
 'use client'
 
 import { useMemo } from 'react'
-import { renderMarkdown } from '@/lib/markdown'
-import { formatContractDate, type ContractClause } from '@/lib/contracts'
+import { renderMarkdown } from '@/lib/core/markdown'
+import { formatContractDate, type ContractClause } from '@/lib/contracts/contracts'
 import {
   SIGNATURE_ROLES,
   SIGNATURE_ROLE_META,
   type SignatureRole,
   type TransferRequestStatusValue,
   type TransferSignatureState,
-} from '@/lib/transfer-requests'
+} from '@/lib/hr/transfer-requests'
 
 export interface TransferDocumentData {
   requestNumber: string

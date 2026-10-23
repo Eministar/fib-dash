@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { invalidateAuthCache, requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { sanitizePermissions } from '@/lib/permissions'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
-import { userGroupDelegate } from '@/lib/prisma-delegates'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
+import { userGroupDelegate } from '@/lib/core/prisma-delegates'
 
 function serializeGroup<T extends {
   users: { id: string }[]

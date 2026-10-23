@@ -9,7 +9,7 @@ import {
   snapshotJson,
   snapshotsEqual,
   validateRankChangeDesiredState,
-} from '@/lib/rank-change-entry'
+} from '@/lib/agents/rank-change-entry'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

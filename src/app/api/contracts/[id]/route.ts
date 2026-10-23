@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { contractSelect } from '@/lib/contract-service'
-import { cleanContractLongText } from '@/lib/contracts'
+import { createAuditLog } from '@/lib/audit/audit'
+import { contractSelect } from '@/lib/contracts/contract-service'
+import { cleanContractLongText } from '@/lib/contracts/contracts'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

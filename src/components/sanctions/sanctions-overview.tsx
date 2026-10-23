@@ -27,10 +27,10 @@ import {
   resolveViolation,
   sanctionLevelLabel,
   violationsForGrade,
-} from '@/lib/sanction-catalog'
+} from '@/lib/sanctions/sanction-catalog'
 import { cn } from '@/lib/utils'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 /** Serverantwort von `GET /api/sanctions` — Karte plus Agent-Bezug. */
 interface SanctionListItem extends SanctionRecord {

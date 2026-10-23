@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { error, success, unauthorized } from '@/lib/api-response'
-import { assessRepeat } from '@/lib/sanction-repeat'
-import { isPenalGrade } from '@/lib/sanctions'
+import { assessRepeat } from '@/lib/sanctions/sanction-repeat'
+import { isPenalGrade } from '@/lib/sanctions/sanctions'
 
 /**
  * Wiederholungsprüfung nach Abschnitt 04 — liefert dem Ausstell-Dialog die

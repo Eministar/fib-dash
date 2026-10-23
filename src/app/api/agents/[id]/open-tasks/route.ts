@@ -2,7 +2,7 @@ import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { success, error, notFound, unauthorized, forbidden } from '@/lib/api-response'
 import { hasPermission } from '@/lib/permissions'
-import { agentTaskModules, missingAgentTrainings, visibleAgentTaskModules, type AgentOpenTask } from '@/lib/agent-open-tasks'
+import { agentTaskModules, missingAgentTrainings, visibleAgentTaskModules, type AgentOpenTask } from '@/lib/agents/agent-open-tasks'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

@@ -7,9 +7,9 @@ import { Crown, Trophy } from 'lucide-react'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
 import { TabBar } from '@/components/ui/tab-bar'
 import { useFetch } from '@/hooks/use-fetch'
-import { displayBadgeNumber } from '@/lib/badge-number'
-// Nur der Typ: @/lib/duty-times zieht Prisma und gehört nicht ins Client-Bundle.
-import type { LeaderboardPeriod } from '@/lib/duty-times'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+// Nur der Typ: @/lib/duty/duty-times zieht Prisma und gehört nicht ins Client-Bundle.
+import type { LeaderboardPeriod } from '@/lib/duty/duty-times'
 import { cn } from '@/lib/utils'
 
 export type LeaderboardRow = {
@@ -100,7 +100,7 @@ export function DutyLeaderboard({ weekRows, note }: { weekRows: LeaderboardRow[]
                     'rounded-[12px] border border-[#38383a]/55 bg-[#1c1c1e]/75 p-4 ring-1 transition-transform hover:-translate-y-0.5',
                     colors.ring,
                     // Sichtbare Reihenfolge 2 · 1 · 3, Lesereihenfolge bleibt 1 · 2 · 3.
-                    place === 1 && 'md:order-2 md:scale-[1.03]',
+                    place === 1 && 'md:order-2',
                     place === 2 && 'md:order-1',
                     place === 3 && 'md:order-3',
                   )}
@@ -132,7 +132,7 @@ export function DutyLeaderboard({ weekRows, note }: { weekRows: LeaderboardRow[]
                     href={`/agents/${agent.id}`}
                     className={cn(
                       'grid items-center gap-3 rounded-[10px] border border-[#38383a]/40 bg-[#1c1c1e]/55 px-3 py-2.5 transition-colors hover:border-[#d4d4d4]/25',
-                      agent.aside ? 'grid-cols-[minmax(0,1fr)_88px]' : 'grid-cols-1',
+                      agent.aside ? 'grid-cols-[minmax(0,1fr)_auto]' : 'grid-cols-1',
                     )}
                   >
                     <div className="min-w-0">

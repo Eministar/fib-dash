@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { resolveEntryBadgeNumbers } from '@/lib/badge-number'
-import { getBadgePrefix } from '@/lib/settings-helpers'
-import { getBlacklistedBadgeRows } from '@/lib/badge-blacklist'
-import { summarizeRankChangeVotes } from '@/lib/rank-change-votes'
-import { notify } from '@/lib/notifications-server'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+import { resolveEntryBadgeNumbers } from '@/lib/agents/badge-number'
+import { getBadgePrefix } from '@/lib/core/settings-helpers'
+import { getBlacklistedBadgeRows } from '@/lib/agents/badge-blacklist'
+import { summarizeRankChangeVotes } from '@/lib/agents/rank-change-votes'
+import { notify } from '@/lib/core/notifications-server'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
 
 export async function GET(req: NextRequest) {
   let currentUser

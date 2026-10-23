@@ -1,14 +1,14 @@
 import { NextRequest } from 'next/server'
 
 import { error, success } from '@/lib/api-response'
-import { routeError } from '@/lib/investigations-server'
-import { authorizeUploadKind } from '@/lib/upload-authorization'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { authorizeUploadKind } from '@/lib/media/upload-authorization'
 import {
   cancelUploadSession,
   loadOwnedSessionUnchecked,
   UploadSessionError,
   type UploadKind,
-} from '@/lib/upload-sessions'
+} from '@/lib/media/upload-sessions'
 
 export const dynamic = 'force-dynamic'
 

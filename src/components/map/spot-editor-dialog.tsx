@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Textarea } from '@/components/ui/textarea'
-import { MAP_CATEGORIES, MAP_SPOT_LIMITS, type MapCategory, type MapSpot } from '@/lib/map-spots'
+import { MAP_CATEGORIES, MAP_SPOT_LIMITS, type MapCategory, type MapSpot } from '@/lib/investigations/map-spots'
 
 export interface SpotFormValues {
   title: string

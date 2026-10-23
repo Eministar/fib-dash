@@ -9,7 +9,7 @@ import {
   SANCTION_AUTHORITIES,
   SANCTION_LEVELS,
   SANCTION_LEVEL_ORDER,
-} from '../src/lib/sanction-catalog'
+} from '../src/lib/sanctions/sanction-catalog'
 
 /**
  * Legt den Sanktionskatalog v1.0 an:

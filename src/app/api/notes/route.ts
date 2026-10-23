@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth, requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { cleanNoteContent, cleanNotePinned, cleanNoteTitle } from '@/lib/notes'
+import { createAuditLog } from '@/lib/audit/audit'
+import { cleanNoteContent, cleanNotePinned, cleanNoteTitle } from '@/lib/core/notes'
 
 export async function GET(req: NextRequest) {
   try {

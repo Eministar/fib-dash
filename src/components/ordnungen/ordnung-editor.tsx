@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { renderMarkdown } from '@/lib/markdown'
-import { ORDNUNG_ICON_NAMES, ordnungIcon } from '@/lib/ordnungen-icons'
+import { renderMarkdown } from '@/lib/core/markdown'
+import { ORDNUNG_ICON_NAMES, ordnungIcon } from '@/lib/publications/ordnungen-icons'
 
 export interface OrdnungForm {
   title: string

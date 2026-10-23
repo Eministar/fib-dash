@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { error, success, unauthorized } from '@/lib/api-response'
 import { requirePortalAuth } from '@/lib/auth'
-import { markNotificationsRead } from '@/lib/notifications-server'
+import { markNotificationsRead } from '@/lib/core/notifications-server'
 
 export const dynamic = 'force-dynamic'
 

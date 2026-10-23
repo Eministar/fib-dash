@@ -1,6 +1,6 @@
 'use client'
 
-import { auditActionLabel, auditDetails } from '@/lib/audit-display'
+import { auditActionLabel, auditDetails } from '@/lib/audit/audit-display'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ScrollText, ChevronLeft, ChevronRight, Search } from 'lucide-react'
@@ -13,8 +13,8 @@ import { useFetch } from '@/hooks/use-fetch'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import { AUDIT_LOG_GROUPS, groupForAction, type AuditLogGroupKey } from '@/lib/audit-log-groups'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import { AUDIT_LOG_GROUPS, groupForAction, type AuditLogGroupKey } from '@/lib/audit/audit-log-groups'
 import { useUrlState } from '@/hooks/use-url-state'
 
 interface AuditLog {

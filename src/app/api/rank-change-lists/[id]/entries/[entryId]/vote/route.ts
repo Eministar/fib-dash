@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { error, success, unauthorized } from '@/lib/api-response'
-import { isRankChangeVoteValue, summarizeRankChangeVotes } from '@/lib/rank-change-votes'
+import { isRankChangeVoteValue, summarizeRankChangeVotes } from '@/lib/agents/rank-change-votes'
 
 export async function PATCH(
   req: NextRequest,

@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 
 import { success } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { requirePermission } from '@/lib/auth'
-import { createSpotSchema, mapRouteError, serializeSpot, spotInclude, visibleSpotInclude } from '@/lib/map-server'
+import { createSpotSchema, mapRouteError, serializeSpot, spotInclude, visibleSpotInclude } from '@/lib/investigations/map-server'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'

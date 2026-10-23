@@ -15,12 +15,12 @@ import { DocumentSkeleton } from '@/components/ui/loading'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { TransferDocument, type TransferDocumentData } from '@/components/transfers/transfer-document'
-import { formatContractDate, type ContractField, type ContractValues } from '@/lib/contracts'
+import { formatContractDate, type ContractField, type ContractValues } from '@/lib/contracts/contracts'
 import {
   SIGNATURE_ROLES,
   SIGNATURE_ROLE_META,
   type SignatureRole,
-} from '@/lib/transfer-requests'
+} from '@/lib/hr/transfer-requests'
 
 interface TransferPayload extends TransferDocumentData {
   id: string

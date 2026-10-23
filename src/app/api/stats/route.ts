@@ -2,10 +2,10 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { hasPermission } from '@/lib/permissions'
-import { getDutyTimesSnapshot } from '@/lib/duty-times'
-import { getActiveAbsenceNotices, runAgentStatusAutomation } from '@/lib/absence-status'
-import { eligibleTrainingsForRank, isTrainingAvailableForRank } from '@/lib/agent-trainings'
-import { runAuditLogCleanup } from '@/lib/audit-log-retention'
+import { getDutyTimesSnapshot } from '@/lib/duty/duty-times'
+import { getActiveAbsenceNotices, runAgentStatusAutomation } from '@/lib/agents/absence-status'
+import { eligibleTrainingsForRank, isTrainingAvailableForRank } from '@/lib/agents/agent-trainings'
+import { runAuditLogCleanup } from '@/lib/audit/audit-log-retention'
 
 const RECENT_WINDOW_DAYS = 30
 const STATUS_LABELS: Record<string, string> = {

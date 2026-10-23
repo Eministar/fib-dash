@@ -1,6 +1,6 @@
 'use client'
 
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -12,8 +12,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
-import { officialNumber } from '@/lib/corruption-numbers'
-import { uploadInChunks, formatRate, formatRemaining, type UploadProgress } from '@/lib/chunked-upload'
+import { officialNumber } from '@/lib/lspd/corruption-numbers'
+import { uploadInChunks, formatRate, formatRemaining, type UploadProgress } from '@/lib/media/chunked-upload'
 import { formatDateTime } from '@/lib/utils'
 import type { Agent, Check, Official, OfficialRevision, OfficialSnapshot } from './corruption-workspace'
 import { ListSkeleton } from '@/components/ui/loading'

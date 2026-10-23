@@ -1,7 +1,7 @@
 import { requirePermission } from '@/lib/auth'
 import { success, error } from '@/lib/api-response'
-import { routeError } from '@/lib/investigations-server'
-import { syncInvestigationPhotos } from '@/lib/investigation-photos'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { syncInvestigationPhotos } from '@/lib/investigations/investigation-photos'
 
 export async function POST() {
   try {

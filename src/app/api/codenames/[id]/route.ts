@@ -1,8 +1,8 @@
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { updateCodename, deleteCodename } from '@/lib/codenames'
-import { updateCodenameSchema } from '@/lib/codename-validation'
-import { codenameRouteError } from '@/lib/codename-route-error'
+import { updateCodename, deleteCodename } from '@/lib/codenames/codenames'
+import { updateCodenameSchema } from '@/lib/codenames/codename-validation'
+import { codenameRouteError } from '@/lib/codenames/codename-route-error'
 
 type Context = { params: Promise<{ id: string }> }
 export async function PATCH(req: Request, context: Context) {

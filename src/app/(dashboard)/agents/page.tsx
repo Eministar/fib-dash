@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, type ReactNode, type CSSProperties } from 'react'
+import { useState, useMemo, useCallback, useEffect, type ReactNode, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as Popover from '@radix-ui/react-popover'
@@ -9,6 +9,8 @@ import {
   type DragEndEvent,
   type CollisionDetection,
   PointerSensor,
+  KeyboardSensor,
+  type Announcements,
   useSensor,
   useSensors,
   useDraggable,
@@ -42,15 +44,16 @@ import {
 } from '@/lib/utils'
 import { AGENT_FLAG_VALUES } from '@/lib/validations/agent'
 import { hasPermission } from '@/lib/permissions'
-import { agentUnitKeys } from '@/lib/agent-units'
-import { notifyLiveUpdate } from '@/lib/live-updates'
-import { displayBadgeNumber, formatBadgeNumber } from '@/lib/badge-number'
+import { agentUnitKeys } from '@/lib/agents/agent-units'
+import { notifyLiveUpdate } from '@/lib/core/live-updates'
+import { displayBadgeNumber, formatBadgeNumber } from '@/lib/agents/badge-number'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
-import { matchesAgent } from '@/lib/search-match'
+import { matchesAgent } from '@/lib/core/search-match'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { useUrlState } from '@/hooks/use-url-state'
 import { SavedAgentViews } from '@/components/agents/saved-agent-views'
-import type { AgentViewFilters } from '@/lib/agent-saved-views'
+import { OnLeaveBadge } from '@/components/agents/on-leave-badge'
+import type { AgentViewFilters } from '@/lib/agents/agent-saved-views'
 
 interface Training {
   id: string
@@ -134,6 +137,34 @@ function DropRankZone({ rankId, canHighlight, children }: { rankId: string; canH
   )
 }
 
+const COLLAPSED_RANKS_KEY = 'agents.collapsedRanks'
+
+// Vergrößert die Trefferfläche kleiner Bedienelemente, ohne das Layout zu verschieben.
+const HIT_AREA = "relative before:absolute before:content-[''] before:-inset-[5px]"
+const HIT_AREA_LG = "relative before:absolute before:content-[''] before:-inset-[10px]"
+
+function readCollapsedRanks(): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(COLLAPSED_RANKS_KEY)
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function dragLabel(id: string | number, agents: Agent[] | null | undefined, ranks: Rank[] | null | undefined) {
+  const key = String(id)
+  if (key.startsWith('drag-')) {
+    const agent = agents?.find((a) => a.id === key.slice(5))
+    return agent ? `${agent.firstName} ${agent.lastName}` : 'Agent'
+  }
+  if (key.startsWith('drop-')) {
+    return ranks?.find((r) => r.id === key.slice(5))?.name ?? 'Rang'
+  }
+  return key
+}
+
 const FLAG_OPTIONS: Array<{ id: string | null; label: string; color: string }> = [
   { id: null, label: 'Keine', color: 'transparent' },
   { id: 'RED', label: 'Rot', color: '#ef4444' },
@@ -197,6 +228,7 @@ function FlagButton({
       aria-label={value ? `Markierung: ${getFlagLabel(value)}` : 'Markierung setzen'}
       className={cn(
         'inline-flex items-center justify-center rounded-full border transition-all',
+        size === 'lg' ? HIT_AREA_LG : HIT_AREA,
         dim,
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'hover:scale-110',
@@ -230,6 +262,8 @@ function FlagButton({
                     type="button"
                     onClick={() => onChange(opt.id)}
                     title={opt.label}
+                    aria-label={opt.id ? `Markierung ${opt.label}` : 'Keine Markierung'}
+                    aria-pressed={active}
                     className={cn(
                       'h-[28px] w-[28px] rounded-full border flex items-center justify-center transition-all',
                       active ? 'ring-2 ring-[#d4d4d4] ring-offset-1 ring-offset-[#1c1c1e] border-transparent' : 'border-[#48484a]/70 hover:border-[#d4d4d4]/60'
@@ -321,12 +355,12 @@ function DraggableAgentRow({
           <Link
             href={`/agents/${agent.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="block truncate text-[13px] font-medium text-[#eee] transition-colors hover:text-[#d4d4d4]"
-            title={`${agent.onLeave ? '[X] Beurlaubt · ' : ''}${agent.firstName} ${agent.lastName}`}
+            className="block min-w-0 truncate text-[13px] font-medium text-[#eee] transition-colors hover:text-[#d4d4d4]"
+            title={`${agent.firstName} ${agent.lastName}${agent.onLeave ? ' · Beurlaubt' : ''}`}
           >
-            {agent.onLeave && <span className="mr-1 font-semibold text-[#a78bfa]">[X]</span>}
             {agent.firstName} {agent.lastName}
           </Link>
+          {agent.onLeave && <OnLeaveBadge compact />}
         </div>
       </td>
       {allTrainings.map((t) => {
@@ -339,12 +373,17 @@ function DraggableAgentRow({
               type="button"
               onClick={() => onTrainToggle(agent.id, t.id, !completed)}
               disabled={!canEditTrainings}
+              aria-pressed={completed}
+              aria-label={`${t.label} – ${agent.firstName} ${agent.lastName}`}
               title={!available ? `${t.label} ist erst ab ${t.minRank?.name ?? 'Mindestrang'} vorgesehen` : t.label}
               className={cn(
-                'mx-auto h-[18px] w-[18px] rounded-[4px] flex items-center justify-center transition-all duration-150',
+                'mx-auto h-[18px] w-[18px] rounded-[4px] flex items-center justify-center transition-colors duration-150',
+                HIT_AREA,
                 completed ? 'bg-[#d4d4d4]' : available ? 'bg-[#38383a]' : 'bg-[#1c1c1e] border border-dashed border-[#808080]/60',
                 !available && !completed && 'opacity-70',
-                canEditTrainings ? 'hover:bg-[#38383a]' : 'cursor-not-allowed opacity-70'
+                canEditTrainings
+                  ? completed ? 'hover:bg-white' : 'hover:bg-[#48484a]'
+                  : 'cursor-not-allowed opacity-70'
               )}
             >
               {completed && <Check size={11} className="text-[#1c1c1e]" strokeWidth={3} />}
@@ -420,13 +459,15 @@ function MobileAgentCard({
             <span className="mb-1 block font-mono text-[11px] text-[#c7c7cc]">
               {displayBadgeNumber(agent.badgeNumber)}
             </span>
-            <Link
-              href={`/agents/${agent.id}`}
-              className="block truncate text-[14px] font-semibold text-[#eee] transition-colors hover:text-[#d4d4d4]"
-            >
-              {agent.onLeave && <span className="mr-1 text-[#a78bfa]">[X]</span>}
-              {agent.firstName} {agent.lastName}
-            </Link>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Link
+                href={`/agents/${agent.id}`}
+                className="block min-w-0 truncate text-[14px] font-semibold text-[#eee] transition-colors hover:text-[#d4d4d4]"
+              >
+                {agent.firstName} {agent.lastName}
+              </Link>
+              {agent.onLeave && <OnLeaveBadge compact />}
+            </div>
           </div>
         </div>
         <div className="shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
@@ -451,7 +492,7 @@ function MobileAgentCard({
           <span className={cn('h-[6px] w-[6px] rounded-full shrink-0', getStatusDot(agent.status))} />
           <span className="text-[11.5px] text-[#98989d]">{getStatusLabel(agent.status)}</span>
         </span>
-        <div className="col-span-2 flex items-center gap-2">
+        <div className="col-span-2 flex flex-wrap items-center gap-x-2 gap-y-1">
           <DiscordMemberBadge agent={agent} compact />
           <span className="text-[11.5px] text-[#98989d]">
             Zuletzt online: {agent.lastOnline ? formatRelativeTime(agent.lastOnline) : 'Nie'}
@@ -473,11 +514,12 @@ function MobileAgentCard({
                 type="button"
                 onClick={() => onTrainToggle(agent.id, t.id, !completed)}
                 disabled={!canEditTrainings}
+                aria-pressed={completed}
                 title={!available ? `${t.label} ist erst ab ${t.minRank?.name ?? 'Mindestrang'} vorgesehen` : t.label}
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[11px] font-medium border transition-colors',
+                  'inline-flex min-h-[32px] items-center gap-1.5 px-2.5 rounded-full text-[12px] font-medium border transition-colors',
                   completed
-                    ? 'bg-[#d4d4d4]/15 border-[#d4d4d4]/40 text-[#e6d27a]'
+                    ? 'bg-[#d4d4d4]/15 border-[#d4d4d4]/40 text-[#f5f5f7]'
                     : available
                       ? 'bg-[#1c1c1e] border-[#38383a]/60 text-[#8e8e93]'
                       : 'bg-[#000000] border-dashed border-[#808080]/50 text-[#8e8e93]',
@@ -486,11 +528,11 @@ function MobileAgentCard({
               >
                 <span
                   className={cn(
-                    'h-[10px] w-[10px] rounded-[3px] flex items-center justify-center',
+                    'h-[12px] w-[12px] rounded-[3px] flex items-center justify-center',
                     completed ? 'bg-[#d4d4d4]' : 'bg-[#38383a]'
                   )}
                 >
-                  {completed && <Check size={7} className="text-[#1c1c1e]" strokeWidth={3} />}
+                  {completed && <Check size={9} className="text-[#1c1c1e]" strokeWidth={3} />}
                 </span>
                 {t.label}
               </button>
@@ -519,6 +561,9 @@ export default function AgentsPage() {
   const [unitFilter, setUnitFilter] = useUrlState('unit', '')
   const [flagFilter, setFlagFilter] = useUrlState<AgentViewFilters['flag']>('flag', '', ['', '__any__', 'RED', 'ORANGE', 'YELLOW', 'BLUE', 'PURPLE'])
   const [collapsedRanks, setCollapsedRanks] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    setCollapsedRanks(readCollapsedRanks())
+  }, [])
   const [movePending, setMovePending] = useState(false)
   const [pendingTrainingOverride, setPendingTrainingOverride] = useState<{
     agent: Agent
@@ -527,8 +572,20 @@ export default function AgentsPage() {
   } | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor)
   )
+
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => `${dragLabel(active.id, agents, ranks)} aufgenommen. Mit den Pfeiltasten zu einem Rang bewegen, Leertaste zum Ablegen, Escape zum Abbrechen.`,
+    onDragOver: ({ active, over }) => over
+      ? `${dragLabel(active.id, agents, ranks)} über ${dragLabel(over.id, agents, ranks)}.`
+      : `${dragLabel(active.id, agents, ranks)} über keinem Rang.`,
+    onDragEnd: ({ active, over }) => over
+      ? `${dragLabel(active.id, agents, ranks)} auf ${dragLabel(over.id, agents, ranks)} abgelegt.`
+      : `${dragLabel(active.id, agents, ranks)} abgelegt, ohne den Rang zu ändern.`,
+    onDragCancel: ({ active }) => `Verschieben von ${dragLabel(active.id, agents, ranks)} abgebrochen.`,
+  }
 
   const filteredAgents = useMemo(() => {
     if (!agents) return []
@@ -590,6 +647,11 @@ export default function AgentsPage() {
       const next = new Set(prev)
       if (next.has(rankId)) next.delete(rankId)
       else next.add(rankId)
+      try {
+        window.localStorage.setItem(COLLAPSED_RANKS_KEY, JSON.stringify([...next]))
+      } catch {
+        // Ohne Speicher bleibt das Einklappen auf diese Sitzung beschränkt.
+      }
       return next
     })
   }
@@ -736,18 +798,27 @@ export default function AgentsPage() {
   const filterClass =
     'h-[36px] sm:h-[34px] px-3 rounded-[8px] text-[13px] bg-[#1c1c1e] text-[#c7c7cc] border border-[#38383a]/50 focus:outline-none focus:border-[#d4d4d4] transition-all'
   const totalActive = agents?.filter((o) => o.status === 'ACTIVE').length || 0
-  const totalAway = agents?.filter((o) => o.status === 'AWAY' || o.status === 'ON_LEAVE').length || 0
+  const totalAway = agents?.filter((o) => o.status === 'AWAY').length || 0
+  const totalOnLeave = agents?.filter((o) => o.status === 'ON_LEAVE' || o.onLeave).length || 0
   const totalFlagged = agents?.filter((o) => o.flag).length || 0
+  const hasFilters = Boolean(search.trim() || statusFilter || rankFilter || unitFilter || flagFilter)
+  const summary = [
+    `${filteredAgents.length} Mitarbeiter`,
+    `${totalActive} aktiv`,
+    `${totalAway} abgemeldet`,
+    totalOnLeave ? `${totalOnLeave} beurlaubt` : null,
+    totalFlagged ? `${totalFlagged} markiert` : null,
+    canMove ? 'Ziehen: Rang wechseln' : null,
+  ].filter(Boolean).join(' · ')
+  const resetFilters = () => {
+    setSearch(''); setStatusFilter(''); setRankFilter(''); setUnitFilter(''); setFlagFilter('')
+  }
 
   return (
     <div className="w-full min-w-0">
       <PageHeader
         title="Agents"
-        description={
-          canMove
-            ? `${filteredAgents.length} Mitarbeiter · ${totalActive} aktiv · ${totalAway} abgemeldet${totalFlagged ? ` · ${totalFlagged} markiert` : ''} · Ziehen: Rang wechseln`
-            : `${filteredAgents.length} Mitarbeiter · ${totalActive} aktiv · ${totalAway} abgemeldet${totalFlagged ? ` · ${totalFlagged} markiert` : ''}`
-        }
+        description={summary}
         action={canEdit ? (
           <Link href="/agents/new" className="block sm:inline-block">
             <Button size="sm" disabled={movePending} className="w-full sm:w-auto">
@@ -771,6 +842,8 @@ export default function AgentsPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            type="search"
+            aria-label="Agents durchsuchen"
             placeholder="Suche nach Name, Dienstnummer oder Discord-ID..."
             className={cn(filterClass, 'w-full pl-9 placeholder:text-[#8e8e93]')}
           />
@@ -779,6 +852,7 @@ export default function AgentsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Select
             size="sm"
+            aria-label="Nach Status filtern"
             value={statusFilter}
             onValueChange={value => setStatusFilter(value as AgentViewFilters['status'])}
             options={[
@@ -792,6 +866,7 @@ export default function AgentsPage() {
 
           <Select
             size="sm"
+            aria-label="Nach Rang filtern"
             value={rankFilter}
             onValueChange={setRankFilter}
             options={[
@@ -802,6 +877,7 @@ export default function AgentsPage() {
 
           <Select
             size="sm"
+            aria-label="Nach Unit filtern"
             value={unitFilter}
             onValueChange={setUnitFilter}
             options={[
@@ -813,6 +889,7 @@ export default function AgentsPage() {
 
           <Select
             size="sm"
+            aria-label="Nach Markierung filtern"
             value={flagFilter}
             onValueChange={value => setFlagFilter(value as AgentViewFilters['flag'])}
             options={[
@@ -828,12 +905,25 @@ export default function AgentsPage() {
         sensors={sensors}
         onDragEnd={canMove ? handleDragEnd : () => {}}
         collisionDetection={rankDropCollision}
+        accessibility={{
+          announcements,
+          screenReaderInstructions: {
+            draggable: 'Leertaste drücken, um den Agent aufzunehmen. Mit den Pfeiltasten zu einem anderen Rang bewegen und mit Leertaste ablegen. Escape bricht ab.',
+          },
+        }}
       >
         <div className="w-full min-w-0 rounded-[12px] overflow-hidden">
           {groupedByRank.length === 0 && (
             <div className="text-center py-24">
-              <Users size={28} className="mx-auto text-[#8e8e93] mb-3" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#98989d]">Keine Ränge gefunden</p>
+              <Users size={28} className="mx-auto text-[#8e8e93] mb-3" strokeWidth={1.5} aria-hidden />
+              <p className="text-[13px] text-[#98989d]">
+                {hasFilters ? 'Keine Agents passen zu diesen Filtern' : 'Noch keine Ränge angelegt'}
+              </p>
+              {hasFilters && (
+                <Button variant="secondary" size="sm" className="mt-4" onClick={resetFilters}>
+                  Filter zurücksetzen
+                </Button>
+              )}
             </div>
           )}
 
@@ -845,6 +935,7 @@ export default function AgentsPage() {
                   <button
                     type="button"
                     onClick={() => toggleRankCollapse(rank.id)}
+                    aria-expanded={!isCollapsed}
                     className="w-full flex items-center gap-2.5 px-3 sm:px-4 py-2 rounded-[8px] hover:bg-[#2c2c2e] transition-colors group"
                   >
                     <ChevronDown

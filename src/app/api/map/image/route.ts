@@ -2,7 +2,7 @@ import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 
 import { requirePermission } from '@/lib/auth'
-import { mapRouteError } from '@/lib/map-server'
+import { mapRouteError } from '@/lib/investigations/map-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

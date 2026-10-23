@@ -22,7 +22,7 @@ import {
   type NotificationInbox,
   type NotificationItem,
   type NotificationKind,
-} from '@/lib/notifications'
+} from '@/lib/core/notifications'
 import { cn, formatRelativeTime } from '@/lib/utils'
 
 const KIND_ICONS: Record<NotificationKind, LucideIcon> = {

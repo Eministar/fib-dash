@@ -2,13 +2,13 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import {
   createLegalCase,
   legalCaseSelect,
   serializeLegalCase,
-} from '@/lib/legal-case-service'
-import { isLegalCaseKind } from '@/lib/legal-cases'
+} from '@/lib/publications/legal-case-service'
+import { isLegalCaseKind } from '@/lib/publications/legal-cases'
 
 function cleanText(value: unknown, maxLength = 20000) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''

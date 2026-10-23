@@ -9,7 +9,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { visitorRedirectTarget } from '../src/lib/visitor-routing'
+import { visitorRedirectTarget } from '../src/lib/core/visitor-routing'
 
 const base = {
   visitorOnly: true,

@@ -1,6 +1,6 @@
 # Freigabelinks für Akten und Bodycams
 
-Unter **Ermittlungen → Freigabelinks** lassen sich Links für eine gezielte Auswahl an Dauerakten/Unterakten, Einzel-/Einsatzakten, Personenakten, Fahrzeugakten und Bodycams erstellen. Jeder Link kann bis zu 100 Einträge aus mehreren Bereichen enthalten.
+Unter **Ermittlungen → Freigabelinks** lassen sich Links für eine gezielte Auswahl an Familienakten/Unterakten, Einzel-/Einsatzakten, Personenakten, Fahrzeugakten und Bodycams erstellen. Jeder Link kann bis zu 100 Einträge aus mehreren Bereichen enthalten.
 
 ## Bedienung
 
@@ -13,7 +13,7 @@ Die öffentliche Leseansicht liegt unter `/share/records/<token>` außerhalb des
 
 ## Umfang der Freigabe
 
-- **Dauerakte:** Titel, Kategorie, Adresse, Informationen und zugeordnetes Katalogfoto.
+- **Familienakte:** Titel, Kategorie, Adresse, Informationen und zugeordnetes Katalogfoto.
 - **Einzel-/Einsatzakte:** Titel, Aktenzeichen, Status, Zusammenfassung und Chronologie mit Texten und Zeitpunkten.
 - **Personenakte:** Nummer, Name, Alias, Kennung, Geburtsdatum, Telefon, Fahndungs-/Gefahrenstatus, Notizen und Katalogfoto.
 - **Fahrzeugakte:** Nummer, Modell, Kennzeichen, Farbe, Status und Notizen.
@@ -31,6 +31,6 @@ Jeder öffentliche API-Aufruf – auch Bilder und Video-Range-Requests – prüf
 
 ## Bereitstellung und Tests
 
-Vor Deployment Datenbank sichern und `npm run db:push` ausführen. Alternativ den additiven Patch `prisma/patches/2026-09-08-record-shares.sql` einmalig anwenden. Der Patch setzt die vorherigen Module voraus und enthält nur die Freigabetabellen. Nicht beide Wege kombinieren. Anschließend `npm run build` und Server neu starten.
+Vor Deployment Datenbank sichern und `npm run db:push` ausführen. Anschließend `npm run build` und Server neu starten.
 
 `npx tsx --test tests/record-shares.test.ts` prüft Ablauf/Widerruf/Tokenwechsel, Auswahlgrenzen, Schutz vor Zugriff auf fremde IDs und Unterakten, sichere Ausgabe ohne verknüpfte Daten, Foto-Zugriffe sowie Eingabevalidierung. Der lokale Test verwendet Datenbank-Doubles; ein Live-Test mit Datenbank und Browser ist nach Bereitstellung erforderlich. Es wurden keine produktiven Freigabelinks erzeugt.

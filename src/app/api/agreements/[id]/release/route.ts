@@ -1,8 +1,8 @@
 import { requirePermission } from '@/lib/auth'
 import { success } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { releaseAgreement } from '@/lib/agreement-service'
-import { agreementErrorResponse } from '@/lib/agreement-http'
+import { createAuditLog } from '@/lib/audit/audit'
+import { releaseAgreement } from '@/lib/contracts/agreement-service'
+import { agreementErrorResponse } from '@/lib/contracts/agreement-http'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

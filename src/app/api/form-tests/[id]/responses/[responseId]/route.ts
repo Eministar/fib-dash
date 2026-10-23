@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { requireTaskModuleFormTestManage } from '@/lib/module-permissions'
-import { cleanLongFormText } from '@/lib/form-tests'
+import { requireTaskModuleFormTestManage } from '@/lib/units/module-permissions'
+import { cleanLongFormText } from '@/lib/hr/form-tests'
 
 const responseInclude = {
   respondent: { select: { id: true, displayName: true, username: true, discordId: true } },

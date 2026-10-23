@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { labelOptions } from '@/components/investigations/investigation-badges'
 import { useInvestigationMutation } from '@/components/investigations/use-investigation-mutation'
-import { PERSON_LINK_TYPE_LABELS } from '@/lib/investigations'
+import { PERSON_LINK_TYPE_LABELS } from '@/lib/investigations/investigations'
 import type { Person, PersonLink } from '@/components/investigations/types'
 
 /// Eine Zeile des Beziehungsnetzes. `outgoing` unterscheidet "X ist Arbeitgeber

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
-import { success, error, unauthorized , forbidden } from '@/lib/api-response'
+import { success, error, unauthorized } from '@/lib/api-response'
 import { discordIdSchema } from '@/lib/validations/agent'
 
 export async function PATCH(req: NextRequest) {

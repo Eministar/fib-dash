@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/auth'
 import { success } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { corruptionError } from '@/lib/corruption-server'
+import { corruptionError } from '@/lib/lspd/corruption-server'
 
 // Only identification fields; no access to agents' HR records is granted.
 export async function GET() {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateAction } from 'react'
-import { LIVE_REFRESH_INTERVAL_MS, LIVE_UPDATE_CHANNEL, LIVE_UPDATE_EVENT } from '@/lib/live-updates'
-import { isConnectionError, reportConnection } from '@/lib/connection-status'
+import { LIVE_REFRESH_INTERVAL_MS, LIVE_UPDATE_CHANNEL, LIVE_UPDATE_EVENT } from '@/lib/core/live-updates'
+import { isConnectionError, reportConnection } from '@/lib/core/connection-status'
 
 /**
  * True, wenn der Nutzer gerade in einem editierbaren Element tippt (Input,

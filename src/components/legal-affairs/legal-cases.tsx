@@ -29,9 +29,9 @@ import {
   readLegalCaseSanctions,
   type LegalCaseKindValue,
   type LegalCaseStatusValue,
-} from '@/lib/legal-cases'
-import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
-import { displayBadgeNumber } from '@/lib/badge-number'
+} from '@/lib/publications/legal-cases'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanctions/sanction-catalog'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useUrlState } from '@/hooks/use-url-state'

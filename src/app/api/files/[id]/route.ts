@@ -2,9 +2,9 @@ import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { notFound, success } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { deleteStoredFile, fileUploadMetaSchema } from '@/lib/file-uploads'
-import { fileUploadRouteError, fileUploadSelect, serializeUpload } from '@/lib/file-upload-queries'
+import { createAuditLog } from '@/lib/audit/audit'
+import { deleteStoredFile, fileUploadMetaSchema } from '@/lib/media/file-uploads'
+import { fileUploadRouteError, fileUploadSelect, serializeUpload } from '@/lib/media/file-upload-queries'
 
 export const dynamic = 'force-dynamic'
 

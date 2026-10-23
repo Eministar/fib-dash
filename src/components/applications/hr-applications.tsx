@@ -12,16 +12,16 @@ import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
-import { stripApplicationCaseNumber } from '@/lib/application-case-number'
+import { stripApplicationCaseNumber } from '@/lib/hr/application-case-number'
 import {
   JOB_APPLICATION_STATUSES,
   JOB_APPLICATION_STATUS_META,
   applicationAnswerText,
   type JobApplicationStatusValue,
-} from '@/lib/job-applications'
+} from '@/lib/hr/job-applications'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 interface ApplicationAnswer {
   id: string

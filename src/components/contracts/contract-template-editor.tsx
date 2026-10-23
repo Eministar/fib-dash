@@ -18,7 +18,7 @@ import {
   type ContractClause,
   type ContractField,
   type ContractFieldTypeValue,
-} from '@/lib/contracts'
+} from '@/lib/contracts/contracts'
 
 export interface ContractTemplateForm {
   name: string

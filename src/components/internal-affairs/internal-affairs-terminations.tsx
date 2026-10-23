@@ -7,10 +7,10 @@ import { PageHeader } from '@/components/layout/page-header'
 import { PageLoader } from '@/components/ui/loading'
 import { Button } from '@/components/ui/button'
 import { useFetch } from '@/hooks/use-fetch'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useUrlState } from '@/hooks/use-url-state'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 type TerminationEntry = {
   id: string

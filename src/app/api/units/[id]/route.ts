@@ -2,14 +2,14 @@ import { NextRequest } from 'next/server'
 
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
-import { queueAllAgentRoleSync } from '@/lib/discord-integration'
+import { queueAllAgentRoleSync } from '@/lib/discord/discord-integration'
 import { automaticPermissionsForRoleNames } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import {
   composeUnitPermissions,
   sanitizeUnitIcon,
   sanitizeUnitModules,
-} from '@/lib/unit-modules'
+} from '@/lib/units/unit-modules'
 
 function discordRoleId(value: unknown) {
   if (value === null || value === undefined || value === '') return null

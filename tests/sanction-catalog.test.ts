@@ -22,7 +22,7 @@ import {
   requiresDualControl,
   resolveViolation,
   violationsForGrade,
-} from '../src/lib/sanction-catalog'
+} from '../src/lib/sanctions/sanction-catalog'
 
 // --- Struktur des Katalogs -------------------------------------------------
 

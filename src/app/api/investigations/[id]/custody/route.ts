@@ -3,9 +3,9 @@ import { NextRequest } from 'next/server'
 import { forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { canAccessInvestigation, investigationAccessInclude } from '@/lib/investigations'
-import { routeError } from '@/lib/investigations-server'
-import { caseCustodyEvents } from '@/lib/custody-server'
+import { canAccessInvestigation, investigationAccessInclude } from '@/lib/investigations/investigations'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { caseCustodyEvents } from '@/lib/investigations/custody-server'
 
 export const dynamic = 'force-dynamic'
 

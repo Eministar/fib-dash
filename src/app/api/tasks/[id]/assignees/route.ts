@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { requireTaskModuleManage } from '@/lib/module-permissions'
+import { requireTaskModuleManage } from '@/lib/units/module-permissions'
 
 const taskInclude = {
   createdBy: { select: { id: true, displayName: true } },

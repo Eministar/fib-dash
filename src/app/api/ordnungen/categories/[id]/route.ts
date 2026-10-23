@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
-import { ORDNUNG_ICONS } from '@/lib/ordnungen-icons'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
+import { ORDNUNG_ICONS } from '@/lib/publications/ordnungen-icons'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

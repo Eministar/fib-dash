@@ -1,5 +1,5 @@
-import { canManageLeadershipGroups, leadershipGroupSchema } from '@/lib/leadership-groups'
-import { groupError, groupResponse, groupUser, listGroupCandidates, listGroups, saveGroup } from '@/lib/leadership-groups-server'
+import { canManageLeadershipGroups, leadershipGroupSchema } from '@/lib/units/leadership-groups'
+import { groupError, groupResponse, groupUser, listGroupCandidates, listGroups, saveGroup } from '@/lib/units/leadership-groups-server'
 
 export const maxDuration = 120
 

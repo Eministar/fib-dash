@@ -7,8 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { readContractClauses } from '@/lib/contracts'
-import type { AgreementLetterhead } from '@/lib/agreements'
+import { readContractClauses } from '@/lib/contracts/contracts'
+import type { AgreementLetterhead } from '@/lib/contracts/agreements'
 
 export interface AgreementTemplateRow {
   id: string

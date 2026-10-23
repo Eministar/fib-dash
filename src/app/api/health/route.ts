@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getSetupStatus } from '@/lib/setup'
-import { runAuditLogCleanup } from '@/lib/audit-log-retention'
+import { getSetupStatus } from '@/lib/core/setup'
+import { runAuditLogCleanup } from '@/lib/audit/audit-log-retention'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,7 +82,7 @@ async function databaseCheck() {
 }
 
 async function authCheck() {
-  const { getDiscordConfig } = await import('@/lib/discord-integration')
+  const { getDiscordConfig } = await import('@/lib/discord/discord-integration')
   const config = await getDiscordConfig()
   const clientConfigured = configuredEnv(
     'DISCORD_CLIENT_ID',
@@ -127,8 +127,8 @@ async function authCheck() {
 
 async function dutyTimesCheck() {
   const [{ getDutyTimesSnapshot }, { playerOnlineApiConfigured }] = await Promise.all([
-    import('@/lib/duty-times'),
-    import('@/lib/player-online'),
+    import('@/lib/duty/duty-times'),
+    import('@/lib/duty/player-online'),
   ])
   const snapshot = await getDutyTimesSnapshot(new Date())
   const errorCount = snapshot.sync.errorCount
@@ -164,7 +164,7 @@ async function dutyTimesCheck() {
 }
 
 async function discordCheck() {
-  const { getDiscordConfig, getDiscordGuildRoles } = await import('@/lib/discord-integration')
+  const { getDiscordConfig, getDiscordGuildRoles } = await import('@/lib/discord/discord-integration')
   const config = await getDiscordConfig()
   const botConfigured = configuredEnv('DISCORD_BOT_TOKEN', 'FIB_DISCORD_BOT_TOKEN')
 
@@ -192,7 +192,7 @@ async function discordCheck() {
 async function discordSyncCheck() {
   const [{ prisma }, { getDiscordConfig }] = await Promise.all([
     import('@/lib/prisma'),
-    import('@/lib/discord-integration'),
+    import('@/lib/discord/discord-integration'),
   ])
   const config = await getDiscordConfig()
   const configuredRoleIds = new Set([

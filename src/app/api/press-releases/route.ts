@@ -3,7 +3,7 @@ import type { PressReleaseStatus } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { error, success, unauthorized } from '@/lib/api-response'
-import { normalizePressReleaseInput, slugifyPressReleaseTitle } from '@/lib/press-releases'
+import { normalizePressReleaseInput, slugifyPressReleaseTitle } from '@/lib/publications/press-releases'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

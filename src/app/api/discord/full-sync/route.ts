@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth'
 import { error, unauthorized } from '@/lib/api-response'
-import { syncAllAgentDiscordRoles } from '@/lib/discord-integration'
+import { syncAllAgentDiscordRoles } from '@/lib/discord/discord-integration'
 
 export async function POST() {
   try {

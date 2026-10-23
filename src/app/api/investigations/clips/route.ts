@@ -2,23 +2,23 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
-import { deleteClipFile, formatBytes, resolveClipPath } from '@/lib/clips'
-import { adoptUploadedFile } from '@/lib/upload-adopt'
-import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
+import { createAuditLog } from '@/lib/audit/audit'
+import { deleteClipFile, formatBytes, resolveClipPath } from '@/lib/media/clips'
+import { adoptUploadedFile } from '@/lib/media/upload-adopt'
+import { queueDiscordInvestigationEvent } from '@/lib/discord/discord-integration'
 import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
   investigationAccessInclude,
   sanitizeTags,
   serializeBigInts,
-} from '@/lib/investigations'
-import { agentDisplayName, cleanText, parseDate, routeError } from '@/lib/investigations-server'
+} from '@/lib/investigations/investigations'
+import { agentDisplayName, cleanText, parseDate, routeError } from '@/lib/investigations/investigations-server'
 import type { Prisma } from '@/generated/prisma'
-import { queueClipCompression } from '@/lib/clip-compression'
-import { bodycamAccess } from '@/lib/bodycam-access'
-import { uploadCors, uploadOptions } from '@/lib/upload-cors'
-import { consumeUploadSession, UploadSessionError } from '@/lib/upload-sessions'
+import { queueClipCompression } from '@/lib/media/clip-compression'
+import { bodycamAccess } from '@/lib/investigations/bodycam-access'
+import { uploadCors, uploadOptions } from '@/lib/media/upload-cors'
+import { consumeUploadSession, UploadSessionError } from '@/lib/media/upload-sessions'
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 

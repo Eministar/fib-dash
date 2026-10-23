@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { refreshApplicantIdentity, type NicknameSyncStatus } from '@/lib/application-identity'
+import { createAuditLog } from '@/lib/audit/audit'
+import { refreshApplicantIdentity, type NicknameSyncStatus } from '@/lib/hr/application-identity'
 
 /**
  * Bewerbungen pro Aufruf. Bewusst klein: Discord limitiert Nickname-Änderungen,

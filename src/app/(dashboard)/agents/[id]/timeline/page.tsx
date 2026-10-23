@@ -16,8 +16,8 @@ import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
 import { cn, formatDate, formatDateTime, getStatusLabel } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import { matchesSearch } from '@/lib/search-match'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import { matchesSearch } from '@/lib/core/search-match'
 import {
   DEFAULT_TIMELINE_CATEGORIES,
   TIMELINE_CATEGORIES,
@@ -27,7 +27,7 @@ import {
   type TimelineEntry,
   type TimelineResponse,
   type TimelineTone,
-} from '@/lib/agent-timeline'
+} from '@/lib/agents/agent-timeline'
 
 const RANGES = [
   { value: 'all', label: 'Gesamter Zeitraum' },

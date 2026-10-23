@@ -2,7 +2,7 @@ import 'dotenv/config'
 import path from 'node:path'
 import { PrismaClient } from '../src/generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-import { createDatabaseBackup } from '../src/lib/database-backup'
+import { createDatabaseBackup } from '../src/lib/core/database-backup'
 
 async function main() {
   if (!process.env.DATABASE_URL) {

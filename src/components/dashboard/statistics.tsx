@@ -26,8 +26,8 @@ import type {
   StatisticsRange,
   StatisticsSeriesPoint,
   StatisticsStaffRow,
-} from '@/lib/statistics'
-import { matchesSearch } from '@/lib/search-match'
+} from '@/lib/core/statistics'
+import { matchesSearch } from '@/lib/core/search-match'
 
 const rangeOptions: Array<{ value: StatisticsRange; label: string; shortLabel: string }> = [
   { value: 'week', label: 'Diese Woche', shortLabel: 'Woche' },

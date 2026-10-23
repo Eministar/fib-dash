@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { syncAgentClipChannel } from '../src/lib/discord-clips'
+import { clipChannelPositions, syncAgentClipChannel } from '../src/lib/discord/discord-clips'
 
 function fixture() {
   const channels: Record<string, unknown>[] = [{ id: 'category', type: 4, name: 'Clips' }, { id: 'other', type: 4, name: 'Andere Kategorie' }]
@@ -76,4 +76,31 @@ test('termination deletes only the agent channel even without role/category conf
   await f.sync(true, '', '')
   assert.deepEqual(f.channels.map(channel => channel.id), ['category', 'other', 'unrelated'])
   assert.equal(f.writes.filter(write => write.method === 'DELETE').length, 1)
+})
+
+test('orders clip channels like the roster and leaves other channels alone', () => {
+  const clip = (id: string, agentId: string, position: number) => ({ id, type: 0, name: id, topic: `fib-agent-clips:${agentId}`, parent_id: 'category', position })
+  const channels = [
+    { id: 'info', type: 0, name: 'info', parent_id: 'category', position: 0 },
+    clip('c-b', 'b', 1),
+    clip('c-a', 'a', 2),
+    clip('c-new', 'new', 3),
+    clip('c-elsewhere', 'z', 0),
+  ]
+  channels[4].parent_id = 'other'
+  // Neuer Agent steht im Roster zwischen a und b.
+  const positions = clipChannelPositions(channels, 'category', ['a', 'new', 'b'])
+  assert.deepEqual(positions, [
+    { id: 'c-a', position: 1 },
+    { id: 'c-new', position: 2 },
+    { id: 'c-b', position: 3 },
+  ])
+  assert.deepEqual(clipChannelPositions(channels, 'category', ['b', 'a', 'new']), [])
+})
+
+test('clip order makes duplicate positions strictly ascending', () => {
+  const clip = (id: string, agentId: string) => ({ id, type: 0, name: id, topic: `fib-agent-clips:${agentId}`, parent_id: 'category', position: 5 })
+  const positions = clipChannelPositions([clip('1', 'b'), clip('2', 'a')], 'category', ['a', 'b'])
+  // „2“ behält Platz 5, nur „1“ rückt dahinter.
+  assert.deepEqual(positions, [{ id: '1', position: 6 }])
 })

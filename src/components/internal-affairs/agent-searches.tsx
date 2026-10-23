@@ -26,10 +26,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
-import { displayBadgeNumber } from '@/lib/badge-number'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { cn, formatDateTime, getStatusLabel } from '@/lib/utils'
 import { useConfirm } from '@/components/ui/confirm-dialog'
-import { matchesAgent } from '@/lib/search-match'
+import { matchesAgent } from '@/lib/core/search-match'
 
 type RankLite = { id: string; name: string; color: string }
 

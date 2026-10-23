@@ -1,6 +1,6 @@
 import { PrismaClient } from '@/generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-import { completeMutationCapture, prepareMutationCapture, type SnapshotClient } from './change-history-tracking'
+import { completeMutationCapture, prepareMutationCapture, type SnapshotClient } from './audit/change-history-tracking'
 
 // Server können je nach generiertem Prisma-Client camelCase oder lowercase Delegates typisieren.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

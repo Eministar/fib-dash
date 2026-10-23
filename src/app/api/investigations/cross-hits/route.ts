@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { findPersonCrossHits, findVehicleCrossHits } from '@/lib/cross-hits-server'
-import { routeError } from '@/lib/investigations-server'
+import { findPersonCrossHits, findVehicleCrossHits } from '@/lib/investigations/cross-hits-server'
+import { routeError } from '@/lib/investigations/investigations-server'
 
 export const dynamic = 'force-dynamic'
 

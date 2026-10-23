@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { getBadgePrefix } from '@/lib/settings-helpers'
-import { findBlacklistedBadgeNumber } from '@/lib/badge-blacklist'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
-import { normalizeBadgeNumber } from '@/lib/badge-number'
+import { getBadgePrefix } from '@/lib/core/settings-helpers'
+import { findBlacklistedBadgeNumber } from '@/lib/agents/badge-blacklist'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
+import { normalizeBadgeNumber } from '@/lib/agents/badge-number'
 
 export async function GET() {
   try {

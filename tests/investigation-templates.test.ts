@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { checklistFromTemplate, openRolesFromTemplate, parseTemplateInput, readChecklist, readOpenRoles, templatePrefill, mergeTemplatePrefill, composeTitle, type InvestigationTemplateData } from '../src/lib/investigation-templates'
+import { checklistFromTemplate, openRolesFromTemplate, parseTemplateInput, readChecklist, readOpenRoles, templatePrefill, mergeTemplatePrefill, composeTitle, type InvestigationTemplateData } from '../src/lib/investigations/investigation-templates'
 
 const template: InvestigationTemplateData = {
   id: 'template', name: 'Drogen', description: null, titlePrefix: 'Drogen –', summary: 'Sachverhalt\n\nMaßnahmen',

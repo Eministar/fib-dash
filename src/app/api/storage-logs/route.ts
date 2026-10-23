@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { rangeStart, storageAlerts, storageLogsConfigured, storageRouteError, storageSummary } from '@/lib/storage-logs-server'
+import { rangeStart, storageAlerts, storageLogsConfigured, storageRouteError, storageSummary } from '@/lib/storage-logs/storage-logs-server'
 
 export const dynamic = 'force-dynamic'
 

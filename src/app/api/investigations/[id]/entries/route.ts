@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
 import {
   INVESTIGATION_ENTRY_KIND_LABELS,
@@ -11,9 +11,9 @@ import {
   isInvestigationEntryKind,
   sanitizeParticipants,
   serializeBigInts,
-} from '@/lib/investigations'
-import { asJson, cleanText, parseDate, routeError } from '@/lib/investigations-server'
-import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
+} from '@/lib/investigations/investigations'
+import { asJson, cleanText, parseDate, routeError } from '@/lib/investigations/investigations-server'
+import { queueDiscordInvestigationEvent } from '@/lib/discord/discord-integration'
 
 export const dynamic = 'force-dynamic'
 

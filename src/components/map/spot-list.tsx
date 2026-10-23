@@ -5,9 +5,9 @@ import { Crosshair, MoreHorizontal, Search } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { mapCategory, type MapSpot } from '@/lib/map-spots'
+import { mapCategory, type MapSpot } from '@/lib/investigations/map-spots'
 import { cn } from '@/lib/utils'
-import { matchesSearch } from '@/lib/search-match'
+import { matchesSearch } from '@/lib/core/search-match'
 
 export function SpotList({
   spots,

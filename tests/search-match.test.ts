@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { agentMatchScore, matchesAgent, matchesSearch, searchTokens } from '../src/lib/search-match'
+import { agentMatchScore, matchesAgent, matchesSearch, searchTokens } from '../src/lib/core/search-match'
 
 const max = {
   firstName: 'Max',

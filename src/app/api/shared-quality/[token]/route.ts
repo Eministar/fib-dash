@@ -1,7 +1,7 @@
 import { success } from '@/lib/api-response'
-import { normalizeLinkToken } from '@/lib/link-tokens'
-import { publicShareHeaders } from '@/lib/record-shares'
-import { publicShareOverview, qcRouteError, resolveQcShare } from '@/lib/quality-checks-server'
+import { normalizeLinkToken } from '@/lib/core/link-tokens'
+import { publicShareHeaders } from '@/lib/investigations/record-shares'
+import { publicShareOverview, qcRouteError, resolveQcShare } from '@/lib/lspd/quality-checks-server'
 
 export const dynamic = 'force-dynamic'
 

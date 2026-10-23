@@ -6,8 +6,8 @@ import { ArrowDown, ArrowDownRight, ArrowRight, ArrowUp, ArrowUpRight, Check, Ch
 import { Button } from '@/components/ui/button'
 import { AgentAvatar } from '@/components/agents/agent-avatar'
 import { cn, formatDate } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import type { RankChangeVoteSummary, RankChangeVoteValue } from '@/lib/rank-change-votes'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import type { RankChangeVoteSummary, RankChangeVoteValue } from '@/lib/agents/rank-change-votes'
 
 export type RankChangeDirection = 'PROMOTION' | 'DEMOTION'
 

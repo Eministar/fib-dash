@@ -1,0 +1,73 @@
+<h2>Familienregister: Wie soll die Übersicht aller Familien aussehen?</h2>
+<p class="subtitle">Heute ist das eine schlichte Tabelle mit Titel, Kategorie und Zählern. Beide Entwürfe zeigen pro Familie Leiter, Anwesen und wie viele Akten gerade offen sind.</p>
+
+<style>
+  .ru { background:#0b0b0b; color:#e5e5e7; font:13px/1.45 system-ui, sans-serif; border-radius:10px; padding:16px; }
+  .ru .muted { color:#a1a1a6; font-size:12px; }
+  .ru .search { background:#1c1c1e; border:1px solid #2c2c2e; border-radius:8px; padding:7px 10px; color:#a1a1a6; margin-bottom:12px; }
+  .ru .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .ru .tile { background:#161617; border:1px solid #2c2c2e; border-radius:10px; overflow:hidden; }
+  .ru .img { height:62px; background:linear-gradient(135deg,#2c2c2e,#1c1c1e); display:flex; align-items:center; justify-content:center; color:#a1a1a6; font-size:12px; }
+  .ru .body { padding:10px; }
+  .ru .name { font-weight:600; }
+  .ru .open { color:#86efac; } .ru .none { color:#a1a1a6; }
+  .ru table { width:100%; border-collapse:collapse; }
+  .ru th { text-align:left; color:#a1a1a6; font-weight:500; font-size:12px; padding:6px 8px; border-bottom:1px solid #2c2c2e; }
+  .ru td { padding:9px 8px; border-bottom:1px solid #1f1f21; vertical-align:middle; }
+  .ru .dot { display:inline-block; width:22px; height:22px; border-radius:6px; background:#2c2c2e; vertical-align:middle; margin-right:8px; }
+</style>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="ru">
+        <div class="search">Familie, Leiter, Mitglied oder Adresse suchen …</div>
+        <div class="grid">
+          <div class="tile"><div class="img">Titelbild</div><div class="body">
+            <div class="name">Familie Vasquez</div>
+            <div class="muted">Leiter: Diego Vasquez · Vinewood Hills 12</div>
+            <div style="margin-top:6px;"><span class="open">3 offen</span> <span class="muted">· 7 Akten · 6 Mitglieder</span></div>
+          </div></div>
+          <div class="tile"><div class="img">Titelbild</div><div class="body">
+            <div class="name">Ballas Grove</div>
+            <div class="muted">Leiter: Tyrone Hill · Grove Street</div>
+            <div style="margin-top:6px;"><span class="open">1 offen</span> <span class="muted">· 4 Akten · 9 Mitglieder</span></div>
+          </div></div>
+          <div class="tile"><div class="img">Titelbild</div><div class="body">
+            <div class="name">Familie Kowalski</div>
+            <div class="muted">Leiter: unbekannt · Paleto Bay</div>
+            <div style="margin-top:6px;"><span class="none">keine offenen</span> <span class="muted">· 2 Akten · 3 Mitglieder</span></div>
+          </div></div>
+          <div class="tile"><div class="img">Titelbild</div><div class="body">
+            <div class="name">Madrazo-Kartell</div>
+            <div class="muted">Leiter: M. Madrazo · Ranch</div>
+            <div style="margin-top:6px;"><span class="open">2 offen</span> <span class="muted">· 11 Akten · 14 Mitglieder</span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Kacheln mit Bild</h3>
+      <p>Jede Familie als Kachel mit Titelbild. Gut zum Wiedererkennen, zeigt weniger Familien auf einmal. Sortiert nach letzter Aktivität.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="ru">
+        <div class="search">Familie, Leiter, Mitglied oder Adresse suchen …</div>
+        <table>
+          <tr><th>Familie</th><th>Leiter</th><th>Anwesen</th><th>Akten</th><th>Aktiv</th></tr>
+          <tr><td><span class="dot"></span><b>Familie Vasquez</b></td><td>Diego Vasquez</td><td class="muted">Vinewood Hills 12</td><td><span class="open">3 offen</span> <span class="muted">/ 7</span></td><td class="muted">vor 2 T.</td></tr>
+          <tr><td><span class="dot"></span><b>Madrazo-Kartell</b></td><td>M. Madrazo</td><td class="muted">Ranch</td><td><span class="open">2 offen</span> <span class="muted">/ 11</span></td><td class="muted">vor 4 T.</td></tr>
+          <tr><td><span class="dot"></span><b>Ballas Grove</b></td><td>Tyrone Hill</td><td class="muted">Grove Street</td><td><span class="open">1 offen</span> <span class="muted">/ 4</span></td><td class="muted">vor 1 W.</td></tr>
+          <tr><td><span class="dot"></span><b>Familie Kowalski</b></td><td class="muted">unbekannt</td><td class="muted">Paleto Bay</td><td><span class="none">0</span> <span class="muted">/ 2</span></td><td class="muted">vor 3 W.</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Kompakte Liste</h3>
+      <p>Eine Zeile pro Familie mit kleinem Bild. Viele Familien auf einen Blick, sortierbar nach Name, offenen Akten oder letzter Aktivität.</p>
+    </div>
+  </div>
+</div>

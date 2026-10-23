@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { performHirePing, type HirePingDependencies } from '../src/lib/hire-ping'
+import { performHirePing, type HirePingDependencies } from '../src/lib/discord/hire-ping'
 
 test('Hiring pings the hired agent once, waits, deletes only its own message and does not repeat the same hire', async () => {
   const claimed = new Set<string>()

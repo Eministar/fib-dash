@@ -19,7 +19,7 @@ import {
   stagedPath,
   storeChunk,
   uploadChunkBytes,
-} from '../src/lib/upload-sessions'
+} from '../src/lib/media/upload-sessions'
 
 after(() => prisma.$disconnect())
 

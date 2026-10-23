@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { completeSetup, getSetupStatus, type CompleteSetupInput } from '@/lib/setup'
+import { completeSetup, getSetupStatus, type CompleteSetupInput } from '@/lib/core/setup'
 
 export const runtime = 'nodejs'
 export const maxDuration = 180

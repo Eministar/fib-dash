@@ -8,7 +8,7 @@ import { FamilyDossierField } from '@/components/leadership/family-dossier-field
 import { Users, Plus, ShieldCheck, ExternalLink, Pencil, Trash2, X } from 'lucide-react'
 import { useFetch } from '@/hooks/use-fetch'
 import { Button } from '@/components/ui/button'
-import { leadershipGroupSchema, type GroupCandidate, type LeadershipGroupInput } from '@/lib/leadership-groups'
+import { leadershipGroupSchema, type GroupCandidate, type LeadershipGroupInput } from '@/lib/units/leadership-groups'
 import { useUrlState } from '@/hooks/use-url-state'
 import { ListSkeleton } from '@/components/ui/loading'
 
@@ -138,7 +138,7 @@ export default function LeadershipGroupsPage() {
         <div className="flex gap-2"><Button type="button" variant="danger" size="sm" disabled={busy} onClick={() => void remove(group)}>{busy ? 'Wird gelöscht …' : 'Endgültig löschen'}</Button><Button type="button" variant="secondary" size="sm" disabled={busy} onClick={() => setConfirmDelete(null)}>Abbrechen</Button></div>
       </div>}
       <div className="flex flex-wrap gap-2">{group.members.map(m => <span key={m.id} className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-sm text-neutral-300">{m.displayName}</span>)}</div>
-      <dl className="divide-y divide-white/5">{group.families.map((f, index) => <div key={index} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><dt className="text-neutral-200">{f.name}{f.dossierId && canViewDossiers && <Link className="ml-3 text-xs text-neutral-400 underline underline-offset-4 hover:text-white" href={`/investigations/dossiers?id=${encodeURIComponent(f.dossierId)}`}>Dauerakte öffnen</Link>}</dt><dd className="text-neutral-400">{f.leadIds.map(id => group.members.find(m => m.id === id)?.displayName ?? 'Nicht verfügbar').join(' & ')}</dd></div>)}</dl>
+      <dl className="divide-y divide-white/5">{group.families.map((f, index) => <div key={index} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><dt className="text-neutral-200">{f.name}{f.dossierId && canViewDossiers && <Link className="ml-3 text-xs text-neutral-400 underline underline-offset-4 hover:text-white" href={`/investigations/dossiers?id=${encodeURIComponent(f.dossierId)}`}>Familienakte öffnen</Link>}</dt><dd className="text-neutral-400">{f.leadIds.map(id => group.members.find(m => m.id === id)?.displayName ?? 'Nicht verfügbar').join(' & ')}</dd></div>)}</dl>
       {!group.families.length && <p className="text-sm text-neutral-500">Noch keine Familien zugewiesen.</p>}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3 text-xs">{group.discordUrl && <a href={group.discordUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-neutral-300 hover:text-white">Discord-Kanal öffnen <ExternalLink size={13} /></a>}<span className={group.syncPending ? 'text-amber-400' : 'text-emerald-400'}>{group.syncPending ? 'Discord-Abgleich ausstehend – Kanalrechte ggf. noch nicht aktuell' : 'Discord synchronisiert'}</span></div>
     </article>)}{!data.groups.length && <p className="col-span-full rounded-xl border border-dashed border-white/15 p-10 text-center text-neutral-500">{data.manage ? 'Noch keine Ermittlungsgruppen. Erstelle die erste Gruppe.' : 'Du bist keiner Ermittlungsgruppe zugeordnet.'}</p>}</div>}

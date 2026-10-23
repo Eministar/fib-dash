@@ -1,8 +1,8 @@
 import { requirePermission } from '@/lib/auth'
 import { notFound } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
-import { routeError } from '@/lib/investigations-server'
-import { investigationPhotoResponse } from '@/lib/investigation-photos'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { investigationPhotoResponse } from '@/lib/investigations/investigation-photos'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

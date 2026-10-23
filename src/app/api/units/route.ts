@@ -2,17 +2,17 @@ import { NextRequest } from 'next/server'
 
 import { success, error, unauthorized } from '@/lib/api-response'
 import { requireAuth, requirePermission, type CurrentUser } from '@/lib/auth'
-import { queueAllAgentRoleSync } from '@/lib/discord-integration'
+import { queueAllAgentRoleSync } from '@/lib/discord/discord-integration'
 import { automaticPermissionsForRoleNames, sanitizePermissions } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import {
   composeUnitPermissions,
   sanitizeUnitIcon,
   sanitizeUnitModules,
-} from '@/lib/unit-modules'
-import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess } from '@/lib/unit-leadership'
-import { ensureDefaultNavigationUnits } from '@/lib/unit-navigation'
+} from '@/lib/units/unit-modules'
+import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess } from '@/lib/units/unit-leadership'
+import { ensureDefaultNavigationUnits } from '@/lib/units/unit-navigation'
 
 function createUnitKey(name: string) {
   return name

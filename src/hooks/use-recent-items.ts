@@ -18,7 +18,7 @@ export type RecentItem = {
 export const RECENT_KIND_LABELS: Record<RecentItemKind, string> = {
   agent: 'Agent',
   investigation: 'Einsatzakte',
-  dossier: 'Dauerakte',
+  dossier: 'Familienakte',
   person: 'Person',
   'rank-change': 'Rangänderung',
   ordnung: 'Ordnung',

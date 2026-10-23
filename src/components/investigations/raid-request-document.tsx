@@ -1,6 +1,6 @@
 'use client'
 
-import { raidDocument, RAID_URGENCY, type RaidAttachment, type RaidRequest } from '@/lib/raid-request'
+import { raidDocument, RAID_URGENCY, type RaidAttachment, type RaidRequest } from '@/lib/investigations/raid-request'
 
 const DEPARTMENT_NAME = 'Federal Investigation Bureau'
 const DIVISION_NAME = 'Ermittlungsabteilung'

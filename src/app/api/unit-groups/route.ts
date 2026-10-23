@@ -2,17 +2,17 @@ import { NextRequest } from 'next/server'
 
 import { error, success, unauthorized } from '@/lib/api-response'
 import { requireAuth, requirePermission } from '@/lib/auth'
-import { queueAllAgentRoleSync } from '@/lib/discord-integration'
-import { agentUnitKeys } from '@/lib/agent-units'
+import { queueAllAgentRoleSync } from '@/lib/discord/discord-integration'
+import { agentUnitKeys } from '@/lib/agents/agent-units'
 import { automaticPermissionsForRoleNames, sanitizePermissions } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import {
   composeUnitPermissions,
   sanitizeUnitIcon,
   sanitizeUnitModules,
-} from '@/lib/unit-modules'
-import { ensureDefaultNavigationUnits } from '@/lib/unit-navigation'
+} from '@/lib/units/unit-modules'
+import { ensureDefaultNavigationUnits } from '@/lib/units/unit-navigation'
 
 function createGroupKey(name: string) {
   return name

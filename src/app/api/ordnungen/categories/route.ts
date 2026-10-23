@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
-import { ORDNUNG_ICONS } from '@/lib/ordnungen-icons'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
+import { ORDNUNG_ICONS } from '@/lib/publications/ordnungen-icons'
 
 function slugify(input: string) {
   return input.trim().toLowerCase().normalize('NFKD')

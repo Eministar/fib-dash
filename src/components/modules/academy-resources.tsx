@@ -25,7 +25,7 @@ import { useFetch } from '@/hooks/use-fetch'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/components/ui/toast'
 import { cn, formatDateTime } from '@/lib/utils'
-import { uploadInChunks } from '@/lib/chunked-upload'
+import { uploadInChunks } from '@/lib/media/chunked-upload'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 
 type ResourceScope = 'GENERAL' | 'TRAINING'

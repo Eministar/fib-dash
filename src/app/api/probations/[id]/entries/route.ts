@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
-import { PROBATION_ENTRY_RATING_LABELS, probationEntryRating } from '@/lib/probations'
+import { createAuditLog } from '@/lib/audit/audit'
+import { PROBATION_ENTRY_RATING_LABELS, probationEntryRating } from '@/lib/hr/probations'
 
 function cleanText(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''

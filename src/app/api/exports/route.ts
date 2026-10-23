@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { error, unauthorized } from '@/lib/api-response'
-import { getDutyTimesSnapshot, formatDuration } from '@/lib/duty-times'
+import { getDutyTimesSnapshot, formatDuration } from '@/lib/duty/duty-times'
 import { formatDate, formatDateTime } from '@/lib/utils'
-import { displayBadgeNumber } from '@/lib/badge-number'
-import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanction-catalog'
-import { withAgentTrainingRows } from '@/lib/agent-trainings'
-import { PROBATION_STATUS_LABELS, PROBATION_TYPE_LABELS } from '@/lib/probations'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import { penalGradeLabel, resolveViolation, sanctionLevelLabel } from '@/lib/sanctions/sanction-catalog'
+import { withAgentTrainingRows } from '@/lib/agents/agent-trainings'
+import { PROBATION_STATUS_LABELS, PROBATION_TYPE_LABELS } from '@/lib/hr/probations'
 
 function csvEscape(value: unknown) {
   const text = value === null || value === undefined ? '' : String(value)

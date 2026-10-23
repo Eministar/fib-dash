@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { notifyLiveUpdate } from '@/lib/live-updates'
-import { reportConnection } from '@/lib/connection-status'
+import { notifyLiveUpdate } from '@/lib/core/live-updates'
+import { reportConnection } from '@/lib/core/connection-status'
 
 /** Verständliche Meldung für Antworten ohne JSON (Proxy-Fehlerseiten, Upload-Limits …). */
 function statusMessage(status: number): string {

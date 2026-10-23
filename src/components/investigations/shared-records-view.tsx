@@ -5,10 +5,10 @@ import Image from 'next/image'
 import { useFetch } from '@/hooks/use-fetch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { SHARE_KINDS, type ShareKind } from '@/lib/record-share-kinds'
+import { SHARE_KINDS, type ShareKind } from '@/lib/investigations/record-share-kinds'
 import { ListSkeleton } from '@/components/ui/loading'
 import { RaidRequestDocument } from './raid-request-document'
-import type { RaidRequest } from '@/lib/raid-request'
+import type { RaidRequest } from '@/lib/investigations/raid-request'
 
 type Item = { kind: ShareKind; recordId: string; title: string }
 type Detail = Item & { label: string; fields: { label: string; value: string }[]; entries: { title: string; content: string | null; occurredAt: string; kind: string }[]; photos: { id: string; title: string }[]; related: (Item & { label: string })[]; hasPhoto: boolean; hasVideo: boolean }

@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
 import { error, success } from '@/lib/api-response'
-import { routeError } from '@/lib/investigations-server'
-import { authorizeUploadKind } from '@/lib/upload-authorization'
-import { openUploadSession, UploadSessionError, type UploadKind } from '@/lib/upload-sessions'
+import { routeError } from '@/lib/investigations/investigations-server'
+import { authorizeUploadKind } from '@/lib/media/upload-authorization'
+import { openUploadSession, UploadSessionError, type UploadKind } from '@/lib/media/upload-sessions'
 
 export const dynamic = 'force-dynamic'
 

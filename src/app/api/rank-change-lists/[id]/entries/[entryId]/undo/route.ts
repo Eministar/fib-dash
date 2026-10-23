@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { isUniqueConstraintError } from '@/lib/prisma-errors'
-import { undoPromotionListEntry } from '@/lib/rank-change-list-undo'
+import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
+import { undoPromotionListEntry } from '@/lib/agents/rank-change-list-undo'
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string; entryId: string }> }) {
   try {

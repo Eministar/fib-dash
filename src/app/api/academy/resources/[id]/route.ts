@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { error, notFound, success, unauthorized } from '@/lib/api-response'
-import { requireTaskModuleManage } from '@/lib/module-permissions'
-import { deleteUploadedFile } from '@/lib/uploads'
+import { requireTaskModuleManage } from '@/lib/units/module-permissions'
+import { deleteUploadedFile } from '@/lib/media/uploads'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

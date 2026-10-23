@@ -11,8 +11,8 @@ import { useFetch } from '@/hooks/use-fetch'
 import { RECENT_KIND_LABELS, useRecentItems } from '@/hooks/use-recent-items'
 import { useAuth } from '@/context/auth-context'
 import { hasPermission } from '@/lib/permissions'
-import { SEARCH_GROUPS, isSearchable, type SearchGroup, type SearchHit } from '@/lib/global-search'
-import { matchesSearch } from '@/lib/search-match'
+import { SEARCH_GROUPS, isSearchable, type SearchGroup, type SearchHit } from '@/lib/core/global-search'
+import { matchesSearch } from '@/lib/core/search-match'
 import {
   agentHitActions,
   allowedAgentActions,
@@ -20,7 +20,7 @@ import {
   type AgentActionDef,
   type PaletteActionIcon,
   type PaletteTarget,
-} from '@/lib/palette-actions'
+} from '@/lib/core/palette-actions'
 import { startPageAction } from '@/hooks/use-page-action'
 import { useNewShortcut } from '@/hooks/use-new-shortcut'
 import { cn } from '@/lib/utils'

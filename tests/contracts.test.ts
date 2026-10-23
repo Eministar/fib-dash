@@ -22,7 +22,7 @@ import {
   sanitizeContractFields,
   validateContractValues,
   type ContractField,
-} from '../src/lib/contracts'
+} from '../src/lib/contracts/contracts'
 
 function field(patch: Partial<ContractField> & Pick<ContractField, 'id' | 'type' | 'label'>): ContractField {
   return { description: null, placeholder: null, required: false, sortOrder: 0, ...patch }
@@ -139,7 +139,7 @@ test('Vertragsdatum wird deutsch formatiert', () => {
 // --- Verträge mit mehreren Unterzeichnern -----------------------------------
 
 test('Der Vertragsstatus wird aus den einzelnen Unterschriften abgeleitet', async () => {
-  const { deriveContractStatus } = await import('../src/lib/contract-signatures')
+  const { deriveContractStatus } = await import('../src/lib/contracts/contract-signatures')
   const open = { signedAt: null, declinedAt: null }
   const signed = { signedAt: new Date(), declinedAt: null }
   const declined = { signedAt: null, declinedAt: new Date() }
@@ -170,7 +170,7 @@ test('Der Vertragsstatus wird aus den einzelnen Unterschriften abgeleitet', asyn
 })
 
 test('signerMatches erkennt die benannte Partei - es entscheidet nicht mehr ueber den Zugang', async () => {
-  const { signerMatches } = await import('../src/lib/contract-signatures')
+  const { signerMatches } = await import('../src/lib/contracts/contract-signatures')
 
   const internal = { side: 'INTERNAL', signerDiscordId: '42' }
   const external = { side: 'EXTERNAL', signerDiscordId: null }
@@ -198,7 +198,7 @@ test('signerMatches erkennt die benannte Partei - es entscheidet nicht mehr uebe
 })
 
 test('Wer den Link hat, unterschreibt - nur lesende HR sieht den Vertrag als Pruefer', async () => {
-  const { resolveLinkAccess } = await import('../src/lib/contract-signatures')
+  const { resolveLinkAccess } = await import('../src/lib/contracts/contract-signatures')
 
   // Der Regelfall: jemand oeffnet den Link, ohne angemeldet zu sein.
   assert.equal(

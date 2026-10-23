@@ -1911,6 +1911,7 @@ model InvestigationEntry {
 /// Fallübergreifendes Personenregister (Zivilisten, keine FIB-Agents).
 model Person {
   dossiers     Dossier[]           @relation("DossierPersons")
+  ledDossiers  Dossier[]           @relation("DossierLeader")
   id           String              @id @default(cuid())
   /// Fortlaufende Personenaktennummer, z. B. "PER-0001".
   personNumber String              @unique @db.VarChar(24)
@@ -2237,10 +2238,15 @@ model InvestigationPhoto {
 model Dossier {
   id              String               @id @default(cuid())
   title           String               @db.VarChar(200)
-  /// FAMILY | COLLECTION | PROPERTY | FILE
-  kind            String               @default("COLLECTION") @db.VarChar(20)
+  /// Früher FAMILY | COLLECTION | PROPERTY. Heute ist jede Akte eine
+  /// Familienakte; die Spalte bleibt nur für Altbestände stehen.
+  kind            String               @default("FAMILY") @db.VarChar(20)
   description     String?              @db.Text
+  /// Anwesen der Familie.
   address         String?              @db.VarChar(300)
+  /// Fraktionsleiter: eine der verknüpften Personenakten.
+  leaderId        String?
+  leader          Person?              @relation("DossierLeader", fields: [leaderId], references: [id], onDelete: SetNull)
   photoId         String?
   photo           InvestigationPhoto?  @relation(fields: [photoId], references: [id], onDelete: SetNull)
   /// Weitere Bilder neben dem Titelbild. Die Kacheln zeigen `photo`, damit das
@@ -2260,6 +2266,7 @@ model Dossier {
   updatedAt       DateTime             @updatedAt
 
   @@index([kind, updatedAt])
+  @@index([leaderId])
 }
 
 /// Früher Lesezugriff einer Ermittlungsgruppe auf Verschlusssachen einer

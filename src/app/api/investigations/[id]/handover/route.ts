@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
 import { requirePermission } from '@/lib/auth'
-import { createAuditLog } from '@/lib/audit'
-import { notifyInvestigationTeam } from '@/lib/notifications-server'
-import { queueDiscordInvestigationEvent } from '@/lib/discord-integration'
+import { createAuditLog } from '@/lib/audit/audit'
+import { notifyInvestigationTeam } from '@/lib/core/notifications-server'
+import { queueDiscordInvestigationEvent } from '@/lib/discord/discord-integration'
 import { prisma } from '@/lib/prisma'
 import {
   canAccessInvestigation,
@@ -12,8 +12,8 @@ import {
   investigationAccessInclude,
   investigationDetailInclude,
   serializeBigInts,
-} from '@/lib/investigations'
-import { agentDisplayName, cleanText, routeError } from '@/lib/investigations-server'
+} from '@/lib/investigations/investigations'
+import { agentDisplayName, cleanText, routeError } from '@/lib/investigations/investigations-server'
 
 export const dynamic = 'force-dynamic'
 

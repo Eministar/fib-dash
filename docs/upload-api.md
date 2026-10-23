@@ -162,7 +162,7 @@ Zwei bewusste Folgen:
   interaktive Elemente (Klappmenüs o. Ä.) sind tot.
 - **Externe Bilder werden geladen.** Avatare aus einem Transkript kommen vom fremden
   Server, der dadurch die IP des Betrachters sieht. Soll das nicht sein, muss
-  `img-src` in `src/lib/file-uploads.ts` auf `data:` beschränkt werden.
+  `img-src` in `src/lib/media/file-uploads.ts` auf `data:` beschränkt werden.
 
 Bilder, PDFs und Videos bekommen die Sandbox-Regel bewusst **nicht** — sie würde den
 eingebauten PDF-Viewer und die Videowiedergabe lahmlegen, ohne etwas zu schützen.
@@ -176,10 +176,10 @@ Gegen Typverwechslung schützt dort `X-Content-Type-Options: nosniff`.
 | `src/app/api/files/[id]/route.ts` | Detail, Bearbeiten, Löschen |
 | `src/app/api/files/[id]/raw/route.ts` | Auslieferung |
 | `src/app/api/upload-keys/**` | Schlüsselverwaltung |
-| `src/lib/upload-keys.ts` | Schlüssel erzeugen und prüfen |
-| `src/lib/file-uploads.ts` | Ablage, Typprüfung, Auslieferungs-Header |
-| `src/lib/file-upload-types.ts` | Erlaubte Typen (auch im Client genutzt) |
-| `src/lib/file-upload-queries.ts` | Gemeinsame Abfragen und Fehlerbehandlung |
+| `src/lib/media/upload-keys.ts` | Schlüssel erzeugen und prüfen |
+| `src/lib/media/file-uploads.ts` | Ablage, Typprüfung, Auslieferungs-Header |
+| `src/lib/media/file-upload-types.ts` | Erlaubte Typen (auch im Client genutzt) |
+| `src/lib/media/file-upload-queries.ts` | Gemeinsame Abfragen und Fehlerbehandlung |
 | `src/components/uploads/**` | Dashboard-Oberfläche |
 
 Dateien liegen unter `<UPLOAD_DIR>/files/` und heißen `<uuid>.<endung>`; der

@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
 import { success, error, notFound } from '@/lib/api-response'
-import { normalizeLinkToken } from '@/lib/link-tokens'
+import { normalizeLinkToken } from '@/lib/core/link-tokens'
 import {
   loadLegalCaseByToken,
   serializeLegalCase,
-} from '@/lib/legal-case-service'
+} from '@/lib/publications/legal-case-service'
 
 /**
  * Geteilter Klageschrift-Link.

@@ -20,6 +20,19 @@ function fromInternal(v: string) {
 export interface SelectOption {
   value: string
   label: string
+  /** Aufeinanderfolgende Optionen mit gleicher Gruppe stehen unter einer Überschrift. */
+  group?: string
+}
+
+/** Fasst aufeinanderfolgende Optionen gleicher Gruppe zusammen, Reihenfolge bleibt. */
+function groupOptions(options: SelectOption[]) {
+  const groups: { group?: string; options: SelectOption[] }[] = []
+  for (const option of options) {
+    const last = groups[groups.length - 1]
+    if (last && last.group === option.group) last.options.push(option)
+    else groups.push({ group: option.group, options: [option] })
+  }
+  return groups
 }
 
 export interface SelectProps {
@@ -37,6 +50,8 @@ export interface SelectProps {
   name?: string
   size?: 'default' | 'sm'
   required?: boolean
+  /** Zugänglicher Name, wenn kein sichtbares `label` gesetzt ist. */
+  'aria-label'?: string
 }
 
 const triggerBase = cn(
@@ -76,6 +91,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
     name,
     size = 'default',
     required,
+    'aria-label': ariaLabel,
   },
   ref
 ) {
@@ -89,6 +105,8 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
   }
 
   const hasEmptyOption = options.some((o) => o.value === '')
+  const selected = value !== undefined ? options.find((o) => o.value === value) : undefined
+  const selectedGroup = selected?.group
   const rootValue = React.useMemo(() => {
     if (value === undefined) return undefined
     // Controlled empty selection: return '' (Radix's controlled "no value" state
@@ -117,6 +135,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
           ref={ref}
           id={triggerId}
           aria-required={required}
+          aria-label={label ? undefined : ariaLabel}
           className={cn(
             triggerBase,
             'cursor-pointer',
@@ -128,7 +147,14 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
           <SelectPrimitive.Value
             placeholder={placeholder}
             className="flex-1 min-w-0 truncate text-left text-[#f5f5f7] data-[placeholder]:text-[#8e8e93]"
-          />
+          >
+            {selectedGroup ? (
+              <span className="flex min-w-0 items-baseline gap-1.5">
+                <span className="truncate">{selected?.label}</span>
+                <span className="shrink-0 truncate text-[11.5px] text-[#8e8e93]">{selectedGroup}</span>
+              </span>
+            ) : undefined}
+          </SelectPrimitive.Value>
           <SelectPrimitive.Icon>
             <ChevronDown className="h-3.5 w-3.5 text-[#98989d] shrink-0 opacity-80" />
           </SelectPrimitive.Icon>
@@ -143,19 +169,31 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(function 
             )}
           >
             <SelectPrimitive.Viewport className="p-1.5 max-h-72 overflow-y-auto">
-              {options.map((opt) => {
-                const internal = toInternal(opt.value)
+              {groupOptions(options).map((block, blockIndex) => {
+                const items = block.options.map((opt) => {
+                  const internal = toInternal(opt.value)
+                  return (
+                    <SelectPrimitive.Item key={internal} value={internal} className={cn(itemBase, block.group && 'pl-4')}>
+                      <span className="absolute right-1.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-[#d4d4d4]">
+                        <SelectPrimitive.ItemIndicator>
+                          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </SelectPrimitive.ItemIndicator>
+                      </span>
+                      <SelectPrimitive.ItemText className="block truncate pr-6 text-left">
+                        {opt.label}
+                      </SelectPrimitive.ItemText>
+                    </SelectPrimitive.Item>
+                  )
+                })
+                if (!block.group) return items
                 return (
-                  <SelectPrimitive.Item key={internal} value={internal} className={itemBase}>
-                    <span className="absolute right-1.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-[#d4d4d4]">
-                      <SelectPrimitive.ItemIndicator>
-                        <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      </SelectPrimitive.ItemIndicator>
-                    </span>
-                    <SelectPrimitive.ItemText className="block truncate pr-6 text-left">
-                      {opt.label}
-                    </SelectPrimitive.ItemText>
-                  </SelectPrimitive.Item>
+                  <SelectPrimitive.Group key={`${block.group}-${blockIndex}`} className={cn(blockIndex > 0 && 'mt-1.5')}>
+                    <SelectPrimitive.Label className="flex items-center gap-1 px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#8e8e93]">
+                      <ChevronDown className="h-3 w-3" aria-hidden />
+                      {block.group}
+                    </SelectPrimitive.Label>
+                    {items}
+                  </SelectPrimitive.Group>
                 )
               })}
             </SelectPrimitive.Viewport>

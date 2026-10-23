@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { updateTrainingsSchema } from '@/lib/validations/agent'
-import { createAuditLog } from '@/lib/audit'
-import { queueDiscordHrEvent, queueAgentRoleSync } from '@/lib/discord-integration'
-import { isTrainingAvailableForRank, withAgentTrainingRows } from '@/lib/agent-trainings'
+import { createAuditLog } from '@/lib/audit/audit'
+import { queueDiscordHrEvent, queueAgentRoleSync } from '@/lib/discord/discord-integration'
+import { isTrainingAvailableForRank, withAgentTrainingRows } from '@/lib/agents/agent-trainings'
 
 function trainingStateLabel(completed: boolean) {
   return completed ? 'abgeschlossen' : 'offen'

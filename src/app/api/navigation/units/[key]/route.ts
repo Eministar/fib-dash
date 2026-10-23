@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/auth'
 import { notFound, success, unauthorized } from '@/lib/api-response'
-import { getNavigationUnitForUser } from '@/lib/unit-navigation'
+import { getNavigationUnitForUser } from '@/lib/units/unit-navigation'
 
 export const dynamic = 'force-dynamic'
 

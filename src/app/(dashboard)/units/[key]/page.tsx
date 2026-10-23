@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { UnitIcon } from '@/components/units/unit-icon'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getNavigationUnitForUser } from '@/lib/unit-navigation'
+import { getNavigationUnitForUser } from '@/lib/units/unit-navigation'
 
 export async function generateMetadata({ params }: { params: Promise<{ key: string }> }): Promise<Metadata> {
   const unit = await prisma.unit.findUnique({ where: { key: (await params).key }, select: { name: true } })

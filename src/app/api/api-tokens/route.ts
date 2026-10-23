@@ -8,10 +8,10 @@ import {
   listApiTokens,
   countActiveTokensForUser,
   assertCanCreateToken,
-} from '@/lib/api-tokens'
+} from '@/lib/core/api-tokens'
 import { PERMISSIONS, type Permission, hasAnyPermission } from '@/lib/permissions'
-import { createAuditLog } from '@/lib/audit'
-import { getApiTokensMaxPerUser } from '@/lib/settings-helpers'
+import { createAuditLog } from '@/lib/audit/audit'
+import { getApiTokensMaxPerUser } from '@/lib/core/settings-helpers'
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(80),

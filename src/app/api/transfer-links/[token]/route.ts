@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { success, error, notFound } from '@/lib/api-response'
 import { getCurrentUser } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
-import { normalizeLinkToken } from '@/lib/link-tokens'
-import { loadTransferRequestByToken, serializeTransferRequest } from '@/lib/transfer-request-service'
+import { normalizeLinkToken } from '@/lib/core/link-tokens'
+import { loadTransferRequestByToken, serializeTransferRequest } from '@/lib/hr/transfer-request-service'
 
 /**
  * Versetzungsantrag über den geteilten Link.

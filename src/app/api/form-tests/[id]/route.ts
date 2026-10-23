@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma/client'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
-import { requireTaskModuleFormTestManage, requireTaskModuleView } from '@/lib/module-permissions'
+import { requireTaskModuleFormTestManage, requireTaskModuleView } from '@/lib/units/module-permissions'
 import {
   cleanFormText,
   cleanLongFormText,
@@ -11,7 +11,7 @@ import {
   isFormTestStatus,
   sanitizeFormQuestions,
   validateQuestionsForPublish,
-} from '@/lib/form-tests'
+} from '@/lib/hr/form-tests'
 
 const formTestInclude = {
   createdBy: { select: { id: true, displayName: true } },

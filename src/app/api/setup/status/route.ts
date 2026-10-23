@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { getSetupStatus } from '@/lib/setup'
+import { getSetupStatus } from '@/lib/core/setup'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'

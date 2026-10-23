@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { getDutyMode, DUTY_ACTIVITY_RESPONSE_MS } from '@/lib/duty-mode'
-import { clockIn, clockOut, confirmDutyActivity, DutyClockError, findAgentForUser, getOpenDutySession } from '@/lib/manual-duty'
+import { getDutyMode, DUTY_ACTIVITY_RESPONSE_MS } from '@/lib/duty/duty-mode'
+import { clockIn, clockOut, confirmDutyActivity, DutyClockError, findAgentForUser, getOpenDutySession } from '@/lib/duty/manual-duty'
 
 async function state(user: { id: string; discordId: string | null }) {
   const mode = await getDutyMode()

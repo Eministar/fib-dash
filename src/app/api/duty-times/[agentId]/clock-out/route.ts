@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { clockOutByAdmin, DutyClockError } from '@/lib/manual-duty'
+import { clockOutByAdmin, DutyClockError } from '@/lib/duty/manual-duty'
 
 /** Leitung stempelt einen Agent im manuellen Modus aus. */
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ agentId: string }> }) {

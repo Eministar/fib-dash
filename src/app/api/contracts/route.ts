@@ -3,14 +3,14 @@ import type { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { createAuditLog } from '@/lib/audit'
+import { createAuditLog } from '@/lib/audit/audit'
 import {
   contractSelect,
   createContractForAgent,
   openContractWhere,
   sendContractMessage,
-} from '@/lib/contract-service'
-import { cleanContractText, isContractStatus } from '@/lib/contracts'
+} from '@/lib/contracts/contract-service'
+import { cleanContractText, isContractStatus } from '@/lib/contracts/contracts'
 
 export async function GET(req: NextRequest) {
   try {

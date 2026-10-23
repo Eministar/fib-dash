@@ -3,13 +3,13 @@ import { z } from 'zod'
 
 import { requireAuth } from '@/lib/auth'
 import { success, error, unauthorized } from '@/lib/api-response'
-import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agent-avatar'
+import { agentAvatarUrl, resolveAgentAvatarUrls } from '@/lib/agents/agent-avatar'
 import {
   AgentOfMonthError,
   castAgentOfMonthVote,
   getAgentOfMonthState,
   withdrawAgentOfMonthVote,
-} from '@/lib/agent-of-month-server'
+} from '@/lib/agents/agent-of-month-server'
 
 const voteSchema = z.object({ agentId: z.string().min(1) })
 
