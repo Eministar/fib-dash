@@ -1819,6 +1819,8 @@ model Investigation {
   vehicles  InvestigationVehicle[]
   linksFrom InvestigationLink[]     @relation("InvestigationLinkFrom")
   linksTo   InvestigationLink[]     @relation("InvestigationLinkTo")
+  /// Offene KI-Vorschläge im Discord-Beitrag dieser Akte.
+  aiProposals AiProposal[]
 
   @@index([status, updatedAt])
   @@index([priority, updatedAt])
@@ -2942,4 +2944,20 @@ model StorageAlert {
   @@index([actorName, createdAt])
   @@index([agentId, createdAt])
   @@index([createdAt])
+}
+
+/// KI-Vorschlag für einen Chronologie-Eintrag, im Akten-Beitrag auf Discord
+/// mit „Übernehmen“/„Verwerfen“. Wird bei beiden Antworten gelöscht.
+model AiProposal {
+  id                 String        @id @default(cuid())
+  investigationId    String
+  investigation      Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  channelId          String        @db.VarChar(32)
+  messageId          String?       @db.VarChar(32)
+  requesterDiscordId String        @db.VarChar(32)
+  title              String        @db.VarChar(200)
+  content            String        @db.Text
+  createdAt          DateTime      @default(now())
+
+  @@index([investigationId])
 }

@@ -43,6 +43,7 @@ import { useUrlState } from '@/hooks/use-url-state'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { checklistProgress, composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigations/investigation-templates'
 import { SavedViews } from '@/components/ui/saved-views'
+import { AiSuggest } from '@/components/ai/ai-suggest'
 import {
   defaultInvestigationFilters,
   readInvestigationViews,
@@ -286,6 +287,11 @@ export function InvestigationsWorkspace() {
       invalid: form.title.trim() && form.title.trim() !== prefill.title.trim() ? undefined : 'Bitte einen Titel für die Akte angeben.',
       content: (
         <div className="space-y-4">
+          <AiSuggest
+            kind="investigation"
+            dossierId={form.affiliation === 'yes' ? form.dossierId : null}
+            onAccept={(suggestion) => setForm((prev) => ({ ...prev, title: suggestion.title, summary: suggestion.content }))}
+          />
           <Input
             label="Titel"
             value={form.title}

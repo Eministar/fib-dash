@@ -2,18 +2,22 @@ import { prisma } from '@/lib/prisma'
 import { readFile } from 'node:fs/promises'
 
 import { DISCORD_UPLOAD_LIMIT_BYTES, DiscordApiError, discordFetch, getDiscordConfig, postChannelMessageWithFiles, type DiscordUploadFile } from '@/lib/discord/discord-integration'
+import { componentMessage, mediaGallery } from '@/lib/discord/discord-components'
 import { resolveClipPath } from '@/lib/media/clips'
 import { photoPath } from '@/lib/investigations/investigation-photos'
 import { agentDisplayName } from '@/lib/investigations/investigations-server'
 import { resolveBaseUrl } from '@/lib/site'
 import {
+  caseOverview,
   dossierCard,
   dossierOverview,
+  forumEntryMessage,
   forumEventMessage,
   forumThreadName,
   investigationCard,
   type ForumEventType,
 } from '@/lib/investigations/investigation-forum-messages'
+import { INVESTIGATION_ENTRY_KIND_LABELS } from '@/lib/investigations/investigations'
 
 /**
  * Ermittlungs-Forum auf Discord: je Einsatzakte ein Beitrag (Startnachricht =
@@ -25,6 +29,8 @@ import {
 
 const FORUM_CHANNEL_TYPE = 15
 const OVERVIEW_KEY = 'discord.investigationsForumOverviewThreadId'
+/** Zweite Nachricht im Übersichts-Beitrag: alle laufenden Einsatzakten. */
+const OVERVIEW_CASES_KEY = 'discord.investigationsForumOverviewCasesMessageId'
 const CHANNEL_CACHE_MS = 5 * 60_000
 /** Discord-Flag für den angepinnten Beitrag eines Forums. */
 const THREAD_PINNED = 1 << 1
@@ -248,6 +254,7 @@ async function syncOverviewPost(forum: ForumChannel, tags: Map<string, string>) 
       threadId = await createPost(forum, name, message, tagIds)
       await prisma.systemSetting.upsert({ where: { key: OVERVIEW_KEY }, create: { key: OVERVIEW_KEY, value: threadId }, update: { value: threadId } })
     }
+    await syncOverviewCases(threadId)
     try {
       await discordFetch(`/channels/${threadId}`, { method: 'PATCH', body: JSON.stringify({ flags: THREAD_PINNED }) })
     } catch (error) {
@@ -257,6 +264,29 @@ async function syncOverviewPost(forum: ForumChannel, tags: Map<string, string>) 
     }
     return threadId
   })
+}
+
+/** Laufende Einsatzakten als zweite, immer wieder bearbeitete Nachricht im Übersichts-Beitrag. */
+async function syncOverviewCases(threadId: string) {
+  const running = await prisma.investigation.findMany({
+    where: { status: { in: [...RUNNING_STATUSES] } },
+    orderBy: [{ updatedAt: 'desc' }],
+    select: { caseNumber: true, title: true, status: true, discordThreadId: true, dossiers: { select: { title: true }, take: 1 } },
+  })
+  const message = caseOverview(running.map((item) => ({
+    caseNumber: item.caseNumber, title: item.title, status: item.status, threadId: item.discordThreadId, family: item.dossiers[0]?.title ?? null,
+  })))
+  const stored = await prisma.systemSetting.findUnique({ where: { key: OVERVIEW_CASES_KEY } })
+  if (stored?.value) {
+    try {
+      await discordFetch(`/channels/${threadId}/messages/${stored.value}`, { method: 'PATCH', body: JSON.stringify(message) })
+      return
+    } catch (error) {
+      if (!isGone(error)) throw error
+    }
+  }
+  const posted = await discordFetch<{ id: string }>(`/channels/${threadId}/messages`, { method: 'POST', body: JSON.stringify(message) })
+  await prisma.systemSetting.upsert({ where: { key: OVERVIEW_CASES_KEY }, create: { key: OVERVIEW_CASES_KEY, value: posted.id }, update: { value: posted.id } })
 }
 
 async function context() {
@@ -282,6 +312,8 @@ export async function postInvestigationForumEvent(event: {
   actorName?: string | null
   clipId?: string
   photoIds?: string[]
+  /** Chronologie-Eintrag, zu dem die Meldung gehört – dann wird sie mit ihm verknüpft. */
+  entryId?: string
 }) {
   const ctx = await context()
   if (!ctx) return false
@@ -291,20 +323,103 @@ export async function postInvestigationForumEvent(event: {
   if (event.type !== 'created') {
     const files = await eventFiles(event, post.threadId)
     const rows = [...(event.rows ?? []), ...(files.skipped ? [{ label: 'Hinweis', value: files.skipped }] : [])]
-    const message = forumEventMessage({ type: event.type, rows, note: event.note, actorName: event.actorName })
-    await discordFetch(`/channels/${post.threadId}/messages`, { method: 'POST', body: JSON.stringify(message) })
-    // Dateien als schlichte Nachricht darunter: Komponenten-Nachrichten zeigen Anhänge
-    // nur über eigene Bausteine, normale Nachrichten spielen Bilder und Videos direkt ab.
-    for (const batch of files.batches) {
-      await postChannelMessageWithFiles(post.threadId, { allowed_mentions: { parse: [] } }, batch)
+    const [first, ...rest] = files.batches
+    const media = first?.map((file) => file.name)
+    const entry = event.type === 'entry' && event.entryId ? await loadEntry(event.entryId) : null
+    const message = entry
+      ? forumEntryMessage(entry.data, media)
+      : forumEventMessage({ type: event.type, rows, note: event.note, actorName: event.actorName, media })
+    // Bilder und Videos stehen eingebettet in derselben Nachricht (Media Gallery).
+    const posted = first
+      ? await postChannelMessageWithFiles(post.threadId, message, first)
+      : await discordFetch<{ id: string }>(`/channels/${post.threadId}/messages`, { method: 'POST', body: JSON.stringify(message) })
+    for (const batch of rest) {
+      await postChannelMessageWithFiles(post.threadId, galleryOnly(batch), batch)
+    }
+    if (entry) {
+      await prisma.investigationEntry.updateMany({ where: { id: entry.id, discordMessageId: null }, data: { discordMessageId: posted.id } })
     }
   }
-  // Neuer Beitrag oder geänderter Status: die Links in den Familienakten nachziehen.
-  if (post.created || event.type === 'status' || event.type === 'closed') await refreshDossiers(ctx, post.dossierIds)
+  // Neuer Beitrag oder geänderter Status: Familienakten und Übersicht nachziehen.
+  if (post.created || event.type === 'status' || event.type === 'closed') {
+    await refreshDossiers(ctx, post.dossierIds)
+    if (!post.dossierIds.length) await syncOverviewPost(ctx.forum, ctx.tags)
+  }
   return true
 }
 
+function galleryOnly(files: DiscordUploadFile[]) {
+  return componentMessage([mediaGallery(files.map((file) => `attachment://${file.name}`))])
+}
+
+async function loadEntry(entryId: string) {
+  const entry = await prisma.investigationEntry.findUnique({
+    where: { id: entryId },
+    select: {
+      id: true, kind: true, title: true, location: true, content: true, occurredAt: true, discordMessageId: true,
+      createdBy: { select: { displayName: true } },
+      investigation: { select: { id: true, discordThreadId: true } },
+    },
+  })
+  if (!entry) return null
+  return {
+    id: entry.id,
+    messageId: entry.discordMessageId,
+    threadId: entry.investigation.discordThreadId,
+    investigationId: entry.investigation.id,
+    data: {
+      kindLabel: INVESTIGATION_ENTRY_KIND_LABELS[entry.kind as keyof typeof INVESTIGATION_ENTRY_KIND_LABELS] ?? 'Eintrag',
+      title: entry.title,
+      location: entry.location,
+      content: entry.content,
+      authorName: entry.createdBy?.displayName ?? null,
+      occurredAt: entry.occurredAt,
+    },
+  }
+}
+
+/** Discord-Fehler „Nachricht gehört einem anderen Nutzer“ bzw. fehlende Rechte. */
+const isForeignMessage = (error: unknown) => error instanceof DiscordApiError && (error.status === 403 || error.code === 50005)
+
+/**
+ * Bearbeiteter Eintrag im Dashboard: die zugehörige Nachricht im Akten-Beitrag
+ * nachziehen. Antworten, die selbst aus Discord stammen, gehören ihrem Autor –
+ * die kann der Bot nicht bearbeiten, dann bleibt es beim Dashboard.
+ */
+export async function syncForumEntry(entryId: string) {
+  const entry = await loadEntry(entryId)
+  if (!entry?.threadId || !entry.messageId) return
+  try {
+    await discordFetch(`/channels/${entry.threadId}/messages/${entry.messageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ components: forumEntryMessage(entry.data).components }),
+    })
+  } catch (error) {
+    if (!isGone(error) && !isForeignMessage(error)) throw error
+  }
+  await refreshInvestigationForumCard(entry.investigationId)
+}
+
+/** Gelöschter Eintrag: die vom Bot gepostete Nachricht entfernen, fremde Antworten bleiben stehen. */
+export async function removeForumEntry(investigationId: string, threadId: string | null, messageId: string | null) {
+  if (threadId && messageId) {
+    try {
+      const message = await discordFetch<{ author?: { bot?: boolean } }>(`/channels/${threadId}/messages/${messageId}`)
+      if (message.author?.bot) await discordFetch(`/channels/${threadId}/messages/${messageId}`, { method: 'DELETE' })
+    } catch (error) {
+      if (!isGone(error) && !isForeignMessage(error)) throw error
+    }
+  }
+  await refreshInvestigationForumCard(investigationId)
+}
+
 const MAX_FILES_PER_MESSAGE = 10
+
+/** Discord findet `attachment://…` nur bei schlichten Dateinamen. */
+function attachmentName(name: string) {
+  const clean = name.normalize('NFKD').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_').replace(/^[_.]+/, '')
+  return clean.slice(-80) || 'datei'
+}
 
 /**
  * Anhänge für eine Meldung: Clip-Video bzw. Bilder, in Gruppen unter der
@@ -318,7 +433,7 @@ async function eventFiles(event: { clipId?: string; photoIds?: string[] }, threa
     const clip = await prisma.bodycamClip.findUnique({ where: { id: event.clipId }, select: { filename: true, originalName: true, mimeType: true, sizeBytes: true } })
     if (clip && Number(clip.sizeBytes) <= DISCORD_UPLOAD_LIMIT_BYTES) {
       const data = await readFile(resolveClipPath(clip.filename)).catch(() => null)
-      if (data) batches.push([{ name: clip.originalName || clip.filename, data, contentType: clip.mimeType }])
+      if (data) batches.push([{ name: attachmentName(clip.originalName || clip.filename), data, contentType: clip.mimeType }])
     } else if (clip) {
       skipped = `Video ist ${Math.round(Number(clip.sizeBytes) / 1024 / 1024)} MB groß – zu groß für Discord, im Dashboard ansehen.`
     }

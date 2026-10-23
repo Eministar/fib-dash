@@ -17,6 +17,17 @@ export function separator(): DiscordMessageComponent {
   }
 }
 
+/**
+ * Bilder und Videos direkt in der Nachricht (Media Gallery, höchstens 10).
+ * `attachment://name` verweist auf eine im selben Request hochgeladene Datei.
+ */
+export function mediaGallery(urls: string[]): DiscordMessageComponent {
+  return {
+    type: 12,
+    items: urls.slice(0, 10).map((url) => ({ media: { url } })),
+  }
+}
+
 export function actionRow(components: DiscordMessageComponent[]): DiscordMessageComponent {
   return {
     type: 1,

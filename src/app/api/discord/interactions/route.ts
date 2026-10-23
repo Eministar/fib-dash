@@ -27,6 +27,7 @@ import { cancelAbsenceNotice, createAbsenceNotice, formatAbsenceDate, parseAbsen
 import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import { queueDiscordWebhookEvent } from '@/lib/discord/discord-webhook'
 import { DISCORD_COMMANDS } from '@/lib/discord/discord-commands'
+import { AI_ACCEPT_PREFIX, AI_REJECT_PREFIX, acceptDiscordAiProposal, createDiscordAiProposal, rejectDiscordAiProposal } from '@/lib/ai/ai-discord'
 import { eligibleTrainingsForRank, isTrainingAvailableForRank } from '@/lib/agents/agent-trainings'
 import { syncLinkedUserDisplayNameForAgent } from '@/lib/agents/user-display-name'
 import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/units/unit-leadership'
@@ -953,6 +954,16 @@ function handleButton(interaction: DiscordInteraction) {
     })
   }
 
+  if (customId && customId.startsWith(AI_ACCEPT_PREFIX)) {
+    const proposalId = customId.slice(AI_ACCEPT_PREFIX.length)
+    return runDeferred(interaction, 'Button: KI-Vorschlag übernehmen', () => acceptDiscordAiProposal(proposalId, actorFromInteraction(interaction).discordId))
+  }
+
+  if (customId && customId.startsWith(AI_REJECT_PREFIX)) {
+    const proposalId = customId.slice(AI_REJECT_PREFIX.length)
+    return runDeferred(interaction, 'Button: KI-Vorschlag verwerfen', () => rejectDiscordAiProposal(proposalId, actorFromInteraction(interaction).discordId))
+  }
+
   if (customId === 'fib_absence_create') {
     return absenceModal()
   }
@@ -1055,6 +1066,14 @@ export async function POST(req: NextRequest) {
   }
 
   const actor = actorFromInteraction(interaction)
+
+  // Der KI-Befehl hängt an den Aktenrechten des verknüpften Dashboard-Kontos,
+  // nicht an den HR-Command-Rollen; die Prüfung steckt in createDiscordAiProposal.
+  if (commandName === 'fib-ki') {
+    const keywords = textOption(interaction.data?.options, 'stichworte')
+    return runDeferred(interaction, `Command: ${commandName}`, () => createDiscordAiProposal({ channelId: interaction.channel_id ?? null, discordId: actor.discordId, keywords }))
+  }
+
   const allowed = await ensureAllowed(interaction)
   if (!allowed && !(commandName === 'fib-abmeldung' && await isLinkedAgent(actor.discordId))) {
     logInteraction(interaction, 'Discord-Command abgelehnt', 'warning', { message: 'Keine Berechtigung' })

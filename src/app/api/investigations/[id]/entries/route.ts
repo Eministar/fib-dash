@@ -71,6 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     queueDiscordInvestigationEvent({
       type: 'entry',
       investigationId: id,
+      entryId: entry.id,
       caseNumber: investigation.caseNumber,
       title: investigation.title,
       actorName: user.displayName,

@@ -79,6 +79,13 @@ export const DISCORD_COMMANDS = [
       { type: USER, name: 'discord', description: 'Optional: anderer Agent', required: false },
     ],
   },
+  {
+    name: 'fib-ki',
+    description: 'KI-Vorschlag für einen Chronologie-Eintrag – nur im Forum-Beitrag einer Einsatzakte.',
+    options: [
+      { type: STRING, name: 'stichworte', description: 'Stichwörter, aus denen der Eintrag formuliert wird', required: true, max_length: 500 },
+    ],
+  },
 ]
 
 function botToken() {

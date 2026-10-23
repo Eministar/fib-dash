@@ -174,6 +174,10 @@ function onDispatch(type: string | null, data: unknown) {
     void import('@/lib/discord/discord-message-router').then(({ routeDiscordMessage }) => routeDiscordMessage(data, botUserId)).catch((error) => {
       console.error(`${LOG} Nachricht konnte nicht verarbeitet werden:`, error)
     })
+  } else if (type === 'MESSAGE_UPDATE') {
+    void import('@/lib/discord/discord-message-router').then(({ routeDiscordMessageUpdate }) => routeDiscordMessageUpdate(data, botUserId)).catch((error) => {
+      console.error(`${LOG} Bearbeitete Nachricht konnte nicht verarbeitet werden:`, error)
+    })
   } else if (type === 'PRESENCE_UPDATE') {
     void handlePresence(data as Presence).catch((error) => {
       console.error(`${LOG} Statusmeldung konnte nicht verarbeitet werden:`, error)

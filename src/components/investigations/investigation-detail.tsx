@@ -74,6 +74,7 @@ import { InvestigationTemplateProgress } from './investigation-template-progress
 import { OtherCasesNote } from '@/components/investigations/cross-hits'
 import { InvestigationTimeline } from '@/components/investigations/investigation-timeline'
 import { HandoverDialog } from '@/components/investigations/handover-dialog'
+import { AiSuggest } from '@/components/ai/ai-suggest'
 
 function localDateTimeValue(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
@@ -715,6 +716,11 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
               onChange={(event) => setEntryForm((prev) => ({ ...prev, occurredAt: event.target.value }))}
             />
           </div>
+          <AiSuggest
+            kind="entry"
+            investigationId={investigationId}
+            onAccept={(suggestion) => setEntryForm((prev) => ({ ...prev, title: suggestion.title, content: suggestion.content }))}
+          />
           <Input
             label="Titel"
             value={entryForm.title}

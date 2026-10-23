@@ -2,9 +2,12 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
   DOSSIER_LINK_LIMIT,
+  OVERVIEW_CASE_LIMIT,
   STATUS_ACCENT,
+  caseOverview,
   dossierCard,
   dossierOverview,
+  forumEntryMessage,
   forumEventMessage,
   forumThreadName,
   investigationCard,
@@ -83,4 +86,46 @@ test('Verlaufsmeldung: Titel, Werte ohne leere Zeilen, Notiz als Zitat', () => {
   assert.ok(!json.includes('**An**'))
   assert.ok(json.includes('> Spur offen'))
   assert.ok(json.includes('Chef'))
+})
+
+test('Meldung mit Anhängen bettet Bilder und Videos als Galerie ein', () => {
+  const message = forumEventMessage({ type: 'photos', rows: [], media: ['a.png', 'clip.mp4'] }) as unknown as { components: { components: { type: number; items?: { media: { url: string } }[] }[] }[] }
+  const gallery = message.components[0].components.find((component) => component.type === 12)
+  assert.ok(gallery)
+  assert.deepEqual(gallery.items?.map((item) => item.media.url), ['attachment://a.png', 'attachment://clip.mp4'])
+  const plain = forumEventMessage({ type: 'status', rows: [] }) as unknown as { components: { components: { type: number }[] }[] }
+  assert.ok(!plain.components[0].components.some((component) => component.type === 12))
+})
+
+test('Chronologie-Eintrag zeigt Art, Titel, Ort, Text und das Datum des Eintrags', () => {
+  const occurredAt = new Date('2026-10-20T18:30:00Z')
+  const json = text(forumEntryMessage({ kindLabel: 'Observation', title: 'Hafen beobachtet', location: 'Pier 4', content: 'Zwei Fahrzeuge', authorName: 'Agent X', occurredAt }))
+  assert.ok(json.includes('**Observation** Hafen beobachtet'))
+  assert.ok(json.includes('**Ort** Pier 4'))
+  assert.ok(json.includes('> Zwei Fahrzeuge'))
+  assert.ok(json.includes(`<t:${occurredAt.getTime() / 1000}:f>`))
+  assert.ok(json.includes('Agent X'))
+})
+
+test('Übersicht der laufenden Einsatzakten gruppiert nach Status und nennt die Familie', () => {
+  const json = text(caseOverview([
+    { caseNumber: 'ERM-1', title: 'Drogen', status: 'ACTIVE', threadId: '111', family: 'Familie Moretti' },
+    { caseNumber: 'ERM-2', title: 'Raub', status: 'OPEN', threadId: null, family: null },
+  ]))
+  assert.ok(json.includes('Laufende Einsatzakten'))
+  assert.ok(json.indexOf('In Bearbeitung') < json.indexOf('Offen'))
+  assert.ok(json.includes('<#111> · Familie Moretti'))
+  assert.ok(json.includes('`ERM-2` Raub'))
+  const many = Array.from({ length: OVERVIEW_CASE_LIMIT + 3 }, (_, i) => ({ caseNumber: `ERM-${i}`, title: 'Akte', status: 'OPEN' as const, threadId: String(1e17 + i), family: null }))
+  const big = text(caseOverview(many))
+  assert.ok(big.includes('und 3 weitere'))
+  assert.ok(big.length < 6000)
+})
+
+test('Übersicht bleibt auch mit langen Familiennamen unter der Textgrenze von Discord', () => {
+  const many = Array.from({ length: OVERVIEW_CASE_LIMIT }, (_, i) => ({ caseNumber: `ERM-${i}`, title: 'Akte', status: 'ACTIVE' as const, threadId: String(1e17 + i), family: 'F'.repeat(60) }))
+  const message = caseOverview(many) as unknown as { components: { components: { type: number; content?: string }[] }[] }
+  const textLength = message.components[0].components.reduce((sum, component) => sum + (component.content?.length ?? 0), 0)
+  assert.ok(textLength <= 4000, `Text ${textLength} Zeichen`)
+  assert.ok(text(message).includes('weitere im Dashboard'))
 })

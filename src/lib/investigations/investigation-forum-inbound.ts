@@ -185,3 +185,32 @@ export async function importForumThreadMessage(message: ForumThreadMessage) {
   })
   await react(message.channel_id, message.id, failed.length ? '⚠️' : '✅')
 }
+
+/**
+ * Eine bereits übernommene Antwort wurde in Discord bearbeitet: den Text des
+ * Chronologie-Eintrags nachziehen. Anhänge lassen sich in Discord nachträglich
+ * nicht hinzufügen, deshalb geht es hier nur um den Text.
+ */
+export async function updateForumThreadMessage(message: ForumThreadMessage) {
+  // Ohne `content` ist es nur ein nachgeladenes Link-Vorschaubild, keine Bearbeitung.
+  if (message.content === undefined || message.webhook_id || message.author?.bot) return
+  const entry = await prisma.investigationEntry.findUnique({
+    where: { discordMessageId: message.id },
+    select: { id: true, content: true, investigation: { select: { id: true, caseNumber: true, discordThreadId: true } } },
+  })
+  if (!entry || entry.investigation.discordThreadId !== message.channel_id) return
+  const text = message.content.trim() || null
+  if (text === entry.content) return
+
+  const user = message.author?.id ? await getUserByDiscordId(message.author.id) : null
+  if (!user || !hasPermission(user, 'investigations:manage')) return
+
+  await prisma.investigationEntry.update({ where: { id: entry.id }, data: { content: text }, select: { id: true } })
+  await prisma.investigation.update({ where: { id: entry.investigation.id }, data: { updatedAt: new Date() }, select: { id: true } })
+  await createAuditLog({
+    action: 'INVESTIGATION_ENTRY_UPDATED',
+    userId: user.id,
+    details: `Akte ${entry.investigation.caseNumber}: Antwort in Discord bearbeitet und übernommen`,
+  })
+  await react(message.channel_id, message.id, '✏️')
+}

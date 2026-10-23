@@ -3,7 +3,7 @@
  * angepinnte Übersicht und kurze Verlaufsmeldungen. Reine Logik ohne
  * Datenbank und Netzwerk, damit Aufbau und Längen testbar sind.
  */
-import { actionRow, componentMessage, linkButton, separator, textDisplay } from '@/lib/discord/discord-components'
+import { actionRow, componentMessage, linkButton, mediaGallery, separator, textDisplay } from '@/lib/discord/discord-components'
 import { INVESTIGATION_PRIORITY_LABELS, INVESTIGATION_STATUS_LABELS } from '@/lib/investigations/investigations'
 
 export type InvestigationStatusKey = keyof typeof INVESTIGATION_STATUS_LABELS
@@ -171,15 +171,84 @@ export function forumEventMessage(input: {
   note?: string | null
   actorName?: string | null
   at?: Date
+  /** Zeitpunkt als Datum statt „vor x Minuten“ – für Chronologie-Einträge. */
+  dated?: boolean
+  /** Dateinamen der mitgeschickten Anhänge; erscheinen eingebettet unter dem Text. */
+  media?: string[]
 }) {
   const rows = (input.rows ?? [])
     .filter((row) => row.value?.trim())
     .map((row) => `**${row.label}** ${row.value!.trim()}`)
+  const time = `<t:${unix(input.at ?? new Date())}:${input.dated ? 'f' : 'R'}>`
   const body = [
     `### ${EVENT_TITLE[input.type]}`,
     rows.length ? rows.join('\n') : null,
     input.note?.trim() ? quote(clip(input.note, 1200)) : null,
-    `-# ${[input.actorName, `<t:${unix(input.at ?? new Date())}:R>`].filter(Boolean).join(' · ')}`,
+    `-# ${[input.actorName, time].filter(Boolean).join(' · ')}`,
   ].filter(Boolean).join('\n')
-  return componentMessage([textDisplay(body)])
+  return componentMessage([
+    textDisplay(body),
+    ...(input.media?.length ? [mediaGallery(input.media.map((name) => `attachment://${name}`))] : []),
+  ])
+}
+
+export type ForumEntryData = {
+  kindLabel: string
+  title: string
+  location: string | null
+  content: string | null
+  authorName: string | null
+  occurredAt: Date
+}
+
+/** Chronologie-Eintrag im Akten-Beitrag. Dieselbe Darstellung beim Anlegen und beim Bearbeiten. */
+export function forumEntryMessage(entry: ForumEntryData, media?: string[]) {
+  return forumEventMessage({
+    type: 'entry',
+    rows: [{ label: entry.kindLabel, value: entry.title }, { label: 'Ort', value: entry.location }],
+    note: entry.content,
+    actorName: entry.authorName,
+    at: entry.occurredAt,
+    dated: true,
+    media,
+  })
+}
+
+export type OverviewCase = ForumCaseLink & { family: string | null }
+
+/** So viele laufende Akten stehen höchstens in der Übersicht; der Rest wird gezählt. */
+export const OVERVIEW_CASE_LIMIT = 60
+
+function overviewLine(item: OverviewCase) {
+  return `${caseLine(item)}${item.family ? ` · ${clip(item.family, 40)}` : ''}`
+}
+
+/** Zweite Nachricht im Übersichts-Beitrag: alle laufenden Einsatzakten nach Status. */
+export function caseOverview(cases: OverviewCase[]) {
+  const order = ['ACTIVE', 'OPEN', 'SUSPENDED'] as const
+  const sorted = order.flatMap((status) => cases.filter((item) => item.status === status))
+  // Discord erlaubt 4000 Zeichen Text pro Nachricht; Kopf und Fuß brauchen ihren Teil.
+  const budget = 3300
+  const shown: OverviewCase[] = []
+  let used = 0
+  for (const item of sorted.slice(0, OVERVIEW_CASE_LIMIT)) {
+    const length = overviewLine(item).length + 1
+    if (used + length > budget) break
+    shown.push(item)
+    used += length
+  }
+  const sections = order
+    .map((status) => {
+      const items = shown.filter((item) => item.status === status)
+      if (!items.length) return null
+      return `**${INVESTIGATION_STATUS_LABELS[status]}**\n${items.map(overviewLine).join('\n')}`
+    })
+    .filter(Boolean)
+
+  return componentMessage([
+    textDisplay(`## 🗂️ Laufende Einsatzakten\n-# ${cases.length} ${cases.length === 1 ? 'Akte' : 'Akten'} · nach Status, mit zugehöriger Familie`),
+    separator(),
+    textDisplay(sections.join('\n\n') || '_Derzeit laufen keine Ermittlungen._'),
+    ...(cases.length > shown.length ? [textDisplay(`-# … und ${cases.length - shown.length} weitere im Dashboard`)] : []),
+  ], { accentColor: OVERVIEW_ACCENT })
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Building2, CalendarDays, CheckCircle2, Clock, Hash, Link2, MessagesSquare, RefreshCw, Save, ShieldCheck, Tag, Users, X, XCircle } from 'lucide-react'
+import { Building2, CalendarDays, CheckCircle2, Clock, Hash, Link2, MessagesSquare, RefreshCw, Save, ShieldCheck, Sparkles, Tag, Users, X, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -139,12 +139,14 @@ export default function SettingsPage() {
   const { execute } = useApi()
   const { addToast } = useToast()
   const { data: dutyModeData, refetch: refetchDutyMode } = useFetch<{ mode: 'api' | 'manual' }>('/api/duty-times/mode')
+  const { data: aiStatusData, refetch: refetchAiStatus } = useFetch<{ configured: boolean; enabled: boolean; model: string }>('/api/ai/status')
   const [dutyModeSaving, setDutyModeSaving] = useState(false)
 
   const [orgName, setOrgName] = useState('FIB')
   const [badgePrefix, setBadgePrefix] = useState('')
   const [codenamePrefix, setCodenamePrefix] = useState('Agent')
   const [allowDuplicateBadgeNumbers, setAllowDuplicateBadgeNumbers] = useState(false)
+  const [aiEnabled, setAiEnabled] = useState(true)
   const [discordForm, setDiscordForm] = useState<DiscordConfigResponse['config']>({
     guildId: '',
     applicationId: '',
@@ -189,6 +191,7 @@ export default function SettingsPage() {
       setBadgePrefix(settings['badgePrefix'] || '')
       setCodenamePrefix(settings['codenames.prefix'] ?? 'Agent')
       setAllowDuplicateBadgeNumbers(settings['allowDuplicateBadgeNumbers'] === 'true')
+      setAiEnabled(settings['ai.enabled'] !== 'false')
     }
   }, [settings])
 
@@ -518,6 +521,7 @@ export default function SettingsPage() {
             {[
               { id: 'general', label: 'Allgemein', icon: Building2 },
               { id: 'duty-mode', label: 'Dienstzeiten', icon: Clock },
+              { id: 'ai', label: 'KI-Assistent', icon: Sparkles },
               { id: 'discord-basics', label: 'Discord', icon: MessagesSquare },
               { id: 'channels', label: 'Channels', icon: Hash },
               { id: 'roles', label: 'Rollen', icon: ShieldCheck },
@@ -612,6 +616,38 @@ export default function SettingsPage() {
                   </button>
                 )
               })}
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+              id="ai"
+              icon={Sparkles}
+              title="KI-Assistent"
+              description="Formuliert aus Stichwörtern Chronologie-Einträge und neue Einsatzakten, im Dashboard und per /fib-ki im Discord-Beitrag einer Akte. Er nutzt nur die Stichwörter und die Daten der Akte und erfindet nichts dazu."
+          >
+            {aiStatusData && !aiStatusData.configured && (
+                <Notice tone="warn">Kein API-Key hinterlegt. Trage <code>DEEPSEEK_API_KEY</code> in die Umgebungsdatei (.env) des Servers ein und starte ihn neu. Bis dahin ist der KI-Knopf ausgeblendet.</Notice>
+            )}
+            <div className="rounded-[10px] border border-[#38383a] bg-[#161617] p-3">
+              <Checkbox
+                  checked={aiEnabled}
+                  onCheckedChange={setAiEnabled}
+                  disabled={!aiStatusData?.configured}
+                  label="KI-Assistent aktiv"
+              />
+              <p className="mt-2 text-[11.5px] leading-relaxed text-[#8e8e93]">
+                Ausgeschaltet verschwindet der KI-Knopf überall, und auch der Discord-Befehl lehnt ab.
+                {aiStatusData?.configured && <> Modell: <code className="text-[#d4d4d4]">{aiStatusData.model}</code> (änderbar über <code>DEEPSEEK_MODEL</code>).</>}
+              </p>
+              <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                  disabled={!aiStatusData?.configured}
+                  onClick={async () => { await saveSetting('ai.enabled', aiEnabled ? 'true' : 'false'); await refetchAiStatus() }}
+              >
+                <Save size={13} /> Speichern
+              </Button>
             </div>
           </SettingsSection>
 

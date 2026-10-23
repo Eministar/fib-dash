@@ -18,3 +18,12 @@ export async function routeDiscordMessage(data: unknown, botUserId: string) {
   const { importForumThreadMessage } = await import('@/lib/investigations/investigation-forum-inbound')
   await importForumThreadMessage(data as Parameters<typeof importForumThreadMessage>[0])
 }
+
+/** Bearbeitete Nachrichten: nur Antworten in Akten-Beiträgen sind interessant. */
+export async function routeDiscordMessageUpdate(data: unknown, botUserId: string) {
+  const message = data as { id?: string; channel_id?: string; guild_id?: string; author?: { id?: string } }
+  if (!message?.id || !message.channel_id || !message.guild_id) return
+  if (!message.author?.id || message.author.id === botUserId) return
+  const { updateForumThreadMessage } = await import('@/lib/investigations/investigation-forum-inbound')
+  await updateForumThreadMessage(data as Parameters<typeof updateForumThreadMessage>[0])
+}

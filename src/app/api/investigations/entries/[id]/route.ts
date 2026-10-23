@@ -12,6 +12,7 @@ import {
   serializeBigInts,
 } from '@/lib/investigations/investigations'
 import { asJson, cleanText, parseDate, routeError } from '@/lib/investigations/investigations-server'
+import { queueForumTask, removeForumEntry, syncForumEntry } from '@/lib/investigations/investigation-forum'
 import type { Prisma } from '@/generated/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -72,6 +73,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       userId: user.id,
       details: `Akte ${existing.investigation.caseNumber}: Eintrag "${entry.title}" bearbeitet`,
     })
+    queueForumTask('Eintrag im Forum aktualisieren', () => syncForumEntry(entry.id))
 
     return success(serializeBigInts(entry))
   } catch (cause: unknown) {
@@ -100,6 +102,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       userId: user.id,
       details: `Akte ${existing.investigation.caseNumber}: Eintrag "${existing.title}" gelöscht`,
     })
+    queueForumTask('Eintrag aus dem Forum entfernen', () =>
+      removeForumEntry(existing.investigationId, existing.investigation.discordThreadId, existing.discordMessageId))
 
     return success({ id })
   } catch (cause: unknown) {

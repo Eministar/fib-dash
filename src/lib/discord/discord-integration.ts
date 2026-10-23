@@ -2451,6 +2451,8 @@ export type DiscordInvestigationEventInput = {
   /** Nur im Forum: Datei des Clips bzw. die Bilder anhängen. */
   clipId?: string
   photoIds?: string[]
+  /** Nur im Forum: Chronologie-Eintrag, mit dem die Nachricht verknüpft wird. */
+  entryId?: string
   caseNumber: string
   title: string
   leadAgentName?: string | null
