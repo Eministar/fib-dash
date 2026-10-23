@@ -623,7 +623,7 @@ export default function SettingsPage() {
               id="ai"
               icon={Sparkles}
               title="KI-Assistent"
-              description="Formuliert aus Stichwörtern Chronologie-Einträge und neue Einsatzakten, im Dashboard und per /fib-ki im Discord-Beitrag einer Akte. Er nutzt nur die Stichwörter und die Daten der Akte und erfindet nichts dazu."
+              description="Formuliert aus Stichwörtern Chronologie-Einträge und neue Einsatzakten, im Dashboard und per /fib-ki. Schreibt ein Agent im Discord-Beitrag einer Akte, antwortet der Bot mit dem ausformulierten Eintrag; mit „Übernehmen“ landet er im Namen des Agents in der Akte. Kurz, sachlich, ohne erfundene Angaben."
           >
             {aiStatusData && !aiStatusData.configured && (
                 <Notice tone="warn">Kein API-Key hinterlegt. Trage <code>DEEPSEEK_API_KEY</code> in die Umgebungsdatei (.env) des Servers ein und starte ihn neu. Bis dahin ist der KI-Knopf ausgeblendet.</Notice>

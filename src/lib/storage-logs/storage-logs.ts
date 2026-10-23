@@ -65,15 +65,92 @@ export function normalizePersonName(name: string) {
     .trim()
 }
 
-/** Agent-ID zu einem Namen aus dem Log; aktive Agents haben Vorrang vor ausgeschiedenen. */
-export function buildAgentNameIndex(agents: Array<{ id: string; firstName: string; lastName: string; status: string }>) {
-  const index = new Map<string, string>()
-  const sorted = [...agents].sort((a, b) => Number(a.status === 'TERMINATED') - Number(b.status === 'TERMINATED'))
-  for (const agent of sorted) {
-    const key = normalizePersonName(`${agent.firstName} ${agent.lastName}`)
-    if (key && !index.has(key)) index.set(key, agent.id)
+type NamedAgent = { id: string; firstName: string; lastName: string; status: string }
+type AgentTokens = { id: string; first: string[]; last: string[] }
+
+/** Höchstens `max` Tippfehler auseinander? (Levenshtein, früh abgebrochen) */
+function withinEdits(a: string, b: string, max: number) {
+  if (Math.abs(a.length - b.length) > max) return false
+  let previous = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i]
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+    }
+    if (Math.min(...current) > max) return false
+    previous = current
   }
-  return index
+  return previous[b.length] <= max
+}
+
+/** Steht die Wortfolge `needle` zusammenhängend in `tokens`? Gibt die Startposition zurück. */
+function findSequence(tokens: string[], needle: string[], same: (a: string, b: string) => boolean) {
+  if (!needle.length) return -1
+  for (let start = 0; start + needle.length <= tokens.length; start++) {
+    if (needle.every((part, offset) => same(tokens[start + offset], part))) return start
+  }
+  return -1
+}
+
+/** Passt der Vorname aus dem Log (falls vorhanden) zum Agent? „N.“, „Nik“ und „Niklas“ passen zu „Niklas“. */
+function firstNameFits(logFirst: string[], agentFirst: string[]) {
+  if (!logFirst.length || !agentFirst.length) return true
+  const a = logFirst[0]
+  const b = agentFirst[0]
+  return a.startsWith(b) || b.startsWith(a) || withinEdits(a, b, 1)
+}
+
+/**
+ * Nur eindeutige Treffer zählen – lieber nicht zuordnen als falsch zuordnen.
+ * `undefined` = kein Treffer, `null` = mehrdeutig.
+ */
+function matchIn(agents: AgentTokens[], tokens: string[]): string | null | undefined {
+  const key = tokens.join(' ')
+  const exact = agents.filter((agent) => [...agent.first, ...agent.last].join(' ') === key || [...agent.last, ...agent.first].join(' ') === key)
+  if (exact.length === 1) return exact[0].id
+  if (exact.length > 1) return null
+
+  // Über den Nachnamen. Ins Lager kommen nur FIB-Leute, ein eindeutiger
+  // Nachname reicht also; der Vorname entscheidet nur bei gleichen Nachnamen.
+  const byLastName = (same: (a: string, b: string) => boolean) => {
+    const candidates = agents
+      .map((agent) => ({ agent, at: findSequence(tokens, agent.last, same) }))
+      .filter((candidate) => candidate.at !== -1)
+    if (candidates.length <= 1) return candidates.map((candidate) => candidate.agent)
+    return candidates
+      .filter(({ agent, at }) => firstNameFits([...tokens.slice(0, at), ...tokens.slice(at + agent.last.length)], agent.first))
+      .map((candidate) => candidate.agent)
+  }
+  const sameLast = byLastName((a, b) => a === b)
+  if (sameLast.length === 1) return sameLast[0].id
+  if (sameLast.length > 1) return null
+
+  // Ein Tippfehler im Nachnamen, nur bei längeren Namen.
+  const typoLast = byLastName((a, b) => a === b || (b.length >= 5 && withinEdits(a, b, 1)))
+  if (typoLast.length > 1) return null
+  return typoLast[0]?.id
+}
+
+/**
+ * Agent-ID zu einem Namen aus dem Log. Erst exakt (auch „Nachname Vorname“),
+ * dann über den Nachnamen, dann mit einem Tippfehler im Nachnamen. Aktive
+ * Agents haben Vorrang; mehrdeutige Treffer werden nicht zugeordnet.
+ */
+export function buildAgentNameMatcher(agents: NamedAgent[]) {
+  const tokenize = (agent: NamedAgent): AgentTokens => ({
+    id: agent.id,
+    first: normalizePersonName(agent.firstName).split(' ').filter(Boolean),
+    last: normalizePersonName(agent.lastName).split(' ').filter(Boolean),
+  })
+  const active = agents.filter((agent) => agent.status !== 'TERMINATED').map(tokenize).filter((agent) => agent.last.length)
+  const former = agents.filter((agent) => agent.status === 'TERMINATED').map(tokenize).filter((agent) => agent.last.length)
+  return (name: string) => {
+    const tokens = normalizePersonName(name).split(' ').filter(Boolean)
+    if (!tokens.length) return null
+    // Mehrdeutig unter den Aktiven heißt: nicht auf Ausgeschiedene ausweichen.
+    const hit = matchIn(active, tokens)
+    return hit !== undefined ? hit : matchIn(former, tokens) ?? null
+  }
 }
 
 const DEFAULT_WEAPON_HINTS = ['weapon_', 'waffe', 'gun', 'rifle', 'pistol', 'smg', 'shotgun', 'carbine', 'sniper', 'knife', 'switchblade', 'machete', 'baseballbat', 'grenade', 'molotov', 'taser', 'stungun']

@@ -17,12 +17,26 @@ export const discordIdSchema = z
     message: 'Discord-ID: 17–22 Ziffern (Snowflake)',
   })
 
+/** Ingame-Telefonnummer: Ziffern mit üblichen Trennzeichen; leer = keine. */
+export const phoneNumberSchema = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((v) => {
+    if (v === undefined) return undefined
+    const s = (v ?? '').replace(/\s+/g, ' ').trim()
+    return s === '' ? null : s
+  })
+  .refine((v) => v === undefined || v === null || (v.length <= 32 && /^\+?[\d\s()/-]+$/.test(v) && /\d/.test(v)), {
+    message: 'Telefonnummer: nur Ziffern, Leerzeichen, +, -, / und Klammern (max. 32 Zeichen)',
+  })
+
 export const createAgentSchema = z.object({
   badgeNumber: z.string().trim().optional().nullable(),
   firstName: z.string().min(1, 'Vorname ist erforderlich'),
   lastName: z.string().min(1, 'Nachname ist erforderlich'),
   rankId: z.string().min(1, 'Rang ist erforderlich'),
   discordId: discordIdSchema,
+  phoneNumber: phoneNumberSchema,
   notes: z.string().optional().nullable(),
   hireDate: z.string().optional(),
   status: z.enum(['ACTIVE', 'AWAY', 'ON_LEAVE', 'INACTIVE', 'TERMINATED']).optional(),

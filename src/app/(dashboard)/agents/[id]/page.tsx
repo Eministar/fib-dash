@@ -108,6 +108,7 @@ interface AgentDetail {
   hiredBy?: { displayName: string | null; createdAt: string } | null
   lastOnline: string | null
   discordId: string | null
+  phoneNumber: string | null
   discordMember?: {
     checked: boolean
     inGuild: boolean
@@ -190,6 +191,7 @@ interface AgentForm {
   flag: string
   hireDate: string
   discordId: string
+  phoneNumber: string
 }
 interface SanctionForm {
   penalGrade: string
@@ -232,6 +234,7 @@ const EMPTY_AGENT_FORM: AgentForm = {
   flag: '',
   hireDate: '',
   discordId: '',
+  phoneNumber: '',
 }
 
 const EMPTY_SANCTION_FORM: SanctionForm = {
@@ -416,6 +419,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       flag: agent.flag ?? '',
       hireDate: agent.hireDate?.split('T')[0] || '',
       discordId: agent.discordId ?? '',
+      phoneNumber: agent.phoneNumber ?? '',
     })
     setEditingMode(mode)
   }
@@ -445,6 +449,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             units: form.units,
             flag: form.flag ? form.flag : null,
             discordId: form.discordId.trim() === '' ? null : form.discordId.trim(),
+            phoneNumber: form.phoneNumber.trim() === '' ? null : form.phoneNumber.trim(),
           }
       await execute(`/api/agents/${id}`, { method: 'PATCH', body: JSON.stringify(payload) })
       addToast({ type: 'success', title: 'Agent aktualisiert' })
@@ -993,13 +998,25 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                       <Input label="Dienstnummer" numericOnly value={form.badgeNumber} onChange={(e) => setForm({ ...form, badgeNumber: e.target.value })} />
                       <Select label="Rang" value={form.rankId} onChange={(e) => setForm({ ...form, rankId: e.target.value })} options={ranks?.map(r => ({ value: r.id, label: r.name })) || []} />
                     </div>
-                    <Input
-                      label="Discord-ID"
-                      value={form.discordId}
-                      onChange={(e) => setForm({ ...form, discordId: e.target.value })}
-                      placeholder="Optional (Snowflake)"
-                      className="font-mono"
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Input
+                        label="Discord-ID"
+                        value={form.discordId}
+                        onChange={(e) => setForm({ ...form, discordId: e.target.value })}
+                        placeholder="Optional (Snowflake)"
+                        className="font-mono"
+                      />
+                      <Input
+                        label="Telefonnummer"
+                        type="tel"
+                        inputMode="tel"
+                        maxLength={32}
+                        value={form.phoneNumber}
+                        onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                        placeholder="Optional, z. B. 555-1234"
+                        className="font-mono"
+                      />
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} options={[
                         { value: 'ACTIVE', label: 'Aktiv' },
@@ -1039,6 +1056,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
                 <InfoRow label="Dienstnummer" value={displayBadgeNumber(agent.badgeNumber)} mono />
                 <InfoRow label="Discord-ID" value={agent.discordId ?? undefined} mono />
+                <InfoRow label="Telefonnummer" value={agent.phoneNumber ?? undefined} mono />
                 <InfoRow label="Discord-Server">
                   <DiscordMemberStatus agent={agent} />
                 </InfoRow>

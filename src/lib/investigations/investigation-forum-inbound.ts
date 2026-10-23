@@ -20,6 +20,10 @@ import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
  * Akte: Text als Chronologie-Eintrag, Bilder in den Bildkatalog der Akte,
  * Videos als Bodycam-Clips. Übernommen wird nur von Discord-Konten, die im
  * Dashboard Akten bearbeiten dürfen; die Nachricht bekommt ✅ bzw. ⛔.
+ *
+ * Ist die KI an, wird reiner Text nicht direkt übernommen: Der Bot antwortet
+ * mit einem ausformulierten Vorschlag, den der Verfasser übernimmt oder
+ * verwirft (siehe `ai-discord.ts`). Nachrichten mit Anhängen gehen weiter direkt.
  */
 
 type Attachment = { id: string; filename: string; url: string; size?: number; content_type?: string }
@@ -137,6 +141,19 @@ export async function importForumThreadMessage(message: ForumThreadMessage) {
   }
 
   const name = authorName(message)
+  if (text && attachments.length === 0) {
+    const { proposeThreadEntry } = await import('@/lib/ai/ai-discord')
+    const proposed = await proposeThreadEntry({
+      id: message.id,
+      channelId: message.channel_id,
+      text,
+      authorDiscordId: message.author!.id!,
+      authorName: name,
+      timestamp: new Date(message.timestamp ?? Date.now()),
+    }, investigation.id, user)
+    if (proposed) return
+  }
+
   let entryId: string
   try {
     const entry = await prisma.investigationEntry.create({
@@ -194,6 +211,22 @@ export async function importForumThreadMessage(message: ForumThreadMessage) {
 export async function updateForumThreadMessage(message: ForumThreadMessage) {
   // Ohne `content` ist es nur ein nachgeladenes Link-Vorschaubild, keine Bearbeitung.
   if (message.content === undefined || message.webhook_id || message.author?.bot) return
+
+  // Gehört die Nachricht zu einem KI-Vorschlag, wird dieser neu formuliert –
+  // ein übernommener Eintrag wird nicht mit dem Rohtext überschrieben.
+  if (message.author?.id && message.content.trim()) {
+    const { refreshThreadProposal } = await import('@/lib/ai/ai-discord')
+    const handled = await refreshThreadProposal({
+      id: message.id,
+      channelId: message.channel_id,
+      text: message.content.trim(),
+      authorDiscordId: message.author.id,
+      authorName: authorName(message),
+      timestamp: new Date(message.timestamp ?? Date.now()),
+    })
+    if (handled) return
+  }
+
   const entry = await prisma.investigationEntry.findUnique({
     where: { discordMessageId: message.id },
     select: { id: true, content: true, investigation: { select: { id: true, caseNumber: true, discordThreadId: true } } },

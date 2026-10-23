@@ -6,10 +6,9 @@ import { resolveBaseUrl } from '@/lib/site'
 import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import {
   DEFAULT_ALERT_SETTINGS,
-  buildAgentNameIndex,
+  buildAgentNameMatcher,
   evaluateWithdrawals,
   isWeaponItem,
-  normalizePersonName,
   parseStorageEmbed,
   settingNumber,
   snowflakeAt,
@@ -68,13 +67,13 @@ export async function getStorageSettings(): Promise<StorageSettings> {
 }
 
 // Namensliste der Agents kurz merken; beim Einlesen vieler Nachrichten sonst je Embed eine Abfrage.
-let agentIndexCache: { expiresAt: number; index: Map<string, string> } | null = null
+let agentIndexCache: { expiresAt: number; match: (name: string) => string | null } | null = null
 async function agentIdForName(name: string) {
   if (!agentIndexCache || Date.now() > agentIndexCache.expiresAt) {
     const agents = await prisma.agent.findMany({ select: { id: true, firstName: true, lastName: true, status: true } })
-    agentIndexCache = { expiresAt: Date.now() + 60_000, index: buildAgentNameIndex(agents) }
+    agentIndexCache = { expiresAt: Date.now() + 60_000, match: buildAgentNameMatcher(agents) }
   }
-  return agentIndexCache.index.get(normalizePersonName(name)) ?? null
+  return agentIndexCache.match(name)
 }
 
 export type DiscordMessageLike = {
@@ -220,6 +219,9 @@ export function queueStorageLogSync() {
   if (syncRunning) return syncRunning
   syncRunning = syncStorageLogChannel()
     .then((result) => { if (result.created) console.log(`[StorageLogs] ${result.created} Lagereinträge nachgeholt`) })
+    // Neue oder umbenannte Agents auch ohne Knopfdruck nachträglich zuordnen.
+    .then(() => relinkUnassignedStorageEntries())
+    .then((linked) => { if (linked) console.log(`[StorageLogs] ${linked} Lagereinträge nachträglich Agents zugeordnet`) })
     .catch((error) => console.error('[StorageLogs] Nachholen fehlgeschlagen:', error))
     .finally(() => { syncRunning = null })
   return syncRunning

@@ -155,7 +155,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Sync selected Discord roles for manually assigned groups
     if ('discordRoleIds' in body && Array.isArray(body.discordRoleIds) && user.discordId) {
       const config = await getDiscordConfig()
-      const allGroupRoleIds = new Set(Object.values(config.authGroupRoleMap).flat())
+      // Bürger-/Bewerber-Rollen bleiben unangetastet, auch wenn sie einer Gruppe zugeordnet sind.
+      const applicantRoleIds = new Set(config.applicantRoleIds)
+      const allGroupRoleIds = new Set(Object.values(config.authGroupRoleMap).flat().filter((roleId) => !applicantRoleIds.has(roleId)))
       const desiredRoleIds = new Set(
         body.discordRoleIds.filter((rid: unknown): rid is string => typeof rid === 'string' && /^\d{17,22}$/.test(rid))
       )

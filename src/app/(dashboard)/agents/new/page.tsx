@@ -77,6 +77,7 @@ export default function NewAgentPage() {
     lastName: '',
     rankId: '',
     discordId: '',
+    phoneNumber: '',
     notes: '',
     units: [] as string[],
     hireDate: toLocalDateInput(),
@@ -107,6 +108,7 @@ export default function NewAgentPage() {
       const payload = {
         ...form,
         discordId: did || null,
+        phoneNumber: form.phoneNumber.trim() || null,
         applicationId: form.applicationId || null,
         contractTemplateId: form.contractTemplateId || null,
       }
@@ -233,6 +235,18 @@ export default function NewAgentPage() {
                   onChange={(v) => update('hireDate', v)}
                 />
               </div>
+
+              <Input
+                id="phoneNumber"
+                label="Telefonnummer"
+                type="tel"
+                inputMode="tel"
+                maxLength={32}
+                value={form.phoneNumber}
+                onChange={(e) => update('phoneNumber', e.target.value)}
+                placeholder="Optional, z. B. 555-1234"
+                className="font-mono"
+              />
 
               <Textarea
                 id="notes"

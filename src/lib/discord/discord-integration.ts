@@ -1153,6 +1153,9 @@ async function getAgentForDiscord(agentId: string) {
 }
 
 export function managedDiscordRoleIds(config: DiscordConfig, extraManagedRoleIds: string[] = []) {
+  // Bewerber-/Bürger-Rollen nie anfassen, auch wenn sie versehentlich zusätzlich
+  // als Mitarbeiter-, Rang- oder Ebenen-Rolle eingetragen sind.
+  const protectedRoles = new Set(config.applicantRoleIds)
   return Array.from(new Set([
     ...config.employeeRoleIds,
     ...Object.values(config.rankRoleMap),
@@ -1163,7 +1166,7 @@ export function managedDiscordRoleIds(config: DiscordConfig, extraManagedRoleIds
     config.promotionBlockRoleId,
     config.leaveRoleId,
     ...extraManagedRoleIds,
-  ].filter(Boolean)))
+  ].filter((roleId) => roleId && !protectedRoles.has(roleId))))
 }
 
 function dashboardGroupIdsForRoles(roleIds: string[], config: DiscordConfig) {
@@ -1298,10 +1301,9 @@ async function syncAgentDiscordMember(
   if (!memberId) return
   if (memberPermissionBlocked(memberId)) return { status: 'missing-permissions' as const }
 
-  const allManaged = Array.from(new Set([
-    ...managedDiscordRoleIds(config, extraManagedRoleIds),
-    ...config.applicantRoleIds,
-  ]))
+  // Bewerber-Rollen bewusst NICHT verwalten: Das ist auf dem Server die
+  // allgemeine „Bürger“-Rolle, die jeder behält – auch Agents und Gekündigte.
+  const allManaged = managedDiscordRoleIds(config, extraManagedRoleIds)
   const desired = mode === 'remove-all' ? [] : desiredRoleIds(agent, config)
   // Reuse a member already fetched by the caller (undefined = not provided → fetch)
   const member = preloadedMember !== undefined

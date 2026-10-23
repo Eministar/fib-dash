@@ -174,6 +174,7 @@ export async function POST(req: NextRequest) {
         lastName: parsed.data.lastName,
         rankId: parsed.data.rankId,
         discordId: did,
+        phoneNumber: parsed.data.phoneNumber ?? null,
         notes: parsed.data.notes || null,
         hireDate: parsed.data.hireDate ? new Date(parsed.data.hireDate) : new Date(),
         status: parsed.data.status || 'ACTIVE',

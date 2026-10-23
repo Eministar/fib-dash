@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
   DEFAULT_ALERT_SETTINGS,
-  buildAgentNameIndex,
+  buildAgentNameMatcher,
   evaluateWithdrawals,
   isWeaponItem,
   itemLabel,
@@ -44,11 +44,34 @@ test('Doppelnamen und fremde Nachrichten', () => {
 
 test('Namensabgleich: tolerant, aktive Agents zuerst', () => {
   assert.equal(normalizePersonName('  Niklas   DIÖR '), 'niklas dior')
-  const index = buildAgentNameIndex([
+  const match = buildAgentNameMatcher([
     { id: 'old', firstName: 'Niklas', lastName: 'Dior', status: 'TERMINATED' },
     { id: 'new', firstName: 'Niklas', lastName: 'Dior', status: 'ACTIVE' },
   ])
-  assert.equal(index.get(normalizePersonName('niklas dior')), 'new')
+  assert.equal(match('niklas dior'), 'new')
+})
+
+test('Namensabgleich über den Nachnamen, nur bei eindeutigem Treffer', () => {
+  const match = buildAgentNameMatcher([
+    { id: 'dior', firstName: 'Niklas', lastName: 'Dior', status: 'ACTIVE' },
+    { id: 'anna', firstName: 'Anna', lastName: 'Schmidt', status: 'ACTIVE' },
+    { id: 'max', firstName: 'Max', lastName: 'Schmidt', status: 'ACTIVE' },
+    { id: 'vdb', firstName: 'Lena', lastName: 'van der Berg', status: 'ACTIVE' },
+    { id: 'ex', firstName: 'Tom', lastName: 'Kowalski', status: 'TERMINATED' },
+  ])
+  assert.equal(match('Nick Dior'), 'dior', 'anderer Vorname, eindeutiger Nachname')
+  assert.equal(match('Dior Niklas'), 'dior', 'vertauscht')
+  assert.equal(match('Dior'), 'dior', 'nur Nachname')
+  assert.equal(match('N. Dior'), 'dior', 'Initiale')
+  assert.equal(match('Niklas Diorr'), null, 'Nachname zu kurz für Tippfehler-Toleranz')
+  assert.equal(match('Anna Schmitt'), 'anna', 'ein Tippfehler im längeren Nachnamen, Vorname entscheidet')
+  assert.equal(match('Max Schmidt'), 'max', 'gleicher Nachname, Vorname entscheidet')
+  assert.equal(match('Schmidt'), null, 'mehrdeutig → nicht zuordnen')
+  assert.equal(match('Paul Schmidt'), null, 'Vorname passt zu keinem')
+  assert.equal(match('Lena van der Berg'), 'vdb', 'mehrteiliger Nachname')
+  assert.equal(match('Tom Kowalski'), 'ex', 'Ausgeschiedene als letzter Ausweg')
+  assert.equal(match('Unbekannt Person'), null)
+  assert.equal(match(''), null)
 })
 
 test('Waffen erkennen und Gegenstände lesbar machen', () => {

@@ -1,14 +1,16 @@
 import { prisma } from '../prisma'
 import type { CurrentUser } from '../auth'
-import { canAccessInvestigation, investigationAccessInclude, INVESTIGATION_ENTRY_KIND_LABELS, INVESTIGATION_PERSON_ROLE_LABELS, INVESTIGATION_PRIORITY_LABELS, INVESTIGATION_STATUS_LABELS } from '../investigations/investigations'
-import { displayBadgeNumber } from '../agents/badge-number'
+import { canAccessInvestigation, investigationAccessInclude } from '../investigations/investigations'
 import {
   buildSystemPrompt,
   buildUserPrompt,
-  MAX_KEYWORDS_LENGTH,
+  contextText,
+  maxInputLength,
   parseSuggestion,
+  reviewSuggestion,
   type AiFamilyContext,
   type AiInvestigationContext,
+  type AiSource,
   type AiSuggestion,
   type AiSuggestionKind,
 } from './ai-prompts'
@@ -56,17 +58,19 @@ function checkRateLimit(userId: string) {
   recentCalls.set(userId, calls)
 }
 
-async function completeJson(system: string, user: string) {
+type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
+
+async function completeJson(messages: ChatMessage[]) {
   const response = await fetch(DEEPSEEK_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.DEEPSEEK_API_KEY!.trim()}` },
     body: JSON.stringify({
       model: process.env.DEEPSEEK_MODEL?.trim() || DEFAULT_MODEL,
-      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      messages,
       response_format: { type: 'json_object' },
-      // Niedrig: lieber trocken und wörtlich als kreativ.
-      temperature: 0.2,
-      max_tokens: 1200,
+      // 0: wörtlich und wiederholbar statt kreativ.
+      temperature: 0,
+      max_tokens: 800,
     }),
     signal: AbortSignal.timeout(45_000),
   }).catch((error: unknown) => {
@@ -80,37 +84,20 @@ async function completeJson(system: string, user: string) {
   return body.choices?.[0]?.message?.content ?? ''
 }
 
-async function authorContext(user: Pick<CurrentUser, 'id' | 'displayName'>) {
-  const agent = await prisma.agent.findFirst({
-    where: { user: { id: user.id } },
-    select: { firstName: true, lastName: true, badgeNumber: true, rank: { select: { name: true } } },
-  })
-  return {
-    name: agent ? `${agent.firstName} ${agent.lastName}` : user.displayName,
-    rank: agent?.rank?.name ?? null,
-    badgeNumber: agent ? displayBadgeNumber(agent.badgeNumber) : null,
-  }
-}
-
-const formatDate = (date: Date) => date.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Berlin' })
-
 async function familyContext(dossierId: string): Promise<AiFamilyContext | null> {
   const dossier = await prisma.dossier.findUnique({
     where: { id: dossierId },
     select: {
-      title: true, address: true,
+      title: true,
       leader: { select: { firstName: true, lastName: true } },
       persons: { select: { firstName: true, lastName: true }, take: 30 },
-      investigations: { select: { caseNumber: true, title: true }, orderBy: { updatedAt: 'desc' }, take: 10 },
     },
   })
   if (!dossier) return null
+  const leader = dossier.leader ? [`${dossier.leader.firstName} ${dossier.leader.lastName}`] : []
   return {
     title: dossier.title,
-    leader: dossier.leader ? `${dossier.leader.firstName} ${dossier.leader.lastName}` : null,
-    address: dossier.address,
-    members: dossier.persons.map((person) => `${person.firstName} ${person.lastName}`),
-    recentCases: dossier.investigations.map((item) => `${item.caseNumber} ${item.title}`),
+    members: [...new Set([...leader, ...dossier.persons.map((person) => `${person.firstName} ${person.lastName}`)])],
   }
 }
 
@@ -119,9 +106,7 @@ async function investigationContext(investigationId: string, user: CurrentUser) 
     where: { id: investigationId },
     include: {
       ...investigationAccessInclude,
-      leadAgent: { select: { firstName: true, lastName: true } },
-      persons: { select: { role: true, person: { select: { firstName: true, lastName: true } } }, take: 20 },
-      entries: { select: { occurredAt: true, kind: true, title: true, content: true }, orderBy: { occurredAt: 'desc' }, take: 8 },
+      persons: { select: { person: { select: { firstName: true, lastName: true } } }, take: 20 },
       dossiers: { select: { id: true }, take: 1 },
     },
   })
@@ -130,17 +115,7 @@ async function investigationContext(investigationId: string, user: CurrentUser) 
   const context: AiInvestigationContext = {
     caseNumber: investigation.caseNumber,
     title: investigation.title,
-    summary: investigation.summary,
-    status: INVESTIGATION_STATUS_LABELS[investigation.status],
-    priority: INVESTIGATION_PRIORITY_LABELS[investigation.priority],
-    leadAgent: investigation.leadAgent ? `${investigation.leadAgent.firstName} ${investigation.leadAgent.lastName}` : null,
-    persons: investigation.persons.map((entry) => `${entry.person.firstName} ${entry.person.lastName} (${INVESTIGATION_PERSON_ROLE_LABELS[entry.role]})`),
-    recentEntries: investigation.entries.map((entry) => ({
-      date: formatDate(entry.occurredAt),
-      kind: INVESTIGATION_ENTRY_KIND_LABELS[entry.kind as keyof typeof INVESTIGATION_ENTRY_KIND_LABELS] ?? entry.kind,
-      title: entry.title,
-      content: entry.content,
-    })),
+    persons: investigation.persons.map((entry) => `${entry.person.firstName} ${entry.person.lastName}`),
   }
   return { context, dossierId: investigation.dossiers[0]?.id ?? null }
 }
@@ -148,6 +123,8 @@ async function investigationContext(investigationId: string, user: CurrentUser) 
 export type SuggestInput = {
   kind: AiSuggestionKind
   keywords: string
+  /** `message`: ganze Discord-Nachricht statt Stichwörter. */
+  source?: AiSource
   investigationId?: string | null
   dossierId?: string | null
 }
@@ -155,18 +132,39 @@ export type SuggestInput = {
 /** Vorschlag erzeugen. Wirft `AiError` mit einer Meldung, die der Nutzer sehen darf. */
 export async function suggestText(input: SuggestInput, user: CurrentUser): Promise<AiSuggestion> {
   if (!await isAiEnabled()) throw new AiError('Der KI-Assistent ist ausgeschaltet.', 403)
+  const source = input.source ?? 'keywords'
   const keywords = input.keywords.trim()
   if (!keywords) throw new AiError('Bitte mindestens ein Stichwort angeben.')
-  if (keywords.length > MAX_KEYWORDS_LENGTH) throw new AiError(`Höchstens ${MAX_KEYWORDS_LENGTH} Zeichen Stichwörter.`)
+  if (keywords.length > maxInputLength(source)) throw new AiError(`Höchstens ${maxInputLength(source)} Zeichen.`)
   if (input.kind === 'entry' && !input.investigationId) throw new AiError('Für einen Chronologie-Eintrag fehlt die Akte.')
   checkRateLimit(user.id)
 
   const investigation = input.investigationId ? await investigationContext(input.investigationId, user) : null
   const dossierId = input.dossierId || investigation?.dossierId || null
-  const [author, family] = await Promise.all([authorContext(user), dossierId ? familyContext(dossierId) : null])
+  const family = dossierId ? await familyContext(dossierId) : null
 
-  const system = buildSystemPrompt(input.kind)
-  const prompt = buildUserPrompt({ kind: input.kind, keywords, author, now: new Date(), investigation: investigation?.context, family })
-  const raw = await completeJson(system, prompt)
-  return parseSuggestion(raw)
+  const promptInput = { kind: input.kind, source, keywords, investigation: investigation?.context, family }
+  const messages: ChatMessage[] = [
+    { role: 'system', content: buildSystemPrompt(input.kind) },
+    { role: 'user', content: buildUserPrompt(promptInput) },
+  ]
+  const review = (suggestion: AiSuggestion) => reviewSuggestion(suggestion, { keywords, context: contextText(promptInput) })
+
+  const raw = await completeJson(messages)
+  const first = parseSuggestion(raw)
+  const problems = review(first)
+  if (!problems.length) return first
+
+  // Ein zweiter Versuch mit den konkreten Beanstandungen.
+  const retry = parseSuggestion(await completeJson([
+    ...messages,
+    { role: 'assistant', content: raw },
+    { role: 'user', content: `Überarbeite den Vorschlag: ${problems.join(' ')} Halte dich strikt an die Regeln.` },
+  ]))
+  const remaining = review(retry)
+  // Erfundene Zahlen sind ein Ausschlussgrund; ein etwas zu langer Text nicht.
+  if (remaining.some((problem) => problem.startsWith('Die Zahlen'))) {
+    throw new AiError('Die KI hat Angaben ergänzt, die nicht in der Eingabe stehen. Bitte noch einmal versuchen oder selbst formulieren.', 422)
+  }
+  return retry
 }

@@ -719,6 +719,8 @@ model Agent {
   user             User?                  @relation("AgentAccount", fields: [userId], references: [id], onDelete: SetNull)
   firstName        String
   lastName         String
+  /// Ingame-Telefonnummer (frei formatiert, z. B. "555-1234").
+  phoneNumber      String?                @db.VarChar(32)
   rankId           String
   rank             Rank                   @relation(fields: [rankId], references: [id])
   status           AgentStatus            @default(ACTIVE)
@@ -2954,9 +2956,17 @@ model AiProposal {
   investigation      Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
   channelId          String        @db.VarChar(32)
   messageId          String?       @db.VarChar(32)
+  /// Verfasser: in seinem Namen wird der Eintrag angelegt.
   requesterDiscordId String        @db.VarChar(32)
+  /// Nachricht im Akten-Beitrag, aus der der Vorschlag entstand (leer bei `/fib-ki`).
+  sourceMessageId    String?       @unique @db.VarChar(32)
+  /// PENDING, ACCEPTED oder REJECTED – bleibt stehen, damit dieselbe Nachricht nie zweimal vorgeschlagen wird.
+  status             String        @default("PENDING") @db.VarChar(16)
   title              String        @db.VarChar(200)
   content            String        @db.Text
+  /// Zeitpunkt der Ursprungsnachricht; wird zum Zeitpunkt des Eintrags.
+  occurredAt         DateTime?
+  decidedAt          DateTime?
   createdAt          DateTime      @default(now())
 
   @@index([investigationId])

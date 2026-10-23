@@ -320,6 +320,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if ('flag' in parsed.data && parsed.data.flag !== existing.flag) {
       changes.push(`Markierung: ${existing.flag ?? '—'} → ${parsed.data.flag ?? '—'}`)
     }
+    if ('phoneNumber' in parsed.data && parsed.data.phoneNumber !== undefined && parsed.data.phoneNumber !== existing.phoneNumber) {
+      changes.push(`Telefonnummer: ${existing.phoneNumber ?? '—'} → ${parsed.data.phoneNumber ?? '—'}`)
+    }
     if ('discordId' in parsed.data && parsed.data.discordId !== existing.discordId) {
       changes.push(
         `Discord-ID: ${existing.discordId ?? '—'} → ${parsed.data.discordId ?? '—'}`,
