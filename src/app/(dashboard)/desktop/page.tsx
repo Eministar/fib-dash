@@ -1,6 +1,6 @@
 'use client'
 
-import { Download, MonitorDown, RefreshCw } from 'lucide-react'
+import { Download, MonitorDown, RefreshCw, ShieldAlert } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -57,6 +57,24 @@ export default function DesktopPage() {
           </a>
         </Card>
       )}
+
+      <Card className="flex gap-3.5">
+        <ShieldAlert size={18} className="mt-0.5 shrink-0 text-[#ffd60a]" aria-hidden />
+        <div className="min-w-0">
+          <h3 className="text-[13.5px] font-semibold text-white">Windows warnt beim ersten Start</h3>
+          <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#98989d]">
+            Der Installer hat (noch) kein Code-Signing-Zertifikat. Windows SmartScreen zeigt deshalb
+            „Der Computer wurde durch Windows geschützt“ und blockiert den Start. Die App ist trotzdem unbedenklich –
+            sie kommt direkt aus diesem Dashboard.
+          </p>
+          <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12.5px] leading-relaxed text-[#98989d]">
+            <li>Im Warnfenster auf <span className="text-[#f5f5f7]">Weitere Informationen</span> klicken.</li>
+            <li>Unten auf <span className="text-[#f5f5f7]">Trotzdem ausführen</span> klicken.</li>
+            <li>Blockiert der Browser schon den Download, dort über das Menü am Download <span className="text-[#f5f5f7]">Behalten</span> wählen.</li>
+          </ol>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-[#98989d]">Das ist nur bei der ersten Installation nötig – Updates installiert die App danach ohne Nachfrage.</p>
+        </div>
+      </Card>
 
       <Card>
         <h3 className="text-[13.5px] font-semibold text-white">So funktioniert’s</h3>
