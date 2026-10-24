@@ -46,12 +46,20 @@ function fillOptions(listId: string, options: { id: string; label: string }[]) {
   )
 }
 
-/** Wert erst setzen, wenn die neu eingefügten Optionen verbunden sind. */
-function selectValue(dropdown: DropdownElement, value: string | null | undefined) {
+/**
+ * Setzt den Wert eines Fluent-Dropdowns. Solange dessen Template oder die frisch
+ * eingefügten Optionen noch nicht stehen, wirft der Setter – dann im nächsten
+ * Frame erneut versuchen (im Release-Build ist der Start schneller als im Dev-Modus).
+ */
+function selectValue(dropdown: DropdownElement, value: string | null | undefined, attempts = 30) {
   if (!value) return
-  requestAnimationFrame(() => {
+  try {
     dropdown.value = value
-  })
+    if (dropdown.value === value) return
+  } catch {
+    // Noch nicht bereit.
+  }
+  if (attempts > 0) requestAnimationFrame(() => selectValue(dropdown, value, attempts - 1))
 }
 
 // ── Ansichten ────────────────────────────────────────────────────────
@@ -119,7 +127,7 @@ const clipperHotkey = hotkeyInput($<ValueElement>('s-clipper-hotkey'), {
 function renderSettings(view: SettingsView) {
   settingsView = view
   const { settings } = view
-  ;($('s-clipper') as DropdownElement).value = settings.clipper
+  selectValue($<DropdownElement>('s-clipper'), settings.clipper)
   bodycamHotkey.set(settings.bodycamHotkey)
   clipperHotkey.set(settings.clipperHotkey)
   const dir = $<ValueElement>('s-clip-dir')

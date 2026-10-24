@@ -26,5 +26,12 @@ document.addEventListener('contextmenu', (event) => {
   if (!(event.target instanceof HTMLElement && event.target.closest('fluent-text-input, fluent-textarea'))) event.preventDefault()
 })
 
-void startApp()
+startApp().catch((error: unknown) => {
+  // Nie ein leeres Fenster: Startfehler sichtbar machen statt still abzubrechen.
+  console.error(error)
+  const bar = document.getElementById('login-error')!
+  bar.textContent = `Die App konnte nicht starten: ${error instanceof Error ? error.message : String(error)}`
+  bar.hidden = false
+  document.getElementById('view-login')!.hidden = false
+})
 startAutoUpdates()
