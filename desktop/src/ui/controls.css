@@ -1,0 +1,185 @@
+/* Eingabefelder, Auswahllisten, Dialoge und Hinweisleisten im Stil von WinUI 3.
+   Die Fluent-Web-Components lesen ihre Farben aus Design-Tokens (CSS-Variablen) –
+   hier werden diese Tokens je Komponente auf die WinUI-Werte gesetzt
+   (ControlFillColor*, ControlStrokeColor*, Flyout, ContentDialog, InfoBar). */
+:root {
+  --control-fill: rgba(255, 255, 255, 0.7);
+  --control-fill-hover: rgba(249, 249, 249, 0.5);
+  --control-fill-active: #ffffff;
+  --control-stroke: rgba(0, 0, 0, 0.0578);
+  --control-stroke-text: rgba(0, 0, 0, 0.4458);
+  --control-stroke-elevation: rgba(0, 0, 0, 0.1622);
+  --flyout-bg: #f9f9f9;
+  --flyout-stroke: rgba(0, 0, 0, 0.0578);
+  --dialog-bg: #ffffff;
+  --dialog-footer: #f3f3f3;
+  --surface-stroke: rgba(117, 117, 117, 0.4);
+  --divider: rgba(0, 0, 0, 0.0803);
+  --info-bg: rgba(246, 246, 246, 0.5);
+  --success-bg: #dff6dd;
+  --caution-bg: #fff4ce;
+  --critical-bg: #fde7e9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --control-fill: rgba(255, 255, 255, 0.0605);
+    --control-fill-hover: rgba(255, 255, 255, 0.0837);
+    --control-fill-active: rgba(30, 30, 30, 0.7);
+    --control-stroke: rgba(255, 255, 255, 0.0698);
+    --control-stroke-text: rgba(255, 255, 255, 0.5442);
+    --control-stroke-elevation: rgba(255, 255, 255, 0.093);
+    --flyout-bg: #2c2c2c;
+    --flyout-stroke: rgba(0, 0, 0, 0.2);
+    --dialog-bg: #2b2b2b;
+    --dialog-footer: #202020;
+    --surface-stroke: rgba(117, 117, 117, 0.4);
+    --divider: rgba(255, 255, 255, 0.0837);
+    --info-bg: rgba(255, 255, 255, 0.05);
+    --success-bg: #393d1b;
+    --caution-bg: #433519;
+    --critical-bg: #442726;
+  }
+}
+
+/* ── Textfelder ───────────────────────────────────────────────── */
+fluent-text-input,
+fluent-textarea {
+  --colorNeutralBackground1: var(--control-fill);
+  --colorNeutralBackground3: var(--control-fill);
+  --colorNeutralStroke1: var(--control-stroke);
+  --colorNeutralStroke1Hover: var(--control-stroke);
+  --colorNeutralStroke1Pressed: var(--control-stroke);
+  --colorNeutralStrokeAccessible: var(--control-stroke-text);
+  --colorNeutralStrokeAccessibleHover: var(--control-stroke-text);
+  --colorNeutralStrokeAccessiblePressed: var(--control-stroke-text);
+  --colorNeutralForeground4: var(--text-secondary);
+}
+fluent-text-input:hover,
+fluent-textarea:hover { --colorNeutralBackground1: var(--control-fill-hover); --colorNeutralBackground3: var(--control-fill-hover); }
+fluent-text-input:focus-within,
+fluent-textarea:focus-within { --colorNeutralBackground1: var(--control-fill-active); --colorNeutralBackground3: var(--control-fill-active); }
+
+/* Datum/Uhrzeit (natives Feld) gleich aussehen lassen */
+.native-input {
+  border: 1px solid var(--control-stroke) !important;
+  border-bottom-color: var(--control-stroke-text) !important;
+  background: var(--control-fill) !important;
+}
+.native-input:hover { background: var(--control-fill-hover) !important; }
+.native-input:focus {
+  background: var(--control-fill-active) !important;
+  border-bottom: 2px solid var(--colorCompoundBrandStroke) !important;
+}
+
+/* ── Auswahllisten (ComboBox) ─────────────────────────────────── */
+fluent-dropdown {
+  --colorNeutralBackground1: var(--control-fill);
+  --colorNeutralStroke1: var(--control-stroke);
+  --colorNeutralStroke1Hover: var(--control-stroke);
+  --colorNeutralStroke1Pressed: var(--control-stroke);
+  --colorNeutralStrokeAccessible: var(--control-stroke-elevation);
+  --colorNeutralForeground4: var(--text-secondary);
+  min-width: 0;
+}
+fluent-dropdown:hover { --colorNeutralBackground1: var(--control-fill-hover); }
+
+/* Gewählter Text bleibt einzeilig und wird bei Platzmangel gekürzt. */
+fluent-dropdown > [slot='control'] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Aufgeklappte Liste wie ein WinUI-Flyout */
+fluent-dropdown fluent-listbox,
+fluent-listbox {
+  --colorNeutralBackground1: var(--flyout-bg);
+  --colorNeutralBackground1Hover: var(--subtle-hover);
+  --colorNeutralBackground1Pressed: var(--subtle-pressed);
+  border: 1px solid var(--flyout-stroke);
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.26);
+  padding: 4px;
+}
+fluent-option { border-radius: 4px; }
+
+/* ── Dialoge (ContentDialog) ──────────────────────────────────── */
+fluent-dialog {
+  --colorNeutralBackground1: var(--dialog-bg);
+  --dialog-backdrop: rgba(0, 0, 0, 0.3);
+}
+fluent-dialog::part(dialog) {
+  border: 1px solid var(--surface-stroke);
+  border-radius: 8px;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.37), 0 2px 21px rgba(0, 0, 0, 0.37);
+  overflow: hidden;
+}
+fluent-dialog-body {
+  padding: 24px 24px 0;
+  gap: 12px;
+}
+fluent-dialog-body::part(title) {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+/* Befehlsbereich: eigene, dunklere Fläche mit gleich breiten Knöpfen */
+fluent-dialog-body::part(actions) {
+  margin: 12px -24px 0;
+  padding: 24px;
+  background: var(--dialog-footer);
+  border-top: 1px solid var(--divider);
+  justify-content: stretch;
+}
+fluent-dialog-body > fluent-button[slot='action'] { flex: 1 1 0; min-width: 0; }
+
+/* Dialoge ohne Befehlsbereich (Einstellungen, Player) unten nicht abschneiden */
+#settings-dialog fluent-dialog-body,
+#player-dialog fluent-dialog-body { padding-bottom: 24px; }
+
+/* ── Hinweisleisten (InfoBar) ─────────────────────────────────── */
+fluent-message-bar {
+  --colorNeutralBackground3: var(--info-bg);
+  --colorNeutralStroke1: var(--card-stroke);
+  --colorNeutralForeground3: var(--colorNeutralForeground1);
+  --colorPaletteGreenBackground1: var(--success-bg);
+  --colorPaletteGreenBorder1: var(--card-stroke);
+  --colorPaletteDarkOrangeBackground1: var(--caution-bg);
+  --colorPaletteDarkOrangeBorder1: var(--card-stroke);
+  --colorPaletteRedBackground1: var(--critical-bg);
+  --colorPaletteRedBorder1: var(--card-stroke);
+  border-radius: 4px;
+}
+
+/* ── Knöpfe ───────────────────────────────────────────────────── */
+:root { --control-fill-pressed: rgba(249, 249, 249, 0.3); --control-stroke-button: rgba(0, 0, 0, 0.0578); }
+@media (prefers-color-scheme: dark) {
+  :root { --control-fill-pressed: rgba(255, 255, 255, 0.0326); --control-stroke-button: rgba(255, 255, 255, 0.093); }
+}
+fluent-button { white-space: nowrap; flex-shrink: 0; }
+/* Standardknopf: halbtransparente Füllung mit feiner Kontur */
+fluent-button:not([appearance]) {
+  --colorNeutralBackground1: var(--control-fill);
+  --colorNeutralBackground1Hover: var(--control-fill-hover);
+  --colorNeutralBackground1Pressed: var(--control-fill-pressed);
+  --colorNeutralStroke1: var(--control-stroke-button);
+  --colorNeutralStroke1Hover: var(--control-stroke-button);
+  --colorNeutralStroke1Pressed: var(--control-stroke);
+  --colorNeutralForeground1Pressed: var(--text-secondary);
+}
+/* Schlichte Knöpfe (Befehlsleisten): Symbole bleiben neutral statt blau */
+fluent-button[appearance='subtle'],
+fluent-button[appearance='transparent'] {
+  --colorSubtleBackgroundHover: var(--subtle-hover);
+  --colorSubtleBackgroundPressed: var(--subtle-pressed);
+  --colorTransparentBackgroundHover: var(--subtle-hover);
+  --colorTransparentBackgroundPressed: var(--subtle-pressed);
+  --colorNeutralForeground2: var(--colorNeutralForeground1);
+  --colorNeutralForeground2Hover: var(--colorNeutralForeground1);
+  --colorNeutralForeground2Pressed: var(--text-secondary);
+  --colorNeutralForeground2BrandHover: var(--colorNeutralForeground1);
+  --colorNeutralForeground2BrandPressed: var(--text-secondary);
+}
+.checkbox-field { flex-shrink: 0; white-space: nowrap; }

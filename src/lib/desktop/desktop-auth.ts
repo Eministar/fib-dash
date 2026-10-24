@@ -20,8 +20,13 @@ const CODE_AUDIENCE = 'fib-desktop-connect'
 const CODE_TTL_SECONDS = 120
 const TOKEN_TTL_DAYS = 180
 
-/** Die App lädt Clips hoch und liest dafür Akten und Agents – mehr nicht. */
-export const DESKTOP_TOKEN_SCOPES: Permission[] = ['investigations:view', 'investigations:manage', 'agents:view']
+/**
+ * Leere Liste = alle Rechte des Kontos, wie eine Browser-Sitzung: Die App deckt
+ * nach und nach dieselben Bereiche ab wie das Dashboard (Clips, Dienstzeiten, Akten).
+ */
+export const DESKTOP_TOKEN_SCOPES: Permission[] = []
+
+export const DESKTOP_TOKEN_PREFIX = 'FIB Desktop · '
 
 const CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/
 
@@ -71,7 +76,7 @@ export async function redeemConnectCode(code: string, verifier: string, deviceNa
   }
   rememberRedeemed(code, (payload.exp ?? 0) * 1000)
 
-  const name = `FIB Desktop · ${deviceName}`.slice(0, 80)
+  const name = `${DESKTOP_TOKEN_PREFIX}${deviceName}`.slice(0, 80)
   // Meldet sich dasselbe Gerät erneut an, ersetzt der neue Token den alten.
   await prisma.apiToken.updateMany({
     where: { userId: payload.sub, name, revokedAt: null },

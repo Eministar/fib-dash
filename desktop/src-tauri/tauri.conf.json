@@ -14,10 +14,10 @@
       {
         "label": "main",
         "title": "FIB Desktop",
-        "width": 1040,
-        "height": 760,
-        "minWidth": 720,
-        "minHeight": 560,
+        "width": 1180,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 620,
         "transparent": true,
         "windowEffects": {
           "effects": [
@@ -27,7 +27,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://cdn.discordapp.com; media-src 'self' asset: http://asset.localhost; connect-src ipc: http://ipc.localhost",
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: asset: http://asset.localhost; media-src 'self' asset: http://asset.localhost; connect-src ipc: http://ipc.localhost",
       "assetProtocol": {
         "enable": true,
         "scope": [
@@ -35,7 +35,8 @@
           "**/*.mkv",
           "**/*.mov",
           "**/*.webm",
-          "**/*.MP4"
+          "**/*.MP4",
+          "**/*.bmp"
         ]
       }
     }

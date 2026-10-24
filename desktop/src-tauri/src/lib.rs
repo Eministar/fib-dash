@@ -3,6 +3,8 @@ mod auth;
 mod clipper;
 mod media;
 mod settings;
+mod convert;
+mod killclip;
 
 use std::{
     collections::HashMap,
@@ -36,6 +38,9 @@ struct AppState {
     capturing: AtomicBool,
     /// Fertig übertragene Dateien, deren Clip noch nicht angelegt ist (z. B. Formfehler).
     tickets: Mutex<HashMap<PathBuf, String>>,
+    kill_clips: killclip::KillClips,
+    /// Taste für den Einrichtungs-Screenshot, solange die Einrichtung offen ist.
+    calibration_shortcut: Mutex<Option<Shortcut>>,
 }
 
 #[derive(Serialize)]
@@ -88,7 +93,10 @@ fn effective_clipper_hotkey(settings: &Settings) -> String {
 fn register_hotkey(app: &AppHandle, hotkey: &str) -> Result<(), String> {
     let shortcut: Shortcut = hotkey.parse().map_err(|_| format!("Ungültige Bodycam-Taste „{hotkey}“"))?;
     let shortcuts = app.global_shortcut();
-    shortcuts.unregister_all().map_err(|e| e.to_string())?;
+    // Nur die bisherige Bodycam-Taste lösen – die Einrichtungstaste der Kill-Clips bleibt.
+    if let Some(previous) = app.try_state::<AppState>().and_then(|s| s.settings.lock().unwrap().bodycam_hotkey.parse::<Shortcut>().ok()) {
+        let _ = shortcuts.unregister(previous);
+    }
     shortcuts
         .register(shortcut)
         .map_err(|_| format!("„{hotkey}“ ist schon von einem anderen Programm belegt"))
@@ -163,7 +171,9 @@ fn get_settings(app: AppHandle, state: State<AppState>) -> SettingsView {
 }
 
 #[tauri::command]
-fn save_settings(app: AppHandle, state: State<AppState>, settings: Settings) -> Result<SettingsView, String> {
+fn save_settings(app: AppHandle, state: State<AppState>, mut settings: Settings) -> Result<SettingsView, String> {
+    // Die Kill-Clip-Einrichtung hat ihren eigenen Befehl und bleibt hier unberührt.
+    settings.kill_clip = state.settings.lock().unwrap().kill_clip.clone();
     if !settings.clipper_hotkey.trim().is_empty() {
         clipper::parse_hotkey(&settings.clipper_hotkey)?;
     }
@@ -262,9 +272,200 @@ async fn upload_clip(app: AppHandle, state: State<'_, AppState>, path: String, m
     Ok(clip)
 }
 
+fn trims_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path().app_cache_dir().map(|dir| dir.join("schnitte")).map_err(|e| e.to_string())
+}
+
+/// Schneidet und/oder komprimiert einen Clip; Fortschritt als Ereignis `convert-progress` (0–100).
+#[tauri::command]
+async fn convert_clip(
+    app: AppHandle,
+    path: String,
+    start: Option<f64>,
+    end: Option<f64>,
+    duration: f64,
+    quality: convert::Quality,
+) -> Result<ClipInfo, String> {
+    let out_dir = trims_dir(&app)?;
+    let emitter = app.clone();
+    let job = convert::Job { range: start.zip(end), duration, quality };
+    let converted = tauri::async_runtime::spawn_blocking(move || {
+        convert::convert(Path::new(&path), &out_dir, job, move |percent| {
+            let _ = emitter.emit("convert-progress", percent);
+        })
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    inspect(&converted)
+}
+
+/// Löscht einen zugeschnittenen Zwischenstand – aber nur aus dem eigenen Ordner.
+#[tauri::command]
+fn discard_trim(app: AppHandle, path: String) {
+    if let Ok(dir) = trims_dir(&app) {
+        let path = PathBuf::from(path);
+        if path.parent() == Some(dir.as_path()) {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+}
+
+#[tauri::command]
+async fn api_call(state: State<'_, AppState>, method: String, path: String, body: Option<Value>) -> Result<Value, String> {
+    let result = api::call(&state.client, &method, &path, body).await;
+    if result.as_ref().err().map(String::as_str) == Some(api::UNAUTHORIZED) {
+        auth::delete_token();
+    }
+    result
+}
+
+/// Bild aus dem Dashboard als Data-URL (das Fenster selbst hat keinen Token).
+#[tauri::command]
+async fn api_image(state: State<'_, AppState>, path: String) -> Result<String, String> {
+    use base64::Engine;
+    let (bytes, content_type) = api::fetch(&state.client, &path, 25 * 1024 * 1024).await?;
+    if !content_type.starts_with("image/") {
+        return Err("Keine Bilddatei".into());
+    }
+    Ok(format!("data:{content_type};base64,{}", base64::engine::general_purpose::STANDARD.encode(bytes)))
+}
+
+/// Lädt eine Datei (z. B. einen Clip) in den Cache und liefert den lokalen Pfad.
+#[tauri::command]
+async fn api_download(app: AppHandle, state: State<'_, AppState>, path: String, name: String) -> Result<String, String> {
+    let safe: String = name.chars().filter(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.')).collect();
+    if safe.is_empty() || safe.starts_with('.') {
+        return Err("Ungültiger Dateiname".into());
+    }
+    let dir = media_dir(&app)?;
+    let target = dir.join(&safe);
+    if target.exists() {
+        return Ok(target.display().to_string());
+    }
+    let (bytes, _) = api::fetch(&state.client, &path, 20 * 1024 * 1024 * 1024).await?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let partial = dir.join(format!("{safe}.part"));
+    std::fs::write(&partial, bytes).map_err(|e| e.to_string())?;
+    std::fs::rename(&partial, &target).map_err(|e| e.to_string())?;
+    Ok(target.display().to_string())
+}
+
+fn media_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path().app_cache_dir().map(|dir| dir.join("medien")).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn duty_times(state: State<'_, AppState>) -> Result<Value, String> {
+    api::duty_times(&state.client).await
+}
+
+#[tauri::command]
+fn open_dashboard(app: AppHandle, path: Option<String>) -> Result<(), String> {
+    let url = format!("{}{}", api::base_url(), path.unwrap_or_default());
+    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn cancel_upload(state: State<AppState>) {
     state.upload_cancel.lock().unwrap().store(true, Ordering::SeqCst);
+}
+
+// ── Kill-Clips ───────────────────────────────────────────────────────
+
+/// Taste für den Einrichtungs-Screenshot (nur aktiv, solange die Einrichtung offen ist).
+const CALIBRATION_HOTKEY: &str = "Ctrl+Alt+K";
+
+#[tauri::command]
+fn killclip_status(state: State<AppState>) -> killclip::Status {
+    state.kill_clips.status()
+}
+
+#[tauri::command]
+async fn killclip_start(app: AppHandle, state: State<'_, AppState>) -> Result<killclip::Status, String> {
+    state.kill_clips.start(app.clone()).await
+}
+
+#[tauri::command]
+fn killclip_stop(app: AppHandle, state: State<AppState>) {
+    state.kill_clips.stop(&app);
+}
+
+#[tauri::command]
+fn killclip_save_config(app: AppHandle, state: State<AppState>, config: killclip::Config) -> Result<SettingsView, String> {
+    let mut settings = state.settings.lock().unwrap();
+    settings.kill_clip = config;
+    settings::save(&app, &settings)?;
+    Ok(settings_view(&app, &settings))
+}
+
+/// Einrichtung öffnen/schließen: solange offen, macht Strg+Alt+K im Spiel einen Screenshot.
+#[tauri::command]
+fn killclip_calibration(app: AppHandle, state: State<AppState>, active: bool) -> Result<String, String> {
+    let shortcuts = app.global_shortcut();
+    let mut current = state.calibration_shortcut.lock().unwrap();
+    if let Some(previous) = current.take() {
+        let _ = shortcuts.unregister(previous);
+    }
+    if active {
+        let shortcut: Shortcut = CALIBRATION_HOTKEY.parse().map_err(|_| "Ungültige Taste".to_string())?;
+        shortcuts
+            .register(shortcut)
+            .map_err(|_| format!("„{CALIBRATION_HOTKEY}“ ist schon von einem anderen Programm belegt"))?;
+        *current = Some(shortcut);
+    }
+    Ok(CALIBRATION_HOTKEY.into())
+}
+
+fn emit_screenshot(app: &AppHandle) {
+    let payload = match killclip::take_screenshot(app) {
+        Ok((path, width, height)) => json!({
+            "path": path.display().to_string(),
+            "width": width,
+            "height": height,
+            "at": SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0),
+        }),
+        Err(message) => json!({ "error": message }),
+    };
+    let _ = app.emit("killclip-screenshot", payload);
+}
+
+#[tauri::command]
+async fn killclip_screenshot(app: AppHandle) {
+    let _ = tauri::async_runtime::spawn_blocking(move || emit_screenshot(&app)).await;
+}
+
+/// Ordner mit den fertigen Kill-Clips (bzw. die Datei darin) im Explorer zeigen.
+#[tauri::command]
+fn killclip_reveal(app: AppHandle, path: Option<String>) -> Result<(), String> {
+    let dir = killclip::output_dir(&app);
+    match path.map(PathBuf::from).filter(|p| p.starts_with(&dir) && p.exists()) {
+        Some(file) => app.opener().reveal_item_in_dir(file).map_err(|e| e.to_string()),
+        None => {
+            std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            app.opener().open_path(dir.display().to_string(), None::<&str>).map_err(|e| e.to_string())
+        }
+    }
+}
+
+/// Nur Links zu Discord-Nachrichten öffnen.
+#[tauri::command]
+fn killclip_open_link(app: AppHandle, url: String) -> Result<(), String> {
+    if !url.starts_with("https://discord.com/channels/") {
+        return Err("Ungültiger Link".into());
+    }
+    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn killclip_set_hitmarker(app: AppHandle, region: killclip::screen::Region) -> Result<(), String> {
+    killclip::save_hitmarker_template(&app, region)
+}
+
+#[tauri::command]
+async fn killclip_test_feed(app: AppHandle, region: killclip::screen::Region, name: String) -> Result<killclip::FeedTest, String> {
+    tauri::async_runtime::spawn_blocking(move || killclip::test_killfeed(&app, region, &name))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 pub fn run() {
@@ -275,8 +476,17 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, _shortcut, event| {
-                    if event.state() == ShortcutState::Pressed {
+                .with_handler(|app, shortcut, event| {
+                    if event.state() != ShortcutState::Pressed {
+                        return;
+                    }
+                    let calibration = app
+                        .try_state::<AppState>()
+                        .is_some_and(|s| s.calibration_shortcut.lock().unwrap().is_some_and(|c| &c == shortcut));
+                    if calibration {
+                        let app = app.clone();
+                        tauri::async_runtime::spawn_blocking(move || emit_screenshot(&app));
+                    } else {
                         run_capture(app.clone());
                     }
                 })
@@ -284,6 +494,14 @@ pub fn run() {
         )
         .setup(|app| {
             let handle = app.handle().clone();
+            // Zugeschnittene Zwischenstände vom letzten Lauf wegräumen.
+            if let Ok(dir) = trims_dir(&handle) {
+                let _ = std::fs::remove_dir_all(dir);
+            }
+            // Zwischengespeicherte Clips aus dem Dashboard ebenso.
+            if let Ok(dir) = media_dir(&handle) {
+                let _ = std::fs::remove_dir_all(dir);
+            }
             let settings = settings::load(&handle);
             if let Err(error) = register_hotkey(&handle, &settings.bodycam_hotkey) {
                 eprintln!("{error}");
@@ -295,6 +513,8 @@ pub fn run() {
                 upload_cancel: Mutex::new(Arc::default()),
                 capturing: AtomicBool::new(false),
                 tickets: Mutex::default(),
+                kill_clips: killclip::KillClips::default(),
+                calibration_shortcut: Mutex::default(),
             });
 
             // Im Hintergrund weiterlaufen, damit die Bodycam-Taste auch im Spiel greift.
@@ -336,6 +556,23 @@ pub fn run() {
             capture_clip,
             upload_clip,
             cancel_upload,
+            convert_clip,
+            discard_trim,
+            duty_times,
+            open_dashboard,
+            api_call,
+            api_image,
+            api_download,
+            killclip_status,
+            killclip_start,
+            killclip_stop,
+            killclip_save_config,
+            killclip_calibration,
+            killclip_screenshot,
+            killclip_set_hitmarker,
+            killclip_reveal,
+            killclip_open_link,
+            killclip_test_feed,
         ])
         .run(tauri::generate_context!())
         .expect("FIB Desktop konnte nicht gestartet werden");

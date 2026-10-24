@@ -19,6 +19,7 @@
     "@tauri-apps/plugin-updater": "^2.14.0"
   },
   "devDependencies": {
+    "@fluentui/svg-icons": "^1.1.344",
     "@tauri-apps/cli": "^2.12.4",
     "typescript": "^6.0.3",
     "vite": "^8.3.5"

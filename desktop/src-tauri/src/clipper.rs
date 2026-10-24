@@ -59,6 +59,15 @@ pub fn default_clip_dir(clipper: Clipper, videos: &Path) -> PathBuf {
     }
 }
 
+/// Wie viele Sekunden das Programm rückwirkend speichert. NVIDIA legt das in
+/// `DVRBufferLen` ab; Medal nicht lesbar – dort gilt die Einstellung der App.
+pub fn replay_seconds(clipper: Clipper) -> Option<u32> {
+    match clipper {
+        Clipper::Nvidia => Some(u32::from_le_bytes(nvidia_binary("DVRBufferLen")?.get(..4)?.try_into().ok()?)).filter(|s| *s >= 15),
+        Clipper::Medal => None,
+    }
+}
+
 pub fn default_hotkey(clipper: Clipper) -> String {
     match clipper {
         Clipper::Nvidia => nvidia_save_hotkey().unwrap_or_else(|| "Alt+F10".into()),

@@ -2678,3 +2678,66 @@ export async function getDiscordGuildCategories() {
   if (!config.guildId || !botToken()) return []
   return (await getAllDiscordGuildChannels(config.guildId)).filter(channel => channel.type === CATEGORY_CHANNEL).sort(byDiscordPosition)
 }
+
+// ── Kill-Clips aus der Desktop-App ──────────────────────────────────
+
+/** Der Clips-Channel eines Agents (vom Bot mit Topic `fib-agent-clips:<agentId>` angelegt). */
+export async function findAgentClipChannel(agentId: string) {
+  const config = await getDiscordConfig()
+  if (!config.guildId || !botToken()) return null
+  const channels = await getAllDiscordGuildChannels(config.guildId) as (DiscordChannel & { topic?: string | null })[]
+  const channel = channels.find(item => item.type === 0 && item.topic === `fib-agent-clips:${agentId}`)
+  return channel ? { id: channel.id, name: channel.name ?? '', guildId: config.guildId } : null
+}
+
+const MIB = 1024 * 1024
+
+/**
+ * Größte Datei, die der Bot im Server posten darf. Discord koppelt das an die
+ * Boost-Stufe (ohne/Stufe 1: 10 MB, Stufe 2: 50 MB, Stufe 3: 100 MB).
+ * `DISCORD_UPLOAD_LIMIT_MB` überschreibt den Wert, falls Discord die Grenzen ändert.
+ */
+export async function guildUploadLimitBytes() {
+  const override = Number.parseInt(process.env.DISCORD_UPLOAD_LIMIT_MB ?? '', 10)
+  if (override > 0) return override * MIB
+  const config = await getDiscordConfig()
+  if (!config.guildId || !botToken()) return 10 * MIB
+  const guild = await discordFetch<{ premium_tier?: number }>(`/guilds/${config.guildId}`)
+  return guild.premium_tier === 3 ? 100 * MIB : guild.premium_tier === 2 ? 50 * MIB : 10 * MIB
+}
+
+/** Postet eine Datei als Bot in einen Channel und liefert den Link zur Nachricht. */
+export async function postDiscordFile(
+  channel: { id: string; guildId: string },
+  content: string,
+  file: { data: Uint8Array; name: string; type: string },
+  attempt = 0,
+): Promise<string> {
+  const form = new FormData()
+  form.append('payload_json', JSON.stringify({ content, allowed_mentions: { parse: [] } }))
+  form.append('files[0]', new Blob([file.data as BlobPart], { type: file.type }), file.name)
+  const res = await fetch(`${API_BASE}/channels/${channel.id}/messages`, {
+    method: 'POST',
+    headers: { authorization: `Bot ${botToken()}` },
+    body: form,
+    // Große Videos brauchen länger als normale API-Aufrufe.
+    signal: AbortSignal.timeout(180_000),
+  })
+  if (res.status === 429 && attempt < MAX_RETRIES) {
+    const body = await res.json().catch(() => ({ retry_after: 2 })) as { retry_after?: number }
+    await wait(Math.min((body.retry_after ?? 2) * 1000, 30000) + 250)
+    return postDiscordFile(channel, content, file, attempt + 1)
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    let code: number | undefined
+    try {
+      code = (JSON.parse(text) as { code?: number }).code
+    } catch {
+      // Antwort ist kein JSON.
+    }
+    throw new DiscordApiError(res.status, code, text || res.statusText)
+  }
+  const message = await res.json() as { id: string }
+  return `https://discord.com/channels/${channel.guildId}/${channel.id}/${message.id}`
+}

@@ -14,7 +14,12 @@ use windows_sys::Win32::Security::Credentials::{
     CredDeleteW, CredFree, CredReadW, CredWriteW, CREDENTIALW, CRED_PERSIST_LOCAL_MACHINE, CRED_TYPE_GENERIC,
 };
 
+// Dev-Builds (tauri dev) sprechen meist mit einem lokalen Dashboard und dürfen den
+// Login der installierten App nicht überschreiben.
+#[cfg(not(debug_assertions))]
 const CREDENTIAL_TARGET: &str = "FIB Desktop/dashboard-token";
+#[cfg(debug_assertions)]
+const CREDENTIAL_TARGET: &str = "FIB Desktop/dashboard-token-dev";
 const LOGIN_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 
 fn wide(text: &str) -> Vec<u16> {

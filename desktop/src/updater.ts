@@ -15,6 +15,10 @@ function show(state: UpdateState, text: string, percent?: number) {
   statusEl.dataset.state = state
   progressEl.hidden = percent === undefined
   if (percent !== undefined) progressEl.value = percent
+  // Ein laufendes Update auch außerhalb der Einstellungen sichtbar machen.
+  const banner = document.getElementById('update-banner')!
+  banner.hidden = state !== 'downloading' && state !== 'installing'
+  banner.textContent = percent === undefined ? text : `${text} ${percent} %`
 }
 
 let running = false

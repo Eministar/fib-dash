@@ -20,8 +20,10 @@ export const ALLOWED_CLIP_TYPES: Record<string, string> = {
   'video/x-matroska': '.mkv',
 }
 
+/** `CLIP_MAX_BYTES="0"` hebt die Grenze auf – dann zählt nur der freie Plattenplatz. */
 export function clipMaxBytes() {
   const raw = Number.parseInt(process.env.CLIP_MAX_BYTES || '', 10)
+  if (raw === 0) return Number.POSITIVE_INFINITY
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_CLIP_MAX_BYTES
 }
 

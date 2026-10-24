@@ -55,6 +55,8 @@ const uploadSchema = z
     recordedByAgentId: z.string().trim().min(1).max(64).nullish(),
     durationSeconds: z.number().nullish(),
     tags: z.array(z.string()).max(50).optional(),
+    /** Von der Desktop-App bereits komprimiert (H.264/MP4) – der Server wandelt nicht erneut um. */
+    clientCompressed: z.boolean().optional(),
   })
   .strict()
 
@@ -184,6 +186,9 @@ async function uploadClip(req: NextRequest) {
         recordedByAgentId,
         tags: sanitizeTags(meta.tags),
         uploadedById: user.id,
+        ...(meta.clientCompressed
+          ? { compressionStatus: 'SKIPPED', compressionError: 'Bereits in der Desktop-App komprimiert' }
+          : {}),
       },
       include: clipInclude,
     })
@@ -191,7 +196,7 @@ async function uploadClip(req: NextRequest) {
     // Ab hier ist die Datei über den Datensatz erreichbar und darf im
     // Fehlerpfad nicht mehr weggeräumt werden.
     storedFilename = null
-    queueClipCompression()
+    if (!meta.clientCompressed) queueClipCompression()
 
     await prisma.investigation.update({
       where: { id: investigationId },

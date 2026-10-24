@@ -79,6 +79,78 @@ pub async fn session(client: &Client) -> Result<Value, String> {
     send(request(client, Method::GET, "/api/desktop/session")?).await
 }
 
+// ── Allgemeiner Zugang zu den Dashboard-APIs ─────────────────────────
+
+/// Nur eigene API-Pfade – das Fenster soll den Token nicht für Fremdes nutzen können.
+fn checked_path(path: &str) -> Result<&str, String> {
+    let ok = path.starts_with("/api/") && !path.contains("..") && !path.contains("://") && !path.contains('\\');
+    if ok { Ok(path) } else { Err(format!("Ungültiger API-Pfad: {path}")) }
+}
+
+/// Wie `send`, aber `data: null` ist eine gültige Antwort (z. B. bei DELETE).
+async fn send_value(builder: RequestBuilder) -> Result<Value, String> {
+    let response = builder.send().await.map_err(|e| format!("Dashboard nicht erreichbar: {e}"))?;
+    let status = response.status();
+    if status == StatusCode::UNAUTHORIZED {
+        return Err(UNAUTHORIZED.into());
+    }
+    let envelope: Envelope<Value> = response
+        .json()
+        .await
+        .map_err(|_| format!("Unerwartete Antwort vom Dashboard (HTTP {status})"))?;
+    if !envelope.success {
+        return Err(envelope.error.unwrap_or_else(|| format!("Fehler (HTTP {status})")));
+    }
+    Ok(envelope.data.unwrap_or(Value::Null))
+}
+
+pub async fn call(client: &Client, method: &str, path: &str, body: Option<Value>) -> Result<Value, String> {
+    let method = match method {
+        "GET" => Method::GET,
+        "POST" => Method::POST,
+        "PATCH" => Method::PATCH,
+        "PUT" => Method::PUT,
+        "DELETE" => Method::DELETE,
+        other => return Err(format!("Methode {other} nicht erlaubt")),
+    };
+    let mut builder = request(client, method, checked_path(path)?)?;
+    if let Some(body) = body {
+        builder = builder.json(&body);
+    }
+    send_value(builder).await
+}
+
+/// Lädt eine Datei (Bild, Clip) mit Anmeldung; liefert Bytes und Content-Type.
+pub async fn fetch(client: &Client, path: &str, max_bytes: u64) -> Result<(Vec<u8>, String), String> {
+    let mut response = request(client, Method::GET, checked_path(path)?)?
+        .send()
+        .await
+        .map_err(|e| format!("Dashboard nicht erreichbar: {e}"))?;
+    match response.status() {
+        StatusCode::UNAUTHORIZED => return Err(UNAUTHORIZED.into()),
+        status if !status.is_success() => return Err(format!("Datei nicht verfügbar (HTTP {status})")),
+        _ => {}
+    }
+    let content_type = response
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream")
+        .to_string();
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(|e| e.to_string())? {
+        bytes.extend_from_slice(&chunk);
+        if bytes.len() as u64 > max_bytes {
+            return Err("Datei ist zu groß für die Vorschau".into());
+        }
+    }
+    Ok((bytes, content_type))
+}
+
+pub async fn duty_times(client: &Client) -> Result<Value, String> {
+    send(request(client, Method::GET, "/api/desktop/duty-times")?).await
+}
+
 pub async fn revoke(client: &Client) {
     if let Ok(builder) = request(client, Method::DELETE, "/api/desktop/session") {
         let _ = builder.send().await;

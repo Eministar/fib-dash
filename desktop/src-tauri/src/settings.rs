@@ -21,6 +21,9 @@ pub struct Settings {
     /// Ablageordner der Clips; leer = Standard des Programms.
     pub clip_dir: String,
     pub last_investigation_id: Option<String>,
+    /// Komprimierung vor dem Upload: "720p", "1080p" oder "original" (nur schneiden).
+    pub clip_quality: String,
+    pub kill_clip: crate::killclip::Config,
 }
 
 impl Default for Settings {
@@ -31,6 +34,8 @@ impl Default for Settings {
             clipper_hotkey: String::new(),
             clip_dir: String::new(),
             last_investigation_id: None,
+            clip_quality: "720p".into(),
+            kill_clip: crate::killclip::Config::default(),
         }
     }
 }
