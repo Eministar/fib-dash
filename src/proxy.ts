@@ -50,8 +50,9 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Die Chunk-Route ist der einzige Request, der noch gross wird. Sie muss am
-  // Body-Klonen des Proxys vorbei, das Bodys bei 10 MB abschneidet. Alle
-  // anderen Upload-Endpunkte tragen nur noch JSON.
-  matcher: '/api/((?!uploads/[^/]+/chunks/).*)',
+  // Die Chunk-Route und der Release-Upload der Desktop-App sind die einzigen
+  // Requests, die noch gross werden. Sie muessen am Body-Klonen des Proxys
+  // vorbei, das Bodys bei 10 MB abschneidet. Alle anderen Upload-Endpunkte
+  // tragen nur noch JSON.
+  matcher: '/api/((?!uploads/[^/]+/chunks/|desktop/releases$).*)',
 }

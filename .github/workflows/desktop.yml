@@ -1,11 +1,12 @@
 # Desktop-App: bei Änderungen in desktop/ Windows-Installer bauen, signieren und
-# auf den Server laden. Das Dashboard bietet ihn unter /desktop zum Download an,
+# per HTTPS ans Dashboard schicken. Das Dashboard bietet ihn unter /desktop zum Download an,
 # installierte Apps holen ihn sich über /api/desktop/updates/latest.json selbst.
 #
 # EINRICHTUNG (einmalig) — GitHub → Settings → Secrets and variables → Actions:
 #   DASHBOARD_URL (Variable oder Secret)    Öffentliche Dashboard-URL, z. B. https://dashboard.tld
 #   Secret    TAURI_SIGNING_PRIVATE_KEY     Inhalt von ~/.tauri/fib-desktop.key (Update-Signatur)
-#   Secrets   SSH_HOST, SSH_USER, SSH_KEY, APP_DIR, SSH_PORT  — dieselben wie im Deploy-Workflow
+#   Secret    DESKTOP_RELEASE_TOKEN         Beliebiger langer Zufallswert; derselbe Wert steht
+#                                           auf dem Server in der .env (DESKTOP_RELEASE_TOKEN=…)
 #
 # Die Version ist 1.0.<Laufnummer>, steigt also bei jedem Lauf automatisch.
 
@@ -39,9 +40,11 @@ jobs:
       - name: Einrichtung prüfen
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          DESKTOP_RELEASE_TOKEN: ${{ secrets.DESKTOP_RELEASE_TOKEN }}
         run: |
           [[ "$DASHBOARD_URL" == https://* ]] || { echo "::error::DASHBOARD_URL (Variable oder Secret) fehlt oder beginnt nicht mit https://"; exit 1; }
           [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "::error::Secret TAURI_SIGNING_PRIVATE_KEY fehlt."; exit 1; }
+          [ -n "$DESKTOP_RELEASE_TOKEN" ] || { echo "::error::Secret DESKTOP_RELEASE_TOKEN fehlt."; exit 1; }
 
       - uses: actions/setup-node@v4
         with:
@@ -74,26 +77,12 @@ jobs:
           ' "$VERSION" "$DASHBOARD_URL"
           npx tauri build --config release.conf.json
 
-      - name: Release zusammenstellen
-        env:
-          NOTES: ${{ github.event.head_commit.message || 'Manueller Build' }}
+      - name: Installer bereitstellen
         run: |
           BUNDLE="src-tauri/target/release/bundle/nsis/FIB Desktop_${VERSION}_x64-setup.exe"
-          FILE="FIB-Desktop-Setup-${VERSION}.exe"
           mkdir -p out
-          cp "$BUNDLE" "out/$FILE"
-          node -e '
-            const fs = require("fs")
-            const [version, file, sigPath] = process.argv.slice(1)
-            const release = {
-              version,
-              file,
-              signature: fs.readFileSync(sigPath, "utf8").trim(),
-              pubDate: new Date().toISOString(),
-              notes: process.env.NOTES,
-            }
-            fs.writeFileSync("out/release.json", JSON.stringify(release, null, 2))
-          ' "$VERSION" "$FILE" "$BUNDLE.sig"
+          cp "$BUNDLE" "out/FIB-Desktop-Setup-${VERSION}.exe"
+          cp "$BUNDLE.sig" "out/FIB-Desktop-Setup-${VERSION}.exe.sig"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -101,39 +90,19 @@ jobs:
           path: desktop/out/
           retention-days: 7
 
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: desktop-release
-          path: out
-
-      - name: Auf den Server laden
+      - name: Ans Dashboard hochladen
         env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-          APP_DIR: ${{ secrets.APP_DIR }}
+          DESKTOP_RELEASE_TOKEN: ${{ secrets.DESKTOP_RELEASE_TOKEN }}
+          NOTES: ${{ github.event.head_commit.message || 'Manueller Build' }}
         run: |
-          set -euo pipefail
-          [ -n "$SSH_HOST" ] || { echo "::error::SSH_HOST nicht gesetzt."; exit 1; }
-          PORT="${SSH_PORT:-22}"
-          DEST="$APP_DIR/desktop-releases"
-          mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
-          chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-          SSH=(ssh -i ~/.ssh/id_deploy -p "$PORT" -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST")
-          SCP=(scp -i ~/.ssh/id_deploy -P "$PORT" -o StrictHostKeyChecking=accept-new)
-
-          "${SSH[@]}" "mkdir -p '$DEST'"
-          # Erst der Installer, dann release.json – Apps sehen eine neue Version erst,
-          # wenn die Datei vollständig da ist. Das mv ist atomar.
-          "${SCP[@]}" out/*.exe "$SSH_USER@$SSH_HOST:$DEST/"
-          "${SCP[@]}" out/release.json "$SSH_USER@$SSH_HOST:$DEST/release.json.tmp"
-          "${SSH[@]}" "mv '$DEST/release.json.tmp' '$DEST/release.json'"
-          # Die letzten drei Installer behalten.
-          "${SSH[@]}" "cd '$DEST' && ls -1t FIB-Desktop-Setup-*.exe | tail -n +4 | xargs -r rm -f"
+          FILE="out/FIB-Desktop-Setup-${VERSION}.exe"
+          printf '%s' "$NOTES" > out/notes.txt
+          # „<datei“ liest den Feldwert aus der Datei – so landen Signatur und
+          # Commit-Text unverändert im Formular, ohne Shell-Quoting.
+          curl --fail-with-body -sS --retry 2 \
+            -H "Authorization: Bearer $DESKTOP_RELEASE_TOKEN" \
+            -F "installer=@$FILE;type=application/octet-stream" \
+            -F "version=$VERSION" \
+            -F "signature=<$FILE.sig" \
+            -F "notes=<out/notes.txt" \
+            "${DASHBOARD_URL%/}/api/desktop/releases"
