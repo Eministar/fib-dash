@@ -1,5 +1,13 @@
 const dateTime = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
 
+/** Anzeigename des gewählten Clip-Programms. */
+export function clipperName(clipper: string | undefined) {
+  return (
+    { nvidia: 'NVIDIA Instant Replay', medal: 'Medal', amd: 'AMD Software (Instant Replay)', selfclip: 'FIB Self-Clip' }[clipper ?? ''] ??
+    'NVIDIA Instant Replay'
+  )
+}
+
 export function formatDateTime(date: Date) {
   return dateTime.format(date)
 }

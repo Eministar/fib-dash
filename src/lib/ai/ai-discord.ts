@@ -252,6 +252,7 @@ export async function acceptDiscordAiProposal(proposalId: string, discordId: str
 
   let entryId: string | null = null
   if (proposal.content) {
+    const participants = (actions.participants ?? []).map((agent) => ({ agentId: agent.id, name: agent.name, badgeNumber: agent.badgeNumber, rank: agent.rank }))
     try {
       const entry = await prisma.investigationEntry.create({
         data: {
@@ -260,7 +261,7 @@ export async function acceptDiscordAiProposal(proposalId: string, discordId: str
           title: proposal.title,
           content: proposal.content,
           occurredAt: proposal.occurredAt ?? new Date(),
-          participants: [],
+          participants,
           createdById: user.id,
           // Verknüpft mit der Ursprungsnachricht: kein Doppelimport, kein Rückspiegeln.
           discordMessageId: proposal.sourceMessageId,
@@ -269,9 +270,23 @@ export async function acceptDiscordAiProposal(proposalId: string, discordId: str
       })
       entryId = entry.id
     } catch (error) {
-      // Nichts angelegt – Vorschlag wieder freigeben, damit man es erneut versuchen kann.
-      await prisma.aiProposal.updateMany({ where: { id: proposalId }, data: { status: 'PENDING', decidedAt: null } })
-      throw error
+      // Die Ursprungsnachricht wurde schon als Roh-Eintrag übernommen (z. B. als die KI
+      // aus war): diesen Eintrag mit dem ausformulierten Vorschlag ersetzen.
+      const existing = isUniqueConstraintError(error) && proposal.sourceMessageId
+        ? await prisma.investigationEntry.findUnique({ where: { discordMessageId: proposal.sourceMessageId }, select: { id: true, investigationId: true } })
+        : null
+      if (existing?.investigationId === proposal.investigationId) {
+        await prisma.investigationEntry.update({
+          where: { id: existing.id },
+          data: { kind: actions.entryKind, title: proposal.title, content: proposal.content, participants },
+          select: { id: true },
+        })
+        entryId = existing.id
+      } else {
+        // Nichts angelegt – Vorschlag wieder freigeben, damit man es erneut versuchen kann.
+        await prisma.aiProposal.updateMany({ where: { id: proposalId }, data: { status: 'PENDING', decidedAt: null } })
+        throw error
+      }
     }
     await createAuditLog({
       action: 'INVESTIGATION_ENTRY_CREATED',

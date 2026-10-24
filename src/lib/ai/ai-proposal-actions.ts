@@ -16,6 +16,8 @@ type PriorityKey = keyof typeof INVESTIGATION_PRIORITY_LABELS
 type EntryKindKey = keyof typeof INVESTIGATION_ENTRY_KIND_LABELS
 type PersonRoleKey = keyof typeof INVESTIGATION_PERSON_ROLE_LABELS
 export type Named = { id: string; name: string }
+/** Agent als Beteiligter am Chronologie-Eintrag (Form wie im Dashboard). */
+export type Participant = Named & { badgeNumber: string | null; rank: string | null }
 
 export type ProposalActions = {
   entryKind: EntryKindKey
@@ -28,6 +30,8 @@ export type ProposalActions = {
   /** `personId: null` = wird neu im Personenregister angelegt. */
   persons: { personId: string | null; firstName: string; lastName: string; role: PersonRoleKey }[]
   vehicles: Named[]
+  /** Am Eintrag beteiligte Agents. */
+  participants: Participant[]
   attachments: { images: number; videos: number }
   /** Was die KI genannt hat, aber nicht eindeutig zugeordnet werden konnte. */
   unresolved: string[]
@@ -35,7 +39,7 @@ export type ProposalActions = {
 
 export const NO_ACTIONS: ProposalActions = {
   entryKind: 'NOTE', status: null, priority: null, title: null, leadAgent: null,
-  addAssignees: [], removeAssignees: [], persons: [], vehicles: [], attachments: { images: 0, videos: 0 }, unresolved: [],
+  addAssignees: [], removeAssignees: [], persons: [], vehicles: [], participants: [], attachments: { images: 0, videos: 0 }, unresolved: [],
 }
 
 /** Gespeicherte Aktionen lesen; alte Vorschläge ohne Aktionen ergeben „nichts zu tun“. */
@@ -61,6 +65,7 @@ export function describeActions(actions: ProposalActions) {
     lines.push(`Person: ${person.firstName} ${person.lastName} (${INVESTIGATION_PERSON_ROLE_LABELS[person.role]})${person.personId ? '' : ' · neu im Register'}`)
   }
   if (actions.vehicles.length) lines.push(`Fahrzeuge: ${actions.vehicles.map((vehicle) => vehicle.name).join(', ')}`)
+  if (actions.participants?.length) lines.push(`Beteiligte Agents: ${actions.participants.map((agent) => agent.name).join(', ')}`)
   const { images, videos } = actions.attachments
   if (images || videos) lines.push(`Anhänge: ${[images ? `${images} ${images === 1 ? 'Bild' : 'Bilder'}` : '', videos ? `${videos} ${videos === 1 ? 'Video' : 'Videos'}` : ''].filter(Boolean).join(', ')}`)
   return lines.map((line) => `• ${line}`)

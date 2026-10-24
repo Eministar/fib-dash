@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-10-23T14:24:08.309Z",
         "reason": "Claude: Wegwerf-Wireframe fürs Brainstorming, 11.5px-Metatext entspricht dem bestehenden Dashboard-Stil"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "desktop/index.html"
+        ],
+        "createdAt": "2026-10-24T22:15:41.242Z",
+        "reason": "Claude: <img id=kc-shot> ist versteckt und bekommt src erst zur Laufzeit (Einrichtungs-Screenshot)"
       }
     ]
   }

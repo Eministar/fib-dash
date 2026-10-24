@@ -410,17 +410,57 @@
             <div class="setting-text"><span>Clip-Programm</span><span class="type-caption muted">Womit deine Clips aufgenommen werden</span></div>
             <fluent-dropdown id="s-clipper" class="setting-control">
               <fluent-listbox>
+                <fluent-option value="selfclip">FIB Self-Clip (eigene Aufnahme)</fluent-option>
                 <fluent-option value="nvidia">NVIDIA Instant Replay</fluent-option>
+                <fluent-option value="amd">AMD Software (Instant Replay)</fluent-option>
                 <fluent-option value="medal">Medal</fluent-option>
               </fluent-listbox>
             </fluent-dropdown>
+          </div>
+          <div class="setting-row selfclip-only" hidden>
+            <span class="setting-icon"><i data-icon="record"></i></span>
+            <div class="setting-text"><span>FIB Self-Clip</span><span class="type-caption muted" id="s-selfclip-status">Wird geprüft …</span></div>
+            <div class="setting-control">
+              <fluent-progress-bar id="s-selfclip-progress" class="selfclip-progress" hidden></fluent-progress-bar>
+              <fluent-button id="s-selfclip-restart" appearance="subtle" hidden>Neu starten</fluent-button>
+              <fluent-button id="s-selfclip-install" appearance="primary" hidden>Einrichten</fluent-button>
+            </div>
+          </div>
+          <div class="setting-row selfclip-only" hidden>
+            <span class="setting-icon"><i data-icon="history"></i></span>
+            <div class="setting-text"><span>Rückwirkend speichern</span><span class="type-caption muted">So viel steht beim Speichern zur Verfügung</span></div>
+            <fluent-dropdown id="s-selfclip-buffer" class="setting-control">
+              <fluent-listbox>
+                <fluent-option value="30">30 Sekunden</fluent-option>
+                <fluent-option value="60">1 Minute</fluent-option>
+                <fluent-option value="120">2 Minuten</fluent-option>
+                <fluent-option value="300">5 Minuten</fluent-option>
+              </fluent-listbox>
+            </fluent-dropdown>
+          </div>
+          <div class="setting-row selfclip-only" hidden>
+            <span class="setting-icon"><i data-icon="videoClip"></i></span>
+            <div class="setting-text"><span>Aufnahmequalität</span><span class="type-caption muted">Höher sieht besser aus, braucht aber mehr Platz</span></div>
+            <fluent-dropdown id="s-selfclip-quality" class="setting-control">
+              <fluent-listbox>
+                <fluent-option value="10:60">Gut · 60 fps</fluent-option>
+                <fluent-option value="15:60">Hoch · 60 fps (empfohlen)</fluent-option>
+                <fluent-option value="25:60">Sehr hoch · 60 fps</fluent-option>
+                <fluent-option value="10:30">Sparsam · 30 fps</fluent-option>
+              </fluent-listbox>
+            </fluent-dropdown>
+          </div>
+          <div class="setting-row selfclip-only" hidden>
+            <span class="setting-icon"><i data-icon="play"></i></span>
+            <div class="setting-text"><span>Spielton aufnehmen</span><span class="type-caption muted">Alles, was aus deinen Lautsprechern oder dem Headset kommt</span></div>
+            <fluent-checkbox id="s-selfclip-audio" class="setting-control"></fluent-checkbox>
           </div>
           <div class="setting-row">
             <span class="setting-icon"><i data-icon="keyboard"></i></span>
             <div class="setting-text"><span>Bodycam-Taste</span><span class="type-caption muted">Speichert den Clip und öffnet den Upload</span></div>
             <fluent-text-input id="s-bodycam-hotkey" class="setting-control hotkey" readonly data-hotkey></fluent-text-input>
           </div>
-          <div class="setting-row">
+          <div class="setting-row" id="s-clipper-hotkey-row">
             <span class="setting-icon"><i data-icon="keyboard"></i></span>
             <div class="setting-text"><span>Speichertaste im Programm</span><span class="type-caption muted">Entf setzt sie auf den Standard zurück</span></div>
             <fluent-text-input id="s-clipper-hotkey" class="setting-control hotkey" readonly data-hotkey data-optional></fluent-text-input>

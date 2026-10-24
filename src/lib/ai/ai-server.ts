@@ -102,6 +102,16 @@ async function familyContext(dossierId: string): Promise<AiFamilyContext | null>
   }
 }
 
+/** Aktive Agents in der Schreibweise des Dashboards („Agent Geber“). */
+async function agentRoster() {
+  const agents = await prisma.agent.findMany({
+    where: { status: { not: 'TERMINATED' } },
+    select: { firstName: true, lastName: true },
+    orderBy: [{ rank: { sortOrder: 'asc' } }, { lastName: 'asc' }],
+  })
+  return agents.map((agent) => `${agent.firstName} ${agent.lastName}`.trim())
+}
+
 async function investigationContext(investigationId: string, user: CurrentUser) {
   const investigation = await prisma.investigation.findUnique({
     where: { id: investigationId },
@@ -163,7 +173,7 @@ export async function suggestText(input: SuggestInput, user: CurrentUser): Promi
   const dossierId = input.dossierId || investigation?.dossierId || null
   const family = dossierId ? await familyContext(dossierId) : null
 
-  const promptInput = { kind: input.kind, keywords, investigation: investigation?.context, family }
+  const promptInput = { kind: input.kind, keywords, investigation: investigation?.context, family, agents: await agentRoster() }
   return generate(
     [{ role: 'system', content: buildSystemPrompt(input.kind) }, { role: 'user', content: buildUserPrompt(promptInput) }],
     parseSuggestion,
@@ -191,6 +201,7 @@ export async function planFromMessage(input: ThreadPlanInput, user: CurrentUser)
   const promptInput = {
     kind: 'entry' as const, source: 'message' as const, keywords: text,
     authorName: input.authorName, attachments: input.attachments, investigation: investigation.context, family,
+    agents: await agentRoster(),
   }
   return generate(
     [{ role: 'system', content: buildSystemPrompt('entry', 'message') }, { role: 'user', content: buildUserPrompt(promptInput) }],

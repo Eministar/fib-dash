@@ -139,3 +139,31 @@ test('Namen werden in Vor- und Nachname zerlegt', () => {
   assert.deepEqual(splitName('Anna Maria Beispiel'), { firstName: 'Anna Maria', lastName: 'Beispiel' })
   assert.equal(splitName('Rosa'), null)
 })
+
+test('FIB-Agents: Agent-Liste im Prompt, Regel für Vornamen/Spitznamen, "agents" wird gelesen', async () => {
+  const system = buildSystemPrompt('entry', 'message')
+  assert.match(system, /Ben Geber/)
+  assert.match(system, /Agent Geber/)
+  assert.match(system, /"agents": \[\]/)
+  const user = buildUserPrompt({ kind: 'entry', source: 'message', keywords: 'mit ben geber observiert', agents: ['Agent Geber', 'Agent Perez'] })
+  assert.match(user, /Agent-Liste[^\n]*\nAgent Geber; Agent Perez/)
+  const plan = parseThreadPlan('{"title": "Observation", "content": "Mit Agent Geber observiert.", "changes": {"agents": ["Agent Geber", "", 3]}}')
+  assert.deepEqual(plan.changes.agents, ['Agent Geber'])
+  // Ältere Antworten ohne "agents" bleiben gültig.
+  assert.deepEqual(parseThreadPlan('{"title": "x", "content": "y"}').changes.agents, [])
+
+  const { buildAgentNameMatcher } = await import('../src/lib/storage-logs/storage-logs')
+  const match = buildAgentNameMatcher([
+    { id: 'geber', firstName: 'Agent', lastName: 'Geber', status: 'ACTIVE' },
+    { id: 'perez', firstName: 'Agent', lastName: 'Perez', status: 'ACTIVE' },
+  ])
+  assert.equal(match('Ben Geber'), 'geber')
+  assert.equal(match('geber'), 'geber')
+  assert.equal(match('Agent Geber'), 'geber')
+  assert.equal(match('Diego Vasquez'), null)
+})
+
+test('Vorschlag zeigt beteiligte Agents an', () => {
+  const lines = describeActions({ ...NO_ACTIONS, participants: [{ id: 'geber', name: 'Agent Geber', badgeNumber: '02', rank: null }] })
+  assert.ok(lines.some((line) => line.includes('Beteiligte Agents: Agent Geber')))
+})

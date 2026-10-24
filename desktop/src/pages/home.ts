@@ -21,7 +21,7 @@ const tools: Tool[] = [
   {
     icon: 'videoClip',
     title: 'Bodycam',
-    description: 'Clips aus NVIDIA oder Medal schneiden, komprimieren und in eine Ermittlungsakte hochladen.',
+    description: 'Clips aus FIB Self-Clip, NVIDIA, AMD oder Medal schneiden, komprimieren und in eine Ermittlungsakte hochladen.',
     meta: () => (state.settings ? `Taste: ${displayHotkey(state.settings.settings.bodycamHotkey)}` : ''),
     route: 'bodycam',
     available: () => !!state.context?.tools.bodycam,

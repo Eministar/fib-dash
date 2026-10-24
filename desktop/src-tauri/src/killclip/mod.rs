@@ -171,6 +171,9 @@ impl KillClips {
         if !has_feed && template.is_none() {
             return Err("Bitte zuerst die Erkennung einrichten (Kill-Feed-Bereich mit Namen oder Hitmarker).".into());
         }
+        if settings.clipper == crate::settings::Clipper::SelfClip && !state.recorder.is_running() {
+            return Err("FIB Self-Clip nimmt gerade nicht auf – bitte in den Einstellungen prüfen.".into());
+        }
 
         let target: Target = serde_json::from_value(api::call(&state.client, "GET", "/api/desktop/kill-clips", None).await?)
             .map_err(|_| "Unerwartete Antwort vom Dashboard".to_string())?;
@@ -238,7 +241,13 @@ fn watch(
         regions.len() - 1
     });
 
-    let replay = clipper::replay_seconds(app.state::<AppState>().settings.lock().unwrap().clipper).unwrap_or(config.replay_seconds) as f64;
+    let replay = {
+        let settings = app.state::<AppState>().settings.lock().unwrap().clone();
+        match settings.clipper {
+            crate::settings::Clipper::SelfClip => settings.self_clip.buffer_seconds,
+            other => clipper::replay_seconds(other).unwrap_or(config.replay_seconds),
+        }
+    } as f64;
     let (pre, post, merge) = (config.pre_seconds as f64, config.post_seconds as f64, config.merge_seconds as f64);
 
     let started = Instant::now();
@@ -360,8 +369,11 @@ fn save_replay(app: &AppHandle) -> Result<(PathBuf, SystemTime), String> {
     }
     let result = (|| {
         let settings = state.settings.lock().unwrap().clone();
-        let keys = clipper::parse_hotkey(&crate::effective_clipper_hotkey(&settings))?;
         let saved_at = SystemTime::now();
+        if settings.clipper == crate::settings::Clipper::SelfClip {
+            return Ok((state.recorder.save(app, settings.self_clip.buffer_seconds, &crate::effective_clip_dir(app, &settings))?, saved_at));
+        }
+        let keys = clipper::parse_hotkey(&crate::effective_clipper_hotkey(&settings))?;
         clipper::press_hotkey(&keys);
         let path = clipper::wait_for_new_clip(&crate::effective_clip_dir(app, &settings), saved_at - Duration::from_secs(1), Duration::from_secs(90))?;
         Ok((path, saved_at))
@@ -370,13 +382,14 @@ fn save_replay(app: &AppHandle) -> Result<(PathBuf, SystemTime), String> {
     result
 }
 
-/// Medal verrät die Länge seines Puffers nicht – die erste Aufnahme zeigt sie.
+/// Medal und AMD verraten die Länge ihres Puffers nicht – die erste Aufnahme zeigt sie.
 /// Gilt ab dem nächsten Start der Erkennung.
 fn remember_replay_length(app: &AppHandle, clip_len: f64) {
     let state = app.state::<AppState>();
     let mut settings = state.settings.lock().unwrap();
     let seconds = clip_len.floor() as u32;
-    if settings.clipper == crate::settings::Clipper::Medal && seconds >= 15 && settings.kill_clip.replay_seconds.abs_diff(seconds) > 5 {
+    let learns = matches!(settings.clipper, crate::settings::Clipper::Medal | crate::settings::Clipper::Amd);
+    if learns && seconds >= 15 && settings.kill_clip.replay_seconds.abs_diff(seconds) > 5 {
         settings.kill_clip.replay_seconds = seconds;
         let _ = crate::settings::save(app, &settings);
     }

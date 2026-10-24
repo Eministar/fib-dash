@@ -9,7 +9,7 @@ import {
   type Region,
 } from '../backend'
 import { $, errorText, escapeHtml, selectValue, showMessage, textOf, type DropdownElement } from '../dom'
-import { formatBytes, formatDateTime } from '../format'
+import { clipperName, formatBytes, formatDateTime } from '../format'
 import { icon, type IconName } from '../icons'
 import { onStateChange, state } from '../store'
 import { toast } from '../ui/toast'
@@ -92,7 +92,7 @@ function renderConfig() {
   selectValue($<DropdownElement>('kc-padding'), String(c.preSeconds))
   selectValue($<DropdownElement>('kc-merge'), String(c.mergeSeconds))
   ;($('kc-delete') as HTMLElement & { checked: boolean }).checked = c.deleteSource
-  $('kc-clipper').textContent = state.settings?.settings.clipper === 'medal' ? 'Medal' : 'NVIDIA Instant Replay'
+  $('kc-clipper').textContent = clipperName(state.settings?.settings.clipper)
 
   const ready = (!!c.killfeed && !!c.playerName.trim()) || !!c.hitmarker
   showMessage(

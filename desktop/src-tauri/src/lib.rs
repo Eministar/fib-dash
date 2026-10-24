@@ -5,6 +5,7 @@ mod media;
 mod settings;
 mod convert;
 mod killclip;
+mod recorder;
 
 use std::{
     collections::HashMap,
@@ -39,6 +40,7 @@ struct AppState {
     /// Fertig übertragene Dateien, deren Clip noch nicht angelegt ist (z. B. Formfehler).
     tickets: Mutex<HashMap<PathBuf, String>>,
     kill_clips: killclip::KillClips,
+    recorder: recorder::Recorder,
     /// Taste für den Einrichtungs-Screenshot, solange die Einrichtung offen ist.
     calibration_shortcut: Mutex<Option<Shortcut>>,
 }
@@ -130,6 +132,34 @@ fn show_main_window(app: &AppHandle) {
     }
 }
 
+/// Löst das eingestellte Clip-Programm aus und liefert die neue Aufnahme.
+/// NVIDIA/Medal bekommen ihre Speichertaste, Self-Clip speichert direkt.
+fn save_clip_now(app: &AppHandle, settings: &Settings) -> Result<PathBuf, String> {
+    if settings.clipper == settings::Clipper::SelfClip {
+        let recorder = &app.state::<AppState>().recorder;
+        return recorder.save(app, settings.self_clip.buffer_seconds, &effective_clip_dir(app, settings));
+    }
+    let keys = clipper::parse_hotkey(&effective_clipper_hotkey(settings))?;
+    let since = SystemTime::now() - Duration::from_millis(500);
+    clipper::press_hotkey(&keys);
+    clipper::wait_for_new_clip(&effective_clip_dir(app, settings), since, CLIP_WAIT)
+}
+
+/// Self-Clip läuft, solange es als Clip-Programm gewählt ist (wie Instant Replay).
+fn sync_recorder(app: &AppHandle) {
+    let app = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        let settings = state.settings.lock().unwrap().clone();
+        if settings.clipper == settings::Clipper::SelfClip && recorder::ffmpeg_path(&app).is_some_and(|p| p.exists()) {
+            let _ = state.recorder.start(&app, &settings.self_clip);
+        } else {
+            state.recorder.stop();
+        }
+        let _ = app.emit("selfclip-status", state.recorder.status(&app));
+    });
+}
+
 /// Bodycam-Taste: Clip im Programm speichern lassen, Datei abwarten, Formular füllen.
 fn run_capture(app: AppHandle) {
     let state = app.state::<AppState>();
@@ -141,10 +171,7 @@ fn run_capture(app: AppHandle) {
 
     tauri::async_runtime::spawn_blocking(move || {
         let result = (|| {
-            let keys = clipper::parse_hotkey(&effective_clipper_hotkey(&settings))?;
-            let since = SystemTime::now() - Duration::from_millis(500);
-            clipper::press_hotkey(&keys);
-            let path = clipper::wait_for_new_clip(&effective_clip_dir(&app, &settings), since, CLIP_WAIT)?;
+            let path = save_clip_now(&app, &settings)?;
             inspect(&path)
         })();
         match result {
@@ -173,7 +200,11 @@ fn get_settings(app: AppHandle, state: State<AppState>) -> SettingsView {
 #[tauri::command]
 fn save_settings(app: AppHandle, state: State<AppState>, mut settings: Settings) -> Result<SettingsView, String> {
     // Die Kill-Clip-Einrichtung hat ihren eigenen Befehl und bleibt hier unberührt.
-    settings.kill_clip = state.settings.lock().unwrap().kill_clip.clone();
+    {
+        let current = state.settings.lock().unwrap();
+        settings.kill_clip = current.kill_clip.clone();
+        settings.self_clip = current.self_clip.clone();
+    }
     if !settings.clipper_hotkey.trim().is_empty() {
         clipper::parse_hotkey(&settings.clipper_hotkey)?;
     }
@@ -185,7 +216,11 @@ fn save_settings(app: AppHandle, state: State<AppState>, mut settings: Settings)
         }
     }
     settings::save(&app, &settings)?;
+    let clipper_changed = state.settings.lock().unwrap().clipper != settings.clipper;
     *state.settings.lock().unwrap() = settings.clone();
+    if clipper_changed {
+        sync_recorder(&app);
+    }
     Ok(settings_view(&app, &settings))
 }
 
@@ -370,6 +405,38 @@ fn cancel_upload(state: State<AppState>) {
     state.upload_cancel.lock().unwrap().store(true, Ordering::SeqCst);
 }
 
+// ── Self-Clip ────────────────────────────────────────────────────────
+
+#[tauri::command]
+fn selfclip_status(app: AppHandle, state: State<AppState>) -> recorder::Status {
+    state.recorder.status(&app)
+}
+
+#[tauri::command]
+async fn selfclip_install(app: AppHandle, state: State<'_, AppState>) -> Result<recorder::Status, String> {
+    recorder::install(&app, &state.client).await?;
+    sync_recorder(&app);
+    Ok(state.recorder.status(&app))
+}
+
+#[tauri::command]
+fn selfclip_save_config(app: AppHandle, state: State<AppState>, config: recorder::Config) -> Result<SettingsView, String> {
+    let view = {
+        let mut settings = state.settings.lock().unwrap();
+        settings.self_clip = config;
+        settings::save(&app, &settings)?;
+        settings_view(&app, &settings)
+    };
+    // Neue Qualität/Pufferlänge gilt sofort.
+    sync_recorder(&app);
+    Ok(view)
+}
+
+#[tauri::command]
+fn selfclip_restart(app: AppHandle) {
+    sync_recorder(&app);
+}
+
 // ── Kill-Clips ───────────────────────────────────────────────────────
 
 /// Taste für den Einrichtungs-Screenshot (nur aktiv, solange die Einrichtung offen ist).
@@ -506,6 +573,7 @@ pub fn run() {
             if let Err(error) = register_hotkey(&handle, &settings.bodycam_hotkey) {
                 eprintln!("{error}");
             }
+            let self_clip = settings.clipper == settings::Clipper::SelfClip;
             app.manage(AppState {
                 client: api::client(),
                 settings: Mutex::new(settings),
@@ -514,8 +582,13 @@ pub fn run() {
                 capturing: AtomicBool::new(false),
                 tickets: Mutex::default(),
                 kill_clips: killclip::KillClips::default(),
+                recorder: recorder::Recorder::default(),
                 calibration_shortcut: Mutex::default(),
             });
+
+            if self_clip {
+                sync_recorder(&handle);
+            }
 
             // Im Hintergrund weiterlaufen, damit die Bodycam-Taste auch im Spiel greift.
             let open = MenuItem::with_id(app, "open", "Öffnen", true, None::<&str>)?;
@@ -563,6 +636,10 @@ pub fn run() {
             api_call,
             api_image,
             api_download,
+            selfclip_status,
+            selfclip_install,
+            selfclip_save_config,
+            selfclip_restart,
             killclip_status,
             killclip_start,
             killclip_stop,

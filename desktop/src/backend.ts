@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 
 // Spiegel der Rust-Befehle in src-tauri/src/lib.rs.
 
-export type Clipper = 'nvidia' | 'medal'
+export type Clipper = 'nvidia' | 'medal' | 'amd' | 'selfclip'
 export type ClipQuality = '720p' | '1080p' | 'original'
 
 export interface Settings {
@@ -13,6 +13,23 @@ export interface Settings {
   lastInvestigationId: string | null
   clipQuality: ClipQuality
   killClip?: KillClipConfig
+  selfClip?: SelfClipConfig
+}
+
+export interface SelfClipConfig {
+  bufferSeconds: number
+  bitrateMbps: number
+  fps: number
+  audio: boolean
+}
+
+export interface SelfClipStatus {
+  installed: boolean
+  running: boolean
+  encoder: string | null
+  bufferedSeconds: number
+  error: string | null
+  downloadBytes: number
 }
 
 export interface Region {
@@ -147,6 +164,10 @@ export const backend = {
   discardTrim: (path: string) => invoke<void>('discard_trim', { path }),
   dutyTimes: () => invoke<DutyTimes>('duty_times'),
   openDashboard: (path?: string) => invoke<void>('open_dashboard', { path: path ?? null }),
+  selfClipStatus: () => invoke<SelfClipStatus>('selfclip_status'),
+  selfClipInstall: () => invoke<SelfClipStatus>('selfclip_install'),
+  selfClipSaveConfig: (config: SelfClipConfig) => invoke<SettingsView>('selfclip_save_config', { config }),
+  selfClipRestart: () => invoke<void>('selfclip_restart'),
   killClipStatus: () => invoke<KillClipStatus>('killclip_status'),
   killClipStart: () => invoke<KillClipStatus>('killclip_start'),
   killClipStop: () => invoke<void>('killclip_stop'),

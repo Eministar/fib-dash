@@ -6,6 +6,7 @@ import { hotkeyInput } from './hotkey-input'
 import { renderIcons } from './icons'
 import { bodycamQueueLength, initBodycam } from './pages/bodycam'
 import { hideDuty, initDuty, showDuty } from './pages/duty'
+import { initSelfClip, renderSelfClip } from './pages/selfclip'
 import { initKillClips, showKillClips } from './pages/killclips'
 import { initHome } from './pages/home'
 import { initInvestigations, showInvestigations } from './pages/investigations'
@@ -112,6 +113,7 @@ function renderSettings(view: SettingsView) {
   $('s-clip-dir-label').textContent = settings.clipDir || `${view.defaultClipDir} (Standard)`
   $('s-clip-dir-label').title = settings.clipDir || view.defaultClipDir
   $('s-clip-dir-reset').hidden = !settings.clipDir
+  renderSelfClip()
   notifyStateChange()
 }
 
@@ -167,6 +169,7 @@ export async function startApp() {
   initDuty()
   initInvestigations()
   initKillClips()
+  initSelfClip()
   await initBodycam()
 
   renderSettings(await backend.getSettings())

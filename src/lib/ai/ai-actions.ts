@@ -13,7 +13,7 @@ import {
 import { nextPersonNumber } from '../investigations/investigations-server'
 import { buildAgentNameMatcher, normalizePersonName } from '../storage-logs/storage-logs'
 import type { AiChanges, AiThreadPlan } from './ai-prompts'
-import { hasChanges, NO_ACTIONS, splitName, type Named, type ProposalActions } from './ai-proposal-actions'
+import { hasChanges, NO_ACTIONS, splitName, type Named, type Participant, type ProposalActions } from './ai-proposal-actions'
 
 /**
  * KI-Vorschlag aus dem Akten-Beitrag gegen die Datenbank auflösen und
@@ -49,10 +49,20 @@ export async function resolvePlan(plan: Pick<AiThreadPlan, 'kind' | 'changes'>, 
   if (changes.title && changes.title !== investigation.title) actions.title = { from: investigation.title, to: changes.title }
 
   // Agents: „ich“ ist der Verfasser, sonst Namensabgleich wie bei den Lagerlogs.
-  const needsAgents = changes.leadAgent || changes.addAssignees.length || changes.removeAssignees.length
+  // Auch für Personen nötig: ein Agent („Ben Geber“) ist nie eine Person der Akte.
+  const needsAgents = changes.leadAgent || changes.addAssignees.length || changes.removeAssignees.length || changes.agents.length || changes.persons.length
+  let matchAgent: ((name: string) => string | null) | null = null
+  let participantOf: (id: string) => Participant | null = () => null
   if (needsAgents) {
-    const agents = await prisma.agent.findMany({ select: { id: true, firstName: true, lastName: true, status: true, discordId: true, user: { select: { discordId: true } } } })
+    const agents = await prisma.agent.findMany({
+      select: { id: true, firstName: true, lastName: true, badgeNumber: true, status: true, discordId: true, rank: { select: { name: true } }, user: { select: { discordId: true } } },
+    })
     const match = buildAgentNameMatcher(agents.filter((agent) => agent.status !== 'TERMINATED'))
+    matchAgent = match
+    participantOf = (id) => {
+      const agent = agents.find((row) => row.id === id)
+      return agent ? { id, name: `${agent.firstName} ${agent.lastName}`, badgeNumber: agent.badgeNumber, rank: agent.rank?.name ?? null } : null
+    }
     const nameOf = new Map(agents.map((agent) => [agent.id, `${agent.firstName} ${agent.lastName}`]))
     const author = agents.find((agent) => agent.status !== 'TERMINATED' && (agent.discordId === context.authorDiscordId || agent.user?.discordId === context.authorDiscordId))
     const resolve = (name: string): Named | null => {
@@ -71,11 +81,24 @@ export async function resolvePlan(plan: Pick<AiThreadPlan, 'kind' | 'changes'>, 
     const unique = (list: Named[]) => [...new Map(list.map((agent) => [agent.id, agent])).values()]
     actions.addAssignees = unique(changes.addAssignees.map(resolve).filter((agent): agent is Named => !!agent && !assigned.has(agent.id)))
     actions.removeAssignees = unique(changes.removeAssignees.map(resolve).filter((agent): agent is Named => !!agent && assigned.has(agent.id)))
+    for (const name of changes.agents) {
+      const id = match(name)
+      // Der Verfasser steht ohnehin am Eintrag.
+      const participant = id && id !== author?.id ? participantOf(id) : null
+      if (participant && !actions.participants.some((entry) => entry.id === participant.id)) actions.participants.push(participant)
+    }
   }
 
   // Personen: vorhandene im Register verknüpfen, sonst neu anlegen. Mehrdeutiges bleibt offen.
   const linked = new Set(investigation.persons.map((row) => `${row.personId}:${row.role}`))
   for (const { name, role } of changes.persons) {
+    // Ein FIB-Agent („Ben Geber“) wird Beteiligter am Eintrag, keine Person in der Akte.
+    const agentId = matchAgent?.(name)
+    if (agentId) {
+      const participant = participantOf(agentId)
+      if (participant && !actions.participants.some((entry) => entry.id === participant.id)) actions.participants.push(participant)
+      continue
+    }
     const split = splitName(name)
     if (!split) {
       actions.unresolved.push(`Person „${name}“ (Vor- und Nachname nötig)`)

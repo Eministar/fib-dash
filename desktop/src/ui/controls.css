@@ -138,6 +138,8 @@ fluent-dialog-body > fluent-button[slot='action'] { flex: 1 1 0; min-width: 0; }
 /* Dialoge ohne Befehlsbereich (Einstellungen, Player) unten nicht abschneiden */
 #settings-dialog fluent-dialog-body,
 #player-dialog fluent-dialog-body { padding-bottom: 24px; }
+#settings-dialog fluent-dialog-body::part(actions),
+#player-dialog fluent-dialog-body::part(actions) { display: none; }
 
 /* ── Hinweisleisten (InfoBar) ─────────────────────────────────── */
 fluent-message-bar {

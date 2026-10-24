@@ -8,6 +8,11 @@ use tauri::{AppHandle, Manager};
 pub enum Clipper {
     Nvidia,
     Medal,
+    /// AMD Software: Adrenalin Edition (Instant Replay).
+    Amd,
+    /// Eigene Hintergrundaufnahme der App (FIB Self-Clip).
+    #[serde(rename = "selfclip")]
+    SelfClip,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -24,6 +29,7 @@ pub struct Settings {
     /// Komprimierung vor dem Upload: "720p", "1080p" oder "original" (nur schneiden).
     pub clip_quality: String,
     pub kill_clip: crate::killclip::Config,
+    pub self_clip: crate::recorder::Config,
 }
 
 impl Default for Settings {
@@ -36,6 +42,7 @@ impl Default for Settings {
             last_investigation_id: None,
             clip_quality: "720p".into(),
             kill_clip: crate::killclip::Config::default(),
+            self_clip: crate::recorder::Config::default(),
         }
     }
 }

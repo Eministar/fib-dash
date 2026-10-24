@@ -1,5 +1,12 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs' && process.env.NEXT_PHASE !== 'phase-production-build') {
+    // Ein lokaler Dev-Server hängt oft an derselben Datenbank und demselben Bot wie
+    // die Produktion – Bot und Hintergrund-Jobs würden dann alles doppelt erledigen
+    // (doppelte Einträge, doppelte DMs). Nur auf ausdrücklichen Wunsch einschalten.
+    if (process.env.NODE_ENV !== 'production' && process.env.FIB_DEV_BACKGROUND !== '1') {
+      console.warn('[Dev] Discord-Bot und Hintergrund-Jobs sind im Entwicklungsmodus aus. FIB_DEV_BACKGROUND=1 schaltet sie ein.')
+      return
+    }
     const { ensureLeadershipGroupSync } = await import('./lib/units/leadership-groups-server')
     ensureLeadershipGroupSync()
     const { ensureClipCompressionWorker } = await import('./lib/media/clip-compression')

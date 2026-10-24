@@ -17,6 +17,7 @@ use crate::settings::Clipper;
 
 const VIDEO_EXTENSIONS: [&str; 4] = ["mp4", "mkv", "mov", "webm"];
 const NVIDIA_KEY: &str = r"Software\NVIDIA Corporation\Global\ShadowPlay\NVSPCAPS";
+const AMD_KEY: &str = r"Software\AMD\DVR";
 
 const VK_SHIFT: u16 = 0x10;
 const VK_CONTROL: u16 = 0x11;
@@ -52,10 +53,19 @@ fn nvidia_save_hotkey() -> Option<String> {
     (!names.is_empty()).then(|| names.join("+"))
 }
 
+/// AMD Adrenalin legt die Taste „Instant Replay speichern" als Text ab (z. B. "Ctrl+Shift+S").
+fn amd_save_hotkey() -> Option<String> {
+    let value: String = RegKey::predef(HKEY_CURRENT_USER).open_subkey(AMD_KEY).ok()?.get_value("SaveInstantReplayHotkey").ok()?;
+    let value = value.trim().to_string();
+    (!value.is_empty() && !value.eq_ignore_ascii_case("none") && parse_hotkey(&value).is_ok()).then_some(value)
+}
+
 pub fn default_clip_dir(clipper: Clipper, videos: &Path) -> PathBuf {
     match clipper {
         Clipper::Nvidia => nvidia_clip_dir().unwrap_or_else(|| videos.to_path_buf()),
         Clipper::Medal => videos.join("Medal").join("Clips"),
+        Clipper::Amd => videos.join("Radeon ReLive"),
+        Clipper::SelfClip => videos.join("FIB Self-Clip"),
     }
 }
 
@@ -64,7 +74,7 @@ pub fn default_clip_dir(clipper: Clipper, videos: &Path) -> PathBuf {
 pub fn replay_seconds(clipper: Clipper) -> Option<u32> {
     match clipper {
         Clipper::Nvidia => Some(u32::from_le_bytes(nvidia_binary("DVRBufferLen")?.get(..4)?.try_into().ok()?)).filter(|s| *s >= 15),
-        Clipper::Medal => None,
+        Clipper::Medal | Clipper::Amd | Clipper::SelfClip => None,
     }
 }
 
@@ -73,6 +83,9 @@ pub fn default_hotkey(clipper: Clipper) -> String {
         Clipper::Nvidia => nvidia_save_hotkey().unwrap_or_else(|| "Alt+F10".into()),
         // Medal legt die Taste nicht lesbar ab; F8 ist der Standard.
         Clipper::Medal => "F8".into(),
+        Clipper::Amd => amd_save_hotkey().unwrap_or_else(|| "Ctrl+Shift+S".into()),
+        // Self-Clip speichert direkt, ohne Taste.
+        Clipper::SelfClip => String::new(),
     }
 }
 

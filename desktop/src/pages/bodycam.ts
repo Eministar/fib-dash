@@ -33,7 +33,7 @@ const video = () => $('clip-video') as HTMLVideoElement
 function renderIdle() {
   const settings = state.settings?.settings
   if (!settings) return
-  const program = settings.clipper === 'nvidia' ? 'NVIDIA' : 'Medal'
+  const program = { nvidia: 'NVIDIA', medal: 'Medal', amd: 'AMD Software', selfclip: 'FIB Self-Clip' }[settings.clipper] ?? 'Das Clip-Programm'
   $('capture-title').textContent = 'Bereit'
   $('capture-hint').textContent =
     `Drücke ${displayHotkey(settings.bodycamHotkey)} im Spiel – ${program} speichert den Clip, danach bearbeitest du ihn hier.`
