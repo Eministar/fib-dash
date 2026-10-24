@@ -35,7 +35,7 @@ jobs:
       DASHBOARD_URL: ${{ vars.DASHBOARD_URL || secrets.DASHBOARD_URL }}
       VERSION: 1.0.${{ github.run_number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Volle Historie: Der Warte-Schritt vergleicht Commits mit dem Server-Stand.
           fetch-depth: 0
@@ -49,7 +49,7 @@ jobs:
           [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "::error::Secret TAURI_SIGNING_PRIVATE_KEY fehlt."; exit 1; }
           [ -n "$DESKTOP_RELEASE_TOKEN" ] || { echo "::error::Secret DESKTOP_RELEASE_TOKEN fehlt."; exit 1; }
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -87,7 +87,7 @@ jobs:
           cp "$BUNDLE" "out/FIB-Desktop-Setup-${VERSION}.exe"
           cp "$BUNDLE.sig" "out/FIB-Desktop-Setup-${VERSION}.exe.sig"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: desktop-release
           path: desktop/out/
@@ -103,7 +103,9 @@ jobs:
           REQUIRED="$(git log -1 --format=%H "$GITHUB_SHA" -- . ':(exclude)docs' ':(exclude).github' ':(exclude)desktop' ':(exclude,glob)**/*.md')"
           echo "Benötigter Dashboard-Stand: ${REQUIRED:0:7}"
           for attempt in $(seq 1 120); do
-            DEPLOYED="$(curl -fsS -m 15 "${DASHBOARD_URL%/}/api/version" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).buildId)}catch{console.log("unknown")}})')"
+            # `|| true`: Antwortet der Server (noch) nicht, weiter warten statt abzubrechen
+            # (GitHub startet bash mit -e -o pipefail).
+            DEPLOYED="$( (curl -fsS -m 15 "${DASHBOARD_URL%/}/api/version" 2>/dev/null || true) | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).buildId)}catch{console.log("unknown")}})')"
             if [ "$DEPLOYED" = "$REQUIRED" ]; then echo "Dashboard ist auf ${REQUIRED:0:7}."; exit 0; fi
             if [ -n "$DEPLOYED" ] && [ "$DEPLOYED" != unknown ]; then
               # Ein neuerer Stand, der unseren Commit enthält, reicht ebenfalls.
