@@ -36,6 +36,9 @@ jobs:
       VERSION: 1.0.${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Volle Historie: Der Warte-Schritt vergleicht Commits mit dem Server-Stand.
+          fetch-depth: 0
 
       - name: Einrichtung prüfen
         env:
@@ -89,6 +92,29 @@ jobs:
           name: desktop-release
           path: desktop/out/
           retention-days: 7
+
+      # Läuft parallel zum Server-Deploy los; hochgeladen wird erst, wenn das Dashboard
+      # den Stand dieses Pushs ausliefert – sonst fehlen z. B. neue Upload-Endpunkte.
+      - name: Auf passenden Dashboard-Stand warten
+        working-directory: .
+        run: |
+          # Letzter Commit, für den der Server neu bauen muss. Dieselbe Regel wie in
+          # scripts/deploy-server.sh: Doku, .github/ und desktop/ lösen keinen Build aus.
+          REQUIRED="$(git log -1 --format=%H "$GITHUB_SHA" -- . ':(exclude)docs' ':(exclude).github' ':(exclude)desktop' ':(exclude,glob)**/*.md')"
+          echo "Benötigter Dashboard-Stand: ${REQUIRED:0:7}"
+          for attempt in $(seq 1 120); do
+            DEPLOYED="$(curl -fsS -m 15 "${DASHBOARD_URL%/}/api/version" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).buildId)}catch{console.log("unknown")}})')"
+            if [ "$DEPLOYED" = "$REQUIRED" ]; then echo "Dashboard ist auf ${REQUIRED:0:7}."; exit 0; fi
+            if [ -n "$DEPLOYED" ] && [ "$DEPLOYED" != unknown ]; then
+              # Ein neuerer Stand, der unseren Commit enthält, reicht ebenfalls.
+              git fetch -q origin || true
+              if git merge-base --is-ancestor "$REQUIRED" "$DEPLOYED" 2>/dev/null; then echo "Dashboard ist auf ${DEPLOYED:0:7} (enthält ${REQUIRED:0:7})."; exit 0; fi
+            fi
+            echo "Server liefert ${DEPLOYED:0:7} – warte auf das Deploy ($attempt/120) …"
+            sleep 15
+          done
+          echo "::error::Das Dashboard hat ${REQUIRED:0:7} nach 30 Minuten nicht ausgeliefert. Läuft das Auto-Deploy (scripts/install-auto-deploy.sh --status)?"
+          exit 1
 
       - name: Ans Dashboard hochladen
         env:

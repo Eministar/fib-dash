@@ -84,6 +84,18 @@ fmt_duration() {
 DEPLOY_STARTED="$(date +%s)"
 LOG_DIR="$APP_DIR/deploy-logs"
 mkdir -p "$LOG_DIR"
+
+# Nie zwei Deploys gleichzeitig (Auto-Deploy, manuelles update.sh, GitHub-SSH):
+# ein zweiter Lauf wartet, bis der erste fertig ist. Die Sperre hängt an FD 9 –
+# die neu gestartete App darf ihn nicht erben (siehe restart_app).
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"$LOG_DIR/.deploy.lock"
+  if ! flock -w 1800 9; then
+    printf '  Ein anderer Deploy läuft seit über 30 Minuten – Abbruch.
+' >&2
+    exit 1
+  fi
+fi
 LOG_FILE="$LOG_DIR/deploy-$(date +%Y-%m-%d_%H-%M-%S).log"
 # Alte Logs aufräumen (die letzten 20 behalten).
 ls -1t "$LOG_DIR"/deploy-*.log 2>/dev/null | tail -n +21 | xargs -r rm -f || true
@@ -336,7 +348,7 @@ restart_app() {
   done
   # V8-Heap deckeln: ohne Limit wählt Node das Ceiling nach RAM und gibt
   # Speicher nie ans OS zurück. Muss beim Start als echte Env-Var gesetzt sein.
-  screen -dmS "$SCREEN_NAME" env "NODE_OPTIONS=--max-old-space-size=$NODE_MAX_OLD_SPACE_MB" npm run start
+  screen -dmS "$SCREEN_NAME" env "NODE_OPTIONS=--max-old-space-size=$NODE_MAX_OLD_SPACE_MB" npm run start 9>&-
 }
 
 wait_for_health() {
