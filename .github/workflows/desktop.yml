@@ -1,0 +1,139 @@
+# Desktop-App: bei Änderungen in desktop/ Windows-Installer bauen, signieren und
+# auf den Server laden. Das Dashboard bietet ihn unter /desktop zum Download an,
+# installierte Apps holen ihn sich über /api/desktop/updates/latest.json selbst.
+#
+# EINRICHTUNG (einmalig) — GitHub → Settings → Secrets and variables → Actions:
+#   Variable  DASHBOARD_URL                 Öffentliche Dashboard-URL, z. B. https://dashboard.tld
+#   Secret    TAURI_SIGNING_PRIVATE_KEY     Inhalt von ~/.tauri/fib-desktop.key (Update-Signatur)
+#   Secrets   SSH_HOST, SSH_USER, SSH_KEY, APP_DIR, SSH_PORT  — dieselben wie im Deploy-Workflow
+#
+# Die Version ist 1.0.<Laufnummer>, steigt also bei jedem Lauf automatisch.
+
+name: Desktop-App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop.yml'
+  workflow_dispatch: {}
+
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: desktop
+    env:
+      DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+      VERSION: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Einrichtung prüfen
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          [[ "$DASHBOARD_URL" == https://* ]] || { echo "::error::Repository-Variable DASHBOARD_URL fehlt oder ist nicht https."; exit 1; }
+          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "::error::Secret TAURI_SIGNING_PRIVATE_KEY fehlt."; exit 1; }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Installer bauen und signieren
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          # Adresse, die die App für Login und Uploads nutzt (src-tauri/src/api.rs).
+          export FIB_DASHBOARD_URL="${DASHBOARD_URL%/}"
+          # Version und Update-Adresse kommen erst hier in die App.
+          node -e '
+            const [version, url] = process.argv.slice(1)
+            const endpoint = url.replace(/\/$/, "") + "/api/desktop/updates/latest.json"
+            // Lokal darf der Updater http (localhost), ausgeliefert wird nur https.
+            const config = { version, plugins: { updater: { endpoints: [endpoint], dangerousInsecureTransportProtocol: false } } }
+            require("fs").writeFileSync("release.conf.json", JSON.stringify(config))
+          ' "$VERSION" "$DASHBOARD_URL"
+          npx tauri build --config release.conf.json
+
+      - name: Release zusammenstellen
+        env:
+          NOTES: ${{ github.event.head_commit.message || 'Manueller Build' }}
+        run: |
+          BUNDLE="src-tauri/target/release/bundle/nsis/FIB Desktop_${VERSION}_x64-setup.exe"
+          FILE="FIB-Desktop-Setup-${VERSION}.exe"
+          mkdir -p out
+          cp "$BUNDLE" "out/$FILE"
+          node -e '
+            const fs = require("fs")
+            const [version, file, sigPath] = process.argv.slice(1)
+            const release = {
+              version,
+              file,
+              signature: fs.readFileSync(sigPath, "utf8").trim(),
+              pubDate: new Date().toISOString(),
+              notes: process.env.NOTES,
+            }
+            fs.writeFileSync("out/release.json", JSON.stringify(release, null, 2))
+          ' "$VERSION" "$FILE" "$BUNDLE.sig"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-release
+          path: desktop/out/
+          retention-days: 7
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-release
+          path: out
+
+      - name: Auf den Server laden
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          APP_DIR: ${{ secrets.APP_DIR }}
+        run: |
+          set -euo pipefail
+          [ -n "$SSH_HOST" ] || { echo "::error::SSH_HOST nicht gesetzt."; exit 1; }
+          PORT="${SSH_PORT:-22}"
+          DEST="$APP_DIR/desktop-releases"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          SSH=(ssh -i ~/.ssh/id_deploy -p "$PORT" -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST")
+          SCP=(scp -i ~/.ssh/id_deploy -P "$PORT" -o StrictHostKeyChecking=accept-new)
+
+          "${SSH[@]}" "mkdir -p '$DEST'"
+          # Erst der Installer, dann release.json – Apps sehen eine neue Version erst,
+          # wenn die Datei vollständig da ist. Das mv ist atomar.
+          "${SCP[@]}" out/*.exe "$SSH_USER@$SSH_HOST:$DEST/"
+          "${SCP[@]}" out/release.json "$SSH_USER@$SSH_HOST:$DEST/release.json.tmp"
+          "${SSH[@]}" "mv '$DEST/release.json.tmp' '$DEST/release.json'"
+          # Die letzten drei Installer behalten.
+          "${SSH[@]}" "cd '$DEST' && ls -1t FIB-Desktop-Setup-*.exe | tail -n +4 | xargs -r rm -f"

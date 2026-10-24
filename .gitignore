@@ -54,6 +54,9 @@ next-env.d.ts
 # lokale Deployment-Logs
 /deploy-logs/
 
+# Desktop-App-Releases (lädt .github/workflows/desktop.yml auf den Server)
+/desktop-releases/
+
 # lokale Uploads (in Produktion per UPLOAD_DIR persistent ablegen)
 /uploads/
 

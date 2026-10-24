@@ -1,0 +1,209 @@
+/* Der Fensterhintergrund ist Mica (siehe tauri.conf.json) – die Seite selbst bleibt transparent.
+   Karten wie in den Windows-11-Einstellungen: leicht aufgehellte Fläche mit feiner Kontur. */
+:root {
+  --card: rgba(255, 255, 255, 0.7);
+  --card-stroke: rgba(0, 0, 0, 0.06);
+  --gap: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card: rgba(255, 255, 255, 0.05);
+    --card-stroke: rgba(255, 255, 255, 0.07);
+  }
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  color: var(--colorNeutralForeground1);
+  font-family: var(--fontFamilyBase);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+h1, p { margin: 0; }
+[hidden] { display: none !important; }
+
+.muted { color: var(--colorNeutralForeground3); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.view {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Anmeldung */
+.login {
+  display: grid;
+  place-items: center;
+}
+
+.login-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(380px, 100% - 64px);
+}
+
+.login-box fluent-button { margin-top: 8px; }
+
+.inline-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Hauptansicht */
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 24px 32px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-stroke);
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.actions.end {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Clip */
+.clip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.clip-head {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+}
+
+#clip-preview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 6px;
+}
+
+.clip-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--fontSizeBase300);
+}
+
+.clip-facts div { min-width: 0; }
+.clip-facts dt { color: var(--colorNeutralForeground3); font-size: var(--fontSizeBase200); }
+.clip-facts dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.form-grid .span-2 { grid-column: span 2; }
+.form-grid fluent-text-input,
+.form-grid fluent-dropdown,
+.form-grid fluent-textarea { width: 100%; }
+
+.input-with-button {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-button fluent-text-input { flex: 1; min-width: 0; }
+
+.progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-hotkey] { cursor: pointer; }
+[data-hotkey][data-recording] { outline: 2px solid var(--colorBrandStroke1); outline-offset: 1px; }
+
+/* Einstellungen */
+.settings summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings summary::-webkit-details-marker { display: none; }
+.settings summary::before {
+  content: '›';
+  display: inline-block;
+  width: 16px;
+  transition: transform 0.15s ease-out;
+}
+
+.settings[open] summary::before { transform: rotate(90deg); }
+.settings[open] summary { margin-bottom: 16px; }
+.settings .hint { margin-top: 12px; }
+.settings fluent-message-bar { margin-top: 12px; }
+
+/* Fußzeile */
+.app-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 32px 12px;
+  color: var(--colorNeutralForeground3);
+}
+
+#update-progress { width: 160px; }
+#update-status[data-state="error"] { color: var(--colorPaletteRedForeground1); }
+
+@media (max-width: 860px) {
+  .clip-head { grid-template-columns: 1fr; }
+}

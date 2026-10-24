@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FIB Desktop</title>
+  <link rel="stylesheet" href="/src/styles.css">
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+  <!-- Anmeldung -->
+  <section id="view-login" class="view login" hidden>
+    <div class="login-box">
+      <fluent-text size="700" weight="semibold" as="h1"><h1>FIB Desktop</h1></fluent-text>
+      <fluent-text size="300"><p class="muted">Melde dich mit deinem Discord-Konto an, genau wie im Dashboard.</p></fluent-text>
+      <fluent-button id="login-button" appearance="primary">Mit Discord anmelden</fluent-button>
+      <div id="login-waiting" class="inline-status" hidden>
+        <fluent-spinner size="tiny"></fluent-spinner>
+        <fluent-text size="200"><span>Bestätige die Anmeldung im Browser …</span></fluent-text>
+      </div>
+      <fluent-message-bar id="login-error" intent="error" hidden></fluent-message-bar>
+    </div>
+  </section>
+
+  <!-- Bodycam -->
+  <section id="view-main" class="view main" hidden>
+    <header class="page-header">
+      <fluent-text size="600" weight="semibold" as="h1"><h1>Bodycam</h1></fluent-text>
+      <div class="account">
+        <fluent-text size="200"><span id="account-name" class="muted"></span></fluent-text>
+        <fluent-button id="logout-button" appearance="subtle" size="small">Abmelden</fluent-button>
+      </div>
+    </header>
+
+    <fluent-message-bar id="permission-warning" intent="warning" hidden>
+      Dein Konto darf keine Clips hochladen. Dafür brauchst du das Recht „Ermittlungsakten verwalten“.
+    </fluent-message-bar>
+
+    <!-- Status und Auslöser -->
+    <div class="card status-card">
+      <div class="status-text">
+        <fluent-text size="400" weight="semibold"><span id="capture-title">Bereit</span></fluent-text>
+        <fluent-text size="200"><span id="capture-hint" class="muted"></span></fluent-text>
+      </div>
+      <div class="actions">
+        <fluent-button id="pick-button">Clip auswählen …</fluent-button>
+        <fluent-button id="capture-button" appearance="primary">Jetzt clippen</fluent-button>
+      </div>
+    </div>
+    <fluent-message-bar id="capture-error" intent="error" hidden></fluent-message-bar>
+    <fluent-message-bar id="upload-success" intent="success" hidden></fluent-message-bar>
+
+    <!-- Upload-Formular -->
+    <div id="clip-card" class="card clip-card" hidden>
+      <div class="clip-head">
+        <video id="clip-preview" controls preload="metadata"></video>
+        <dl class="clip-facts">
+          <div><dt>Länge</dt><dd id="clip-duration">–</dd></div>
+          <div><dt>Aufgenommen</dt><dd id="clip-recorded">–</dd></div>
+          <div><dt>Größe</dt><dd id="clip-size">–</dd></div>
+          <div><dt>Datei</dt><dd id="clip-name" class="truncate">–</dd></div>
+          <div id="clip-queue-row" hidden><dt>Warteschlange</dt><dd id="clip-queue"></dd></div>
+        </dl>
+      </div>
+
+      <div class="form-grid">
+        <fluent-field class="span-2">
+          <label slot="label" for="f-title">Titel</label>
+          <fluent-text-input slot="input" id="f-title" maxlength="200"></fluent-text-input>
+        </fluent-field>
+        <fluent-field class="span-2">
+          <label slot="label">Ermittlungsakte</label>
+          <fluent-dropdown slot="input" id="f-investigation" type="combobox" placeholder="Akte suchen …">
+            <fluent-listbox id="f-investigation-list"></fluent-listbox>
+          </fluent-dropdown>
+        </fluent-field>
+        <fluent-field>
+          <label slot="label">Bodycam von</label>
+          <fluent-dropdown slot="input" id="f-agent" type="combobox" placeholder="Agent suchen …">
+            <fluent-listbox id="f-agent-list"></fluent-listbox>
+          </fluent-dropdown>
+        </fluent-field>
+        <fluent-field>
+          <label slot="label" for="f-location">Ort</label>
+          <fluent-text-input slot="input" id="f-location" maxlength="200" placeholder="z. B. Route 68"></fluent-text-input>
+        </fluent-field>
+        <fluent-field class="span-2">
+          <label slot="label" for="f-tags">Stichworte</label>
+          <fluent-text-input slot="input" id="f-tags" placeholder="Zugriff, Verfolgung (mit Komma trennen)"></fluent-text-input>
+        </fluent-field>
+        <fluent-field class="span-2">
+          <label slot="label" for="f-description">Beschreibung</label>
+          <fluent-textarea slot="input" id="f-description" resize="vertical" placeholder="Was ist auf der Aufnahme zu sehen?"></fluent-textarea>
+        </fluent-field>
+      </div>
+
+      <div id="upload-progress-row" class="progress-row" hidden>
+        <fluent-progress-bar id="upload-progress"></fluent-progress-bar>
+        <fluent-text size="200"><span id="upload-progress-text" class="muted"></span></fluent-text>
+      </div>
+      <fluent-message-bar id="upload-error" intent="error" hidden></fluent-message-bar>
+
+      <div class="actions end">
+        <fluent-button id="discard-button">Verwerfen</fluent-button>
+        <fluent-button id="cancel-upload-button" hidden>Abbrechen</fluent-button>
+        <fluent-button id="upload-button" appearance="primary">Hochladen</fluent-button>
+      </div>
+    </div>
+
+    <!-- Einstellungen -->
+    <details class="card settings">
+      <summary><fluent-text size="400" weight="semibold"><span>Einstellungen</span></fluent-text></summary>
+      <div class="form-grid">
+        <fluent-field>
+          <label slot="label">Clip-Programm</label>
+          <fluent-dropdown slot="input" id="s-clipper">
+            <fluent-listbox>
+              <fluent-option value="nvidia">NVIDIA (Instant Replay)</fluent-option>
+              <fluent-option value="medal">Medal</fluent-option>
+            </fluent-listbox>
+          </fluent-dropdown>
+        </fluent-field>
+        <fluent-field>
+          <label slot="label" for="s-bodycam-hotkey">Bodycam-Taste</label>
+          <fluent-text-input slot="input" id="s-bodycam-hotkey" readonly data-hotkey></fluent-text-input>
+        </fluent-field>
+        <fluent-field>
+          <label slot="label" for="s-clipper-hotkey">Speichertaste im Programm</label>
+          <fluent-text-input slot="input" id="s-clipper-hotkey" readonly data-hotkey data-optional></fluent-text-input>
+        </fluent-field>
+        <fluent-field>
+          <label slot="label" for="s-clip-dir">Clip-Ordner</label>
+          <div slot="input" class="input-with-button">
+            <fluent-text-input id="s-clip-dir"></fluent-text-input>
+            <fluent-button id="s-clip-dir-browse">Durchsuchen …</fluent-button>
+          </div>
+        </fluent-field>
+      </div>
+      <fluent-text size="200"><p class="muted hint">Zum Ändern einer Taste ins Feld klicken und die neue Kombination drücken. Entf setzt die Speichertaste auf den Standard des Programms zurück.</p></fluent-text>
+      <fluent-message-bar id="settings-error" intent="error" hidden></fluent-message-bar>
+    </details>
+  </section>
+
+  <footer class="app-footer">
+    <fluent-text size="200"><span id="version"></span></fluent-text>
+    <fluent-text size="200"><span id="update-status" aria-live="polite"></span></fluent-text>
+    <fluent-progress-bar id="update-progress" hidden></fluent-progress-bar>
+  </footer>
+</body>
+</html>

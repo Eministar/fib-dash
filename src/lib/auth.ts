@@ -17,7 +17,7 @@ import { describeTrackedChange, pathHasExternalSideEffects } from './audit/chang
  * statt auf einen öffentlich bekannten Wert zurückzufallen – sonst könnte
  * jeder gültige Sitzungen fälschen.
  */
-function jwtSecret(): string {
+export function jwtSecret(): string {
   const configured = process.env.JWT_SECRET?.trim()
   if (configured) return configured
   const material = [

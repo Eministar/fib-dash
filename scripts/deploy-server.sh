@@ -19,7 +19,8 @@
 # Inkrementell: Es läuft nur, was die neuen Commits wirklich brauchen.
 #   package.json / package-lock.json geändert  → npm ci
 #   prisma/schema.prisma geändert              → Backup + db push
-#   nur Doku (*.md, docs/, .github/) geändert  → kein Build, kein Neustart
+#   nur Doku (*.md, docs/, .github/) oder
+#   die Desktop-App (desktop/) geändert        → kein Build, kein Neustart
 #
 # Sicherheits-Design:
 #   - DB-Backup VOR jeder Schema-Änderung.
@@ -215,7 +216,7 @@ changed_matches '^prisma/schema\.prisma$|^prisma\.config\.ts$' && NEED_SCHEMA=1
 NEED_BUILD=0
 if [[ "$FULL" == "1" || ! -f .next/BUILD_ID ]]; then
   NEED_BUILD=1
-elif [[ -n "$CHANGED" ]] && grep -vqE '(^docs/|^\.github/|\.md$)' <<<"$CHANGED"; then
+elif [[ -n "$CHANGED" ]] && grep -vqE '(^docs/|^\.github/|^desktop/|\.md$)' <<<"$CHANGED"; then
   NEED_BUILD=1
 fi
 
@@ -322,7 +323,7 @@ if [[ "$NEED_BUILD" == "1" ]]; then
   # build = prisma generate && next build (inkrementell dank Turbopack-Cache in .next/)
   must_step "Production-Build erstellen" npm run --silent build
 else
-  skip_step "Production-Build erstellen" "nur Doku geändert"
+  skip_step "Production-Build erstellen" "nur Doku/Desktop-App geändert"
 fi
 
 restart_app() {

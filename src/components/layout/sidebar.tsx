@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, Warehouse, ArrowUpDown, UserX, StickyNote, ScrollText,
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
-  Menu, X, KeyRound, Timer, Download,
+  Menu, X, KeyRound, Timer, Download, MonitorDown,
   FileText, FileSignature, Gavel, FolderSearch, Map,
   History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star,
 } from 'lucide-react'
@@ -76,6 +76,7 @@ export const adminNav: NavItem[] = [
 export const accountNav: NavItem[] = [
   { name: 'Mein Konto', href: '/account', icon: KeyRound },
   { name: 'Build-Historie', href: '/releases', icon: History },
+  { name: 'Desktop-App', href: '/desktop', icon: MonitorDown },
 ]
 
 function isActivePath(pathname: string, href: string) {
