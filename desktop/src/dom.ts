@@ -55,5 +55,8 @@ export function escapeHtml(text: string) {
 }
 
 export function errorText(error: unknown) {
-  return error instanceof Error ? error.message : String(error)
+  if (error instanceof Error) return error.message
+  // Strukturierte Fehler aus Rust (z. B. Tweaks): { code, message }
+  if (error && typeof error === 'object' && 'message' in error) return String((error as { message: unknown }).message)
+  return String(error)
 }

@@ -6,6 +6,7 @@ mod settings;
 mod convert;
 mod killclip;
 mod recorder;
+mod tweaks;
 
 use std::{
     collections::HashMap,
@@ -41,6 +42,7 @@ struct AppState {
     tickets: Mutex<HashMap<PathBuf, String>>,
     kill_clips: killclip::KillClips,
     recorder: recorder::Recorder,
+    tweaks: Arc<tweaks::Service>,
     /// Taste für den Einrichtungs-Screenshot, solange die Einrichtung offen ist.
     calibration_shortcut: Mutex<Option<Shortcut>>,
 }
@@ -536,6 +538,11 @@ async fn killclip_test_feed(app: AppHandle, region: killclip::screen::Region, na
 }
 
 pub fn run() {
+    // Administrator-Helfer der Tweaks (per UAC gestartet): ohne Fenster arbeiten und beenden.
+    let args: Vec<String> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some(tweaks::elevate::HELPER_FLAG) {
+        std::process::exit(tweaks::elevate::helper_main(&args[2..]));
+    }
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
@@ -583,6 +590,9 @@ pub fn run() {
                 tickets: Mutex::default(),
                 kill_clips: killclip::KillClips::default(),
                 recorder: recorder::Recorder::default(),
+                tweaks: Arc::new(tweaks::Service::windows(
+                    handle.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir()).join(tweaks::backup::BACKUP_FILE_NAME),
+                )),
                 calibration_shortcut: Mutex::default(),
             });
 
@@ -640,6 +650,16 @@ pub fn run() {
             selfclip_install,
             selfclip_save_config,
             selfclip_restart,
+            tweaks::commands::get_wasd_tweak_status,
+            tweaks::commands::get_wasd_tweak_details,
+            tweaks::commands::preview_wasd_changes,
+            tweaks::commands::apply_wasd_tweak,
+            tweaks::commands::restore_wasd_tweak,
+            tweaks::commands::apply_tweak,
+            tweaks::commands::restore_tweak,
+            tweaks::commands::restore_all_tweaks,
+            tweaks::commands::get_input_devices,
+            tweaks::commands::measure_polling_rate,
             killclip_status,
             killclip_start,
             killclip_stop,

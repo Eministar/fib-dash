@@ -36,6 +36,8 @@
         <button class="nav-item" data-route="investigations" data-tool="investigations" role="listitem"><i data-icon="documentSearch"></i><span>Ermittlungsakten</span></button>
         <button class="nav-item" data-route="killclips" data-tool="killClips" role="listitem"><i data-icon="target"></i><span>Kill-Clips</span></button>
         <button class="nav-item" data-route="duty" data-tool="dutyTimes" role="listitem"><i data-icon="timer"></i><span>Dienstzeiten</span></button>
+        <div class="nav-group-label type-caption muted" role="presentation">Weitere Sachen</div>
+        <button class="nav-item" data-route="tweaks" role="listitem"><i data-icon="wrench"></i><span>Tweaks</span></button>
       </div>
       <div class="nav-footer">
         <button class="nav-item" id="nav-settings"><i data-icon="settings"></i><span>Einstellungen</span></button>
@@ -297,6 +299,19 @@
         </div>
         <div class="card list" id="kc-history"></div>
         <p class="type-caption muted kc-feed" id="kc-feed" hidden></p>
+      </section>
+
+      <!-- Weitere Sachen → Tweaks -->
+      <section class="page wide" data-page="tweaks" hidden>
+        <div id="tw-overview">
+          <header class="page-header">
+            <h1 class="type-title">Tweaks</h1>
+            <p class="type-body muted">Geprüfte Windows-Einstellungen für Spiele. Jede Änderung wird vorher gesichert und lässt sich vollständig rückgängig machen.</p>
+          </header>
+          <fluent-message-bar id="tw-error" intent="error" hidden></fluent-message-bar>
+          <div class="tw-grid" id="tw-cards"></div>
+        </div>
+        <div id="tw-details" hidden></div>
       </section>
 
       <!-- Dienstzeiten -->

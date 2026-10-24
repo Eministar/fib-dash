@@ -144,6 +144,126 @@ export interface DutyTimes {
   agents: DutyAgent[]
 }
 
+// ── Tweaks (Spiegel von src-tauri/src/tweaks) ────────────────────────
+
+export type TweakId =
+  | 'mouse_acceleration'
+  | 'keyboard_repeat'
+  | 'keyboard_filterkeys'
+  | 'keyboard_queue'
+  | 'mouse_queue'
+  | 'mmcss_games'
+  | 'usb_polling'
+  | 'fivem_raw_input'
+
+export type TweakState =
+  | 'inactive'
+  | 'active'
+  | 'partiallyActive'
+  | 'applying'
+  | 'restoring'
+  | 'pendingRestart'
+  | 'unsupported'
+  | 'error'
+  | 'diagnostic'
+
+export interface TweakMeta {
+  id: TweakId
+  name: string
+  description: string
+  category: 'mouse' | 'keyboard' | 'system' | 'fivem'
+  kind: 'toggle' | 'experimental' | 'diagnostic' | 'inGame'
+  risk: 'none' | 'low' | 'medium'
+  recommended: boolean
+  needsAdmin: boolean
+  needsRestart: boolean
+  experimental: boolean
+  inProfile: boolean
+  ownRisk: boolean
+  riskNotice: string | null
+}
+
+export interface SettingRow {
+  label: string
+  current: string
+  target: string | null
+  note: string | null
+}
+
+export interface TweakReport {
+  meta: TweakMeta
+  state: TweakState
+  unsupported: string | null
+  needsElevation: boolean
+  settings: SettingRow[]
+  explanation: string[]
+  externalChange: boolean
+  alreadyAtTarget: boolean
+  managed: boolean
+  error: string | null
+}
+
+export interface WasdStatus {
+  state: TweakState
+  activeCount: number
+  profileCount: number
+  managedCount: number
+  pendingRestart: boolean
+  isAdmin: boolean
+  items: { id: TweakId; name: string; state: TweakState }[]
+  features: string[]
+  adminFeatures: string[]
+  error: string | null
+}
+
+export interface WasdDetails {
+  status: WasdStatus
+  tweaks: TweakReport[]
+  backupPath: string
+}
+
+export interface PlannedChange {
+  tweak: TweakId
+  tweakName: string
+  setting: string
+  current: string
+  target: string
+  unchanged: boolean
+}
+
+export interface ApplyResult {
+  written: number
+  unchanged: number
+}
+
+export interface RestoreResult {
+  restored: number
+  conflicts: string[]
+  failures: string[]
+}
+
+export interface InputDevice {
+  kind: 'keyboard' | 'mouse'
+  name: string
+  manufacturer: string | null
+  connection: 'usb' | 'bluetooth' | 'ps2' | 'virtual' | 'unknown'
+  hardwareId: string | null
+  vendorId: string | null
+  productId: string | null
+  driver: string | null
+  note: string | null
+}
+
+export interface PollingResult {
+  device: string
+  vendorId: string | null
+  productId: string | null
+  events: number
+  measuredHz: number | null
+  nominalHz: number | null
+  note: string | null
+}
+
 /** Rust meldet einen ungültigen oder fehlenden Token mit genau diesem Text. */
 export const UNAUTHORIZED = 'UNAUTHORIZED'
 
@@ -168,6 +288,16 @@ export const backend = {
   selfClipInstall: () => invoke<SelfClipStatus>('selfclip_install'),
   selfClipSaveConfig: (config: SelfClipConfig) => invoke<SettingsView>('selfclip_save_config', { config }),
   selfClipRestart: () => invoke<void>('selfclip_restart'),
+  tweaksStatus: () => invoke<WasdStatus>('get_wasd_tweak_status'),
+  tweaksDetails: () => invoke<WasdDetails>('get_wasd_tweak_details'),
+  tweaksPreview: () => invoke<PlannedChange[]>('preview_wasd_changes'),
+  tweaksApplyProfile: () => invoke<ApplyResult>('apply_wasd_tweak'),
+  tweaksRestoreProfile: (force = false) => invoke<RestoreResult>('restore_wasd_tweak', { force }),
+  tweakApply: (id: TweakId, confirmed = false) => invoke<ApplyResult>('apply_tweak', { id, confirmed }),
+  tweakRestore: (id: TweakId, force = false) => invoke<RestoreResult>('restore_tweak', { id, force }),
+  tweaksRestoreAll: (force = false) => invoke<RestoreResult>('restore_all_tweaks', { force }),
+  inputDevices: () => invoke<InputDevice[]>('get_input_devices'),
+  measurePolling: (seconds = 3) => invoke<PollingResult[]>('measure_polling_rate', { seconds }),
   killClipStatus: () => invoke<KillClipStatus>('killclip_status'),
   killClipStart: () => invoke<KillClipStatus>('killclip_start'),
   killClipStop: () => invoke<void>('killclip_stop'),

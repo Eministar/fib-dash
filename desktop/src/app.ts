@@ -7,6 +7,7 @@ import { renderIcons } from './icons'
 import { bodycamQueueLength, initBodycam } from './pages/bodycam'
 import { hideDuty, initDuty, showDuty } from './pages/duty'
 import { initSelfClip, renderSelfClip } from './pages/selfclip'
+import { initTweaks, showTweaks } from './pages/tweaks'
 import { initKillClips, showKillClips } from './pages/killclips'
 import { initHome } from './pages/home'
 import { initInvestigations, showInvestigations } from './pages/investigations'
@@ -38,6 +39,7 @@ function go(next: Route) {
   if (next === 'duty') showDuty()
   if (next === 'investigations') showInvestigations()
   if (next === 'killclips') showKillClips()
+  if (next === 'tweaks') showTweaks()
 }
 
 async function enterApp() {
@@ -170,6 +172,7 @@ export async function startApp() {
   initInvestigations()
   initKillClips()
   initSelfClip()
+  initTweaks()
   await initBodycam()
 
   renderSettings(await backend.getSettings())
