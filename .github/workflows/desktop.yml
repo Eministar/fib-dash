@@ -3,7 +3,7 @@
 # installierte Apps holen ihn sich über /api/desktop/updates/latest.json selbst.
 #
 # EINRICHTUNG (einmalig) — GitHub → Settings → Secrets and variables → Actions:
-#   Variable  DASHBOARD_URL                 Öffentliche Dashboard-URL, z. B. https://dashboard.tld
+#   DASHBOARD_URL (Variable oder Secret)    Öffentliche Dashboard-URL, z. B. https://dashboard.tld
 #   Secret    TAURI_SIGNING_PRIVATE_KEY     Inhalt von ~/.tauri/fib-desktop.key (Update-Signatur)
 #   Secrets   SSH_HOST, SSH_USER, SSH_KEY, APP_DIR, SSH_PORT  — dieselben wie im Deploy-Workflow
 #
@@ -31,7 +31,7 @@ jobs:
         shell: bash
         working-directory: desktop
     env:
-      DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+      DASHBOARD_URL: ${{ vars.DASHBOARD_URL || secrets.DASHBOARD_URL }}
       VERSION: 1.0.${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
-          [[ "$DASHBOARD_URL" == https://* ]] || { echo "::error::Repository-Variable DASHBOARD_URL fehlt oder ist nicht https."; exit 1; }
+          [[ "$DASHBOARD_URL" == https://* ]] || { echo "::error::DASHBOARD_URL (Variable oder Secret) fehlt oder beginnt nicht mit https://"; exit 1; }
           [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "::error::Secret TAURI_SIGNING_PRIVATE_KEY fehlt."; exit 1; }
 
       - uses: actions/setup-node@v4
