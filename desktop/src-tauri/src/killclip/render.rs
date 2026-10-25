@@ -19,6 +19,21 @@ use windows::{
 use super::plan::Output;
 use crate::convert::{compressed_profile, span, winrt, winrt_path};
 
+/// Medal legt mehrere Tonspuren ab (Gesamt, Spiel, Mikrofon, Discord …), und Windows
+/// nimmt sonst die erste – bei Medal eine fast stumme Nebenspur. Die Spur mit der
+/// höchsten Bitrate ist die volle (Spiel bzw. Gesamtmischung); stille Spuren kodiert AAC klein.
+fn select_game_audio(clip: &MediaClip) {
+    let Ok(tracks) = clip.EmbeddedAudioTracks() else { return };
+    let best = tracks
+        .into_iter()
+        .enumerate()
+        .max_by_key(|(_, track)| track.GetAudioEncodingProperties().and_then(|p| p.Bitrate()).unwrap_or(0))
+        .map(|(index, _)| index as u32);
+    if let Some(index) = best {
+        let _ = clip.SetSelectedEmbeddedAudioTrackIndex(index);
+    }
+}
+
 pub fn render(source: &Path, clip_len: f64, output: &Output, out_dir: &Path, name: &str) -> Result<PathBuf, String> {
     unsafe {
         let _ = RoInitialize(RO_INIT_MULTITHREADED);
@@ -35,6 +50,7 @@ pub fn render(source: &Path, clip_len: f64, output: &Output, out_dir: &Path, nam
     let clips = winrt(composition.Clips(), "Schnitt")?;
     for (start, end) in &output.ranges {
         let clip = winrt(MediaClip::CreateFromFileAsync(&input).and_then(|op| op.join()), "Clip laden")?;
+        select_game_audio(&clip);
         winrt(clip.SetTrimTimeFromStart(span(*start)), "Startzeit")?;
         winrt(clip.SetTrimTimeFromEnd(span((clip_len - end).max(0.0))), "Endzeit")?;
         winrt(clips.Append(&clip), "Schnitt")?;
@@ -128,3 +144,4 @@ mod real_clip {
         assert!(size < limit);
     }
 }
+
