@@ -17,7 +17,7 @@ use windows::{
             },
             Dxgi::{
                 Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
-                CreateDXGIFactory1, IDXGIFactory1, IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource,
+                CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory1, IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource,
                 DXGI_ERROR_ACCESS_LOST, DXGI_ERROR_WAIT_TIMEOUT, DXGI_OUTDUPL_FRAME_INFO,
             },
         },
@@ -119,7 +119,6 @@ pub struct Screen {
     device: ID3D11Device,
     context: ID3D11DeviceContext,
     duplication: IDXGIOutputDuplication,
-    output: IDXGIOutput1,
     pub width: u32,
     pub height: u32,
 }
@@ -127,57 +126,70 @@ pub struct Screen {
 // Die COM-Objekte werden nur im Erkennungs-Thread benutzt, der den Screen besitzt.
 unsafe impl Send for Screen {}
 
+unsafe fn create_device(adapter: &IDXGIAdapter1) -> Result<(ID3D11Device, ID3D11DeviceContext), String> {
+    let mut device = None;
+    let mut context = None;
+    D3D11CreateDevice(
+        adapter,
+        D3D_DRIVER_TYPE_UNKNOWN,
+        HMODULE::default(),
+        D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+        None,
+        D3D11_SDK_VERSION,
+        Some(&mut device),
+        None,
+        Some(&mut context),
+    )
+    .map_err(|e| hr(e, "Direct3D"))?;
+    Ok((device.ok_or("Direct3D nicht verfügbar")?, context.ok_or("Direct3D nicht verfügbar")?))
+}
+
 impl Screen {
     /// Öffnet den Hauptmonitor (der mit dem Ursprung 0,0) – dort läuft das Spiel.
+    ///
+    /// Mit zwei Grafikchips (z. B. AMD im Prozessor + NVIDIA) muss das Gerät zum Chip
+    /// passen, der den Monitor ansteuert – sonst meldet Windows „Falscher Parameter“.
+    /// Deshalb erst der Chip des Monitors, dann zur Sicherheit alle anderen.
     pub fn open() -> Result<Self, String> {
         unsafe {
             let factory: IDXGIFactory1 = CreateDXGIFactory1().map_err(|e| hr(e, "DXGI"))?;
-            let mut index = 0;
-            while let Ok(adapter) = factory.EnumAdapters1(index) {
-                index += 1;
-                let mut out_index = 0;
-                while let Ok(output) = adapter.EnumOutputs(out_index) {
-                    out_index += 1;
+            let adapters: Vec<IDXGIAdapter1> = (0..).map_while(|i| factory.EnumAdapters1(i).ok()).collect();
+            let mut primary = None;
+            for (index, adapter) in adapters.iter().enumerate() {
+                for output in (0..).map_while(|i| adapter.EnumOutputs(i).ok()) {
                     let desc = output.GetDesc().map_err(|e| hr(e, "Monitor"))?;
                     let r = desc.DesktopCoordinates;
-                    if !(desc.AttachedToDesktop.as_bool() && r.left == 0 && r.top == 0) {
-                        continue;
+                    if desc.AttachedToDesktop.as_bool() && r.left == 0 && r.top == 0 {
+                        primary = Some((index, output, (r.right - r.left) as u32, (r.bottom - r.top) as u32));
                     }
-                    let mut device = None;
-                    let mut context = None;
-                    D3D11CreateDevice(
-                        &adapter,
-                        D3D_DRIVER_TYPE_UNKNOWN,
-                        HMODULE::default(),
-                        D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                        None,
-                        D3D11_SDK_VERSION,
-                        Some(&mut device),
-                        None,
-                        Some(&mut context),
-                    )
-                    .map_err(|e| hr(e, "Direct3D"))?;
-                    let device: ID3D11Device = device.ok_or("Direct3D nicht verfügbar")?;
-                    let output: IDXGIOutput1 = output.cast().map_err(|e| hr(e, "Monitor"))?;
-                    let duplication = output.DuplicateOutput(&device).map_err(|e| hr(e, "Bildschirmzugriff"))?;
-                    return Ok(Self {
-                        device,
-                        context: context.ok_or("Direct3D nicht verfügbar")?,
-                        duplication,
-                        output,
-                        width: (r.right - r.left) as u32,
-                        height: (r.bottom - r.top) as u32,
-                    });
                 }
             }
-            Err("Kein Hauptmonitor gefunden".into())
+            let (owner, output, width, height) = primary.ok_or("Kein Hauptmonitor gefunden")?;
+            let output: IDXGIOutput1 = output.cast().map_err(|e| hr(e, "Monitor"))?;
+            let order = std::iter::once(owner).chain((0..adapters.len()).filter(|i| *i != owner));
+            let mut last_error = String::from("Bildschirmzugriff nicht möglich");
+            for index in order {
+                let (device, context) = match create_device(&adapters[index]) {
+                    Ok(pair) => pair,
+                    Err(error) => {
+                        last_error = error;
+                        continue;
+                    }
+                };
+                match output.DuplicateOutput(&device) {
+                    Ok(duplication) => return Ok(Self { device, context, duplication, width, height }),
+                    Err(error) => last_error = hr(error, "Bildschirmzugriff"),
+                }
+            }
+            Err(last_error)
         }
     }
 
+    /// Nach „Zugriff verloren“ (Vollbild-Umschaltung, Auflösung, UAC) alles neu aufbauen:
+    /// Das alte Monitor-Objekt ist dann veraltet, und DuplicateOutput darauf meldet
+    /// „Falscher Parameter“.
     fn reopen(&mut self) -> Result<(), String> {
-        unsafe {
-            self.duplication = self.output.DuplicateOutput(&self.device).map_err(|e| hr(e, "Bildschirmzugriff"))?;
-        }
+        *self = Screen::open()?;
         Ok(())
     }
 

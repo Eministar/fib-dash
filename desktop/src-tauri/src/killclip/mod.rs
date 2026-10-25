@@ -233,6 +233,14 @@ const TICK: Duration = Duration::from_millis(100);
 /// Texterkennung höchstens so oft – reicht für Kill-Feeds, die Sekunden stehen bleiben.
 const OCR_EVERY: f64 = 0.25;
 
+/// Meldet einen Bildschirmfehler erst, wenn er länger als 5 Sekunden anhält.
+fn report_screen_error(app: &AppHandle, status: &Arc<Mutex<Status>>, failing_since: &mut Option<Instant>, error: String) {
+    let since = *failing_since.get_or_insert_with(Instant::now);
+    if since.elapsed() >= Duration::from_secs(5) {
+        update_status(app, status, |s| s.error = Some(format!("{error} – die App versucht es weiter.")));
+    }
+}
+
 /// Bereich um das Fadenkreuz in der Bildschirmmitte, passend zur Auflösung.
 fn center_region(width: u32, height: u32) -> Region {
     let size = ((64.0 * height as f32 / 1080.0).round() as u32).max(48);
@@ -271,6 +279,8 @@ fn watch(
     let mut last_feed: Vec<u8> = Vec::new();
     let mut last_ocr = f64::MIN;
     let mut session: Vec<Kill> = Vec::new();
+    // Seit wann der Bildschirm nicht lesbar ist – kurze Aussetzer (Vollbild-Umschaltung) nicht melden.
+    let mut failing_since: Option<Instant> = None;
 
     let flush = |session: &mut Vec<Kill>| {
         if !session.is_empty() {
@@ -298,8 +308,8 @@ fn watch(
                     screen = Some(opened);
                 }
                 Err(error) => {
-                    update_status(&app, &status, |s| s.error = Some(error));
-                    thread::sleep(Duration::from_secs(2));
+                    report_screen_error(&app, &status, &mut failing_since, error);
+                    thread::sleep(Duration::from_secs(1));
                     continue;
                 }
             }
@@ -346,8 +356,12 @@ fn watch(
             Ok(None) => {}
             Err(error) => {
                 screen = None;
-                update_status(&app, &status, |s| s.error = Some(error));
+                report_screen_error(&app, &status, &mut failing_since, error);
             }
+        }
+        // Läuft wieder: eine alte Fehlermeldung verschwinden lassen.
+        if screen.is_some() && failing_since.take().is_some() {
+            update_status(&app, &status, |s| s.error = None);
         }
 
         if !new_kills.is_empty() {
@@ -592,6 +606,22 @@ mod tests {
         let events: Vec<FeedEvent> = lines.iter().filter_map(detect::classify).collect();
         assert!(events.iter().any(|e| matches!(e, FeedEvent::Kill(_))), "Kill erkannt");
         assert!(events.iter().any(|e| matches!(e, FeedEvent::Death(_))), "Tod erkannt");
+    }
+
+    /// Wie in der App: Prozess ist Per-Monitor-DPI-bewusst (v2).
+    #[test]
+    #[ignore]
+    fn grabs_with_dpi_awareness_like_the_app() {
+        unsafe {
+            let _ = windows::Win32::UI::HiDpi::SetProcessDpiAwarenessContext(windows::Win32::UI::HiDpi::DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        }
+        match Screen::open() {
+            Ok(mut screen) => {
+                let size = (screen.width, screen.height);
+                println!("DPI v2: ok {size:?} – {:?}", screen.screenshot().map(|i| i.width));
+            }
+            Err(error) => println!("DPI v2: FEHLER {error}"),
+        }
     }
 
     /// Echter Bildschirm: Screenshot und kleiner Ausschnitt über DXGI.
