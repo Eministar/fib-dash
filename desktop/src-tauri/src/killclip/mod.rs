@@ -7,6 +7,7 @@
 //! schneidet und lädt jede fertige Serie hoch – die Erkennung läuft derweil weiter.
 
 pub mod detect;
+mod lifecycle;
 pub mod ocr;
 mod pixels;
 pub mod plan;
@@ -120,7 +121,7 @@ struct Session {
 
 #[derive(Default)]
 pub struct KillClips {
-    running: Arc<AtomicBool>,
+    watcher: Arc<lifecycle::WatchControl>,
     status: Arc<Mutex<Status>>,
 }
 
@@ -189,7 +190,7 @@ impl KillClips {
     }
 
     pub fn stop(&self, app: &AppHandle) {
-        self.running.store(false, Ordering::SeqCst);
+        self.watcher.stop();
         update_status(app, &self.status, |s| {
             s.running = false;
             if s.phase == "watching" {
@@ -199,9 +200,10 @@ impl KillClips {
     }
 
     pub async fn start(&self, app: AppHandle) -> Result<Status, String> {
-        if self.running.load(Ordering::SeqCst) {
+        if self.status().running {
             return Ok(self.status());
         }
+        let lease = self.watcher.acquire().ok_or("Die Kill-Erkennung startet oder beendet sich noch. Bitte kurz warten.")?;
         let state = app.state::<AppState>();
         let settings = state.settings.lock().unwrap().clone();
         let config = settings.kill_clip.clone();
@@ -217,31 +219,46 @@ impl KillClips {
             .map_err(|_| "Unerwartete Antwort vom Dashboard".to_string())?;
 
         // Bildschirm und Texterkennung vorab prüfen, damit Fehler sofort sichtbar sind.
-        screen::with_screen(|_| Ok(()))?;
         if has_feed {
             ocr::Ocr::new()?;
         }
+        screen::with_screen(|_| Ok(()))?;
 
-        self.running.store(true, Ordering::SeqCst);
+        if !lease.running.load(Ordering::SeqCst) {
+            screen::release();
+            return Err("Start der Kill-Erkennung abgebrochen".into());
+        }
         update_status(&app, &self.status, |s| {
             *s = Status { running: true, phase: "watching".into(), target: Some(target.clone()), ..Default::default() };
         });
 
         let (tx, rx) = mpsc::channel::<Session>();
-        let running = self.running.clone();
+        let running = lease.running.clone();
         let status = self.status.clone();
         let watcher_app = app.clone();
-        thread::Builder::new()
-            .name("kill-clip-waechter".into())
-            .spawn(move || watch(watcher_app, config, running, status, tx))
-            .map_err(|e| e.to_string())?;
-
-        let status = self.status.clone();
+        let worker_status = self.status.clone();
         let worker_app = app.clone();
+        let on_spawn_error = |error: std::io::Error| {
+            self.watcher.stop();
+            screen::release();
+            update_status(&app, &self.status, |s| {
+                s.running = false;
+                s.phase = "idle".into();
+                s.error = Some(error.to_string());
+            });
+            error.to_string()
+        };
         thread::Builder::new()
             .name("kill-clip-arbeiter".into())
-            .spawn(move || work(worker_app, target, status, rx))
-            .map_err(|e| e.to_string())?;
+            .spawn(move || work(worker_app, target, worker_status, rx))
+            .map_err(&on_spawn_error)?;
+        thread::Builder::new()
+            .name("kill-clip-waechter".into())
+            .spawn(move || {
+                let _lease = lease;
+                watch(watcher_app, config, running, status, tx);
+            })
+            .map_err(on_spawn_error)?;
         Ok(self.status())
     }
 }
@@ -293,6 +310,7 @@ fn watch(
         match ocr::LiveFeedOcr::new() {
             Ok(ocr) => Some(ocr),
             Err(error) => {
+                screen::release();
                 running.store(false, Ordering::SeqCst);
                 update_status(&app, &status, |s| {
                     s.running = false;
@@ -339,7 +357,6 @@ fn watch(
 
     while running.load(Ordering::SeqCst) {
         let tick = Instant::now();
-        let now = started.elapsed().as_secs_f64();
 
         let grabbed = screen::with_screen(|opened| {
             if size != Some((opened.width, opened.height)) {
@@ -358,18 +375,21 @@ fn watch(
                     regions.len() - 1
                 });
             }
-            opened.grab(&regions, 50)
+            opened.grab(&regions, 0)
         });
         let mut new_kills: Vec<Kill> = Vec::new();
         let ok = grabbed.is_ok();
         match grabbed {
-            Ok(Some(images)) => {
+            Ok(Some(frame)) => {
+                let now = frame.at.saturating_duration_since(started).as_secs_f64();
+                let sampled_at = SystemTime::now() - frame.at.elapsed();
+                let images = frame.images;
                 if let Some(i) = marker_index {
                     let image = &images[i];
                     let mask = detect::marker_mask(&image.bgra);
                     let score = detect::marker_score(&mask, image.width as usize, image.height as usize);
                     if let Some(at) = marker.update(score, now) {
-                        new_kills.push(Kill { at: SystemTime::now() - Duration::from_secs_f64(now - at), victim: None });
+                        new_kills.push(Kill { at: sampled_at - Duration::from_secs_f64(now - at), victim: None });
                         emit_event(&app, "kill", "Kill erkannt (Kill-Marker)", None, None);
                     }
                 }
@@ -384,7 +404,7 @@ fn watch(
                             for event in feed.update(&lines, now) {
                                 match event {
                                     FeedEvent::Kill(victim) => {
-                                        new_kills.push(Kill { at: SystemTime::now(), victim: Some(victim.clone()) });
+                                        new_kills.push(Kill { at: sampled_at, victim: Some(victim.clone()) });
                                         emit_event(&app, "kill", format!("Kill: {victim}"), None, None);
                                     }
                                     // Eigener Tod: nur anzeigen, kein Clip.
@@ -586,7 +606,7 @@ pub fn analyze_reference(app: &AppHandle, clip: &std::path::Path, at: f64) -> Re
     let marker = marker_frame_path(app).ok_or("Cache-Ordner fehlt")?;
     let result = reference::analyze(clip, at, &frame, &marker);
     // Nur für die Monitorgröße geöffnet – läuft die Erkennung nicht, wieder freigeben.
-    if !app.state::<AppState>().kill_clips.running.load(Ordering::SeqCst) {
+    if !app.state::<AppState>().kill_clips.watcher.is_active() {
         screen::release();
     }
     result

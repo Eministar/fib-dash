@@ -4,6 +4,7 @@
 //! Bereiche, die wir auswerten. Staging-Texturen werden zwischen Scans wiederverwendet.
 
 use serde::{Deserialize, Serialize};
+use std::time::Instant;
 use windows::{
     core::Interface,
     Win32::{
@@ -12,13 +13,13 @@ use windows::{
             Direct3D::D3D_DRIVER_TYPE_UNKNOWN,
             Direct3D11::{
                 D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D, D3D11_BOX, D3D11_CPU_ACCESS_READ,
-                D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_MAPPED_SUBRESOURCE, D3D11_MAP_READ, D3D11_SDK_VERSION,
+                D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_MAPPED_SUBRESOURCE, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, D3D11_SDK_VERSION,
                 D3D11_TEXTURE2D_DESC, D3D11_USAGE_STAGING,
             },
             Dxgi::{
                 Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
                 CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory1, IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource,
-                DXGI_ERROR_ACCESS_LOST, DXGI_ERROR_WAIT_TIMEOUT, DXGI_OUTDUPL_FRAME_INFO,
+                DXGI_ERROR_ACCESS_LOST, DXGI_ERROR_WAIT_TIMEOUT, DXGI_ERROR_WAS_STILL_DRAWING, DXGI_OUTDUPL_FRAME_INFO,
             },
         },
     },
@@ -39,6 +40,17 @@ pub struct Image {
     pub width: u32,
     pub height: u32,
     pub bgra: Vec<u8>,
+}
+
+/// Aufnahmezeit bleibt erhalten, auch wenn die GPU erst im nächsten Scan fertig ist.
+pub struct CapturedFrame {
+    pub images: Vec<Image>,
+    pub at: Instant,
+}
+
+struct PendingFrame {
+    regions: Vec<Region>,
+    at: Instant,
 }
 
 impl Image {
@@ -122,6 +134,7 @@ pub struct Screen {
     frame_owned: bool,
     staging: Vec<ID3D11Texture2D>,
     staging_sizes: Vec<(u32, u32)>,
+    pending: Option<PendingFrame>,
     pub width: u32,
     pub height: u32,
 }
@@ -140,6 +153,21 @@ impl Drop for Screen {
 mod tests {
     use super::*;
     use windows::Win32::Graphics::Direct3D11::{D3D11_SUBRESOURCE_DATA, D3D11_USAGE_DEFAULT};
+
+    unsafe fn copy_synthetic(screen: &mut Screen, texture: &ID3D11Texture2D, region: Region) -> Result<Image, String> {
+        screen.queue_region(texture, region, 0)?;
+        screen.context.Flush();
+        let deadline = Instant::now() + std::time::Duration::from_secs(2);
+        loop {
+            if let Some(image) = screen.read_region(0, true)? {
+                return Ok(image);
+            }
+            if Instant::now() >= deadline {
+                return Err("GPU-Test überschreitet Zeitlimit".into());
+            }
+            std::thread::sleep(std::time::Duration::from_millis(1));
+        }
+    }
 
     /// Hardware-Test mit synthetischen Pixeln, ohne Bildschirmbilder zu lesen.
     #[test]
@@ -160,18 +188,18 @@ mod tests {
             screen.device.CreateTexture2D(&desc, Some(&data), Some(&mut texture)).unwrap();
             let texture = texture.unwrap();
             let region = Region { x: 0, y: 0, width: 64, height: 32 };
-            let first = screen.copy_region(&texture, region, 0).unwrap();
+            let first = copy_synthetic(&mut screen, &texture, region).unwrap();
             assert_eq!(first.bgra, pixels);
             let staging = screen.staging[0].clone();
             for _ in 0..20 {
-                assert_eq!(screen.copy_region(&texture, region, 0).unwrap().bgra, pixels);
+                assert_eq!(copy_synthetic(&mut screen, &texture, region).unwrap().bgra, pixels);
                 assert_eq!(screen.staging[0].as_raw(), staging.as_raw());
             }
             let crop = Region { x: 2, y: 3, width: 16, height: 8 };
-            let cropped = screen.copy_region(&texture, crop, 0).unwrap();
+            let cropped = copy_synthetic(&mut screen, &texture, crop).unwrap();
             assert_eq!(cropped.bgra, first.crop(crop).unwrap().bgra);
             assert_ne!(screen.staging[0].as_raw(), staging.as_raw());
-            assert!(screen.copy_region(&texture, Region { x: screen.width, ..crop }, 0).is_err());
+            assert!(screen.queue_region(&texture, Region { x: screen.width, ..crop }, 0).is_err());
         }
     }
 }
@@ -256,7 +284,7 @@ impl Screen {
                 match output.DuplicateOutput(&device) {
                     Ok(duplication) => return Ok(Self {
                         device, context, duplication, width, height,
-                        frame_owned: false, staging: Vec::new(), staging_sizes: Vec::new(),
+                        frame_owned: false, staging: Vec::new(), staging_sizes: Vec::new(), pending: None,
                     }),
                     Err(error) => last_error = hr(error, "Bildschirmzugriff"),
                 }
@@ -265,13 +293,38 @@ impl Screen {
         }
     }
 
-    /// Wartet bis zu `timeout_ms` auf ein neues Bild und kopiert die gewünschten
-    /// Bereiche heraus. `None` = seitdem hat sich nichts geändert.
-    pub fn grab(&mut self, regions: &[Region], timeout_ms: u32) -> Result<Option<Vec<Image>>, String> {
-        self.grab_inner(regions, timeout_ms, false)
+    /// Live-Pipeline mit höchstens einer ausstehenden Kopie. Nie synchron auf
+    /// die GPU warten: Bei Überlast diesen Scan auslassen, ohne neue Arbeit zu stauen.
+    pub fn grab(&mut self, regions: &[Region], timeout_ms: u32) -> Result<Option<CapturedFrame>, String> {
+        if self.pending.as_ref().is_some_and(|pending| pending.regions != regions) {
+            self.pending = None;
+        }
+        let ready = if let Some(pending) = self.pending.take() {
+            let mut images = Vec::with_capacity(regions.len());
+            for index in 0..regions.len() {
+                match unsafe { self.read_region(index, true)? } {
+                    Some(image) => images.push(image),
+                    None => {
+                        self.pending = Some(pending);
+                        return Ok(None);
+                    }
+                }
+            }
+            // Sehr alte Bilder nach GPU-Hängern dürfen keine nachträglichen Kills auslösen.
+            (pending.at.elapsed().as_secs_f64() <= 2.0).then_some(CapturedFrame { images, at: pending.at })
+        } else {
+            None
+        };
+        self.grab_inner(regions, timeout_ms, false)?;
+        Ok(ready)
     }
 
     fn grab_inner(&mut self, regions: &[Region], timeout_ms: u32, any_frame: bool) -> Result<Option<Vec<Image>>, String> {
+        if any_frame {
+            // Einrichtungs-Screenshot darf eine ausstehende Live-Kopie nicht später
+            // mit anderen Abmessungen oder anderem Bildinhalt zurückliefern.
+            self.pending = None;
+        }
         unsafe {
             // DXGI empfiehlt Release unmittelbar vor Acquire: Solange wir das
             // Bild besitzen, muss Windows nicht jedes Spielframe hineinkopieren.
@@ -301,14 +354,25 @@ impl Screen {
                 self.staging.truncate(regions.len());
                 self.staging_sizes.truncate(regions.len());
                 for (index, region) in regions.iter().enumerate() {
-                    images.push(self.copy_region(&texture, *region, index)?);
+                    self.queue_region(&texture, *region, index)?;
                 }
-                Ok(Some(images))
+                if any_frame {
+                    for index in 0..regions.len() {
+                        images.push(self.read_region(index, false)?.ok_or("Bild noch nicht verfügbar")?);
+                    }
+                    Ok(Some(images))
+                } else {
+                    self.pending = Some(PendingFrame { regions: regions.to_vec(), at: Instant::now() });
+                    // Einmal abschicken, bevor der Wächter schläft. Flush wartet
+                    // nicht auf Fertigstellung; Map(DO_NOT_WAIT) prüft beim nächsten Scan.
+                    self.context.Flush();
+                    Ok(None)
+                }
             })()
         }
     }
 
-    unsafe fn copy_region(&mut self, texture: &ID3D11Texture2D, region: Region, index: usize) -> Result<Image, String> {
+    unsafe fn queue_region(&mut self, texture: &ID3D11Texture2D, region: Region, index: usize) -> Result<(), String> {
         let width = region.width.min(self.width.saturating_sub(region.x));
         let height = region.height.min(self.height.saturating_sub(region.y));
         if width == 0 || height == 0 {
@@ -341,15 +405,26 @@ impl Screen {
         let staging = &self.staging[index];
         let source_box = D3D11_BOX { left: region.x, top: region.y, front: 0, right: region.x + width, bottom: region.y + height, back: 1 };
         self.context.CopySubresourceRegion(staging, 0, 0, 0, 0, texture, 0, Some(&source_box));
+        Ok(())
+    }
+
+    unsafe fn read_region(&self, index: usize, nonblocking: bool) -> Result<Option<Image>, String> {
+        let staging = &self.staging[index];
+        let (width, height) = self.staging_sizes[index];
         let mut mapped = D3D11_MAPPED_SUBRESOURCE::default();
-        self.context.Map(staging, 0, D3D11_MAP_READ, 0, Some(&mut mapped)).map_err(|e| hr(e, "Bild lesen"))?;
+        let flags = if nonblocking { D3D11_MAP_FLAG_DO_NOT_WAIT.0 as u32 } else { 0 };
+        match self.context.Map(staging, 0, D3D11_MAP_READ, flags, Some(&mut mapped)) {
+            Ok(()) => {}
+            Err(error) if nonblocking && error.code() == DXGI_ERROR_WAS_STILL_DRAWING => return Ok(None),
+            Err(error) => return Err(hr(error, "Bild lesen")),
+        }
         let mut bgra = Vec::with_capacity((width * height * 4) as usize);
         for row in 0..height as usize {
             let line = std::slice::from_raw_parts((mapped.pData as *const u8).add(row * mapped.RowPitch as usize), (width * 4) as usize);
             bgra.extend_from_slice(line);
         }
         self.context.Unmap(staging, 0);
-        Ok(Image { width, height, bgra })
+        Ok(Some(Image { width, height, bgra }))
     }
 
     /// Ganzer Monitor – für den Einrichtungs-Screenshot.
