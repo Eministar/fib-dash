@@ -502,6 +502,75 @@ button { font: inherit; color: inherit; }
 .settings #update-progress { width: 140px; }
 .settings fluent-message-bar { margin-top: 8px; }
 
+/* ── Updates ───────────────────────────────────────────────────── */
+/* Während eines Updates beim Start ist nur der Update-Bildschirm zu sehen. */
+body.updating > :not(#update-screen) { visibility: hidden; }
+
+.update-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: var(--layer);
+}
+
+.update-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(520px, 100%);
+  text-align: center;
+  animation: update-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.update-seal { margin-bottom: 8px; }
+.update-screen-progress { width: 100%; margin-top: 16px; }
+#update-screen-detail { min-height: 16px; font-variant-numeric: tabular-nums; }
+
+.update-notes {
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px 20px;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--radius);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.update-notes h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--colorBrandForeground1); }
+
+@keyframes update-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .update-card { animation: none; }
+}
+
+#whatsnew-dialog::part(dialog) { max-width: min(560px, calc(100vw - 48px)); border-radius: var(--radius); }
+.whatsnew-notes { max-height: 50vh; overflow-y: auto; }
+
+/* Markierung „Neu / Behoben / Verbessert“ vor einer Änderung. */
+.change-kind {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: 600;
+  vertical-align: 1px;
+  background: var(--colorBrandBackground2);
+  color: var(--colorBrandForeground2);
+}
+.change-kind[data-kind="Behoben"] { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+.change-kind[data-kind="Verbessert"] { background: var(--subtle-selected); color: var(--text-secondary); }
+
 [data-hotkey] { cursor: pointer; }
 [data-hotkey][data-recording] { outline: 2px solid var(--colorBrandStroke1); outline-offset: 1px; border-radius: 4px; }
 

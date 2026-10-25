@@ -66,6 +66,7 @@ interface DiscordConfigResponse {
     dutyStatusMessageId: string
     absenceStatusChannelId: string
     weeklyReportChannelId: string
+    desktopNewsChannelId: string
     absenceStatusMessageId: string
     humanResourcesRoleId: string
     clipsCategoryId: string
@@ -161,6 +162,7 @@ export default function SettingsPage() {
     dutyStatusMessageId: '',
     absenceStatusChannelId: '',
     weeklyReportChannelId: '',
+    desktopNewsChannelId: '',
     absenceStatusMessageId: '',
     humanResourcesRoleId: '',
     clipsCategoryId: '',
@@ -735,6 +737,7 @@ export default function SettingsPage() {
               {channelField('Ankündigungs-Channel', 'announcementsChannelId', 'Personalmeldungen wie Einstellungen, Rangänderungen und Kündigungen.')}
               {channelField('Update-Channel', 'updateChannelId', 'Update-Mitteilungen. Leer lassen, um den Ankündigungs-Channel zu nutzen.')}
               {channelField('Sanktions-Channel', 'sanctionsChannelId', 'Neue Sanktionen. Leer lassen, um den Ankündigungs-Channel zu nutzen.')}
+              {channelField('Desktop-App: Neuigkeiten', 'desktopNewsChannelId', 'Die Beiträge dieses Channels zeigt die Desktop-App unter „Neuigkeiten“ – mit Formatierung, Bildern und Verfasser. Leer lassen, um den Ankündigungs-Channel zu nutzen.')}
               {channelField('Neueinstellung: Kurz-Ping', 'hirePingChannelId', 'Ein neu angelegter Agent wird hier einmal kurz erwähnt; die Nachricht verschwindet nach etwa einer Sekunde. Ohne Discord-ID passiert nichts. Leer bedeutet deaktiviert.')}
             </ChannelGroup>
 
@@ -949,7 +952,7 @@ export default function SettingsPage() {
 type ChannelField =
   | 'announcementsChannelId' | 'updateChannelId' | 'sanctionsChannelId' | 'investigationsChannelId'
   | 'photoCatalogChannelId' | 'dutyStatusChannelId' | 'codenameBoardChannelId' | 'dutyAdminLogChannelId'
-  | 'absenceStatusChannelId' | 'weeklyReportChannelId' | 'hirePingChannelId'
+  | 'absenceStatusChannelId' | 'weeklyReportChannelId' | 'hirePingChannelId' | 'desktopNewsChannelId'
 type RoleField = 'humanResourcesRoleId' | 'promotionBlockRoleId' | 'leaveRoleId' | 'bodycamViewerRoleId' | 'clipsAnalystRoleId'
 
 function SettingsSection({ id, icon: Icon, iconClassName, title, description, action, children }: {

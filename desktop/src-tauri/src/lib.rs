@@ -525,6 +525,15 @@ fn killclip_open_link(app: AppHandle, url: String) -> Result<(), String> {
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 
+/// Links aus Ankündigungen im Browser öffnen – nur http(s), nie Dateien oder Programme.
+#[tauri::command]
+fn open_external(app: AppHandle, url: String) -> Result<(), String> {
+    if !(url.starts_with("https://") || url.starts_with("http://")) {
+        return Err("Ungültiger Link".into());
+    }
+    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 async fn killclip_test_marker(app: AppHandle, region: Option<killclip::screen::Region>) -> Result<f32, String> {
     tauri::async_runtime::spawn_blocking(move || killclip::test_marker(&app, region)).await.map_err(|e| e.to_string())?
@@ -678,6 +687,7 @@ pub fn run() {
             killclip_set_hitmarker,
             killclip_reveal,
             killclip_open_link,
+            open_external,
             killclip_test_feed,
             killclip_test_marker,
         ])

@@ -22,7 +22,9 @@ import './ui/controls.css'
 import './investigations/investigations.css'
 import './pages/killclips.css'
 import './pages/tweaks.css'
+import './pages/news.css'
 import { startApp } from './app'
+import { backend } from './backend'
 import { startAutoUpdates } from './updater'
 
 // Hell/Dunkel folgt wie bei Windows-Apps der Systemeinstellung.
@@ -36,6 +38,14 @@ darkMode.addEventListener('change', applyTheme)
 // Kein Browser-Kontextmenü („Neu laden", „Untersuchen") – wie in nativen Apps.
 document.addEventListener('contextmenu', (event) => {
   if (!(event.target instanceof HTMLElement && event.target.closest('fluent-text-input, fluent-textarea'))) event.preventDefault()
+})
+
+// Links (Ankündigungen, Versionshinweise) im Browser öffnen statt im App-Fenster.
+document.addEventListener('click', (event) => {
+  const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null
+  if (!anchor) return
+  event.preventDefault()
+  if (/^https?:\/\//.test(anchor.href)) void backend.openExternal(anchor.href)
 })
 
 // Profilbild nicht ladbar (offline, gelöschter Avatar) → Initialen bleiben sichtbar.

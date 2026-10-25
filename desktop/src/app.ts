@@ -10,6 +10,7 @@ import { initSelfClip, renderSelfClip } from './pages/selfclip'
 import { initTweaks, showTweaks } from './pages/tweaks'
 import { initKillClips, showKillClips } from './pages/killclips'
 import { initHome } from './pages/home'
+import { hideNews, initNews, refreshNewsBadge, showNews } from './pages/news'
 import { initInvestigations, showInvestigations } from './pages/investigations'
 import { navigation, notifyStateChange, state, type Route } from './store'
 
@@ -29,6 +30,7 @@ function go(next: Route) {
   const tool = document.querySelector<HTMLElement>(`.nav-item[data-route="${next}"]`)
   if (!tool || tool.hidden) next = 'home'
   if (route === 'duty' && next !== 'duty') hideDuty()
+  if (route === 'news' && next !== 'news') hideNews()
   route = next
   for (const item of document.querySelectorAll<HTMLElement>('.nav-item[data-route]')) {
     if (item.dataset.route === next) item.setAttribute('aria-current', 'page')
@@ -37,6 +39,7 @@ function go(next: Route) {
   for (const page of document.querySelectorAll<HTMLElement>('.page')) page.hidden = page.dataset.page !== next
   $('content').scrollTop = 0
   if (next === 'duty') showDuty()
+  if (next === 'news') showNews()
   if (next === 'investigations') showInvestigations()
   if (next === 'killclips') showKillClips()
   if (next === 'tweaks') showTweaks()
@@ -70,6 +73,7 @@ async function enterApp() {
   notifyStateChange()
   showView('app')
   go(bodycamQueueLength() ? 'bodycam' : route)
+  refreshNewsBadge()
 }
 
 function showLogin() {
@@ -168,6 +172,7 @@ export async function startApp() {
   }
   bindSettings()
   initHome()
+  initNews()
   initDuty()
   initInvestigations()
   initKillClips()

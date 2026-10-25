@@ -48,6 +48,13 @@ const tools: Tool[] = [
     available: () => !!state.context?.tools.investigations,
   },
   {
+    icon: 'megaphone',
+    title: 'Neuigkeiten',
+    description: 'Ankündigungen aus dem Discord und was sich in der App geändert hat.',
+    route: 'news',
+    available: () => true,
+  },
+  {
     icon: 'open',
     title: 'Dashboard öffnen',
     description: 'Das FIB-Dashboard im Browser für alles Weitere.',

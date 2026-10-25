@@ -317,6 +317,7 @@ export const backend = {
   killClipSetHitmarker: (region: Region) => invoke<void>('killclip_set_hitmarker', { region }),
   killClipReveal: (path?: string) => invoke<void>('killclip_reveal', { path: path ?? null }),
   killClipOpenLink: (url: string) => invoke<void>('killclip_open_link', { url }),
+  openExternal: (url: string) => invoke<void>('open_external', { url }),
   killClipTestFeed: (region: Region) => invoke<{ lines: string[]; kills: string[]; deaths: string[] }>('killclip_test_feed', { region }),
   killClipTestMarker: (region: Region | null) => invoke<number>('killclip_test_marker', { region }),
 }

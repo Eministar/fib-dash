@@ -49,6 +49,28 @@ export async function readLatestDesktopRelease(): Promise<DesktopRelease | null>
   return { ...release, size }
 }
 
+const HISTORY_FILE = 'history.json'
+const KEEP_HISTORY = 30
+
+const historySchema = z.array(releaseSchema.pick({ version: true, pubDate: true, notes: true }))
+
+export type DesktopReleaseNote = z.infer<typeof historySchema>[number]
+
+/**
+ * Die letzten Releases mit ihren Notizen, neuestes zuerst – für die Seite
+ * „Neuigkeiten“ der App. Vor Einführung des Verlaufs gab es nur `release.json`.
+ */
+export async function readDesktopReleaseHistory(): Promise<DesktopReleaseNote[]> {
+  try {
+    const raw = await readFile(path.join(/*turbopackIgnore: true*/ desktopReleaseDir(), HISTORY_FILE), 'utf8')
+    return historySchema.parse(JSON.parse(raw))
+  } catch (cause) {
+    if ((cause as NodeJS.ErrnoException)?.code !== 'ENOENT') throw cause
+  }
+  const latest = await readLatestDesktopRelease().catch(() => null)
+  return latest ? [{ version: latest.version, pubDate: latest.pubDate, notes: latest.notes }] : []
+}
+
 export function desktopDownloadPath(release: Pick<DesktopRelease, 'file'>) {
   return `/api/desktop/download/${encodeURIComponent(release.file)}`
 }
@@ -78,6 +100,12 @@ export async function publishDesktopRelease(input: { version: string; signature:
   const manifest = path.join(/*turbopackIgnore: true*/ dir, 'release.json')
   await writeFile(`${manifest}.tmp`, JSON.stringify(release, null, 2))
   await rename(`${manifest}.tmp`, manifest)
+
+  const previous = (await readDesktopReleaseHistory().catch(() => [])).filter((entry) => entry.version !== release.version)
+  const history = [{ version: release.version, pubDate: release.pubDate, notes: release.notes }, ...previous].slice(0, KEEP_HISTORY)
+  const historyPath = path.join(/*turbopackIgnore: true*/ dir, HISTORY_FILE)
+  await writeFile(`${historyPath}.tmp`, JSON.stringify(history, null, 2))
+  await rename(`${historyPath}.tmp`, historyPath)
 
   // Nur die letzten Installer behalten.
   const installers = (await readdir(dir)).filter(isDesktopInstallerName)

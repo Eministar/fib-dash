@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/pages/news.css"
+        ],
+        "createdAt": "2026-10-25T14:21:04.214Z",
+        "reason": "model decision: L110 is Discord's embed color bar (the embed's own color from Discord), L182 is the Markdown/Discord blockquote bar; both reproduce Discord's rendering, not decorative card accents"
+      }
+    ]
+  }
+}

@@ -115,6 +115,8 @@ export type DiscordConfig = {
   absenceStatusMessageId: string
   /// Wöchentlicher Bericht an die Leitung (montags). Leer = kein Bericht.
   weeklyReportChannelId: string
+  /// Channel, dessen Beiträge die Desktop-App unter „Neuigkeiten“ zeigt; leer = Ankündigungs-Channel.
+  desktopNewsChannelId: string
   humanResourcesRoleId: string
   promotionBlockRoleId: string
   leaveRoleId: string
@@ -237,6 +239,7 @@ export const DISCORD_SETTING_KEYS = {
   absenceStatusChannelId: 'discord.absenceStatusChannelId',
   absenceStatusMessageId: 'discord.absenceStatusMessageId',
   weeklyReportChannelId: 'discord.weeklyReportChannelId',
+  desktopNewsChannelId: 'discord.desktopNewsChannelId',
   humanResourcesRoleId: 'discord.humanResourcesRoleId',
   promotionBlockRoleId: 'discord.promotionBlockRoleId',
   leaveRoleId: 'discord.leaveRoleId',
@@ -943,6 +946,7 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
     absenceStatusChannelId: envFirst(envAbsenceStatusChannelId(), map[DISCORD_SETTING_KEYS.absenceStatusChannelId]),
     absenceStatusMessageId: map[DISCORD_SETTING_KEYS.absenceStatusMessageId] || '',
     weeklyReportChannelId: envFirst(process.env.DISCORD_WEEKLY_REPORT_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.weeklyReportChannelId]),
+    desktopNewsChannelId: envFirst(process.env.DISCORD_DESKTOP_NEWS_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.desktopNewsChannelId]),
     humanResourcesRoleId: envFirst(envHumanResourcesRoleId(), map[DISCORD_SETTING_KEYS.humanResourcesRoleId]),
     promotionBlockRoleId: envFirst(envPromotionBlockRoleId(), map[DISCORD_SETTING_KEYS.promotionBlockRoleId]),
     leaveRoleId: envFirst(envLeaveRoleId(), map[DISCORD_SETTING_KEYS.leaveRoleId]),
@@ -988,6 +992,7 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.dutyStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.dutyStatusMessageId] = input.dutyStatusMessageId.trim()
   if (input.absenceStatusChannelId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusChannelId] = input.absenceStatusChannelId.trim()
   if (input.weeklyReportChannelId !== undefined) data[DISCORD_SETTING_KEYS.weeklyReportChannelId] = input.weeklyReportChannelId.trim()
+  if (input.desktopNewsChannelId !== undefined) data[DISCORD_SETTING_KEYS.desktopNewsChannelId] = input.desktopNewsChannelId.trim()
   if (input.absenceStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusMessageId] = input.absenceStatusMessageId.trim()
   if (input.humanResourcesRoleId !== undefined) data[DISCORD_SETTING_KEYS.humanResourcesRoleId] = input.humanResourcesRoleId.trim()
   if (input.promotionBlockRoleId !== undefined) data[DISCORD_SETTING_KEYS.promotionBlockRoleId] = input.promotionBlockRoleId.trim()

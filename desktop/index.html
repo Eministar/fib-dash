@@ -8,6 +8,21 @@
   <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
+  <!-- ── Update beim Start ─────────────────────────────────────── -->
+  <section id="update-screen" class="update-screen" hidden aria-live="polite">
+    <div class="update-card">
+      <img class="update-seal" src="/src/assets/fib-seal.png" alt="" width="64" height="64">
+      <h1 class="type-title" id="update-screen-title">Update wird installiert</h1>
+      <p class="type-body muted" id="update-screen-version"></p>
+      <fluent-progress-bar id="update-screen-progress" class="update-screen-progress"></fluent-progress-bar>
+      <p class="type-caption muted" id="update-screen-detail"></p>
+      <div class="update-notes">
+        <h2 class="type-body-strong"><i data-icon="sparkle"></i>Was ist neu</h2>
+        <div class="markdown" id="update-screen-notes-body"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- ── Anmeldung ─────────────────────────────────────────────── -->
   <section id="view-login" class="login" hidden>
     <div class="login-card">
@@ -32,6 +47,7 @@
       </div>
       <div class="nav-items" role="list">
         <button class="nav-item" data-route="home" role="listitem"><i data-icon="home"></i><span>Startseite</span></button>
+        <button class="nav-item" data-route="news" role="listitem"><i data-icon="megaphone"></i><span>Neuigkeiten</span><span class="nav-badge" id="nav-news-badge" hidden></span></button>
         <button class="nav-item" data-route="bodycam" data-tool="bodycam" role="listitem"><i data-icon="videoClip"></i><span>Bodycam</span></button>
         <button class="nav-item" data-route="investigations" data-tool="investigations" role="listitem"><i data-icon="documentSearch"></i><span>Ermittlungsakten</span></button>
         <button class="nav-item" data-route="killclips" data-tool="killClips" role="listitem"><i data-icon="target"></i><span>Kill-Clips</span></button>
@@ -52,7 +68,11 @@
     </nav>
 
     <main class="content" id="content">
-      <fluent-message-bar id="update-banner" intent="info" hidden></fluent-message-bar>
+      <fluent-message-bar id="update-banner" intent="success" hidden>
+        <span id="update-banner-text"></span>
+        <fluent-button slot="actions" id="update-restart" size="small" appearance="primary">Jetzt neu starten</fluent-button>
+        <fluent-button slot="actions" id="update-later" size="small">Später</fluent-button>
+      </fluent-message-bar>
 
       <!-- Startseite -->
       <section class="page" data-page="home">
@@ -314,6 +334,27 @@
         <div id="tw-details" hidden></div>
       </section>
 
+      <!-- Neuigkeiten -->
+      <section class="page" data-page="news" hidden>
+        <header class="page-header row">
+          <div>
+            <h1 class="type-title">Neuigkeiten</h1>
+            <p class="type-body muted">Ankündigungen aus dem Discord und was sich in der App geändert hat.</p>
+          </div>
+          <fluent-button id="news-refresh" appearance="subtle"><i data-icon="arrowSync" slot="start"></i>Aktualisieren</fluent-button>
+        </header>
+        <div class="toolbar">
+          <fluent-tablist id="news-tabs" size="small" activeid="news-tab-announcements">
+            <fluent-tab id="news-tab-announcements">Ankündigungen <span class="tab-count" id="news-tab-announcements-count"></span></fluent-tab>
+            <fluent-tab id="news-tab-releases">App-Updates</fluent-tab>
+          </fluent-tablist>
+          <fluent-button id="news-toggle-all" appearance="subtle" size="small" hidden><span id="news-toggle-all-label">Alle ausklappen</span></fluent-button>
+        </div>
+        <fluent-message-bar id="news-error" intent="error" hidden></fluent-message-bar>
+        <div class="news-list" id="news-announcements"><div class="card empty">Wird geladen …</div></div>
+        <div id="news-releases" hidden></div>
+      </section>
+
       <!-- Dienstzeiten -->
       <section class="page" data-page="duty" hidden>
         <header class="page-header row">
@@ -365,6 +406,22 @@
       <fluent-button slot="action" class="form-cancel">Abbrechen</fluent-button>
     </fluent-dialog-body>
   </fluent-dialog>
+
+  <!-- ── Nach einem Update ─────────────────────────────────────── -->
+  <fluent-dialog id="whatsnew-dialog" type="modal">
+    <fluent-dialog-body>
+      <span slot="title">Aktualisiert auf Version <span id="whatsnew-version"></span></span>
+      <div class="markdown whatsnew-notes" id="whatsnew-notes"></div>
+      <fluent-button slot="action" id="whatsnew-all">Alle Änderungen</fluent-button>
+      <fluent-button slot="action" id="whatsnew-close" appearance="primary">Los geht's</fluent-button>
+    </fluent-dialog-body>
+  </fluent-dialog>
+
+  <!-- ── Bild aus einer Ankündigung ────────────────────────────── -->
+  <div id="news-lightbox" class="news-lightbox" tabindex="-1" role="dialog" aria-label="Bild" hidden>
+    <img id="news-lightbox-img" alt="">
+    <fluent-button id="news-lightbox-open" appearance="subtle"><i data-icon="open" slot="start"></i>Im Browser öffnen</fluent-button>
+  </div>
 
   <!-- ── Clip abspielen ────────────────────────────────────────── -->
   <fluent-dialog id="player-dialog" type="modal">
@@ -519,6 +576,7 @@
             <span class="setting-icon"><img src="/src/assets/fib-seal.png" alt="" width="20" height="20"></span>
             <div class="setting-text"><span>FIB Desktop <span id="version"></span></span><span class="type-caption muted" id="update-status" aria-live="polite"></span></div>
             <fluent-progress-bar id="update-progress" class="setting-control" hidden></fluent-progress-bar>
+            <fluent-button id="update-check" class="setting-control"><i data-icon="arrowSync" slot="start"></i>Nach Updates suchen</fluent-button>
           </div>
         </div>
       </div>
