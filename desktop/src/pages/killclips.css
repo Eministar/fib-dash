@@ -57,6 +57,8 @@ kbd {
 .kc-setup-bar { display: flex; align-items: center; gap: 8px; }
 .kc-canvas {
   position: relative;
+  display: flex;
+  justify-content: center;
   min-height: 220px;
   border: 1px solid var(--card-stroke);
   border-radius: 6px;
@@ -66,7 +68,10 @@ kbd {
   touch-action: none;
   user-select: none;
 }
-.kc-canvas img { display: block; width: 100%; height: auto; pointer-events: none; }
+/* Die Bühne ist genau so groß wie das Bild – Rahmen sitzen in Prozent darauf. */
+.kc-stage { position: relative; max-width: 100%; align-self: flex-start; }
+/* Das ganze Bild bleibt sichtbar, Probelauf und Buttons rutschen nicht aus dem Dialog. */
+.kc-canvas img { display: block; max-width: 100%; max-height: max(200px, calc(100vh - 440px)); width: auto; height: auto; pointer-events: none; }
 .kc-canvas-empty {
   position: absolute;
   inset: 0;

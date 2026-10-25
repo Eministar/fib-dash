@@ -141,19 +141,21 @@ let shot: { width: number; height: number } | null = null
 let draft: { killfeed: Region | null; hitmarker: Region | null } = { killfeed: null, hitmarker: null }
 let mode: 'killfeed' | 'hitmarker' = 'killfeed'
 
-function scale() {
-  const img = $<HTMLImageElement>('kc-shot')
-  return shot && img.clientWidth ? img.clientWidth / shot.width : 1
-}
-
+// Rahmen in Prozent des Bildes: bleibt richtig, egal wann und wie groß das Bild gerade dargestellt wird
+// (z. B. wenn der Screenshot ankommt, während das Fenster hinter dem Spiel liegt).
 function placeRects() {
-  const s = scale()
   for (const [key, id] of [['killfeed', 'kc-rect-feed'], ['hitmarker', 'kc-rect-hit']] as const) {
     const rect = draft[key]
     const el = $(id)
     el.hidden = !rect || !shot
     if (rect && shot) {
-      Object.assign(el.style, { left: `${rect.x * s}px`, top: `${rect.y * s}px`, width: `${rect.width * s}px`, height: `${rect.height * s}px` })
+      const { width, height } = shot
+      Object.assign(el.style, {
+        left: `${(rect.x / width) * 100}%`,
+        top: `${(rect.y / height) * 100}%`,
+        width: `${(rect.width / width) * 100}%`,
+        height: `${(rect.height / height) * 100}%`,
+      })
     }
   }
 }
@@ -216,10 +218,9 @@ function bindCanvas() {
   let start: { x: number; y: number } | null = null
   const point = (event: PointerEvent) => {
     const box = $<HTMLImageElement>('kc-shot').getBoundingClientRect()
-    const s = scale()
     return {
-      x: Math.max(0, Math.min(shot!.width, (event.clientX - box.left) / s)),
-      y: Math.max(0, Math.min(shot!.height, (event.clientY - box.top) / s)),
+      x: Math.max(0, Math.min(shot!.width, ((event.clientX - box.left) / box.width) * shot!.width)),
+      y: Math.max(0, Math.min(shot!.height, ((event.clientY - box.top) / box.height) * shot!.height)),
     }
   }
   canvas.addEventListener('pointerdown', (event) => {
@@ -250,7 +251,6 @@ function bindCanvas() {
     }
     void runFeedTest()
   })
-  window.addEventListener('resize', placeRects)
 }
 
 async function openSetup() {
