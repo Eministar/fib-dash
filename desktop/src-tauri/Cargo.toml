@@ -33,6 +33,7 @@ windows-collections = "0.3.2"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 zip = { version = "4", default-features = false, features = ["deflate"] }
 windows-core = "0.62.2"
+tauri-plugin-notification = "2"
 
 # Kleine, schnelle Release-Binary.
 [profile.release]

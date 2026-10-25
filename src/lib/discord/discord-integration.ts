@@ -31,6 +31,8 @@ type DiscordRole = {
   id: string
   name: string
   color: number
+  /** Farbverlauf (Server mit erweiterten Rollenfarben); `color` ist dann die erste Farbe. */
+  colors?: { primary_color: number; secondary_color: number | null; tertiary_color: number | null }
   position: number
   managed: boolean
 }

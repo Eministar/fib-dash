@@ -6,8 +6,16 @@ import { escapeHtml } from './dom'
 
 export interface Mentions {
   users: Record<string, string>
-  roles: Record<string, { name: string; color: string | null }>
+  roles: Record<string, { name: string; color: string | null; gradient?: string[] | null }>
   channels: Record<string, string>
+}
+
+/** Text in Rollenfarbe – bei Rollen mit Farbverlauf als Verlauf über den Text. */
+export function roleColored(html: string, color: string | null | undefined, gradient?: string[] | null) {
+  if (gradient && gradient.length > 1) {
+    return `<span class="role-gradient" style="--gradient:linear-gradient(90deg, ${gradient.map(escapeHtml).join(', ')})">${html}</span>`
+  }
+  return color ? `<span style="color:${escapeHtml(color)}">${html}</span>` : html
 }
 
 const NO_MENTIONS: Mentions = { users: {}, roles: {}, channels: {} }
@@ -61,7 +69,8 @@ const inlineRules: Rule[] = [
   [/^<@&(\d+)>/, (m, x) => {
     const role = x.roles[m[1]]
     const style = role?.color ? ` style="--role:${escapeHtml(role.color)}"` : ''
-    return `<span class="md-mention md-role"${style}>@${escapeHtml(role?.name ?? 'Rolle')}</span>`
+    const name = `@${escapeHtml(role?.name ?? 'Rolle')}`
+    return `<span class="md-mention md-role"${style}>${roleColored(name, null, role?.gradient)}</span>`
   }],
   [/^<#(\d+)>/, (m, x) => `<span class="md-mention">#${escapeHtml(x.channels[m[1]] ?? 'Kanal')}</span>`],
   [/^@(everyone|here)\b/, (m) => `<span class="md-mention">@${m[1]}</span>`],
@@ -121,11 +130,20 @@ const LIST_ITEM = /^(\s*)([-*]|\d+\.)\s+(.*)$/
 
 /** Discord-Markdown als HTML (Überschriften, Listen, Zitate, Code, Zeilenformatierung). */
 export function renderMarkdown(text: string, mentions: Mentions = NO_MENTIONS): string {
-  const lines = text.replace(/\r\n?/g, '\n').split('\n')
+  const lines = text.replace(/\r\n?/g, '\n').replace(/^(\s*\n)+|(\n\s*)+$/g, '').split('\n')
   let html = ''
   let paragraph: string[] = []
+  // Wie in Discord zählt jede Leerzeile als eigene Zeile – Abstände bleiben so, wie sie geschrieben wurden.
   const flush = () => {
-    if (paragraph.length) html += `<p>${inline(paragraph.join('\n'), mentions)}</p>`
+    if (!paragraph.length) return
+    let start = 0
+    let end = paragraph.length
+    while (start < end && !paragraph[start].trim()) start++
+    while (end > start && !paragraph[end - 1].trim()) end--
+    const body = inline(paragraph.slice(start, end).join('\n'), mentions)
+    const trail = paragraph.length - end
+    // Ein <br> am Absatzende zeichnet keine eigene Zeile – nach Text braucht es eins mehr.
+    html += `<p>${'<br>'.repeat(start)}${body}${'<br>'.repeat(trail && body ? trail + 1 : trail)}</p>`
     paragraph = []
   }
 
@@ -191,14 +209,19 @@ export function renderMarkdown(text: string, mentions: Mentions = NO_MENTIONS): 
       continue
     }
 
-    if (!line.trim()) {
-      flush()
-      continue
-    }
     paragraph.push(line)
   }
   flush()
   return html
+}
+
+/** Klartext für Benachrichtigungen: Erwähnungen aufgelöst, Formatierung und Spoiler weg. */
+export function plainText(text: string, mentions: Mentions = NO_MENTIONS): string {
+  const box = document.createElement('div')
+  box.innerHTML = renderMarkdown(text, mentions).replace(/<br>|<\/(p|h\d|li|pre)>/g, '$&\n')
+  for (const spoiler of box.querySelectorAll('.md-spoiler')) spoiler.textContent = '▒▒▒'
+  for (const emoji of box.querySelectorAll<HTMLImageElement>('img.md-emoji')) emoji.replaceWith(emoji.alt)
+  return (box.textContent ?? '').replace(/\n\s*\n+/g, '\n').trim()
 }
 
 // Commit-Typen aus der Pipeline („feat: …“) als verständliche Markierung.

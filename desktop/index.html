@@ -337,11 +337,17 @@
       <!-- Neuigkeiten -->
       <section class="page" data-page="news" hidden>
         <header class="page-header row">
-          <div>
-            <h1 class="type-title">Neuigkeiten</h1>
-            <p class="type-body muted">Ankündigungen aus dem Discord und was sich in der App geändert hat.</p>
+          <div class="news-title">
+            <span class="news-server-icon" id="news-server-icon" hidden></span>
+            <div>
+              <h1 class="type-title">Neuigkeiten</h1>
+              <p class="type-body muted" id="news-subtitle">Ankündigungen aus dem Discord und was sich in der App geändert hat.</p>
+            </div>
           </div>
-          <fluent-button id="news-refresh" appearance="subtle"><i data-icon="arrowSync" slot="start"></i>Aktualisieren</fluent-button>
+          <div class="news-header-actions">
+            <span class="type-caption muted" id="news-updated"></span>
+            <fluent-button id="news-refresh" appearance="subtle"><i data-icon="arrowSync" slot="start"></i>Aktualisieren</fluent-button>
+          </div>
         </header>
         <div class="toolbar">
           <fluent-tablist id="news-tabs" size="small" activeid="news-tab-announcements">

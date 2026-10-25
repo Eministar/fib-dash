@@ -15,8 +15,10 @@ import {
  */
 
 const MESSAGE_LIMIT = 30
-// Alle offenen Apps fragen beim Öffnen der Seite – Discord nur einmal pro Minute.
+// Alle offenen Apps fragen regelmäßig nach – Discord nur einmal pro Minute.
 const CACHE_MS = 60_000
+// „Aktualisieren“ in der App lädt sofort neu, aber höchstens alle paar Sekunden.
+const FORCED_REFRESH_MS = 5_000
 
 type DiscordAttachment = {
   id: string
@@ -41,6 +43,9 @@ type DiscordEmbed = {
   thumbnail?: { url: string; width?: number; height?: number }
   fields?: { name: string; value: string; inline?: boolean }[]
 }
+
+type DiscordGuild = { id: string; name: string; icon: string | null }
+type GuildRole = Awaited<ReturnType<typeof getDiscordGuildRoles>>[number]
 
 type DiscordMessageContent = {
   content: string
@@ -86,7 +91,7 @@ export type NewsAnnouncement = {
   url: string
   createdAt: string
   editedAt: string | null
-  author: { name: string; avatarUrl: string; color: string | null; bot: boolean }
+  author: { name: string; avatarUrl: string; color: string | null; gradient: string[] | null; bot: boolean }
   content: string
   attachments: NewsAttachment[]
   embeds: NewsEmbed[]
@@ -94,12 +99,16 @@ export type NewsAnnouncement = {
 
 export type NewsMentions = {
   users: Record<string, string>
-  roles: Record<string, { name: string; color: string | null }>
+  /** `gradient` nur bei Rollen mit Farbverlauf (2–3 Farben), `color` ist dessen erste Farbe. */
+  roles: Record<string, { name: string; color: string | null; gradient: string[] | null }>
   channels: Record<string, string>
 }
 
+export type NewsServer = { name: string; iconUrl: string | null; channel: string | null }
+
 export type DesktopAnnouncements = {
   configured: boolean
+  server: NewsServer | null
   announcements: NewsAnnouncement[]
   mentions: NewsMentions
 }
@@ -109,6 +118,18 @@ const CONTENT_TYPES = new Set([0, 19])
 
 function hexColor(color: number | null | undefined) {
   return color ? `#${color.toString(16).padStart(6, '0')}` : null
+}
+
+// Discords „holografischer“ Stil hat feste Farben – die API liefert dafür genau diese drei.
+function roleGradient(role: GuildRole | undefined) {
+  const colors = role?.colors
+  if (!colors?.secondary_color) return null
+  return [colors.primary_color, colors.secondary_color, colors.tertiary_color].flatMap((c) => (c ? [hexColor(c)!] : []))
+}
+
+function guildIconUrl(guild: DiscordGuild) {
+  if (!guild.icon) return null
+  return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${guild.icon.startsWith('a_') ? 'gif' : 'png'}?size=128`
 }
 
 function userAvatarUrl(user: DiscordApiUser, guildId: string, memberAvatar?: string | null) {
@@ -142,12 +163,13 @@ async function loadAnnouncements(): Promise<DesktopAnnouncements> {
   const channelId = config.desktopNewsChannelId || config.announcementsChannelId
   const guildId = config.guildId
   const empty: NewsMentions = { users: {}, roles: {}, channels: {} }
-  if (!channelId || !guildId) return { configured: false, announcements: [], mentions: empty }
+  if (!channelId || !guildId) return { configured: false, server: null, announcements: [], mentions: empty }
 
-  const [messages, roles, channels] = await Promise.all([
+  const [messages, roles, channels, guild] = await Promise.all([
     discordFetch<DiscordMessage[]>(`/channels/${channelId}/messages?limit=${MESSAGE_LIMIT}`),
     getDiscordGuildRoles(guildId).catch(() => []),
     getDiscordGuildChannels(guildId).catch(() => []),
+    getGuild(guildId),
   ])
 
   // Spitznamen und Server-Profilbilder nur aus dem Cache – nie auf die volle Mitgliederliste warten.
@@ -156,13 +178,12 @@ async function loadAnnouncements(): Promise<DesktopAnnouncements> {
   const roleById = new Map(roles.map((role) => [role.id, role]))
 
   const displayName = (user: DiscordApiUser) => members.get(user.id)?.nick || user.global_name || user.username
-  const topRoleColor = (userId: string) => {
-    const colored = (members.get(userId)?.roles ?? [])
+  // Wie in Discord färbt die höchste farbige Rolle den Namen.
+  const topColoredRole = (userId: string) =>
+    (members.get(userId)?.roles ?? [])
       .map((id) => roleById.get(id))
       .filter((role) => role && role.color)
-      .sort((a, b) => b!.position - a!.position)
-    return hexColor(colored[0]?.color)
-  }
+      .sort((a, b) => b!.position - a!.position)[0]
 
   const users: Record<string, string> = {}
   const announcements = messages
@@ -172,6 +193,7 @@ async function loadAnnouncements(): Promise<DesktopAnnouncements> {
       const body = !message.content && !message.attachments.length && !message.embeds.length && message.message_snapshots?.[0]
         ? message.message_snapshots[0].message
         : message
+      const nameRole = topColoredRole(message.author.id)
       return {
         id: message.id,
         url: `https://discord.com/channels/${guildId}/${channelId}/${message.id}`,
@@ -180,7 +202,8 @@ async function loadAnnouncements(): Promise<DesktopAnnouncements> {
         author: {
           name: displayName(message.author),
           avatarUrl: userAvatarUrl(message.author, guildId, members.get(message.author.id)?.avatar),
-          color: topRoleColor(message.author.id),
+          color: hexColor(nameRole?.color),
+          gradient: roleGradient(nameRole),
           bot: !!message.author.bot,
         },
         content: body.content ?? '',
@@ -206,22 +229,40 @@ async function loadAnnouncements(): Promise<DesktopAnnouncements> {
     if (!users[id] && user) users[id] = displayName(user)
   }
 
+  const channel = channels.find((c) => c.id === channelId)
   return {
     configured: true,
+    server: guild ? { name: guild.name, iconUrl: guildIconUrl(guild), channel: channel?.name ?? null } : null,
     announcements,
     mentions: {
       users,
-      roles: Object.fromEntries(roles.map((role) => [role.id, { name: role.name, color: hexColor(role.color) }])),
+      roles: Object.fromEntries(roles.map((role) => [role.id, { name: role.name, color: hexColor(role.color), gradient: roleGradient(role) }])),
       channels: Object.fromEntries(channels.map((channel) => [channel.id, channel.name ?? 'Kanal'])),
     },
+  }
+}
+
+// Name und Bild ändern sich selten – fällt die Abfrage aus, fehlt nur der Kopf.
+let guildCache: { at: number; guild: DiscordGuild } | null = null
+
+async function getGuild(guildId: string) {
+  if (guildCache?.guild.id === guildId && Date.now() - guildCache.at < 10 * CACHE_MS) return guildCache.guild
+  try {
+    const guild = await discordFetch<DiscordGuild>(`/guilds/${guildId}`)
+    guildCache = { at: Date.now(), guild }
+    return guild
+  } catch {
+    return guildCache?.guild.id === guildId ? guildCache.guild : null
   }
 }
 
 let cache: { at: number; data: DesktopAnnouncements } | null = null
 let pending: Promise<DesktopAnnouncements> | null = null
 
-export async function getDesktopAnnouncements(): Promise<DesktopAnnouncements> {
-  if (cache && Date.now() - cache.at < CACHE_MS) return cache.data
+/** `fresh`: Discord sofort fragen (Knopf „Aktualisieren“) statt den Minuten-Cache zu nehmen. */
+export async function getDesktopAnnouncements(fresh = false): Promise<DesktopAnnouncements> {
+  const maxAge = fresh ? FORCED_REFRESH_MS : CACHE_MS
+  if (cache && Date.now() - cache.at < maxAge) return cache.data
   pending ??= loadAnnouncements()
     .then((data) => {
       cache = { at: Date.now(), data }

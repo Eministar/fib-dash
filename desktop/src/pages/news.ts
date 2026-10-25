@@ -1,10 +1,11 @@
 import { getVersion } from '@tauri-apps/api/app'
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification'
 import { api } from '../api'
 import { backend, UNAUTHORIZED } from '../backend'
-import { $, errorText, escapeHtml, initials, showMessage } from '../dom'
+import { $, errorText, escapeHtml, initials, showMessage, type ButtonElement } from '../dom'
 import { formatAgo, formatDateTime } from '../format'
 import { icon } from '../icons'
-import { renderMarkdown, renderReleaseNotes, type Mentions } from '../markdown'
+import { plainText, renderMarkdown, renderReleaseNotes, roleColored, type Mentions } from '../markdown'
 import { navigation } from '../store'
 
 // Ankündigungen aus dem Discord-Ankündigungs-Channel und die Änderungen der
@@ -29,7 +30,7 @@ interface Announcement {
   url: string
   createdAt: string
   editedAt: string | null
-  author: { name: string; avatarUrl: string; color: string | null; bot: boolean }
+  author: { name: string; avatarUrl: string; color: string | null; gradient?: string[] | null; bot: boolean }
   content: string
   attachments: Attachment[]
   embeds: Embed[]
@@ -37,8 +38,11 @@ interface Announcement {
 
 interface Release { version: string; pubDate: string; notes?: string }
 
+interface Server { name: string; iconUrl: string | null; channel: string | null }
+
 interface News {
   configured: boolean
+  server?: Server | null
   error: string | null
   announcements: Announcement[]
   mentions: Mentions
@@ -47,9 +51,12 @@ interface News {
 
 type Tab = 'announcements' | 'releases'
 
-// Im Hintergrund nachsehen, ob es Neues gibt (für den Zähler in der Navigation).
-const POLL_MS = 5 * 60 * 1000
+// Im Hintergrund nachsehen, ob es Neues gibt (Zähler in der Navigation, Benachrichtigung).
+// Der Server fragt Discord für alle Apps zusammen höchstens einmal pro Minute.
+const POLL_MS = 60 * 1000
 const SEEN_KEY = 'fib-desktop.news-seen'
+/** Neuester Beitrag, zu dem schon eine Windows-Benachrichtigung kam. */
+const NOTIFIED_KEY = 'fib-desktop.news-notified'
 
 let data: News | null = null
 let tab: Tab = 'announcements'
@@ -61,13 +68,15 @@ let unreadIds = new Set<string>()
 const expanded = new Set<string>()
 const collapsed = new Set<string>()
 
-function seenId() {
+function stored(key: string) {
   try {
-    return localStorage.getItem(SEEN_KEY) ?? ''
+    return localStorage.getItem(key) ?? ''
   } catch {
     return ''
   }
 }
+
+const seenId = () => stored(SEEN_KEY)
 
 function markSeen() {
   const newest = data?.announcements[0]?.id
@@ -88,6 +97,42 @@ function unread() {
   // Beim allerersten Start nicht alle alten Beiträge als neu zählen.
   if (!seen) return []
   return data?.announcements.filter((a) => newerThan(a.id, seen)) ?? []
+}
+
+// ── Benachrichtigung ─────────────────────────────────────────────────
+
+/** Liest man die Seite gerade, braucht es keine Benachrichtigung. */
+const reading = () => visible && document.visibilityState === 'visible' && document.hasFocus()
+
+function excerpt(post: Announcement) {
+  const text = plainText(post.content, data!.mentions) || post.embeds.map((e) => e.title || plainText(e.description ?? '', data!.mentions)).find(Boolean)
+  if (text) return text.length > 180 ? `${text.slice(0, 179).trimEnd()}…` : text
+  return post.attachments.length ? 'Hat ein Bild geteilt.' : 'Neue Ankündigung'
+}
+
+async function notifyNew() {
+  const seen = seenId()
+  if (!seen || !data) return
+  const notified = stored(NOTIFIED_KEY)
+  const since = notified && newerThan(notified, seen) ? notified : seen
+  const posts = data.announcements.filter((a) => newerThan(a.id, since))
+  if (!posts.length) return
+  try {
+    localStorage.setItem(NOTIFIED_KEY, posts[0].id)
+  } catch {
+    // Ohne Speicher kann dieselbe Ankündigung erneut gemeldet werden.
+  }
+  if (reading()) return
+  try {
+    if (!(await isPermissionGranted()) && (await requestPermission()) !== 'granted') return
+    const where = data.server?.name ?? 'Discord'
+    sendNotification({
+      title: posts.length === 1 ? `${posts[0].author.name} · ${where}` : `${posts.length} neue Ankündigungen · ${where}`,
+      body: excerpt(posts[0]),
+    })
+  } catch (error) {
+    console.warn('[News] Benachrichtigung fehlgeschlagen', error)
+  }
 }
 
 function updateBadge() {
@@ -143,14 +188,13 @@ function postHtml(post: Announcement, index: number, mentions: Mentions) {
   const date = new Date(post.createdAt)
   const images = post.attachments.filter((a) => a.contentType?.startsWith('image/'))
   const files = post.attachments.filter((a) => !a.contentType?.startsWith('image/'))
-  const nameStyle = post.author.color ? ` style="color:${escapeHtml(post.author.color)}"` : ''
   const extras = images.length + files.length + post.embeds.length
   return `
     <article class="card news-post${open ? ' open' : ''}" data-id="${escapeHtml(post.id)}">
       <button class="news-head" aria-expanded="${open}">
         <span class="avatar">${escapeHtml(initials(post.author.name))}<img class="avatar-img" src="${escapeHtml(post.author.avatarUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>
         <span class="news-meta">
-          <span class="type-body-strong truncate"><span${nameStyle}>${escapeHtml(post.author.name)}</span>${post.author.bot ? '<span class="badge">BOT</span>' : ''}</span>
+          <span class="type-body-strong truncate">${roleColored(escapeHtml(post.author.name), post.author.color, post.author.gradient)}${post.author.bot ? '<span class="badge">BOT</span>' : ''}</span>
           <span class="type-caption muted" title="${escapeHtml(formatDateTime(date))}">${escapeHtml(formatAgo(date))} · ${escapeHtml(formatDateTime(date))}${post.editedAt ? ' · bearbeitet' : ''}</span>
         </span>
         ${unreadIds.has(post.id) ? '<span class="news-new">Neu</span>' : ''}
@@ -183,9 +227,24 @@ function releaseHtml(release: Release) {
     </article>`
 }
 
+function renderServer() {
+  const server = data?.server
+  const serverIcon = $('news-server-icon')
+  serverIcon.hidden = !server?.iconUrl
+  // Nur bei neuem Bild ersetzen, sonst flackert es bei jedem Neuladen.
+  if (server?.iconUrl && serverIcon.dataset.url !== server.iconUrl) {
+    serverIcon.dataset.url = server.iconUrl
+    serverIcon.innerHTML = `<img src="${escapeHtml(server.iconUrl)}" alt="${escapeHtml(server.name)}" referrerpolicy="no-referrer">`
+  }
+  $('news-subtitle').innerHTML = server
+    ? `Ankündigungen aus <strong>${escapeHtml(server.name)}</strong>${server.channel ? ` <span class="news-channel">#${escapeHtml(server.channel)}</span>` : ''} und was sich in der App geändert hat.`
+    : 'Ankündigungen aus dem Discord und was sich in der App geändert hat.'
+}
+
 function render() {
   $('news-tabs').setAttribute('activeid', `news-tab-${tab}`)
   if (!data) return
+  renderServer()
   $('news-tab-announcements-count').textContent = data.announcements.length ? String(data.announcements.length) : ''
   $('news-announcements').hidden = tab !== 'announcements'
   $('news-releases').hidden = tab !== 'releases'
@@ -244,14 +303,22 @@ function closeLightbox() {
 
 // ── Laden ────────────────────────────────────────────────────────────
 
-async function load() {
+/** `fresh`: am Server am Minuten-Cache vorbei direkt bei Discord nachsehen. */
+async function load(fresh = false) {
   if (loading) return
   loading = true
+  const button = $<ButtonElement>('news-refresh')
+  if (fresh) {
+    button.disabled = true
+    button.classList.add('spinning')
+  }
   try {
-    data = await api.get<News>('/api/desktop/news')
+    data = await api.get<News>(`/api/desktop/news${fresh ? '?refresh=1' : ''}`)
     showMessage('news-error', null)
+    $('news-updated').textContent = `Stand ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
     // Erster Start: bisherige Beiträge gelten als gelesen, ab jetzt wird gezählt.
     if (!seenId()) markSeen()
+    await notifyNew()
     if (visible) {
       for (const post of unread()) unreadIds.add(post.id)
       render()
@@ -264,12 +331,14 @@ async function load() {
     if (visible) showMessage('news-error', `Neuigkeiten konnten nicht geladen werden: ${errorText(error)}`)
   } finally {
     loading = false
+    button.disabled = false
+    button.classList.remove('spinning')
   }
 }
 
 export function initNews() {
   void getVersion().then((version) => (installed = version))
-  $('news-refresh').addEventListener('click', () => void load())
+  $('news-refresh').addEventListener('click', () => void load(true))
   $('news-toggle-all').addEventListener('click', toggleAll)
   for (const [id, value] of [['news-tab-announcements', 'announcements'], ['news-tab-releases', 'releases']] as const) {
     $(id).addEventListener('click', () => {

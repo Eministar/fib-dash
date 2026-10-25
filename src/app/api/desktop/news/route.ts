@@ -11,18 +11,18 @@ export const dynamic = 'force-dynamic'
  * Änderungen der letzten App-Versionen. Fällt Discord aus, kommen die
  * Versionen trotzdem – mit Fehlertext für den Ankündigungsbereich.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await getCurrentAuth()
     if (!auth) return unauthorized()
 
     const [releases, announcements] = await Promise.all([
       readDesktopReleaseHistory().catch(() => []),
-      getDesktopAnnouncements().then(
+      getDesktopAnnouncements(new URL(request.url).searchParams.has('refresh')).then(
         (data) => ({ ...data, error: null }),
         (cause: unknown) => {
           console.error('[DesktopNews] Ankündigungen konnten nicht geladen werden', cause)
-          return { configured: true, announcements: [], mentions: { users: {}, roles: {}, channels: {} }, error: 'Discord ist gerade nicht erreichbar.' }
+          return { configured: true, server: null, announcements: [], mentions: { users: {}, roles: {}, channels: {} }, error: 'Discord ist gerade nicht erreichbar.' }
         },
       ),
     ])
