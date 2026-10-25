@@ -1,5 +1,5 @@
 //! Texterkennung mit der in Windows eingebauten OCR (Windows.Media.Ocr) –
-//! offline, ohne Zusatzprogramme, auf kleinen Ausschnitten in wenigen Millisekunden.
+//! offline, ohne Zusatzprogramme. Live wird höchstens ein OCR-Durchlauf pro Scan ausgeführt.
 
 use windows::{
     Graphics::Imaging::{BitmapAlphaMode, BitmapPixelFormat, SoftwareBitmap},
@@ -21,6 +21,36 @@ unsafe impl Send for Ocr {}
 
 /// Kill-Feeds nutzen kleine Schrift – vergrößert erkennt die OCR sie deutlich besser.
 const MIN_TEXT_HEIGHT: u32 = 360;
+
+/// Live keine zweite OCR über dasselbe Bild: Die Vergrößerungen wechseln
+/// zwischen Scans. Eine erfolgreiche bleibt für die Bestätigung erhalten.
+pub struct LiveFeedOcr {
+    ocr: Ocr,
+    scale: u32,
+    retry_pending: bool,
+}
+
+impl LiveFeedOcr {
+    pub fn new() -> Result<Self, String> {
+        Ok(Self { ocr: Ocr::new()?, scale: 2, retry_pending: false })
+    }
+
+    pub fn needs_retry(&self) -> bool {
+        self.retry_pending
+    }
+
+    pub fn read(&mut self, image: &Image) -> Result<Vec<Line>, String> {
+        let scale = if image.height < MIN_TEXT_HEIGHT { self.scale } else { 1 };
+        let lines = self.ocr.read_with(image, scale, false)?;
+        if !lines.iter().any(|line| classify(line).is_some()) {
+            self.scale = if self.scale == 2 { 3 } else { 2 };
+            self.retry_pending = image.height < MIN_TEXT_HEIGHT && !self.retry_pending;
+        } else {
+            self.retry_pending = false;
+        }
+        Ok(lines)
+    }
+}
 
 impl Ocr {
     pub fn new() -> Result<Self, String> {
@@ -50,11 +80,18 @@ impl Ocr {
 
     /// Wie `read`, mit wählbarer Vergrößerung und optional invertiert (dunkle Schrift auf hell).
     pub fn read_with(&self, image: &Image, scale: u32, invert: bool) -> Result<Vec<Line>, String> {
-        let prepared = prepare(image, scale, invert);
         let max = OcrEngine::MaxImageDimension().unwrap_or(2600);
-        if prepared.width > max || prepared.height > max {
+        if image.width == 0 || image.height == 0 || scale == 0 || image.width > max || image.height > max {
             return Err("Kill-Feed-Bereich ist zu groß".into());
         }
+        // Vor dem Vergrößern begrenzen: früher wurden auch unbrauchbare 3×-Bilder
+        // vollständig berechnet und erst danach wegen Übergröße verworfen.
+        let scale = scale.min(max / image.width).min(max / image.height);
+        let prepared = Image {
+            width: image.width * scale,
+            height: image.height * scale,
+            bgra: super::pixels::prepare_bgra(&image.bgra, image.width as usize, image.height as usize, scale, invert),
+        };
         let writer = DataWriter::new().map_err(|e| e.message().to_string())?;
         writer.WriteBytes(&prepared.bgra).map_err(|e| e.message().to_string())?;
         let buffer = writer.DetachBuffer().map_err(|e| e.message().to_string())?;
@@ -84,33 +121,4 @@ impl Ocr {
         }
         Ok(group_rows(words))
     }
-}
-
-/// Graustufen mit gestrecktem Kontrast, weich (bilinear) vergrößert – kantige Pixel
-/// verschlechtern die Erkennung kleiner Schrift.
-fn prepare(image: &Image, scale: u32, invert: bool) -> Image {
-    let gray = image.gray();
-    let (lo, hi) = gray.iter().fold((255u8, 0u8), |(lo, hi), &v| (lo.min(v), hi.max(v)));
-    let range = (hi.saturating_sub(lo)).max(1) as f32;
-    let (sw, sh) = (image.width as usize, image.height as usize);
-    let at = |x: usize, y: usize| (gray[y.min(sh - 1) * sw + x.min(sw - 1)].saturating_sub(lo)) as f32 * 255.0 / range;
-
-    let (w, h) = (image.width * scale, image.height * scale);
-    let mut bgra = Vec::with_capacity((w * h * 4) as usize);
-    for y in 0..h {
-        let fy = ((y as f32 + 0.5) / scale as f32 - 0.5).max(0.0);
-        let (y0, ty) = (fy as usize, fy.fract());
-        for x in 0..w {
-            let fx = ((x as f32 + 0.5) / scale as f32 - 0.5).max(0.0);
-            let (x0, tx) = (fx as usize, fx.fract());
-            let top = at(x0, y0) * (1.0 - tx) + at(x0 + 1, y0) * tx;
-            let bottom = at(x0, y0 + 1) * (1.0 - tx) + at(x0 + 1, y0 + 1) * tx;
-            let mut v = (top * (1.0 - ty) + bottom * ty).round().clamp(0.0, 255.0) as u8;
-            if invert {
-                v = 255 - v;
-            }
-            bgra.extend_from_slice(&[v, v, v, 255]);
-        }
-    }
-    Image { width: w, height: h, bgra }
 }

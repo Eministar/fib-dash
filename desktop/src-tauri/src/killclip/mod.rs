@@ -2,12 +2,13 @@
 //! die Kills (± ein paar Sekunden) herausschneiden, unter das Discord-Limit
 //! rendern und als Bot in den eigenen Clips-Channel posten.
 //!
-//! Zwei Threads: Der Wächter schaut ~10× pro Sekunde auf kleine
-//! Bildschirmausschnitte und sammelt Kills zu Serien. Der Arbeiter speichert,
+//! Zwei Threads: Der Wächter prüft kleine Bildschirmausschnitte und sammelt Kills
+//! zu Serien: Kill-Feed 2× pro Sekunde, Marker 10×. Der Arbeiter speichert,
 //! schneidet und lädt jede fertige Serie hoch – die Erkennung läuft derweil weiter.
 
 pub mod detect;
 pub mod ocr;
+mod pixels;
 pub mod plan;
 pub mod render;
 pub mod reference;
@@ -254,9 +255,9 @@ fn changed(a: &[u8], b: &[u8]) -> bool {
     sum as f64 / a.len().max(1) as f64 > 1.0
 }
 
-const TICK: Duration = Duration::from_millis(100);
-/// Texterkennung höchstens so oft – reicht für Kill-Feeds, die Sekunden stehen bleiben.
-const OCR_EVERY: f64 = 0.25;
+const MARKER_TICK: Duration = Duration::from_millis(100);
+// Meldungen bleiben Sekunden sichtbar. Nur der kurze Marker braucht 10 Hz.
+const FEED_TICK: Duration = Duration::from_millis(500);
 
 /// Meldet einen Bildschirmfehler erst, wenn er länger als 5 Sekunden anhält.
 fn report_screen_error(app: &AppHandle, status: &Arc<Mutex<Status>>, failing_since: &mut Option<Instant>, error: String) {
@@ -282,8 +283,14 @@ fn watch(
     status: Arc<Mutex<Status>>,
     jobs: mpsc::Sender<Session>,
 ) {
-    let ocr = if config.killfeed.is_some() {
-        match ocr::Ocr::new() {
+    // Nur dieser Hintergrund-Thread bekommt weniger CPU-Priorität; Recorder
+    // und UI bleiben unberührt. Der Thread endet zusammen mit dem Wächter.
+    unsafe {
+        use windows::Win32::System::Threading::{GetCurrentThread, SetThreadPriority, THREAD_PRIORITY_BELOW_NORMAL};
+        let _ = SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+    }
+    let mut ocr = if config.killfeed.is_some() {
+        match ocr::LiveFeedOcr::new() {
             Ok(ocr) => Some(ocr),
             Err(error) => {
                 running.store(false, Ordering::SeqCst);
@@ -298,6 +305,7 @@ fn watch(
     } else {
         None
     };
+    let interval = if ocr.is_some() { FEED_TICK } else { MARKER_TICK };
 
     let replay = {
         let settings = app.state::<AppState>().settings.lock().unwrap().clone();
@@ -365,13 +373,13 @@ fn watch(
                         emit_event(&app, "kill", "Kill erkannt (Kill-Marker)", None, None);
                     }
                 }
-                if let (Some(i), Some(ocr)) = (feed_index, &ocr) {
+                if let (Some(i), Some(ocr)) = (feed_index, &mut ocr) {
                     let gray = images[i].gray();
                     // Auch stehende Meldungen erneut lesen: zur Bestätigung und
                     // damit sie bei einer späteren Animation nicht nochmals zählen.
-                    if now - last_ocr >= OCR_EVERY && (feed.needs_confirmation() || changed(&gray, &last_feed) || now - last_ocr >= 0.75) {
+                    if feed.needs_confirmation() || ocr.needs_retry() || changed(&gray, &last_feed) || now - last_ocr >= 1.5 {
                         last_ocr = now;
-                        if let Ok(lines) = ocr.read_feed(&images[i]) {
+                        if let Ok(lines) = ocr.read(&images[i]) {
                             last_feed = gray;
                             for event in feed.update(&lines, now) {
                                 match event {
@@ -421,7 +429,7 @@ fn watch(
             }
         }
 
-        if let Some(rest) = TICK.checked_sub(tick.elapsed()) {
+        if let Some(rest) = interval.checked_sub(tick.elapsed()) {
             thread::sleep(rest);
         }
     }

@@ -1,7 +1,7 @@
 //! Bildschirmausschnitte über die DXGI Desktop Duplication (dieselbe Technik wie
 //! OBS' „Bildschirmaufnahme“). Das Spiel wird nicht angefasst: Windows reicht uns
 //! nur das fertige Bild des Monitors. Kopiert werden ausschließlich die kleinen
-//! Bereiche, die wir auswerten – das kostet praktisch keine Leistung.
+//! Bereiche, die wir auswerten. Staging-Texturen werden zwischen Scans wiederverwendet.
 
 use serde::{Deserialize, Serialize};
 use windows::{
@@ -119,8 +119,61 @@ pub struct Screen {
     device: ID3D11Device,
     context: ID3D11DeviceContext,
     duplication: IDXGIOutputDuplication,
+    frame_owned: bool,
+    staging: Vec<ID3D11Texture2D>,
+    staging_sizes: Vec<(u32, u32)>,
     pub width: u32,
     pub height: u32,
+}
+
+impl Drop for Screen {
+    fn drop(&mut self) {
+        if self.frame_owned {
+            unsafe {
+                let _ = self.duplication.ReleaseFrame();
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use windows::Win32::Graphics::Direct3D11::{D3D11_SUBRESOURCE_DATA, D3D11_USAGE_DEFAULT};
+
+    /// Hardware-Test mit synthetischen Pixeln, ohne Bildschirmbilder zu lesen.
+    #[test]
+    #[ignore]
+    fn reuses_staging_and_recreates_it_for_resized_crops() {
+        let mut screen = Screen::open().unwrap();
+        let pixels: Vec<u8> = (0..64 * 32).flat_map(|i| [(i % 256) as u8, 42, 123, 255]).collect();
+        let desc = D3D11_TEXTURE2D_DESC {
+            Width: 64, Height: 32, MipLevels: 1, ArraySize: 1,
+            Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+            SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
+            Usage: D3D11_USAGE_DEFAULT,
+            ..Default::default()
+        };
+        let data = D3D11_SUBRESOURCE_DATA { pSysMem: pixels.as_ptr().cast(), SysMemPitch: 64 * 4, SysMemSlicePitch: 0 };
+        let mut texture = None;
+        unsafe {
+            screen.device.CreateTexture2D(&desc, Some(&data), Some(&mut texture)).unwrap();
+            let texture = texture.unwrap();
+            let region = Region { x: 0, y: 0, width: 64, height: 32 };
+            let first = screen.copy_region(&texture, region, 0).unwrap();
+            assert_eq!(first.bgra, pixels);
+            let staging = screen.staging[0].clone();
+            for _ in 0..20 {
+                assert_eq!(screen.copy_region(&texture, region, 0).unwrap().bgra, pixels);
+                assert_eq!(screen.staging[0].as_raw(), staging.as_raw());
+            }
+            let crop = Region { x: 2, y: 3, width: 16, height: 8 };
+            let cropped = screen.copy_region(&texture, crop, 0).unwrap();
+            assert_eq!(cropped.bgra, first.crop(crop).unwrap().bgra);
+            assert_ne!(screen.staging[0].as_raw(), staging.as_raw());
+            assert!(screen.copy_region(&texture, Region { x: screen.width, ..crop }, 0).is_err());
+        }
+    }
 }
 
 // Die COM-Objekte benutzt immer nur, wer gerade die Sperre von `SHARED` hält.
@@ -201,7 +254,10 @@ impl Screen {
                     }
                 };
                 match output.DuplicateOutput(&device) {
-                    Ok(duplication) => return Ok(Self { device, context, duplication, width, height }),
+                    Ok(duplication) => return Ok(Self {
+                        device, context, duplication, width, height,
+                        frame_owned: false, staging: Vec::new(), staging_sizes: Vec::new(),
+                    }),
                     Err(error) => last_error = hr(error, "Bildschirmzugriff"),
                 }
             }
@@ -217,6 +273,13 @@ impl Screen {
 
     fn grab_inner(&mut self, regions: &[Region], timeout_ms: u32, any_frame: bool) -> Result<Option<Vec<Image>>, String> {
         unsafe {
+            // DXGI empfiehlt Release unmittelbar vor Acquire: Solange wir das
+            // Bild besitzen, muss Windows nicht jedes Spielframe hineinkopieren.
+            // https://learn.microsoft.com/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutputduplication-releaseframe
+            if self.frame_owned {
+                self.frame_owned = false;
+                self.duplication.ReleaseFrame().map_err(|e| hr(e, "Bild freigeben"))?;
+            }
             let mut info = DXGI_OUTDUPL_FRAME_INFO::default();
             let mut resource: Option<IDXGIResource> = None;
             match self.duplication.AcquireNextFrame(timeout_ms, &mut info, &mut resource) {
@@ -227,51 +290,65 @@ impl Screen {
                 Err(e) if e.code() == DXGI_ERROR_ACCESS_LOST => return Err("Bildschirmzugriff verloren".into()),
                 Err(e) => return Err(hr(e, "Bild holen")),
             }
-            let result = (|| {
+            self.frame_owned = true;
+            (|| {
                 // Nur der Mauszeiger hat sich bewegt – das Bild ist dasselbe.
                 if info.LastPresentTime == 0 && !any_frame {
                     return Ok(None);
                 }
                 let texture: ID3D11Texture2D = resource.ok_or("Kein Bild")?.cast().map_err(|e| hr(e, "Bild"))?;
                 let mut images = Vec::with_capacity(regions.len());
-                for region in regions {
-                    images.push(self.copy_region(&texture, *region)?);
+                self.staging.truncate(regions.len());
+                self.staging_sizes.truncate(regions.len());
+                for (index, region) in regions.iter().enumerate() {
+                    images.push(self.copy_region(&texture, *region, index)?);
                 }
                 Ok(Some(images))
-            })();
-            let _ = self.duplication.ReleaseFrame();
-            result
+            })()
         }
     }
 
-    unsafe fn copy_region(&self, texture: &ID3D11Texture2D, region: Region) -> Result<Image, String> {
-        let width = region.width.min(self.width.saturating_sub(region.x)).max(1);
-        let height = region.height.min(self.height.saturating_sub(region.y)).max(1);
-        let desc = D3D11_TEXTURE2D_DESC {
-            Width: width,
-            Height: height,
-            MipLevels: 1,
-            ArraySize: 1,
-            Format: DXGI_FORMAT_B8G8R8A8_UNORM,
-            SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
-            Usage: D3D11_USAGE_STAGING,
-            BindFlags: 0,
-            CPUAccessFlags: D3D11_CPU_ACCESS_READ.0 as u32,
-            MiscFlags: 0,
-        };
-        let mut staging = None;
-        self.device.CreateTexture2D(&desc, None, Some(&mut staging)).map_err(|e| hr(e, "Zwischenspeicher"))?;
-        let staging = staging.ok_or("Zwischenspeicher")?;
+    unsafe fn copy_region(&mut self, texture: &ID3D11Texture2D, region: Region, index: usize) -> Result<Image, String> {
+        let width = region.width.min(self.width.saturating_sub(region.x));
+        let height = region.height.min(self.height.saturating_sub(region.y));
+        if width == 0 || height == 0 {
+            return Err("Erkennungsbereich liegt außerhalb des Monitors".into());
+        }
+        if self.staging_sizes.get(index) != Some(&(width, height)) {
+            let desc = D3D11_TEXTURE2D_DESC {
+                Width: width,
+                Height: height,
+                MipLevels: 1,
+                ArraySize: 1,
+                Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+                SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
+                Usage: D3D11_USAGE_STAGING,
+                BindFlags: 0,
+                CPUAccessFlags: D3D11_CPU_ACCESS_READ.0 as u32,
+                MiscFlags: 0,
+            };
+            let mut staging = None;
+            self.device.CreateTexture2D(&desc, None, Some(&mut staging)).map_err(|e| hr(e, "Zwischenspeicher"))?;
+            let staging = staging.ok_or("Zwischenspeicher")?;
+            if index < self.staging.len() {
+                self.staging[index] = staging;
+                self.staging_sizes[index] = (width, height);
+            } else {
+                self.staging.push(staging);
+                self.staging_sizes.push((width, height));
+            }
+        }
+        let staging = &self.staging[index];
         let source_box = D3D11_BOX { left: region.x, top: region.y, front: 0, right: region.x + width, bottom: region.y + height, back: 1 };
-        self.context.CopySubresourceRegion(&staging, 0, 0, 0, 0, texture, 0, Some(&source_box));
+        self.context.CopySubresourceRegion(staging, 0, 0, 0, 0, texture, 0, Some(&source_box));
         let mut mapped = D3D11_MAPPED_SUBRESOURCE::default();
-        self.context.Map(&staging, 0, D3D11_MAP_READ, 0, Some(&mut mapped)).map_err(|e| hr(e, "Bild lesen"))?;
+        self.context.Map(staging, 0, D3D11_MAP_READ, 0, Some(&mut mapped)).map_err(|e| hr(e, "Bild lesen"))?;
         let mut bgra = Vec::with_capacity((width * height * 4) as usize);
         for row in 0..height as usize {
             let line = std::slice::from_raw_parts((mapped.pData as *const u8).add(row * mapped.RowPitch as usize), (width * 4) as usize);
             bgra.extend_from_slice(line);
         }
-        self.context.Unmap(&staging, 0);
+        self.context.Unmap(staging, 0);
         Ok(Image { width, height, bgra })
     }
 
