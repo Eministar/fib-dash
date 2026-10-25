@@ -328,12 +328,13 @@ export const backend = {
   killClipSaveConfig: (config: KillClipConfig) => invoke<SettingsView>('killclip_save_config', { config }),
   killClipCalibration: (active: boolean) => invoke<string>('killclip_calibration', { active }),
   killClipAnalyze: (path: string, at: number) => invoke<KillClipReference>('killclip_analyze', { path, at }),
-  killClipSetHitmarker: (region: Region) => invoke<void>('killclip_set_hitmarker', { region }),
   killClipReveal: (path?: string) => invoke<void>('killclip_reveal', { path: path ?? null }),
   killClipOpenLink: (url: string) => invoke<void>('killclip_open_link', { url }),
   openExternal: (url: string) => invoke<void>('open_external', { url }),
   killClipTestFeed: (region: Region) => invoke<{ lines: string[]; kills: string[]; deaths: string[] }>('killclip_test_feed', { region }),
-  killClipTestMarker: (region: Region | null) => invoke<number>('killclip_test_marker', { region }),
+  killClipTestMarker: () => invoke<number>('killclip_test_marker'),
+  killClipSavedReference: () =>
+    invoke<{ path: string; markerPath: string | null; width: number; height: number; hitmarker: Region } | null>('killclip_saved_reference'),
 }
 
 export function errorText(error: unknown) {

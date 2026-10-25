@@ -90,7 +90,7 @@ function renderConfig() {
   const c = config()
   const parts = [
     c.killfeed ? 'Bereich festgelegt – erkennt „Du hast … getötet“' : 'Bereich fehlt',
-    c.useMarker ? (c.hitmarker ? 'Kill-Marker angelernt' : 'Kill-Marker in der Bildmitte') : '',
+    c.useMarker ? 'Kill-Marker am Fadenkreuz' : '',
   ].filter(Boolean)
   $('kc-setup-state').textContent = parts.join(' · ')
   ;($('kc-marker') as HTMLElement & { checked: boolean }).checked = c.useMarker
@@ -149,8 +149,8 @@ let view: SetupView = 'empty'
 let clip: { path: string; duration: number } | null = null
 let reference: KillClipReference | null = null
 let shot: { width: number; height: number } | null = null
+// Der Marker-Bereich liegt immer auf dem Fadenkreuz – nur der Kill-Feed-Rahmen lässt sich ziehen.
 let draft: { killfeed: Region | null; hitmarker: Region | null } = { killfeed: null, hitmarker: null }
-let mode: 'killfeed' | 'hitmarker' = 'killfeed'
 
 const kcVideo = () => $<HTMLVideoElement>('kc-video')
 
@@ -167,7 +167,6 @@ function setView(next: SetupView, hint = '') {
   $('kc-canvas-empty').hidden = next === 'reference'
   $('kc-shot').hidden = next !== 'reference'
   if (EMPTY_TEXT[next]) $('kc-canvas-empty-text').innerHTML = EMPTY_TEXT[next]!
-  $('kc-mode').hidden = next !== 'reference'
   $('kc-back').hidden = next !== 'reference' || !clip
   $('kc-test').hidden = next !== 'reference'
   $('kc-setup-hint').textContent = hint
@@ -264,9 +263,18 @@ async function analyze(at: number) {
     killfeed: reference.killfeed ?? draft.killfeed,
     hitmarker: reference.hitmarker ?? draft.hitmarker,
   }
-  // Fehlt der Kill-Feed, gleich das Zeichnen dafür anbieten.
-  mode = reference.killfeed ? 'hitmarker' : 'killfeed'
-  $('kc-mode').setAttribute('activeid', mode === 'killfeed' ? 'kc-mode-feed' : 'kc-mode-hit')
+  showReferenceImage()
+  const found = [reference.killfeed && 'Kill-Feed', reference.hitmarker && 'Kill-Marker'].filter(Boolean)
+  setView(
+    'reference',
+    found.length
+      ? `Gefunden: ${found.join(' und ')}. Passt der Kill-Feed-Rahmen nicht, zieh ihn neu.`
+      : 'Nichts gefunden – zieh selbst einen Rahmen um „Du hast … getötet“ oder wähl einen anderen Moment.',
+  )
+}
+
+function showReferenceImage() {
+  if (!reference) return
   shot = { width: reference.width, height: reference.height }
   const img = $<HTMLImageElement>('kc-shot')
   img.onload = () => {
@@ -274,13 +282,6 @@ async function analyze(at: number) {
     void runFeedTest()
   }
   img.src = `${convertFileSrc(reference.path)}?t=${Date.now()}`
-  const found = [reference.killfeed && 'Kill-Feed', reference.hitmarker && 'Kill-Marker'].filter(Boolean)
-  setView(
-    'reference',
-    found.length
-      ? `Gefunden: ${found.join(' und ')}. Passt ein Rahmen nicht, zieh ihn neu.`
-      : 'Nichts gefunden – zieh selbst einen Rahmen um „Du hast … getötet“ oder wähl einen anderen Moment.',
-  )
 }
 
 // Rahmen in Prozent des Bildes: bleibt richtig, egal wann und wie groß das Bild gerade dargestellt wird.
@@ -348,8 +349,8 @@ async function runFeedTest() {
       )
     }
     if (config().useMarker) {
-      const score = await backend.killClipTestMarker(draft.hitmarker)
-      const seen = score >= 0.2
+      const score = await backend.killClipTestMarker()
+      const seen = score >= 0.25
       parts.push(
         `<span class="type-body-strong">Kill-Marker</span><div class="kc-test-line ${seen ? 'hit' : ''}">${icon(seen ? 'checkmarkCircle' : 'dismiss')}<span>${seen ? 'Türkiser Marker am Fadenkreuz erkannt' : 'Kein Marker an dieser Stelle'} (Wert ${score.toFixed(2)})</span></div>`,
       )
@@ -400,7 +401,7 @@ function bindCanvas() {
   canvas.addEventListener('pointermove', (event) => {
     if (!start) return
     const p = point(event)
-    draft[mode] = {
+    draft.killfeed = {
       x: Math.round(Math.min(start.x, p.x)),
       y: Math.round(Math.min(start.y, p.y)),
       width: Math.round(Math.abs(p.x - start.x)),
@@ -411,10 +412,10 @@ function bindCanvas() {
   canvas.addEventListener('pointerup', () => {
     if (!start) return
     start = null
-    const rect = draft[mode]
+    const rect = draft.killfeed
     // Versehentliche Klicks verwerfen.
     if (rect && (rect.width < 8 || rect.height < 8)) {
-      draft[mode] = null
+      draft.killfeed = null
       placeRects()
       return
     }
@@ -424,27 +425,28 @@ function bindCanvas() {
 
 async function openSetup() {
   const c = config()
-  if (!reference) draft = { killfeed: c.killfeed, hitmarker: c.hitmarker }
+  if (!reference) {
+    draft = { killfeed: c.killfeed, hitmarker: c.hitmarker }
+    // Nach einem Neustart die gespeicherte Einrichtung zeigen statt eines leeren Dialogs.
+    const saved = c.killfeed ? await backend.killClipSavedReference().catch(() => null) : null
+    if (saved) {
+      reference = { ...saved, at: 0, killfeed: c.killfeed, victim: null, line: null, markerScore: 0 }
+      draft.hitmarker = saved.hitmarker
+      showReferenceImage()
+    }
+  }
   try {
     const hotkey = await backend.killClipCalibration(true)
     $('kc-hotkey').textContent = hotkey.replace('Ctrl', 'Strg')
   } catch (error) {
     toast(errorText(error), 'error')
   }
-  setView(reference ? 'reference' : clip ? 'clip' : 'empty', reference ? 'Letzte Auswertung – speichern oder einen neuen Kill aufnehmen.' : '')
+  setView(reference ? 'reference' : clip ? 'clip' : 'empty', reference ? 'Deine gespeicherte Einrichtung – oder nimm einen neuen Kill auf.' : '')
   $<DialogElement>('kc-setup-dialog').show()
   if (reference) void runFeedTest()
 }
 
 async function saveSetup() {
-  // Vorlage nur aus einer Auswertung – ohne neue bleibt die bestehende gültig.
-  if (draft.hitmarker && reference) {
-    try {
-      await backend.killClipSetHitmarker(draft.hitmarker)
-    } catch (error) {
-      return toast(errorText(error), 'error')
-    }
-  }
   await saveConfig({ killfeed: draft.killfeed, hitmarker: draft.hitmarker })
   $<DialogElement>('kc-setup-dialog').hide()
   toast('Erkennung gespeichert')
@@ -496,8 +498,6 @@ export function initKillClips() {
   // Einrichtung
   bindCanvas()
   bindTimeline()
-  $('kc-mode-feed').addEventListener('click', () => (mode = 'killfeed'))
-  $('kc-mode-hit').addEventListener('click', () => (mode = 'hitmarker'))
   $('kc-pick').addEventListener('click', () => void pickClip())
   $('kc-back').addEventListener('click', () => {
     setView('clip', 'Spul zum Kill und klick „Hier ist der Kill“.')

@@ -496,6 +496,11 @@ fn emit_reference_clip(app: &AppHandle) {
 }
 
 #[tauri::command]
+async fn killclip_saved_reference(app: AppHandle) -> Option<killclip::SavedReference> {
+    tauri::async_runtime::spawn_blocking(move || killclip::saved_reference(&app)).await.ok().flatten()
+}
+
+#[tauri::command]
 async fn killclip_analyze(app: AppHandle, path: String, at: f64) -> Result<killclip::reference::Reference, String> {
     let clip = PathBuf::from(path);
     if !clipper::is_video(&clip) || !clip.exists() {
@@ -536,13 +541,8 @@ fn open_external(app: AppHandle, url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn killclip_test_marker(app: AppHandle, region: Option<killclip::screen::Region>) -> Result<f32, String> {
-    tauri::async_runtime::spawn_blocking(move || killclip::test_marker(&app, region)).await.map_err(|e| e.to_string())?
-}
-
-#[tauri::command]
-fn killclip_set_hitmarker(app: AppHandle, region: killclip::screen::Region) -> Result<(), String> {
-    killclip::save_hitmarker_template(&app, region)
+async fn killclip_test_marker(app: AppHandle) -> Result<f32, String> {
+    tauri::async_runtime::spawn_blocking(move || killclip::test_marker(&app)).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -686,7 +686,7 @@ pub fn run() {
             killclip_save_config,
             killclip_calibration,
             killclip_analyze,
-            killclip_set_hitmarker,
+            killclip_saved_reference,
             killclip_reveal,
             killclip_open_link,
             open_external,

@@ -140,10 +140,6 @@ fn update_status(app: &AppHandle, status: &Arc<Mutex<Status>>, change: impl FnOn
     let _ = app.emit("killclip-status", snapshot);
 }
 
-pub fn template_path(app: &AppHandle) -> Option<PathBuf> {
-    app.path().app_config_dir().ok().map(|dir| dir.join("hitmarker.bmp"))
-}
-
 pub fn screenshot_path(app: &AppHandle) -> Option<PathBuf> {
     app.path().app_cache_dir().ok().map(|dir| dir.join("kill-clip-einrichtung.bmp"))
 }
@@ -153,7 +149,31 @@ fn marker_frame_path(app: &AppHandle) -> Option<PathBuf> {
     app.path().app_cache_dir().ok().map(|dir| dir.join("kill-clip-marker.bmp"))
 }
 
-/// Bild für Marker-Probelauf und -Vorlage: das Marker-Bild der Einrichtung, sonst das Einrichtungsbild.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedReference {
+    pub path: String,
+    pub marker_path: Option<String>,
+    pub width: u32,
+    pub height: u32,
+    pub hitmarker: Region,
+}
+
+/// Bilder der letzten Einrichtung – damit der Dialog beim nächsten Öffnen zeigt, was gilt.
+pub fn saved_reference(app: &AppHandle) -> Option<SavedReference> {
+    let path = screenshot_path(app)?;
+    let shot = Image::load_bmp(&path)?;
+    let marker = marker_frame_path(app).filter(|p| p.exists());
+    Some(SavedReference {
+        path: path.display().to_string(),
+        marker_path: marker.map(|p| p.display().to_string()),
+        width: shot.width,
+        height: shot.height,
+        hitmarker: center_region(shot.width, shot.height),
+    })
+}
+
+/// Bild für den Marker-Probelauf: das Marker-Bild der Einrichtung, sonst das Einrichtungsbild.
 fn marker_frame(app: &AppHandle) -> Option<Image> {
     marker_frame_path(app).and_then(|p| Image::load_bmp(&p)).or_else(|| screenshot_path(app).and_then(|p| Image::load_bmp(&p)))
 }
@@ -185,12 +205,6 @@ impl KillClips {
         let settings = state.settings.lock().unwrap().clone();
         let config = settings.kill_clip.clone();
         let has_feed = config.killfeed.is_some();
-        // Angelernte Marker-Vorlage (optional) – passend zum festgelegten Bereich.
-        let template = config
-            .hitmarker
-            .and_then(|_| template_path(&app))
-            .and_then(|p| Image::load_bmp(&p))
-            .map(|image| detect::marker_mask(&image.bgra));
         if !has_feed && !config.use_marker {
             return Err("Bitte zuerst den Kill-Feed-Bereich festlegen (oder den Kill-Marker einschalten).".into());
         }
@@ -218,7 +232,7 @@ impl KillClips {
         let watcher_app = app.clone();
         thread::Builder::new()
             .name("kill-clip-waechter".into())
-            .spawn(move || watch(watcher_app, config, template, running, status, tx))
+            .spawn(move || watch(watcher_app, config, running, status, tx))
             .map_err(|e| e.to_string())?;
 
         let status = self.status.clone();
@@ -252,6 +266,9 @@ fn report_screen_error(app: &AppHandle, status: &Arc<Mutex<Status>>, failing_sin
     }
 }
 
+/// Ab diesem Wert gilt der Kill-Marker als gesehen (Live-Erkennung, Einrichtung und Probelauf).
+pub const MARKER_THRESHOLD: f32 = 0.25;
+
 /// Bereich um das Fadenkreuz in der Bildschirmmitte, passend zur Auflösung.
 fn center_region(width: u32, height: u32) -> Region {
     let size = ((64.0 * height as f32 / 1080.0).round() as u32).max(48);
@@ -261,7 +278,6 @@ fn center_region(width: u32, height: u32) -> Region {
 fn watch(
     app: AppHandle,
     config: Config,
-    template: Option<Vec<bool>>,
     running: Arc<AtomicBool>,
     status: Arc<Mutex<Status>>,
     jobs: mpsc::Sender<Session>,
@@ -284,9 +300,8 @@ fn watch(
     let mut feed_index = None;
     let mut marker_index = None;
     let mut feed = KillfeedTracker::default();
-    // Mit angelernter Vorlage zählt die Überlappung, sonst die eingebaute X-Form.
-    // Feste Schwellen: Ältere Einstellungen enthalten noch den Wert der früheren Vorlagen-Erkennung.
-    let mut marker = HitmarkerTracker::new(if template.is_some() { 0.45 } else { 0.2 });
+    // Feste Schwelle: Ältere Einstellungen enthalten noch Werte früherer Erkennungen.
+    let mut marker = HitmarkerTracker::new(MARKER_THRESHOLD);
     let mut merger = KillMerger::default();
     let mut last_feed: Vec<u8> = Vec::new();
     let mut last_ocr = f64::MIN;
@@ -314,7 +329,8 @@ fn watch(
                     regions.len() - 1
                 });
                 marker_index = config.use_marker.then(|| {
-                    regions.push(config.hitmarker.unwrap_or_else(|| center_region(opened.width, opened.height)));
+                    // Der Marker sitzt immer genau auf dem Fadenkreuz – ein von Hand verrutschter Rahmen zählt nicht.
+                    regions.push(center_region(opened.width, opened.height));
                     regions.len() - 1
                 });
             }
@@ -327,7 +343,7 @@ fn watch(
                 if let Some(i) = marker_index {
                     let image = &images[i];
                     let mask = detect::marker_mask(&image.bgra);
-                    let score = detect::marker_score(&mask, image.width as usize, image.height as usize, template.as_deref());
+                    let score = detect::marker_score(&mask, image.width as usize, image.height as usize);
                     if marker.update(score, now) && merger.accept(Source::Hitmarker, now) {
                         new_kills.push(Kill { at: SystemTime::now(), victim: None });
                         emit_event(&app, "kill", "Kill erkannt (Kill-Marker)", None, None);
@@ -338,7 +354,7 @@ fn watch(
                     if now - last_ocr >= OCR_EVERY && changed(&gray, &last_feed) {
                         last_feed = gray;
                         last_ocr = now;
-                        if let Ok(lines) = ocr.read(&images[i]) {
+                        if let Ok(lines) = ocr.read_feed(&images[i]) {
                             for event in feed.update(&lines, now) {
                                 match event {
                                     FeedEvent::Kill(victim) => {
@@ -555,17 +571,6 @@ pub fn analyze_reference(app: &AppHandle, clip: &std::path::Path, at: f64) -> Re
     result
 }
 
-/// Speichert den markierten Ausschnitt als Hitmarker-Vorlage – aus dem Bild, auf dem der Marker zu sehen war.
-pub fn save_hitmarker_template(app: &AppHandle, region: Region) -> Result<(), String> {
-    let shot = marker_frame(app).ok_or("Erst einen Kill aufnehmen")?;
-    let template = shot.crop(region).ok_or("Bereich liegt außerhalb des Screenshots")?;
-    let path = template_path(app).ok_or("Einstellungsordner fehlt")?;
-    if let Some(dir) = path.parent() {
-        std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-    }
-    template.save_bmp(&path).map_err(|e| e.to_string())
-}
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedTest {
@@ -580,7 +585,7 @@ pub struct FeedTest {
 pub fn test_killfeed(app: &AppHandle, region: Region) -> Result<FeedTest, String> {
     let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Kill aufnehmen")?;
     let crop = shot.crop(region).ok_or("Bereich liegt außerhalb des Screenshots")?;
-    let lines = ocr::Ocr::new()?.read(&crop)?;
+    let lines = ocr::Ocr::new()?.read_feed(&crop)?;
     let events: Vec<FeedEvent> = lines.iter().filter_map(detect::classify).collect();
     Ok(FeedTest {
         lines: lines.iter().map(|l| l.text()).collect(),
@@ -590,11 +595,10 @@ pub fn test_killfeed(app: &AppHandle, region: Region) -> Result<FeedTest, String
 }
 
 /// Probelauf des Kill-Markers auf dem Marker-Bild der Einrichtung (Bereich um das Fadenkreuz).
-pub fn test_marker(app: &AppHandle, region: Option<Region>) -> Result<f32, String> {
+pub fn test_marker(app: &AppHandle) -> Result<f32, String> {
     let shot = marker_frame(app).ok_or("Erst einen Kill aufnehmen")?;
-    let crop = shot.crop(region.unwrap_or_else(|| center_region(shot.width, shot.height))).ok_or("Bereich liegt außerhalb des Screenshots")?;
-    let mask = detect::marker_mask(&crop.bgra);
-    Ok(detect::marker_score(&mask, crop.width as usize, crop.height as usize, None))
+    let crop = shot.crop(center_region(shot.width, shot.height)).ok_or("Bild zu klein")?;
+    Ok(detect::marker_score(&detect::marker_mask(&crop.bgra), crop.width as usize, crop.height as usize))
 }
 
 #[cfg(test)]

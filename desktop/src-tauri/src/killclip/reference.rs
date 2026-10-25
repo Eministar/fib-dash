@@ -21,6 +21,7 @@ use windows::{
 
 use super::{
     center_region,
+    MARKER_THRESHOLD,
     detect::{self, FeedEvent, Line},
     ocr::Ocr,
     screen::{self, Image, Region},
@@ -97,8 +98,6 @@ pub struct Reference {
     pub marker_score: f32,
 }
 
-/// Ab diesem Wert gilt ein Marker als sicher gesehen (wie im Probelauf).
-const MARKER_SEEN: f32 = 0.2;
 
 /// Texterkennung über das ganze Bild: in überlappenden Kacheln, vergrößert – die
 /// Schrift im Kill-Feed ist klein, und eine Meldung darf an keiner Kachelgrenze zerfallen.
@@ -157,11 +156,11 @@ pub fn analyze(clip: &Path, at: f64, frame_path: &Path, marker_path: &Path) -> R
         .enumerate()
         .map(|(i, frame)| {
             let crop = frame.crop(center);
-            let score = crop.map_or(0.0, |c| detect::marker_score(&detect::marker_mask(&c.bgra), c.width as usize, c.height as usize, None));
+            let score = crop.map_or(0.0, |c| detect::marker_score(&detect::marker_mask(&c.bgra), c.width as usize, c.height as usize));
             (i, score)
         })
         .fold((0, 0.0f32), |best, next| if next.1 > best.1 { next } else { best });
-    let marker_seen = marker_score >= MARKER_SEEN;
+    let marker_seen = marker_score >= MARKER_THRESHOLD;
 
     // Kill-Feed: Die Meldung erscheint mit dem Kill und bleibt ein paar Sekunden stehen.
     let ocr = Ocr::new()?;
@@ -236,4 +235,5 @@ mod tests {
         println!("in {:?}: {}", started.elapsed(), serde_json::to_string_pretty(&result).unwrap());
     }
 }
+
 

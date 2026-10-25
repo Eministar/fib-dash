@@ -8,7 +8,7 @@ use windows::{
 };
 
 use super::{
-    detect::{group_rows, Line, Word},
+    detect::{classify, group_rows, Line, Word},
     screen::Image,
 };
 
@@ -33,6 +33,19 @@ impl Ocr {
     pub fn read(&self, image: &Image) -> Result<Vec<Line>, String> {
         let scale = if image.height < MIN_TEXT_HEIGHT { 2 } else { 1 };
         self.read_with(image, scale, false)
+    }
+
+    /// Für den Kill-Feed: Die Meldung ist dünn und halb durchsichtig. Findet die erste
+    /// Lesung keine Meldung, noch einmal stärker vergrößert lesen.
+    pub fn read_feed(&self, image: &Image) -> Result<Vec<Line>, String> {
+        let first = self.read(image)?;
+        if first.iter().any(|line| classify(line).is_some()) || image.height >= MIN_TEXT_HEIGHT {
+            return Ok(first);
+        }
+        match self.read_with(image, 3, false) {
+            Ok(closer) if closer.iter().any(|line| classify(line).is_some()) => Ok(closer),
+            _ => Ok(first),
+        }
     }
 
     /// Wie `read`, mit wählbarer Vergrößerung und optional invertiert (dunkle Schrift auf hell).

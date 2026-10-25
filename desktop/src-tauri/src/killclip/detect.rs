@@ -117,7 +117,9 @@ pub fn classify(line: &Line) -> Option<FeedEvent> {
     let words: Vec<&str> = line.words.iter().map(|w| w.text.as_str()).collect();
     // „getötet“ – auch als „getotet“, „get6tet“ o. Ä. gelesen.
     let end = words.iter().rposition(|w| word_is(w, &["getotet", "getoetet"], 2))?;
-    let du = words[..end].iter().position(|w| word_is(w, &["du"], 0))?;
+    let Some(du) = words[..end].iter().position(|w| word_is(w, &["du"], 0)) else {
+        return unclear_kill(&words, end);
+    };
     let next = words.get(du + 1)?;
     let (kind, start) = if word_is(next, &["hast"], 1) {
         ("kill", du + 2)
@@ -136,6 +138,19 @@ pub fn classify(line: &Line) -> Option<FeedEvent> {
         return None;
     }
     Some(if kind == "kill" { FeedEvent::Kill(name) } else { FeedEvent::Death(name) })
+}
+
+/// „getötet“ ist lesbar, „Du hast“ nicht (live gelesen: „… rost W I Krypto I FIB (4391 get&et“).
+/// Gilt als Kill, solange nichts nach „Du wurdest von“ aussieht – der Name ist dann, was
+/// nach einem „hast“-ähnlichen Wort steht, sonst alles davor.
+fn unclear_kill(words: &[&str], end: usize) -> Option<FeedEvent> {
+    if words[..end].iter().any(|w| word_is(w, &["wurdest", "wurde"], 2) || word_is(w, &["von"], 0)) {
+        return None;
+    }
+    let start = words[..end].iter().rposition(|w| word_is(w, &["hast"], 2)).map_or(0, |i| i + 1);
+    let name = clean_name(&words[start..end].join(" "));
+    // Nur ein, zwei Zeichen davor: eher Rauschen als eine Meldung.
+    (fold(&name).len() >= 3).then_some(FeedEvent::Kill(name))
 }
 
 /// Typische OCR-Verwechslungen in Namen wie „NV | Aki | FIB [865]“ bereinigen.
@@ -205,7 +220,8 @@ pub fn is_marker_color(r: u8, g: u8, b: u8) -> bool {
     let max = r.max(g).max(b);
     let min = r.min(g).min(b);
     let delta = max - min;
-    if max < 0.38 || delta / max.max(1e-6) < 0.5 {
+    // Aufnahmen und Kantenglättung blassen das Türkis aus (gemessen: 79,130,151 → Sättigung 0,48).
+    if max < 0.3 || delta / max.max(1e-6) < 0.35 {
         return false;
     }
     let hue = if max == r {
@@ -216,7 +232,7 @@ pub fn is_marker_color(r: u8, g: u8, b: u8) -> bool {
         60.0 * ((r - g) / delta + 4.0)
     };
     let hue = if hue < 0.0 { hue + 360.0 } else { hue };
-    (176.0..=208.0).contains(&hue)
+    (176.0..=212.0).contains(&hue)
 }
 
 /// Maske der türkisen Pixel eines BGRA-Ausschnitts.
@@ -224,23 +240,18 @@ pub fn marker_mask(bgra: &[u8]) -> Vec<bool> {
     bgra.chunks_exact(4).map(|p| is_marker_color(p[2], p[1], p[0])).collect()
 }
 
-/// Wie sehr der Ausschnitt dem Marker gleicht (0..1).
+/// Wie sehr der Ausschnitt dem Marker gleicht (0..1). Der Ausschnitt liegt mittig auf dem Fadenkreuz.
 ///
-/// Mit Vorlage (bei der Einrichtung aufgenommen): Überlappung der Masken.
-/// Ohne: ein „X“ aus vier diagonalen Strichen um die Mitte – mindestens drei
-/// Arme müssen da sein, und außerhalb der Diagonalen darf kaum Türkis sein
-/// (sonst ist es Himmel oder Wasser, kein Marker).
-pub fn marker_score(mask: &[bool], width: usize, height: usize, template: Option<&[bool]>) -> f32 {
-    if let Some(template) = template.filter(|t| t.len() == mask.len()) {
-        let both = mask.iter().zip(template).filter(|(a, b)| **a && **b).count();
-        let either = mask.iter().zip(template).filter(|(a, b)| **a || **b).count();
-        return if either == 0 { 0.0 } else { both as f32 / either as f32 };
-    }
-    let scale = width.min(height) as f32 / 64.0;
+/// Der NERO-V-Marker sind vier kurze, dicke „Blätter“ auf den Diagonalen, etwa
+/// 3–14 px von der Mitte (bei 1080p; gemessen an einem echten Kill). Gezählt werden
+/// türkise Pixel je Diagonale: Mindestens drei müssen etwas zeigen (in Aufnahmen
+/// verschwimmen die unteren gern), und außerhalb der Diagonalen darf kaum Türkis
+/// sein – sonst ist es Himmel oder Wasser, kein Marker.
+pub fn marker_score(mask: &[bool], width: usize, height: usize) -> f32 {
+    let scale = height as f32 / 64.0;
     let (cx, cy) = (width as f32 / 2.0, height as f32 / 2.0);
-    let (r_in, r_out, band) = (5.0 * scale, 30.0 * scale, 2.5 * scale);
+    let (r_in, r_out, band) = (2.5 * scale, 17.0 * scale, 4.0 * scale);
     let mut arm_hits = [0usize; 4];
-    let mut arm_size = [0usize; 4];
     let mut outside = 0usize;
     let mut outside_area = 0usize;
     for y in 0..height {
@@ -250,24 +261,24 @@ pub fn marker_score(mask: &[bool], width: usize, height: usize, template: Option
             if r < r_in || r > r_out {
                 continue;
             }
-            let on_diagonal = (dx.abs() - dy.abs()).abs() <= band;
-            let quadrant = usize::from(dx > 0.0) + 2 * usize::from(dy > 0.0);
             let hit = mask[y * width + x];
-            if on_diagonal {
-                arm_size[quadrant] += 1;
-                arm_hits[quadrant] += usize::from(hit);
+            if (dx.abs() - dy.abs()).abs() <= band {
+                arm_hits[usize::from(dx > 0.0) + 2 * usize::from(dy > 0.0)] += usize::from(hit);
             } else {
                 outside_area += 1;
                 outside += usize::from(hit);
             }
         }
     }
-    let mut coverage: Vec<f32> = (0..4).map(|q| arm_hits[q] as f32 / arm_size[q].max(1) as f32).collect();
-    coverage.sort_by(|a, b| b.total_cmp(a));
+    let mut hits = arm_hits;
+    hits.sort_unstable_by(|a, b| b.cmp(a));
+    let area = scale * scale;
+    // Zweit- und drittstärkstes Blatt zusammen gegen ein deutlich sichtbares Blatt (~40 px).
+    let strength = ((hits[1] + hits[2]) as f32 / (40.0 * area)).min(1.0);
+    let third = (hits[2] as f32 / (4.0 * area)).min(1.0);
     // Wie viel der Fläche neben den Diagonalen ebenfalls türkis ist (Himmel, Wasser …).
     let spill = outside as f32 / outside_area.max(1) as f32;
-    // Drittstärkster Arm: verlangt mindestens drei Arme.
-    coverage[2] * (1.0 - spill).powi(4)
+    strength * third * (1.0 - spill).powi(4)
 }
 
 /// Meldet einen Marker, sobald die Ähnlichkeit über die Schwelle steigt.
@@ -352,6 +363,10 @@ mod tests {
         assert_eq!(classify(&line("Du hast Max_Muster get6tet")), Some(FeedEvent::Kill("Max_Muster".into())));
         assert_eq!(classify(&line("Du hast NV I Aki I FIB 1865] getÄTtet")), Some(FeedEvent::Kill("NV | Aki | FIB [865]".into())));
         assert_eq!(classify(&line("Du wurdst von Max_Muster getötet")), Some(FeedEvent::Death("Max_Muster".into())));
+        // Live gelesen: „Du hast“ verstümmelt, „getötet“ als „get&et“.
+        assert_eq!(classify(&line("I e sysTEMA.e,CE5 · rost W I Krypto I FIB (4391 get&et")), Some(FeedEvent::Kill("W | Krypto | FIB (4391".into())));
+        assert_eq!(classify(&line("wurdest von Max_Muster get&et")), None);
+        assert_eq!(classify(&line("x getötet")), None);
         // Ein Tod wird nie als Kill gewertet, auch wenn „hast“ fehlt.
         assert!(!matches!(classify(&line("Du wurdest von Du hast getötet")), Some(FeedEvent::Kill(_))));
     }
@@ -400,17 +415,58 @@ mod tests {
         let size = 64;
         assert!(!is_marker_color(44, 84, 79), "grünlicher Hintergrund ist kein Marker");
         assert!(is_marker_color(40, 104, 116));
-        let marker = marker_score(&marker_mask(&with_x(size)), size, size, None);
-        let empty = marker_score(&marker_mask(&background(size)), size, size, None);
+        let marker = marker_score(&marker_mask(&with_x(size)), size, size);
+        let empty = marker_score(&marker_mask(&background(size)), size, size);
         let sky: Vec<u8> = (0..size * size).flat_map(|_| [116u8, 104, 40, 255]).collect();
-        let sky = marker_score(&marker_mask(&sky), size, size, None);
+        let sky = marker_score(&marker_mask(&sky), size, size);
         println!("Marker {marker}, Hintergrund {empty}, Fläche {sky}");
         assert!(marker > 0.25, "Marker {marker}");
         assert!(empty < 0.01, "Hintergrund {empty}");
         assert!(sky < 0.05, "türkise Fläche {sky}");
-        // Mit angelernter Vorlage: Überlappung.
-        let template = marker_mask(&with_x(size));
-        assert!(marker_score(&marker_mask(&with_x(size)), size, size, Some(&template)) > 0.99);
+    }
+
+    /// Echter NERO-V-Marker aus einem Replay (1080p, Bereich 64×64 um das Fadenkreuz):
+    /// die oberen Blätter deutlich, die unteren verwaschen.
+    const REAL_MARKER: [&str; 26] = [
+        "........++++...+++++..................................",
+        "........++++..++++++..................................",
+        "........++++..++##++..................................",
+        "........+++..+####++......##+.........................",
+        "........+++.++#####+.....#####........................",
+        "..........++++######....#######.......................",
+        "...........+++######+...########......................",
+        ".............+######++.##########.....................",
+        "..............+######+..######+##.....................",
+        "................####+...####++........................",
+        "......................................................",
+        "......................................................",
+        "......................................................",
+        "......................................................",
+        ".................+........+##.........................",
+        "................#+.......++###........................",
+        "...............#++........++##........................",
+        "..............+#++........++#+........................",
+        "...............+++.........+++........................",
+        "......................................................",
+        "......................................................",
+        "......................................................",
+        "......................................................",
+        "......................................................",
+        "......................................................",
+        "......................................................",
+    ];
+
+    #[test]
+    fn real_marker_from_a_replay_is_found() {
+        // Zeilen 20–45 des Bereichs, Spalten ab 10 (links nur Hintergrund).
+        let mut mask = vec![false; 64 * 64];
+        for (row, line) in REAL_MARKER.iter().enumerate() {
+            for (col, c) in line.chars().enumerate() {
+                mask[(20 + row) * 64 + 10 + col] = c == '#';
+            }
+        }
+        let score = marker_score(&mask, 64, 64);
+        assert!(score >= 0.25, "echter Marker {score}");
     }
 
     #[test]
