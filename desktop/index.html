@@ -50,6 +50,7 @@
         <button class="nav-item" data-route="news" role="listitem"><i data-icon="megaphone"></i><span>Neuigkeiten</span><span class="nav-badge" id="nav-news-badge" hidden></span></button>
         <button class="nav-item" data-route="bodycam" data-tool="bodycam" role="listitem"><i data-icon="videoClip"></i><span>Bodycam</span></button>
         <button class="nav-item" data-route="investigations" data-tool="investigations" role="listitem"><i data-icon="documentSearch"></i><span>Ermittlungsakten</span></button>
+        <button class="nav-item" data-route="agents" data-tool="agents" role="listitem"><i data-icon="peopleTeam"></i><span>Agents</span></button>
         <button class="nav-item" data-route="killclips" data-tool="killClips" role="listitem"><i data-icon="target"></i><span>Kill-Clips</span></button>
         <button class="nav-item" data-route="duty" data-tool="dutyTimes" role="listitem"><i data-icon="timer"></i><span>Dienstzeiten</span></button>
         <div class="nav-group-label type-caption muted" role="presentation">Weitere Sachen</div>
@@ -234,6 +235,32 @@
         </div>
       </section>
 
+      <!-- Agents -->
+      <section class="page wide" data-page="agents" hidden>
+        <div id="ag-list-view">
+          <header class="page-header">
+            <h1 class="type-title">Agents</h1>
+            <p class="type-body muted" id="ag-count"></p>
+          </header>
+          <div class="toolbar">
+            <fluent-text-input id="ag-search" placeholder="Name, Dienstnummer oder Discord-ID suchen"><i data-icon="search" slot="start"></i></fluent-text-input>
+            <fluent-dropdown id="ag-status" class="ag-filter" placeholder="Status"><fluent-listbox></fluent-listbox></fluent-dropdown>
+            <fluent-dropdown id="ag-rank" class="ag-filter" placeholder="Rang"><fluent-listbox></fluent-listbox></fluent-dropdown>
+            <fluent-dropdown id="ag-unit" class="ag-filter" placeholder="Unit"><fluent-listbox></fluent-listbox></fluent-dropdown>
+            <fluent-dropdown id="ag-flag" class="ag-filter" placeholder="Markierung"><fluent-listbox></fluent-listbox></fluent-dropdown>
+            <span class="spacer"></span>
+            <fluent-button id="ag-refresh" appearance="subtle" icon-only aria-label="Aktualisieren" title="Aktualisieren"><i data-icon="arrowSync"></i></fluent-button>
+            <fluent-button id="ag-new" appearance="primary"><i data-icon="personAdd" slot="start"></i>Neuer Agent</fluent-button>
+          </div>
+          <fluent-message-bar id="ag-error" intent="error" hidden></fluent-message-bar>
+          <div id="ag-list" class="ag-groups"></div>
+        </div>
+        <div id="ag-detail-view" hidden>
+          <div id="ag-detail-header" class="detail-header"></div>
+          <div id="ag-detail-body" class="detail-body"></div>
+        </div>
+      </section>
+
       <!-- Kill-Clips -->
       <section class="page" data-page="killclips" hidden>
         <header class="page-header">
@@ -410,6 +437,16 @@
       <div class="form-dialog-content"></div>
       <fluent-button slot="action" class="form-submit" appearance="primary">Speichern</fluent-button>
       <fluent-button slot="action" class="form-cancel">Abbrechen</fluent-button>
+    </fluent-dialog-body>
+  </fluent-dialog>
+
+  <!-- ── Sanktion ausstellen (Sanktionskatalog) ─────────────────── -->
+  <fluent-dialog id="sanction-dialog" type="modal">
+    <fluent-dialog-body>
+      <span slot="title" id="sanction-dialog-title">Sanktion ausstellen</span>
+      <div class="sanction-form" id="sanction-form"></div>
+      <fluent-button slot="action" id="sanction-submit" appearance="primary">Ausstellen</fluent-button>
+      <fluent-button slot="action" id="sanction-cancel">Abbrechen</fluent-button>
     </fluent-dialog-body>
   </fluent-dialog>
 

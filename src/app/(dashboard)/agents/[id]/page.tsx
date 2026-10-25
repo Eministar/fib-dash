@@ -55,6 +55,7 @@ import { Badge } from '@/components/ui/badge'
 import { RankNumberBadge } from '@/components/ranks/rank-number-badge'
 import { CodenameHistory } from '@/components/codenames/codename-history'
 import { AgentRecordsPanel } from '@/components/agents/agent-records-panel'
+import { AgentLicensesPanel } from '@/components/agents/agent-licenses-panel'
 import { useTrackRecentItem } from '@/hooks/use-recent-items'
 import { AgentAchievements } from '@/components/agents/agent-achievements'
 import { usePageAction } from '@/hooks/use-page-action'
@@ -973,6 +974,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         { id: 'profile', label: 'Profil' },
         { id: 'activity', label: 'Dienst & Abwesenheit' },
         { id: 'career', label: 'Ausbildung & Laufbahn' },
+        { id: 'licenses', label: 'Lizenzen' },
         { id: 'records', label: 'Dokumente & Notizen' },
         { id: 'management', label: 'Verwaltung', count: openSanctions.length || undefined },
       ]} />
@@ -1521,6 +1523,9 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           )}
 
           <div hidden={detailTab !== 'records'}><AgentRecordsPanel agentId={agent.id} canManage={canEditAgent} flat /></div>
+          {detailTab === 'licenses' && (
+            <AgentLicensesPanel agentId={agent.id} canManage={hasPermission(user, 'licenses:manage')} terminated={agent.status === 'TERMINATED'} />
+          )}
 
           {/* Notes */}
           <div hidden={detailTab !== 'records'}

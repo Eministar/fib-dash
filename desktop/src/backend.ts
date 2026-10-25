@@ -114,7 +114,7 @@ export interface Option {
 export interface SessionContext {
   user: { displayName: string; avatarUrl: string | null }
   canUpload: boolean
-  tools: { bodycam: boolean; dutyTimes: boolean; investigations: boolean; killClips?: boolean }
+  tools: { bodycam: boolean; dutyTimes: boolean; investigations: boolean; killClips?: boolean; agents?: boolean }
   permissions?: string[]
   ownAgent: Option | null
   agents: Option[]

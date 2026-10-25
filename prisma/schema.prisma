@@ -356,6 +356,7 @@ model User {
   qualityChecks         QualityCheck[]         @relation("QualityCheckConductor")
   qualityCheckEntries   QualityCheckEntry[]    @relation("QualityCheckEntryAuthor")
   qualityShares         QualityShare[]         @relation("QualityShareCreator")
+  licenseEvents         AgentLicenseEvent[]    @relation("AgentLicenseEventActor")
 
   // Login, Impersonation und Rollen-Sync suchen Konten über die Discord-ID.
   @@index([discordId])
@@ -771,6 +772,8 @@ model Agent {
   bodycamClips             BodycamClip[]           @relation("BodycamClipRecorder")
   evidenceSeized           Evidence[]              @relation("EvidenceSeizedBy")
   agentOfMonthVotes        AgentOfMonthVote[]      @relation("AgentOfMonthNominee")
+  licenses                 AgentLicense[]
+  licenseEvents            AgentLicenseEvent[]
 
   @@index([badgeNumber])
   @@index([status])
@@ -990,6 +993,78 @@ model PlaytimeSession {
   @@index([endedAt])
 }
 
+/// Interne Lizenz (Konzept „Lizenzen Intern“): eine Befugnis, die von Hand erteilt
+/// und bei Fehlverhalten entzogen wird – zurück gibt es sie nach der Sperrfrist über
+/// erneute Ausbildung/Prüfung. Lizenzarten sind im Admin-Bereich pflegbar.
+model License {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  label        String
+  description  String?  @db.Text
+  /// Tage nach einem Entzug, bevor die Lizenz wieder erteilt werden darf (0 = sofort).
+  cooldownDays Int      @default(0)
+  sortOrder    Int      @default(0)
+  /// Inaktive Lizenzarten erscheinen nicht mehr bei den Agents, ihre Historie bleibt.
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  agentLicenses AgentLicense[]
+  events        AgentLicenseEvent[]
+}
+
+enum AgentLicenseStatus {
+  GRANTED
+  REVOKED
+}
+
+/// Aktueller Stand einer Lizenz bei einem Agent. Kein Eintrag = nie erteilt.
+model AgentLicense {
+  id           String             @id @default(cuid())
+  agentId      String
+  agent        Agent              @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  licenseId    String
+  license      License            @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  status       AgentLicenseStatus
+  /// Nach einem Entzug: frühestens ab dann wieder erteilbar.
+  regainableAt DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@unique([agentId, licenseId])
+  @@index([licenseId, status])
+}
+
+/// Jede Erteilung und jeder Entzug – wer, wann, warum. Bleibt auch erhalten, wenn
+/// sich der Stand später wieder ändert.
+model AgentLicenseEvent {
+  id               String             @id @default(cuid())
+  agentId          String
+  agent            Agent              @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  licenseId        String
+  license          License            @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  action           AgentLicenseStatus
+  /// Begründung (Pflicht beim Entzug) bzw. Notiz zur Erteilung.
+  reason           String?            @db.Text
+  /// Sanktion, auf der ein Entzug beruht (optional).
+  sanctionId       String?
+  sanction         Sanction?          @relation(fields: [sanctionId], references: [id], onDelete: SetNull)
+  /// Erteilung trotz laufender Sperrfrist – bewusst übersteuert.
+  overrodeCooldown Boolean            @default(false)
+  /// Beim Entzug: ab wann die Lizenz wieder erteilt werden darf.
+  regainableAt     DateTime?
+  /// Massenvergabe an alle aktiven Agents (wird nicht einzeln im Discord gemeldet).
+  bulk             Boolean            @default(false)
+  actorId          String?
+  actor            User?              @relation("AgentLicenseEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt        DateTime           @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([licenseId, createdAt])
+  @@index([sanctionId])
+  @@index([actorId])
+}
+
 model AgentTraining {
   id         String   @id @default(cuid())
   agentId    String
@@ -1069,6 +1144,7 @@ model Sanction {
   repeatOfSanctionId  String?
   repeatOf            Sanction?      @relation("SanctionRepeat", fields: [repeatOfSanctionId], references: [id], onDelete: SetNull)
   repeatedSanctions   Sanction[]     @relation("SanctionRepeat")
+  licenseEvents       AgentLicenseEvent[]
   /// Vier-Augen-Bestätigung; bei Penal Grade 5 und 6 vorgesehen.
   confirmedByUserId   String?
   confirmedBy         User?          @relation("SanctionConfirmedBy", fields: [confirmedByUserId], references: [id], onDelete: SetNull)

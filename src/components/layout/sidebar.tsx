@@ -10,7 +10,7 @@ import {
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Download, MonitorDown,
   FileText, FileSignature, Gavel, FolderSearch, Map,
-  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star,
+  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star, IdCard,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -64,6 +64,7 @@ export const adminNav: NavItem[] = [
   { name: 'Protokoll', href: '/logs', icon: ScrollText, permission: 'logs:view' },
   { name: 'Ränge', href: '/admin/ranks', icon: Shield, permission: 'ranks:manage' },
   { name: 'Ausbildungen', href: '/admin/trainings', icon: GraduationCap, permission: 'trainings:manage' },
+  { name: 'Lizenzen', href: '/admin/licenses', icon: IdCard, permission: 'licenses:manage' },
   { name: 'Units verwalten', href: '/admin/units', icon: Briefcase, permission: 'units:manage' },
   { name: 'Benutzer', href: '/admin/users', icon: UserCog, permission: 'users:manage' },
   { name: 'Benutzergruppen', href: '/admin/user-groups', icon: Users, permission: 'groups:manage' },

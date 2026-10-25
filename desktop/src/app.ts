@@ -12,6 +12,7 @@ import { initKillClips, showKillClips } from './pages/killclips'
 import { initHome } from './pages/home'
 import { hideNews, initNews, refreshNewsBadge, showNews } from './pages/news'
 import { initInvestigations, showInvestigations } from './pages/investigations'
+import { initAgents, showAgents } from './pages/agents'
 import { navigation, notifyStateChange, state, type Route } from './store'
 
 type ValueElement = HTMLElement & { value: string }
@@ -41,6 +42,7 @@ function go(next: Route) {
   if (next === 'duty') showDuty()
   if (next === 'news') showNews()
   if (next === 'investigations') showInvestigations()
+  if (next === 'agents') showAgents()
   if (next === 'killclips') showKillClips()
   if (next === 'tweaks') showTweaks()
 }
@@ -56,6 +58,8 @@ async function enterApp() {
   }
   // Ältere Server liefern noch keine Werkzeugliste.
   state.context.tools ??= { bodycam: state.context.canUpload, dutyTimes: false, investigations: false }
+  // Server vor dem Agents-Bereich kennen den Schalter noch nicht – dann gilt das Recht selbst.
+  state.context.tools.agents ??= !!state.context.permissions?.includes('agents:view')
   const { user, tools } = state.context
   $('account-name').textContent = user.displayName
   $('settings-account').textContent = user.displayName
@@ -175,6 +179,7 @@ export async function startApp() {
   initNews()
   initDuty()
   initInvestigations()
+  initAgents()
   initKillClips()
   initSelfClip()
   initTweaks()

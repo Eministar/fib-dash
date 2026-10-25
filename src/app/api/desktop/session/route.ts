@@ -77,6 +77,7 @@ export async function GET() {
         bodycam: canUpload,
         dutyTimes: hasPermission(user, 'duty-times:view'),
         investigations: hasPermission(user, 'investigations:view'),
+        agents: hasPermission(user, 'agents:view'),
         /** Kill-Clips gehen in den eigenen Clips-Channel – dafür braucht es einen Agent. */
         killClips: !!ownAgent,
       },

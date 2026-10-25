@@ -1,6 +1,6 @@
 import type { SessionContext, SettingsView } from './backend'
 
-export type Route = 'home' | 'news' | 'bodycam' | 'duty' | 'investigations' | 'killclips' | 'tweaks'
+export type Route = 'home' | 'news' | 'bodycam' | 'duty' | 'investigations' | 'agents' | 'killclips' | 'tweaks'
 
 /** Gemeinsamer Zustand der Seiten; gesetzt vom App-Gerüst (app.ts). */
 export const state: { context: SessionContext | null; settings: SettingsView | null } = {

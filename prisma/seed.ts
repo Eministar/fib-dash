@@ -6,6 +6,7 @@ import { PrismaClient } from '../src/generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import bcrypt from 'bcryptjs'
 import { PERMISSIONS } from '../src/lib/permissions'
+import { DEFAULT_LICENSES } from '../src/lib/licenses/default-licenses'
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL!)
 const prisma = new PrismaClient({ adapter })
@@ -94,6 +95,7 @@ async function main() {
       permissions: [
         'agents:write',
         'agent-trainings:manage',
+        'licenses:manage',
         'agents:view',
         'calendar:manage',
         'calendar:view',
@@ -227,6 +229,17 @@ async function main() {
     })
   }
   console.log('Trainings created:', trainings.length)
+
+  // Konzept „Lizenzen Intern“: nur anlegen, nie überschreiben.
+  const licenses = DEFAULT_LICENSES
+  for (const [index, license] of licenses.entries()) {
+    await getUpsertDelegate(['license']).upsert({
+      where: { key: license.key },
+      update: {},
+      create: { ...license, sortOrder: index + 1 },
+    })
+  }
+  console.log('Licenses created:', licenses.length)
 
   await importOrdnungen()
 

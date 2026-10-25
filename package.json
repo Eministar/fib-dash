@@ -30,6 +30,7 @@
     "db:backfill-case-numbers": "node scripts/backfill-application-case-numbers.js",
     "db:restore-discord-settings": "npx tsx scripts/restore-discord-settings.ts",
     "db:seed-sanktionskatalog": "npx tsx scripts/seed-sanktionskatalog.ts",
+    "db:seed-licenses": "npx tsx scripts/seed-licenses.ts",
     "db:link-users-to-agents": "npx tsx scripts/link-users-to-agents.ts",
     "db:grant-role-permissions": "npx tsx scripts/grant-role-permissions.ts",
     "db:fix-json-permissions": "node scripts/fix-json-permissions.js",

@@ -47,6 +47,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       recordEntries: { include: { author: { select: { displayName: true } } } },
       terminations: { include: { terminatedBy: { select: { displayName: true } } } },
       trainings: { include: { training: true } },
+      licenseEvents: {
+        include: {
+          license: { select: { label: true } },
+          actor: { select: { displayName: true } },
+          sanction: { select: { penalGrade: true, level: true } },
+        },
+      },
       absenceNotices: true,
       dutySessions: true,
       playtimeSessions: true,
@@ -173,6 +180,27 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       title: 'Ausbildung abgeschlossen',
       description: training.training.label,
       occurredAt: training.updatedAt,
+    })
+  }
+
+  for (const event of agent.licenseEvents) {
+    const granted = event.action === 'GRANTED'
+    push({
+      id: `license-${event.id}`,
+      type: granted ? 'license-granted' : 'license-revoked',
+      category: 'license',
+      tone: granted ? 'positive' : 'negative',
+      title: granted ? 'Lizenz erteilt' : 'Lizenz entzogen',
+      description: event.license.label,
+      occurredAt: event.createdAt,
+      details: [
+        detail(granted ? 'Notiz' : 'Grund', event.reason),
+        event.sanction && detail('Sanktion', `Penal Grade ${event.sanction.penalGrade} · Stufe ${event.sanction.level}`),
+        event.regainableAt && detail('Wieder möglich ab', formatDateTime(event.regainableAt)),
+        event.overrodeCooldown && detail('Hinweis', 'Vor Ablauf der Sperrfrist erteilt'),
+        event.bulk && detail('Art', 'Erstausstattung für alle Agents'),
+        detail(granted ? 'Erteilt von' : 'Entzogen von', event.actor?.displayName ?? 'Gelöschter Benutzer'),
+      ],
     })
   }
 

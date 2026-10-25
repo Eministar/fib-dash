@@ -266,6 +266,8 @@ const EVENT_META = {
   hire:        { icon: '✅', label: 'Neueinstellung' },
   promotion:   { icon: '🔼', label: 'Rangänderung' },
   training:    { icon: '🎓', label: 'Ausbildung aktualisiert' },
+  licenseGranted: { icon: '🪪', label: 'Lizenz erteilt' },
+  licenseRevoked: { icon: '⛔', label: 'Lizenz entzogen' },
   units:       { icon: '🛡️', label: 'Unit-Zuordnung geändert' },
   sanction:    { icon: '⚠️', label: 'Sanktion ausgestellt' },
   termination: { icon: '❌', label: 'Dienstverhältnis beendet' },
