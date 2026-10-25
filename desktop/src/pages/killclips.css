@@ -100,3 +100,43 @@ kbd {
 .kc-test-sep { width: 100%; border: 0; border-top: 1px solid var(--card-stroke); margin: 4px 0; }
 .kc-event.death .kc-event-icon { color: var(--colorPaletteRedForeground1); }
 .kc-event.warning .kc-event-icon { color: var(--colorPaletteYellowForeground2); }
+
+/* Aufnahme mit Zeitleiste: Kill markieren */
+.kc-clip { display: flex; flex-direction: column; }
+.kc-player { width: 100%; max-height: max(220px, calc(100vh - 460px)); }
+.kc-track { height: 28px; cursor: pointer; }
+.kc-track:focus-visible { outline: 2px solid var(--colorStrokeFocus2); outline-offset: 2px; }
+/* Zuletzt ausgewerteter Moment */
+.kc-kill-flag {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #c42b1c;
+  pointer-events: none;
+}
+.kc-kill-flag::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: -3px;
+  border: 5px solid transparent;
+  border-top-color: #c42b1c;
+}
+#kc-mark { margin-left: 8px; }
+
+/* Referenz: so sieht die App den Kill */
+.kc-crops { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.kc-crop { display: flex; flex-direction: column; gap: 4px; margin: 0; max-width: 100%; }
+.kc-crop-img {
+  width: min(420px, 100%);
+  max-height: 140px;
+  border: 1px solid var(--card-stroke);
+  border-radius: 4px;
+  background-color: #000;
+  background-repeat: no-repeat;
+}
+/* Marker-Ausschnitt ist quadratisch und klein – vergrößert zeigen. */
+.kc-crop:nth-child(2) .kc-crop-img { width: 120px; image-rendering: pixelated; }

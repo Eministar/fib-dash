@@ -1,16 +1,18 @@
 import { convertFileSrc } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { open } from '@tauri-apps/plugin-dialog'
 import {
   backend,
   type KillClipConfig,
   type KillClipEvent,
-  type KillClipScreenshot,
+  type KillClipReference,
+  type KillClipReferenceClip,
   type KillClipStatus,
   type Region,
 } from '../backend'
 import { $, errorText, escapeHtml, selectValue, showMessage, textOf, type DropdownElement } from '../dom'
 import { clipperName, formatBytes, formatDateTime } from '../format'
-import { icon, type IconName } from '../icons'
+import { icon, icons, type IconName } from '../icons'
 import { onStateChange, state } from '../store'
 import { toast } from '../ui/toast'
 
@@ -136,18 +138,157 @@ function renderHistory() {
 }
 
 // ── Einrichtung ──────────────────────────────────────────────────────
+//
+// Ablauf: Kill im Spiel aufnehmen (Einrichtungstaste oder vorhandener Clip) → in der
+// Zeitleiste den Moment des Kills markieren → die App wertet die Bilder darum aus und
+// zeigt das Ergebnis als Referenz. Die Rahmen lassen sich danach noch verschieben.
 
+type SetupView = 'empty' | 'saving' | 'clip' | 'analyzing' | 'reference'
+
+let view: SetupView = 'empty'
+let clip: { path: string; duration: number } | null = null
+let reference: KillClipReference | null = null
 let shot: { width: number; height: number } | null = null
 let draft: { killfeed: Region | null; hitmarker: Region | null } = { killfeed: null, hitmarker: null }
 let mode: 'killfeed' | 'hitmarker' = 'killfeed'
 
-// Rahmen in Prozent des Bildes: bleibt richtig, egal wann und wie groß das Bild gerade dargestellt wird
-// (z. B. wenn der Screenshot ankommt, während das Fenster hinter dem Spiel liegt).
+const kcVideo = () => $<HTMLVideoElement>('kc-video')
+
+const EMPTY_TEXT: Partial<Record<SetupView, string>> = {
+  empty: 'Noch keine Aufnahme – mach im Spiel einen Kill und drück <kbd>Strg+Alt+K</kbd>',
+  saving: 'Dein Clip-Programm speichert die Aufnahme …',
+  analyzing: 'Die App sieht sich deinen Kill an …',
+}
+
+function setView(next: SetupView, hint = '') {
+  view = next
+  $('kc-clip').hidden = next !== 'clip'
+  $('kc-canvas').hidden = next === 'clip'
+  $('kc-canvas-empty').hidden = next === 'reference'
+  $('kc-shot').hidden = next !== 'reference'
+  if (EMPTY_TEXT[next]) $('kc-canvas-empty-text').innerHTML = EMPTY_TEXT[next]!
+  $('kc-mode').hidden = next !== 'reference'
+  $('kc-back').hidden = next !== 'reference' || !clip
+  $('kc-test').hidden = next !== 'reference'
+  $('kc-setup-hint').textContent = hint
+  if (next !== 'clip') kcVideo().pause()
+  placeRects()
+}
+
+// ── Zeitleiste ──
+
+function clock(seconds: number) {
+  const s = Math.max(0, seconds)
+  return `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0').replace('.', ',')}`
+}
+
+const clipDuration = () => clip?.duration || kcVideo().duration || 0
+
+function renderTimeline() {
+  const v = kcVideo()
+  const duration = clipDuration()
+  const percent = (t: number) => `${duration ? (t / duration) * 100 : 0}%`
+  $('kc-playhead').style.left = percent(v.currentTime)
+  $('kc-time').textContent = `${clock(v.currentTime)} / ${clock(duration)}`
+  const flag = $('kc-kill-flag')
+  flag.hidden = !reference
+  if (reference) flag.style.left = percent(reference.at)
+  $('kc-play-icon').innerHTML = (v.paused ? icons.play : icons.pause).replace('<svg ', '<svg aria-hidden="true" fill="currentColor" ')
+}
+
+function seek(seconds: number) {
+  kcVideo().currentTime = Math.min(Math.max(0, seconds), Math.max(0, clipDuration() - 0.05))
+  renderTimeline()
+}
+
+/** `startAt` negativ = so viele Sekunden vor dem Ende. */
+function loadClip(path: string, duration: number, startAt: number) {
+  clip = { path, duration }
+  reference = null
+  const v = kcVideo()
+  v.onloadedmetadata = () => {
+    if (!clip!.duration && Number.isFinite(v.duration)) clip!.duration = v.duration
+    seek(startAt < 0 ? clip!.duration + startAt : startAt)
+  }
+  v.src = convertFileSrc(path)
+  setView('clip', 'Spul zum Kill und klick „Hier ist der Kill“ – mit ← und → gehst du in kleinen Schritten.')
+}
+
+function bindTimeline() {
+  const v = kcVideo()
+  for (const event of ['timeupdate', 'play', 'pause', 'seeked']) v.addEventListener(event, renderTimeline)
+  v.addEventListener('error', () => {
+    if (view === 'clip') setView('empty', 'Der Clip lässt sich hier nicht abspielen – nimm einen anderen.')
+  })
+  const track = $('kc-track')
+  const at = (event: PointerEvent) => {
+    const rect = track.getBoundingClientRect()
+    return Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1) * clipDuration()
+  }
+  track.addEventListener('pointerdown', (event) => {
+    track.setPointerCapture(event.pointerId)
+    v.pause()
+    seek(at(event))
+  })
+  track.addEventListener('pointermove', (event) => {
+    if (track.hasPointerCapture(event.pointerId)) seek(at(event))
+  })
+  const togglePlay = () => void (v.paused ? v.play() : v.pause())
+  $('kc-play').addEventListener('click', togglePlay)
+  $('kc-step-back').addEventListener('click', () => seek(v.currentTime - 0.1))
+  $('kc-step-forward').addEventListener('click', () => seek(v.currentTime + 0.1))
+  $('kc-setup-dialog').addEventListener('keydown', (event) => {
+    if (view !== 'clip') return
+    const step = event.shiftKey ? 1 : 0.1
+    if (event.key === 'ArrowLeft') seek(v.currentTime - step)
+    else if (event.key === 'ArrowRight') seek(v.currentTime + step)
+    else if (event.key === ' ') togglePlay()
+    else return
+    event.preventDefault()
+  })
+  $('kc-mark').addEventListener('click', () => void analyze(v.currentTime))
+}
+
+// ── Auswertung und Referenz ──
+
+async function analyze(at: number) {
+  if (!clip) return
+  setView('analyzing')
+  try {
+    reference = await backend.killClipAnalyze(clip.path, at)
+  } catch (error) {
+    toast(errorText(error), 'error')
+    return setView('clip')
+  }
+  draft = {
+    killfeed: reference.killfeed ?? draft.killfeed,
+    hitmarker: reference.hitmarker ?? draft.hitmarker,
+  }
+  // Fehlt der Kill-Feed, gleich das Zeichnen dafür anbieten.
+  mode = reference.killfeed ? 'hitmarker' : 'killfeed'
+  $('kc-mode').setAttribute('activeid', mode === 'killfeed' ? 'kc-mode-feed' : 'kc-mode-hit')
+  shot = { width: reference.width, height: reference.height }
+  const img = $<HTMLImageElement>('kc-shot')
+  img.onload = () => {
+    placeRects()
+    void runFeedTest()
+  }
+  img.src = `${convertFileSrc(reference.path)}?t=${Date.now()}`
+  const found = [reference.killfeed && 'Kill-Feed', reference.hitmarker && 'Kill-Marker'].filter(Boolean)
+  setView(
+    'reference',
+    found.length
+      ? `Gefunden: ${found.join(' und ')}. Passt ein Rahmen nicht, zieh ihn neu.`
+      : 'Nichts gefunden – zieh selbst einen Rahmen um „Du hast … getötet“ oder wähl einen anderen Moment.',
+  )
+}
+
+// Rahmen in Prozent des Bildes: bleibt richtig, egal wann und wie groß das Bild gerade dargestellt wird.
 function placeRects() {
   for (const [key, id] of [['killfeed', 'kc-rect-feed'], ['hitmarker', 'kc-rect-hit']] as const) {
     const rect = draft[key]
     const el = $(id)
-    el.hidden = !rect || !shot
+    el.hidden = !rect || !shot || view !== 'reference'
     if (rect && shot) {
       const { width, height } = shot
       Object.assign(el.style, {
@@ -160,16 +301,39 @@ function placeRects() {
   }
 }
 
+/** Ausschnitt eines Bildes als Kachel – so sieht die App den Kill. */
+function cropHtml(src: string, rect: Region, size: { width: number; height: number }, label: string) {
+  const x = size.width > rect.width ? (rect.x / (size.width - rect.width)) * 100 : 0
+  const y = size.height > rect.height ? (rect.y / (size.height - rect.height)) * 100 : 0
+  const style = [
+    `aspect-ratio:${rect.width}/${rect.height}`,
+    `background-image:url('${src}')`,
+    `background-size:${(size.width / rect.width) * 100}% auto`,
+    `background-position:${x}% ${y}%`,
+  ].join(';')
+  return `<figure class="kc-crop"><div class="kc-crop-img" style="${escapeHtml(style)}"></div><figcaption class="type-caption muted">${escapeHtml(label)}</figcaption></figure>`
+}
+
+function referenceHtml() {
+  if (!reference || !shot) return ''
+  const stamp = `?t=${reference.at}`
+  const frame = convertFileSrc(reference.path) + stamp
+  const markerFrame = (reference.markerPath ? convertFileSrc(reference.markerPath) : convertFileSrc(reference.path)) + stamp
+  const crops = [
+    draft.killfeed ? cropHtml(frame, draft.killfeed, shot, reference.victim ? `Kill-Feed: Du hast ${reference.victim} getötet` : 'Kill-Feed') : '',
+    draft.hitmarker ? cropHtml(markerFrame, draft.hitmarker, shot, 'Kill-Marker am Fadenkreuz') : '',
+  ].join('')
+  return crops ? `<span class="type-body-strong">So sieht dein Kill aus</span><div class="kc-crops">${crops}</div>` : ''
+}
+
 async function runFeedTest() {
   const box = $('kc-test')
-  if (!shot) {
-    box.hidden = true
-    return
-  }
-  box.hidden = false
-  box.innerHTML = `<span class="muted">Lese den Screenshot …</span>`
+  if (!shot || view !== 'reference') return
+  box.innerHTML = `<span class="muted">Lese das Bild …</span>`
   try {
     const parts: string[] = []
+    const crops = referenceHtml()
+    if (crops) parts.push(crops)
     if (draft.killfeed) {
       const result = await backend.killClipTestFeed(draft.killfeed)
       const rows = [
@@ -187,7 +351,7 @@ async function runFeedTest() {
       const score = await backend.killClipTestMarker(draft.hitmarker)
       const seen = score >= 0.2
       parts.push(
-        `<span class="type-body-strong">Kill-Marker</span><div class="kc-test-line ${seen ? 'hit' : ''}">${icon(seen ? 'checkmarkCircle' : 'dismiss')}<span>${seen ? 'Türkiser Marker am Fadenkreuz erkannt' : 'Kein Marker auf diesem Screenshot'} (Wert ${score.toFixed(2)})</span></div>`,
+        `<span class="type-body-strong">Kill-Marker</span><div class="kc-test-line ${seen ? 'hit' : ''}">${icon(seen ? 'checkmarkCircle' : 'dismiss')}<span>${seen ? 'Türkiser Marker am Fadenkreuz erkannt' : 'Kein Marker an dieser Stelle'} (Wert ${score.toFixed(2)})</span></div>`,
       )
     }
     box.innerHTML = parts.join('<hr class="kc-test-sep">') || '<span class="muted">Zieh einen Rahmen um den Kill-Feed.</span>'
@@ -196,21 +360,26 @@ async function runFeedTest() {
   }
 }
 
-function showShot(payload: KillClipScreenshot) {
+function onReferenceClip(payload: KillClipReferenceClip) {
+  if (payload.saving) return setView('saving')
   if (payload.error || !payload.path) {
-    toast(payload.error ?? 'Screenshot fehlgeschlagen', 'error')
-    return
+    toast(payload.error ?? 'Aufnahme fehlgeschlagen', 'error')
+    return setView(reference ? 'reference' : clip ? 'clip' : 'empty')
   }
-  shot = { width: payload.width!, height: payload.height! }
-  const img = $<HTMLImageElement>('kc-shot')
-  img.onload = () => {
-    placeRects()
-    void runFeedTest()
-  }
-  img.src = `${convertFileSrc(payload.path)}?t=${payload.at ?? Date.now()}`
-  img.hidden = false
-  $('kc-canvas-empty').hidden = true
-  toast('Screenshot aufgenommen')
+  // Der Kill war kurz vor dem Druck auf die Taste – dort anfangen.
+  loadClip(payload.path, payload.duration ?? 0, -3)
+  toast('Aufnahme gespeichert – jetzt den Kill markieren')
+}
+
+async function pickClip() {
+  const settings = state.settings
+  const path = await open({
+    multiple: false,
+    directory: false,
+    defaultPath: settings?.settings.clipDir || settings?.defaultClipDir,
+    filters: [{ name: 'Videos', extensions: ['mp4', 'mkv', 'mov', 'webm'] }],
+  })
+  if (typeof path === 'string') loadClip(path, 0, 0)
 }
 
 function bindCanvas() {
@@ -224,7 +393,7 @@ function bindCanvas() {
     }
   }
   canvas.addEventListener('pointerdown', (event) => {
-    if (!shot || $('kc-shot').hidden) return
+    if (!shot || view !== 'reference') return
     canvas.setPointerCapture(event.pointerId)
     start = point(event)
   })
@@ -255,28 +424,27 @@ function bindCanvas() {
 
 async function openSetup() {
   const c = config()
-  draft = { killfeed: c.killfeed, hitmarker: c.hitmarker }
-  mode = 'killfeed'
-  $('kc-mode').setAttribute('activeid', 'kc-mode-feed')
+  if (!reference) draft = { killfeed: c.killfeed, hitmarker: c.hitmarker }
   try {
     const hotkey = await backend.killClipCalibration(true)
     $('kc-hotkey').textContent = hotkey.replace('Ctrl', 'Strg')
   } catch (error) {
     toast(errorText(error), 'error')
   }
+  setView(reference ? 'reference' : clip ? 'clip' : 'empty', reference ? 'Letzte Auswertung – speichern oder einen neuen Kill aufnehmen.' : '')
   $<DialogElement>('kc-setup-dialog').show()
-  placeRects()
+  if (reference) void runFeedTest()
 }
 
 async function saveSetup() {
-  if (draft.hitmarker && shot) {
+  // Vorlage nur aus einer Auswertung – ohne neue bleibt die bestehende gültig.
+  if (draft.hitmarker && reference) {
     try {
       await backend.killClipSetHitmarker(draft.hitmarker)
     } catch (error) {
       return toast(errorText(error), 'error')
     }
   }
-  // Ohne neuen Screenshot bleibt eine bestehende Hitmarker-Vorlage gültig.
   await saveConfig({ killfeed: draft.killfeed, hitmarker: draft.hitmarker })
   $<DialogElement>('kc-setup-dialog').hide()
   toast('Erkennung gespeichert')
@@ -327,9 +495,14 @@ export function initKillClips() {
 
   // Einrichtung
   bindCanvas()
+  bindTimeline()
   $('kc-mode-feed').addEventListener('click', () => (mode = 'killfeed'))
   $('kc-mode-hit').addEventListener('click', () => (mode = 'hitmarker'))
-  $('kc-shot-now').addEventListener('click', () => void backend.killClipScreenshot())
+  $('kc-pick').addEventListener('click', () => void pickClip())
+  $('kc-back').addEventListener('click', () => {
+    setView('clip', 'Spul zum Kill und klick „Hier ist der Kill“.')
+    if (reference) seek(reference.at)
+  })
   $('kc-setup-save').addEventListener('click', () => void saveSetup())
   $('kc-setup-cancel').addEventListener('click', () => $<DialogElement>('kc-setup-dialog').hide())
   $('kc-setup-dialog').addEventListener('toggle', (event) => {
@@ -347,7 +520,7 @@ export function initKillClips() {
     if (event.payload.kind === 'uploaded') toast(event.payload.message)
     if (event.payload.kind === 'error') toast(event.payload.message, 'error')
   })
-  void listen<KillClipScreenshot>('killclip-screenshot', (event) => showShot(event.payload))
+  void listen<KillClipReferenceClip>('killclip-reference-clip', (event) => onReferenceClip(event.payload))
 
   onStateChange(renderConfig)
   renderHistory()

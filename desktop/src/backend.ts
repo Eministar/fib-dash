@@ -70,12 +70,26 @@ export interface KillClipEvent {
   at: number
 }
 
-export interface KillClipScreenshot {
+/** Einrichtungstaste: erst `saving`, dann der gespeicherte Replay oder ein Fehler. */
+export interface KillClipReferenceClip {
+  saving?: boolean
   path?: string
-  width?: number
-  height?: number
-  at?: number
+  duration?: number
   error?: string
+}
+
+/** Ergebnis der Einrichtung: was die App rund um den markierten Kill gefunden hat. */
+export interface KillClipReference {
+  path: string
+  markerPath: string | null
+  width: number
+  height: number
+  at: number
+  killfeed: Region | null
+  victim: string | null
+  line: string | null
+  hitmarker: Region | null
+  markerScore: number
 }
 
 export interface SettingsView {
@@ -313,7 +327,7 @@ export const backend = {
   killClipStop: () => invoke<void>('killclip_stop'),
   killClipSaveConfig: (config: KillClipConfig) => invoke<SettingsView>('killclip_save_config', { config }),
   killClipCalibration: (active: boolean) => invoke<string>('killclip_calibration', { active }),
-  killClipScreenshot: () => invoke<void>('killclip_screenshot'),
+  killClipAnalyze: (path: string, at: number) => invoke<KillClipReference>('killclip_analyze', { path, at }),
   killClipSetHitmarker: (region: Region) => invoke<void>('killclip_set_hitmarker', { region }),
   killClipReveal: (path?: string) => invoke<void>('killclip_reveal', { path: path ?? null }),
   killClipOpenLink: (url: string) => invoke<void>('killclip_open_link', { url }),

@@ -446,22 +446,44 @@
       <fluent-button slot="close" appearance="transparent" icon-only aria-label="Schließen"><i data-icon="dismiss"></i></fluent-button>
       <div class="kc-setup">
         <ol class="kc-steps type-body">
-          <li>Geh ins Spiel und warte, bis die Meldung <strong>„Du hast … getötet“</strong> zu sehen ist.</li>
-          <li>Drück <kbd id="kc-hotkey">Strg+Alt+K</kbd> – die App macht einen Screenshot, ohne das Spiel zu stören.</li>
-          <li>Zieh hier einen Rahmen um den Bereich, in dem diese Meldungen erscheinen. Der Probelauf zeigt sofort, was die App liest – „Du wurdest von … getötet“ zählt nie als Kill.</li>
+          <li>Mach im Spiel einen Kill und drück <strong>direkt danach</strong> <kbd id="kc-hotkey">Strg+Alt+K</kbd> – dein Clip-Programm speichert die letzten Sekunden.</li>
+          <li>Such in der Zeitleiste den Moment, in dem <strong>„Du hast … getötet“</strong> oder der Kill-Marker erscheint, und klick <strong>Hier ist der Kill</strong>.</li>
+          <li>Die App sieht sich die Stelle an und merkt sich, wie dein Kill aussieht. Die Rahmen kannst du danach noch verschieben.</li>
         </ol>
         <div class="kc-setup-bar">
-          <fluent-tablist id="kc-mode" size="small" activeid="kc-mode-feed">
+          <fluent-tablist id="kc-mode" size="small" activeid="kc-mode-feed" hidden>
             <fluent-tab id="kc-mode-feed">Kill-Feed-Bereich</fluent-tab>
-            <fluent-tab id="kc-mode-hit">Kill-Marker (optional)</fluent-tab>
+            <fluent-tab id="kc-mode-hit">Kill-Marker</fluent-tab>
           </fluent-tablist>
+          <span class="type-body muted" id="kc-setup-hint"></span>
           <span class="spacer"></span>
-          <fluent-button id="kc-shot-now" appearance="subtle"><i data-icon="screenshot" slot="start"></i>Jetzt aufnehmen</fluent-button>
+          <fluent-button id="kc-back" appearance="subtle" hidden><i data-icon="arrowReset" slot="start"></i>Anderen Moment wählen</fluent-button>
+          <fluent-button id="kc-pick" appearance="subtle"><i data-icon="folderOpen" slot="start"></i>Vorhandenen Clip wählen …</fluent-button>
+        </div>
+        <!-- Aufnahme mit Zeitleiste: hier den Kill markieren -->
+        <div class="kc-clip" id="kc-clip" hidden>
+          <div class="player kc-player">
+            <video id="kc-video" preload="auto" playsinline muted></video>
+          </div>
+          <div class="trim">
+            <div class="trim-track kc-track" id="kc-track" role="slider" tabindex="0" aria-label="Zeitleiste">
+              <div class="kc-kill-flag" id="kc-kill-flag" hidden></div>
+              <div class="trim-playhead" id="kc-playhead"></div>
+            </div>
+            <div class="trim-bar">
+              <fluent-button id="kc-play" appearance="subtle" icon-only aria-label="Abspielen"><i data-icon="play" id="kc-play-icon"></i></fluent-button>
+              <span class="type-caption time" id="kc-time">0:00,0 / 0:00</span>
+              <fluent-button id="kc-step-back" size="small" appearance="subtle" title="0,1 s zurück (←)">−0,1 s</fluent-button>
+              <fluent-button id="kc-step-forward" size="small" appearance="subtle" title="0,1 s vor (→)">+0,1 s</fluent-button>
+              <span class="spacer"></span>
+              <fluent-button id="kc-mark" appearance="primary"><i data-icon="target" slot="start"></i>Hier ist der Kill</fluent-button>
+            </div>
+          </div>
         </div>
         <div class="kc-canvas" id="kc-canvas">
           <div class="kc-canvas-empty" id="kc-canvas-empty">
-            <i data-icon="screenshot"></i>
-            <span>Noch kein Screenshot – drück im Spiel <kbd>Strg+Alt+K</kbd></span>
+            <i data-icon="videoClip"></i>
+            <span id="kc-canvas-empty-text">Noch keine Aufnahme – mach im Spiel einen Kill und drück <kbd>Strg+Alt+K</kbd></span>
           </div>
           <div class="kc-stage" id="kc-stage">
             <img id="kc-shot" alt="" hidden draggable="false">

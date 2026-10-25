@@ -467,7 +467,7 @@ fn killclip_save_config(app: AppHandle, state: State<AppState>, config: killclip
     Ok(settings_view(&app, &settings))
 }
 
-/// Einrichtung öffnen/schließen: solange offen, macht Strg+Alt+K im Spiel einen Screenshot.
+/// Einrichtung öffnen/schließen: solange offen, speichert Strg+Alt+K im Spiel das Replay mit dem Kill.
 #[tauri::command]
 fn killclip_calibration(app: AppHandle, state: State<AppState>, active: bool) -> Result<String, String> {
     let shortcuts = app.global_shortcut();
@@ -485,22 +485,23 @@ fn killclip_calibration(app: AppHandle, state: State<AppState>, active: bool) ->
     Ok(CALIBRATION_HOTKEY.into())
 }
 
-fn emit_screenshot(app: &AppHandle) {
-    let payload = match killclip::take_screenshot(app) {
-        Ok((path, width, height)) => json!({
-            "path": path.display().to_string(),
-            "width": width,
-            "height": height,
-            "at": SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0),
-        }),
+/// Einrichtungstaste im Spiel: Replay mit dem Kill speichern und im Einrichtungsfenster zeigen.
+fn emit_reference_clip(app: &AppHandle) {
+    let _ = app.emit("killclip-reference-clip", json!({ "saving": true }));
+    let payload = match killclip::record_reference(app) {
+        Ok((path, duration)) => json!({ "path": path.display().to_string(), "duration": duration }),
         Err(message) => json!({ "error": message }),
     };
-    let _ = app.emit("killclip-screenshot", payload);
+    let _ = app.emit("killclip-reference-clip", payload);
 }
 
 #[tauri::command]
-async fn killclip_screenshot(app: AppHandle) {
-    let _ = tauri::async_runtime::spawn_blocking(move || emit_screenshot(&app)).await;
+async fn killclip_analyze(app: AppHandle, path: String, at: f64) -> Result<killclip::reference::Reference, String> {
+    let clip = PathBuf::from(path);
+    if !clipper::is_video(&clip) || !clip.exists() {
+        return Err("Clip nicht gefunden".into());
+    }
+    tauri::async_runtime::spawn_blocking(move || killclip::analyze_reference(&app, &clip, at)).await.map_err(|e| e.to_string())?
 }
 
 /// Ordner mit den fertigen Kill-Clips (bzw. die Datei darin) im Explorer zeigen.
@@ -577,7 +578,7 @@ pub fn run() {
                         .is_some_and(|s| s.calibration_shortcut.lock().unwrap().is_some_and(|c| &c == shortcut));
                     if calibration {
                         let app = app.clone();
-                        tauri::async_runtime::spawn_blocking(move || emit_screenshot(&app));
+                        tauri::async_runtime::spawn_blocking(move || emit_reference_clip(&app));
                     } else {
                         run_capture(app.clone());
                     }
@@ -684,7 +685,7 @@ pub fn run() {
             killclip_stop,
             killclip_save_config,
             killclip_calibration,
-            killclip_screenshot,
+            killclip_analyze,
             killclip_set_hitmarker,
             killclip_reveal,
             killclip_open_link,

@@ -10,6 +10,7 @@ pub mod detect;
 pub mod ocr;
 pub mod plan;
 pub mod render;
+pub mod reference;
 pub mod screen;
 
 use std::{
@@ -28,7 +29,7 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{api, clipper, media, AppState};
 use detect::{FeedEvent, HitmarkerTracker, KillMerger, KillfeedTracker, Source};
-use screen::{Image, Region, Screen};
+use screen::{Image, Region};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -147,6 +148,16 @@ pub fn screenshot_path(app: &AppHandle) -> Option<PathBuf> {
     app.path().app_cache_dir().ok().map(|dir| dir.join("kill-clip-einrichtung.bmp"))
 }
 
+/// Bild mit dem deutlichsten Kill-Marker aus der Einrichtung (kann ein anderes sein als das mit der Meldung).
+fn marker_frame_path(app: &AppHandle) -> Option<PathBuf> {
+    app.path().app_cache_dir().ok().map(|dir| dir.join("kill-clip-marker.bmp"))
+}
+
+/// Bild für Marker-Probelauf und -Vorlage: das Marker-Bild der Einrichtung, sonst das Einrichtungsbild.
+fn marker_frame(app: &AppHandle) -> Option<Image> {
+    marker_frame_path(app).and_then(|p| Image::load_bmp(&p)).or_else(|| screenshot_path(app).and_then(|p| Image::load_bmp(&p)))
+}
+
 pub fn output_dir(app: &AppHandle) -> PathBuf {
     crate::videos_dir(app).join("FIB Kill-Clips")
 }
@@ -191,7 +202,7 @@ impl KillClips {
             .map_err(|_| "Unerwartete Antwort vom Dashboard".to_string())?;
 
         // Bildschirm und Texterkennung vorab prüfen, damit Fehler sofort sichtbar sind.
-        Screen::open()?;
+        screen::with_screen(|_| Ok(()))?;
         if has_feed {
             ocr::Ocr::new()?;
         }
@@ -267,7 +278,8 @@ fn watch(
     let (pre, post, merge) = (config.pre_seconds as f64, config.post_seconds as f64, config.merge_seconds as f64);
 
     let started = Instant::now();
-    let mut screen: Option<Screen> = None;
+    // Größe des Monitors, für den `regions` gilt – nach einem Wechsel neu festlegen.
+    let mut size: Option<(u32, u32)> = None;
     let mut regions: Vec<Region> = Vec::new();
     let mut feed_index = None;
     let mut marker_index = None;
@@ -292,30 +304,25 @@ fn watch(
         let tick = Instant::now();
         let now = started.elapsed().as_secs_f64();
 
-        if screen.is_none() {
-            match Screen::open() {
-                Ok(opened) => {
-                    // Bereiche passend zum (evtl. neuen) Monitor festlegen.
-                    regions.clear();
-                    feed_index = config.killfeed.filter(|_| ocr.is_some()).map(|r| {
-                        regions.push(r);
-                        regions.len() - 1
-                    });
-                    marker_index = config.use_marker.then(|| {
-                        regions.push(config.hitmarker.unwrap_or_else(|| center_region(opened.width, opened.height)));
-                        regions.len() - 1
-                    });
-                    screen = Some(opened);
-                }
-                Err(error) => {
-                    report_screen_error(&app, &status, &mut failing_since, error);
-                    thread::sleep(Duration::from_secs(1));
-                    continue;
-                }
+        let grabbed = screen::with_screen(|opened| {
+            if size != Some((opened.width, opened.height)) {
+                // Bereiche passend zum (evtl. neuen) Monitor festlegen.
+                size = Some((opened.width, opened.height));
+                regions.clear();
+                feed_index = config.killfeed.filter(|_| ocr.is_some()).map(|r| {
+                    regions.push(r);
+                    regions.len() - 1
+                });
+                marker_index = config.use_marker.then(|| {
+                    regions.push(config.hitmarker.unwrap_or_else(|| center_region(opened.width, opened.height)));
+                    regions.len() - 1
+                });
             }
-        }
+            opened.grab(&regions, 50)
+        });
         let mut new_kills: Vec<Kill> = Vec::new();
-        match screen.as_mut().unwrap().grab(&regions, 50) {
+        let ok = grabbed.is_ok();
+        match grabbed {
             Ok(Some(images)) => {
                 if let Some(i) = marker_index {
                     let image = &images[i];
@@ -355,12 +362,13 @@ fn watch(
             }
             Ok(None) => {}
             Err(error) => {
-                screen = None;
                 report_screen_error(&app, &status, &mut failing_since, error);
+                thread::sleep(Duration::from_secs(1));
+                continue;
             }
         }
         // Läuft wieder: eine alte Fehlermeldung verschwinden lassen.
-        if screen.is_some() && failing_since.take().is_some() {
+        if ok && failing_since.take().is_some() {
             update_status(&app, &status, |s| s.error = None);
         }
 
@@ -388,6 +396,8 @@ fn watch(
             thread::sleep(rest);
         }
     }
+
+    screen::release();
 
     // Beim Beenden angefangene Serien nicht verlieren.
     if let Some(last) = session.last() {
@@ -526,20 +536,28 @@ fn process(app: &AppHandle, target: &Target, status: &Arc<Mutex<Status>>, sessio
     Ok(())
 }
 
-/// Einrichtung: Screenshot des Hauptmonitors für das Festlegen der Bereiche.
-pub fn take_screenshot(app: &AppHandle) -> Result<(PathBuf, u32, u32), String> {
-    let image = Screen::open()?.screenshot()?;
-    let path = screenshot_path(app).ok_or("Cache-Ordner fehlt")?;
-    if let Some(dir) = path.parent() {
-        std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-    }
-    image.save_bmp(&path).map_err(|e| e.to_string())?;
-    Ok((path, image.width, image.height))
+/// Einrichtung: Das Clip-Programm speichert die letzten Sekunden (mit dem Kill darin).
+pub fn record_reference(app: &AppHandle) -> Result<(PathBuf, f64), String> {
+    let (path, _) = save_replay(app)?;
+    let duration = media::duration_seconds(&path).ok_or("Länge der Aufnahme nicht lesbar")?;
+    Ok((path, duration))
 }
 
-/// Speichert den markierten Ausschnitt des Screenshots als Hitmarker-Vorlage.
+/// Einrichtung: Bilder um den markierten Kill auswerten und als Referenz ablegen.
+pub fn analyze_reference(app: &AppHandle, clip: &std::path::Path, at: f64) -> Result<reference::Reference, String> {
+    let frame = screenshot_path(app).ok_or("Cache-Ordner fehlt")?;
+    let marker = marker_frame_path(app).ok_or("Cache-Ordner fehlt")?;
+    let result = reference::analyze(clip, at, &frame, &marker);
+    // Nur für die Monitorgröße geöffnet – läuft die Erkennung nicht, wieder freigeben.
+    if !app.state::<AppState>().kill_clips.running.load(Ordering::SeqCst) {
+        screen::release();
+    }
+    result
+}
+
+/// Speichert den markierten Ausschnitt als Hitmarker-Vorlage – aus dem Bild, auf dem der Marker zu sehen war.
 pub fn save_hitmarker_template(app: &AppHandle, region: Region) -> Result<(), String> {
-    let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Screenshot aufnehmen")?;
+    let shot = marker_frame(app).ok_or("Erst einen Kill aufnehmen")?;
     let template = shot.crop(region).ok_or("Bereich liegt außerhalb des Screenshots")?;
     let path = template_path(app).ok_or("Einstellungsordner fehlt")?;
     if let Some(dir) = path.parent() {
@@ -560,7 +578,7 @@ pub struct FeedTest {
 
 /// Probelauf der Texterkennung auf dem Screenshot – zeigt, was die App liest.
 pub fn test_killfeed(app: &AppHandle, region: Region) -> Result<FeedTest, String> {
-    let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Screenshot aufnehmen")?;
+    let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Kill aufnehmen")?;
     let crop = shot.crop(region).ok_or("Bereich liegt außerhalb des Screenshots")?;
     let lines = ocr::Ocr::new()?.read(&crop)?;
     let events: Vec<FeedEvent> = lines.iter().filter_map(detect::classify).collect();
@@ -571,9 +589,9 @@ pub fn test_killfeed(app: &AppHandle, region: Region) -> Result<FeedTest, String
     })
 }
 
-/// Probelauf des Kill-Markers auf dem Screenshot (Bereich um das Fadenkreuz).
+/// Probelauf des Kill-Markers auf dem Marker-Bild der Einrichtung (Bereich um das Fadenkreuz).
 pub fn test_marker(app: &AppHandle, region: Option<Region>) -> Result<f32, String> {
-    let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Screenshot aufnehmen")?;
+    let shot = marker_frame(app).ok_or("Erst einen Kill aufnehmen")?;
     let crop = shot.crop(region.unwrap_or_else(|| center_region(shot.width, shot.height))).ok_or("Bereich liegt außerhalb des Screenshots")?;
     let mask = detect::marker_mask(&crop.bgra);
     Ok(detect::marker_score(&mask, crop.width as usize, crop.height as usize, None))
@@ -582,6 +600,7 @@ pub fn test_marker(app: &AppHandle, region: Option<Region>) -> Result<f32, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+    use screen::Screen;
 
     /// Liest ein Kill-Feed-Bild (Pfad in `FIB_KILLFEED_BMP`) mit der Windows-OCR.
     #[test]
@@ -622,6 +641,18 @@ mod tests {
             }
             Err(error) => println!("DPI v2: FEHLER {error}"),
         }
+    }
+
+    /// Läuft die Erkennung, darf der Einrichtungs-Screenshot nicht an „Falscher Parameter“ scheitern.
+    #[test]
+    #[ignore]
+    fn screenshot_while_watching() {
+        screen::with_screen(|_| Ok(())).unwrap();
+        screen::release();
+        let shot = screen::with_screen(|screen| screen.screenshot());
+        assert!(shot.is_ok(), "{:?}", shot.err());
+        screen::with_screen(|screen| screen.grab(&[Region { x: 0, y: 0, width: 32, height: 32 }], 50)).unwrap();
+        screen::release();
     }
 
     /// Echter Bildschirm: Screenshot und kleiner Ausschnitt über DXGI.

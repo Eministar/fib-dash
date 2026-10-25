@@ -63,6 +63,7 @@ impl Ocr {
                 words.push(Word {
                     text: word.Text().map(|t| t.to_string()).unwrap_or_default(),
                     x0: rect.X / s,
+                    x1: (rect.X + rect.Width) / s,
                     y0: rect.Y / s,
                     y1: (rect.Y + rect.Height) / s,
                 });

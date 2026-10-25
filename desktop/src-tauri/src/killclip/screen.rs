@@ -123,8 +123,32 @@ pub struct Screen {
     pub height: u32,
 }
 
-// Die COM-Objekte werden nur im Erkennungs-Thread benutzt, der den Screen besitzt.
+// Die COM-Objekte benutzt immer nur, wer gerade die Sperre von `SHARED` hält.
 unsafe impl Send for Screen {}
+
+/// Windows lässt pro Prozess nur eine Duplizierung desselben Monitors zu – eine
+/// zweite (Einrichtungs-Screenshot, während die Erkennung läuft) scheitert mit
+/// „Falscher Parameter“. Darum teilen sich alle diese eine.
+static SHARED: std::sync::Mutex<Option<Screen>> = std::sync::Mutex::new(None);
+
+/// Arbeitet mit der gemeinsamen Duplizierung und öffnet sie bei Bedarf. Nach einem
+/// Fehler wird sie geschlossen, damit der nächste Aufruf frisch verbindet.
+pub fn with_screen<T>(f: impl FnOnce(&mut Screen) -> Result<T, String>) -> Result<T, String> {
+    let mut slot = SHARED.lock().unwrap_or_else(|e| e.into_inner());
+    if slot.is_none() {
+        *slot = Some(Screen::open()?);
+    }
+    let result = f(slot.as_mut().unwrap());
+    if result.is_err() {
+        *slot = None;
+    }
+    result
+}
+
+/// Gibt den Monitor frei (Erkennung beendet). Die nächste Nutzung öffnet neu.
+pub fn release() {
+    *SHARED.lock().unwrap_or_else(|e| e.into_inner()) = None;
+}
 
 unsafe fn create_device(adapter: &IDXGIAdapter1) -> Result<(ID3D11Device, ID3D11DeviceContext), String> {
     let mut device = None;
@@ -185,14 +209,6 @@ impl Screen {
         }
     }
 
-    /// Nach „Zugriff verloren“ (Vollbild-Umschaltung, Auflösung, UAC) alles neu aufbauen:
-    /// Das alte Monitor-Objekt ist dann veraltet, und DuplicateOutput darauf meldet
-    /// „Falscher Parameter“.
-    fn reopen(&mut self) -> Result<(), String> {
-        *self = Screen::open()?;
-        Ok(())
-    }
-
     /// Wartet bis zu `timeout_ms` auf ein neues Bild und kopiert die gewünschten
     /// Bereiche heraus. `None` = seitdem hat sich nichts geändert.
     pub fn grab(&mut self, regions: &[Region], timeout_ms: u32) -> Result<Option<Vec<Image>>, String> {
@@ -206,11 +222,9 @@ impl Screen {
             match self.duplication.AcquireNextFrame(timeout_ms, &mut info, &mut resource) {
                 Ok(()) => {}
                 Err(e) if e.code() == DXGI_ERROR_WAIT_TIMEOUT => return Ok(None),
-                // Auflösungswechsel, Vollbild-Umschaltung, UAC: neu verbinden.
-                Err(e) if e.code() == DXGI_ERROR_ACCESS_LOST => {
-                    self.reopen()?;
-                    return Ok(None);
-                }
+                // Auflösungswechsel, Vollbild-Umschaltung, UAC: Der Fehler lässt `with_screen`
+                // die alte Duplizierung schließen – erst danach geht eine neue.
+                Err(e) if e.code() == DXGI_ERROR_ACCESS_LOST => return Err("Bildschirmzugriff verloren".into()),
                 Err(e) => return Err(hr(e, "Bild holen")),
             }
             let result = (|| {
@@ -262,6 +276,7 @@ impl Screen {
     }
 
     /// Ganzer Monitor – für den Einrichtungs-Screenshot.
+    #[cfg(test)]
     pub fn screenshot(&mut self) -> Result<Image, String> {
         let full = Region { x: 0, y: 0, width: self.width, height: self.height };
         // Das erste Bild nach dem Öffnen kann leer sein; ein paar Versuche abwarten.

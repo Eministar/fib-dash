@@ -13,6 +13,7 @@
 pub struct Word {
     pub text: String,
     pub x0: f32,
+    pub x1: f32,
     pub y0: f32,
     pub y1: f32,
 }
@@ -91,6 +92,16 @@ fn similarity(a: &str, b: &str) -> f32 {
 fn word_is(word: &str, targets: &[&str], max_edits: usize) -> bool {
     let w = fold(word);
     !w.is_empty() && targets.iter().any(|t| levenshtein(&w, t) <= max_edits)
+}
+
+/// Enthält die Zeile „getötet“? Für die Einrichtung, wenn der Rest unleserlich ist.
+pub fn mentions_killed(line: &Line) -> bool {
+    line.words.iter().any(|w| word_is(&w.text, &["getotet", "getoetet"], 2))
+}
+
+/// Sieht die Zeile nach „Du wurdest von … getötet“ aus (eigener Tod)?
+pub fn mentions_death(line: &Line) -> bool {
+    line.words.iter().any(|w| word_is(&w.text, &["wurdest"], 2))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -321,7 +332,7 @@ mod tests {
             words: text
                 .split_whitespace()
                 .enumerate()
-                .map(|(i, t)| Word { text: t.to_string(), x0: i as f32 * 50.0, y0: 0.0, y1: 20.0 })
+                .map(|(i, t)| Word { text: t.to_string(), x0: i as f32 * 50.0, x1: i as f32 * 50.0 + 40.0, y0: 0.0, y1: 20.0 })
                 .collect(),
         }
     }
