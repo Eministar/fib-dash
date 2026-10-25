@@ -304,7 +304,7 @@ fn external_changes_are_detected_and_kept_unless_forced() {
     // Ein anderes Programm (z. B. die Systemsteuerung) stellt eigene Werte ein – Laufzeit und Registry.
     sys.set_mouse([4, 8, 2], true).unwrap();
     let backup = e.store.load().unwrap();
-    let (state, external, _) = e.state(TweakId::MouseAcceleration, &backup);
+    let (state, external, _, _) = e.state(TweakId::MouseAcceleration, &backup);
     assert_eq!((state, external), (TweakState::Inactive, true));
 
     let result = e.restore(TweakId::MouseAcceleration, false).unwrap();
@@ -416,31 +416,75 @@ fn no_elevation() -> Elevator {
 }
 
 #[test]
-fn main_toggle_applies_only_the_low_risk_profile() {
-    let (service, reg, sys, _) = service("profile", false, no_elevation());
-    assert_eq!(service.status().state, TweakState::Inactive);
-    let preview = service.preview().unwrap();
-    assert!(preview.iter().all(|p| p.tweak != TweakId::MmcssGames && p.tweak != TweakId::KeyboardFilterkeys));
-
-    service.apply_profile().unwrap();
+fn main_toggle_is_blocked_by_nerov_rules_and_changes_nothing() {
+    let (service, _, sys, _) = service("profile", false, no_elevation());
     let status = service.status();
-    assert_eq!((status.state, status.active_count, status.profile_count), (TweakState::Active, 2, 2));
-    assert_eq!(*sys.mouse.lock().unwrap(), [0, 0, 0]);
-    assert_eq!(reg.get(Hive::LocalMachine, MMCSS_GAMES, "Scheduling Category"), Some(RegValue::sz("Medium")), "Experimentelles bleibt aus");
-
-    service.restore_profile(false).unwrap();
-    assert_eq!(service.status().state, TweakState::Inactive);
+    assert!(status.blocked_by_rules);
+    let error = service.apply_profile().unwrap_err();
+    assert_eq!(error.code, ErrorCode::ForbiddenByRules);
+    assert!(error.message.contains("§ 4.5"), "{}", error.message);
     assert_eq!(*sys.mouse.lock().unwrap(), [6, 10, 1]);
+    assert_eq!(service.status().managed_count, 0);
 }
 
 #[test]
-fn main_toggle_failure_leaves_nothing_half_done() {
-    let (service, _, sys, _) = service("profile-fail", false, no_elevation());
+fn forbidden_tweaks_cannot_be_enabled_even_with_confirmation() {
+    let (service, _, sys, _) = service("forbidden", false, no_elevation());
+    for id in [TweakId::MouseAcceleration, TweakId::KeyboardRepeat] {
+        assert_eq!(service.apply(id, true).unwrap_err().code, ErrorCode::ForbiddenByRules);
+    }
+    assert_eq!((*sys.mouse.lock().unwrap(), sys.delay.load(Ordering::SeqCst)), ([6, 10, 1], 1));
+}
+
+#[test]
+fn engine_keeps_profile_rollback_semantics_for_future_profiles() {
+    // Die Engine selbst kennt kein Regelwerk; apply_many rollt weiterhin vollständig zurück.
+    let (reg, sys, path) = (FakeRegistry::default(), FakeSystem::default(), temp_store("profile-fail"));
     sys.fail_delay.store(true, Ordering::SeqCst);
-    assert!(service.apply_profile().is_err());
+    let e = engine(&reg, &sys, false, &path);
+    assert!(e.apply_many(&[TweakId::MouseAcceleration, TweakId::KeyboardRepeat]).is_err());
     assert_eq!(*sys.mouse.lock().unwrap(), [6, 10, 1], "Mausbeschleunigung wurde wieder eingeschaltet");
-    let status = service.status();
-    assert_eq!((status.state, status.managed_count), (TweakState::Inactive, 0));
+    assert!(e.store.load().unwrap().entries.is_empty());
+}
+
+#[test]
+fn windows_default_can_be_restored_and_undone() {
+    // Nach einem früheren Tweak-Skript: Beschleunigung aus, Werte als DWORD.
+    let reg = Arc::new(FakeRegistry::default());
+    for name in ["MouseSpeed", "MouseThreshold1", "MouseThreshold2"] {
+        reg.set(Hive::CurrentUser, MOUSE_KEY, name, RegValue::dword(0));
+    }
+    let sys = FakeSystem::default();
+    *sys.mouse.lock().unwrap() = [0, 0, 0];
+    *sys.mirror.lock().unwrap() = Some(reg.clone());
+    let path = temp_store("default");
+    let e = engine(&reg, &sys, false, &path);
+    assert_eq!(e.report(TweakId::MouseAcceleration).deviates_from_default, Some(true));
+
+    e.apply_default(TweakId::MouseAcceleration).unwrap();
+    assert_eq!(*sys.mouse.lock().unwrap(), [6, 10, 1]);
+    assert_eq!(reg.get(Hive::CurrentUser, MOUSE_KEY, "MouseThreshold2"), Some(RegValue::sz("10")));
+    let report = e.report(TweakId::MouseAcceleration);
+    assert_eq!((report.state, report.windows_default_set, report.deviates_from_default), (TweakState::Inactive, true, Some(false)));
+
+    // Rückgängig: exakt der vorherige Zustand inklusive Datentyp.
+    e.restore(TweakId::MouseAcceleration, false).unwrap();
+    assert_eq!(*sys.mouse.lock().unwrap(), [0, 0, 0]);
+    assert_eq!(reg.get(Hive::CurrentUser, MOUSE_KEY, "MouseSpeed"), Some(RegValue::dword(0)));
+}
+
+#[test]
+fn ticket_tweaks_need_confirmation_and_rules_are_documented() {
+    use super::model::{meta, RuleStatus};
+    let (service, _, sys, _) = service("ticket", false, no_elevation());
+    *sys.filter.lock().unwrap() = FilterKeys { flags: FKF_FILTERKEYSON, ..FilterKeys::default() };
+    assert_eq!(meta(TweakId::KeyboardFilterkeys).server_rule.status, RuleStatus::TicketRequired);
+    assert_eq!(service.apply(TweakId::KeyboardFilterkeys, false).unwrap_err().code, ErrorCode::ConfirmationRequired);
+    service.apply(TweakId::KeyboardFilterkeys, true).unwrap();
+    for id in TweakId::ALL {
+        let rule = meta(id).server_rule;
+        assert!(!rule.reason.is_empty() && !rule.paragraphs.is_empty(), "{id:?} ohne Begründung");
+    }
 }
 
 #[test]
@@ -456,15 +500,16 @@ fn admin_tweak_goes_through_the_helper_and_reports_denial() {
     assert_eq!(error.code, ErrorCode::ElevationDenied);
     assert_eq!(*calls.lock().unwrap(), vec![(Action::Apply, TweakId::MmcssGames)]);
     assert_eq!(reg.get(Hive::LocalMachine, MMCSS_GAMES, "Scheduling Category"), Some(RegValue::sz("Medium")));
-    // Benutzer-Tweaks brauchen den Helfer nie.
-    service.apply(TweakId::MouseAcceleration, false).unwrap();
+    // Benutzer-Einstellungen brauchen den Helfer nie.
+    service.reset_to_default(TweakId::MouseAcceleration).unwrap();
     assert_eq!(calls.lock().unwrap().len(), 1);
 }
 
 #[test]
 fn restore_all_only_touches_managed_settings() {
     let (service, _, sys, _) = service("restore-all", true, no_elevation());
-    service.apply(TweakId::MouseAcceleration, false).unwrap();
+    *sys.mouse.lock().unwrap() = [0, 0, 0];
+    service.reset_to_default(TweakId::MouseAcceleration).unwrap();
     service.apply(TweakId::MmcssGames, true).unwrap();
     // Nicht von der App verwaltet – muss unverändert bleiben.
     sys.speed.store(12, Ordering::SeqCst);
@@ -486,9 +531,8 @@ fn own_risk_tweaks_need_explicit_confirmation() {
     assert_eq!(reg.get(Hive::LocalMachine, MMCSS_GAMES, "Scheduling Category"), Some(RegValue::sz("Medium")));
     assert_eq!(sys.filter.lock().unwrap().flags, FKF_FILTERKEYSON | FKF_HOTKEYACTIVE);
     assert_eq!(service.status().managed_count, 0);
-    // Mit Bestätigung geht es; risikoarme Tweaks brauchen keine.
+    // Mit Bestätigung geht es.
     service.apply(TweakId::KeyboardFilterkeys, true).unwrap();
-    service.apply(TweakId::MouseAcceleration, false).unwrap();
     assert!(!super::model::meta(TweakId::MouseAcceleration).own_risk);
 }
 

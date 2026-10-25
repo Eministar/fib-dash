@@ -99,6 +99,61 @@ pub struct Meta {
     pub own_risk: bool,
     /// Text der Warnung, die vor dem Einschalten bestätigt werden muss.
     pub risk_notice: Option<&'static str>,
+    /// Einstufung nach dem NERO-V-Regelwerk (Analysten-Regelwerk, Stand 04.09.2026).
+    pub server_rule: ServerRule,
+    /// „Windows-Standard herstellen“ wird angeboten.
+    pub has_windows_default: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum RuleStatus {
+    /// Erlaubt (ggf. auf eigene Gefahr, § 6.4).
+    Allowed,
+    /// Nur nach Freigabe per Analyse-Ticket (§ 6.3).
+    TicketRequired,
+    /// Verboten – die App schaltet es nicht ein.
+    Forbidden,
+}
+
+#[derive(Clone, Copy, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ServerRule {
+    pub status: RuleStatus,
+    pub paragraphs: &'static str,
+    pub reason: &'static str,
+}
+
+/// NERO-V: § 4.5 und § 6.2 verbieten Tweaks an Eingaben, Movement und Reaktionszeiten
+/// sowie jeden Tweak, der nicht eindeutig kosmetisch oder rein technisch ist.
+pub fn server_rule(id: TweakId) -> ServerRule {
+    let rule = |status, paragraphs, reason| ServerRule { status, paragraphs, reason };
+    match id {
+        TweakId::MouseAcceleration => rule(
+            RuleStatus::Forbidden,
+            "§ 4.5, § 6.2",
+            "Verändert die Verarbeitung der Mauseingaben. Tweaks, die Eingaben beeinflussen, sind auf NERO-V verboten – die App schaltet das nicht ein.",
+        ),
+        TweakId::KeyboardRepeat => rule(
+            RuleStatus::Forbidden,
+            "§ 4.5, § 6.2",
+            "Verändert Tastenwiederholung und Verzögerung (Eingaben/Reaktionszeiten). Auf NERO-V verboten – die App schaltet das nicht ein.",
+        ),
+        TweakId::KeyboardFilterkeys => rule(
+            RuleStatus::TicketRequired,
+            "§ 6.3",
+            "Betrifft die Verarbeitung von Tastenanschlägen. Nur nutzen, wenn das Analyseteam es per Ticket freigegeben hat.",
+        ),
+        TweakId::MmcssGames => rule(
+            RuleStatus::Allowed,
+            "§ 1.1, § 6.1, § 6.4",
+            "Technischer Performance-Tweak ohne Einfluss auf Spielmechaniken, Movement oder Kampf – erlaubt, aber auf eigene Gefahr. Bei Unsicherheit vorher ein Ticket erstellen.",
+        ),
+        TweakId::KeyboardQueue | TweakId::MouseQueue | TweakId::UsbPolling => {
+            rule(RuleStatus::Allowed, "–", "Reine Anzeige – an Windows wird nichts verändert.")
+        }
+        TweakId::FivemRawInput => rule(RuleStatus::Allowed, "–", "Einstellung im Spiel selbst; die App liest oder ändert nichts am Spiel."),
+    }
 }
 
 pub fn meta(id: TweakId) -> Meta {
@@ -116,10 +171,11 @@ pub fn meta(id: TweakId) -> Meta {
         in_profile: TweakId::PROFILE.contains(&id),
         own_risk: false,
         risk_notice: None,
+        server_rule: server_rule(id),
+        has_windows_default: matches!(id, TweakId::MouseAcceleration | TweakId::KeyboardRepeat),
     };
     match id {
         TweakId::MouseAcceleration => Meta {
-            recommended: true,
             ..base(
                 "Mausbeschleunigung",
                 "Schaltet die Windows-Zeigerbeschleunigung („Zeigerpräzision verbessern“) aus. Gleiche Handbewegung = gleiche Zeigerstrecke – in allen Programmen, die den Windows-Zeiger nutzen.",
@@ -129,7 +185,6 @@ pub fn meta(id: TweakId) -> Meta {
             )
         },
         TweakId::KeyboardRepeat => Meta {
-            recommended: true,
             ..base(
                 "Tastenwiederholung",
                 "Schnellste Wiederholrate (31) und kürzeste Verzögerung (0) für gehaltene Tasten. Ändert nicht, wie schnell der erste Tastendruck ankommt.",
@@ -217,6 +272,8 @@ pub enum TweakState {
 pub enum ErrorCode {
     /// „Benutzung auf eigene Gefahr“ wurde nicht bestätigt.
     ConfirmationRequired,
+    /// Nach dem NERO-V-Regelwerk verboten.
+    ForbiddenByRules,
     /// Nur mit Administratorrechten möglich.
     NeedsElevation,
     /// Der Nutzer hat die Rechteabfrage abgelehnt.

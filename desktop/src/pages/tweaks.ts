@@ -86,7 +86,19 @@ function render() {
 
 function mainSwitchHtml(id: string) {
   const s = status!
-  return switchHtml(id, isOn(s.state), working || isBusy(s.state) || s.state === 'unsupported', 'WASD Tweak ein- oder ausschalten')
+  // Gesperrt, solange nichts aktiv ist – Ausschalten (Wiederherstellen) bleibt immer möglich.
+  const blocked = s.blockedByRules && !isOn(s.state)
+  return switchHtml(id, isOn(s.state), working || isBusy(s.state) || s.state === 'unsupported' || blocked, 'WASD Tweak ein- oder ausschalten')
+}
+
+function rulesNotice(s: WasdStatus) {
+  const blocked = s.blockedByRules
+    ? `<p class="tw-hint danger type-caption">${icon('shieldError')}<span><strong>Auf NERO-V nicht erlaubt.</strong> Mausbeschleunigung und Tastenwiederholung verändern Eingaben – das verbietet das Regelwerk (§ 4.5, § 6.2). Der Haupt-Schalter bleibt deshalb aus.</span></p>`
+    : ''
+  const deviations = s.forbiddenDeviations.length
+    ? `<p class="tw-hint warning type-caption">${icon('warning')}<span>Bei dir weichen vom Windows-Standard ab: ${escapeHtml(s.forbiddenDeviations.join(', '))} (z. B. durch ein früheres Tweak-Skript). In den Details kannst du den Windows-Standard herstellen – gesichert und rückgängig zu machen.</span></p>`
+    : ''
+  return blocked + deviations
 }
 
 function statusLine(s: WasdStatus) {
@@ -112,6 +124,7 @@ function renderOverview() {
       </div>
       <p class="type-body">Optimierung und Konfiguration der Windows-Eingabeverarbeitung für Maus und Tastatur mit Fokus auf FiveM.</p>
       <div class="tw-status">${statusLine(s)}</div>
+      ${rulesNotice(s)}
       <div class="chips">${s.features.map((f) => `<span class="chip">${escapeHtml(f)}</span>`).join('')}</div>
       ${s.adminFeatures.length ? `<p class="tw-hint type-caption">${icon('shieldError')}<span>${escapeHtml(s.adminFeatures.join(', '))} ${s.adminFeatures.length === 1 ? 'braucht' : 'brauchen'} Administratorrechte – Windows fragt beim Einschalten nach. Der Haupt-Schalter selbst braucht keine.</span></p>` : ''}
       ${s.pendingRestart ? `<p class="tw-hint warning type-caption">${icon('arrowSync')}<span>Neustart ausstehend: Eine Änderung wird erst nach dem nächsten Windows-Neustart wirksam.</span></p>` : ''}
@@ -216,13 +229,29 @@ async function onMainSwitch() {
 async function enableTweak(report: TweakReport) {
   const { meta } = report
   const elevation = report.needsElevation ? ' Windows fragt danach nach Administratorrechten.' : ''
-  if (meta.ownRisk) {
-    // Benutzung auf eigene Gefahr: immer erst bestätigen (das Backend prüft es zusätzlich).
+  const ticket = meta.serverRule.status === 'ticketRequired'
+  if (meta.ownRisk || ticket) {
+    // Benutzung auf eigene Gefahr / Ticket-Freigabe: immer erst bestätigen (das Backend prüft es zusätzlich).
+    const notices = [
+      ticket
+        ? `<div class="tw-risk">${icon('shieldError')}<div><strong>NERO-V: nur mit Ticket-Freigabe (${escapeHtml(meta.serverRule.paragraphs)})</strong><p>${escapeHtml(meta.serverRule.reason)}</p></div></div>`
+        : '',
+      meta.ownRisk ? `<div class="tw-risk">${icon('warning')}<div><strong>Benutzung auf eigene Gefahr</strong><p>${escapeHtml(meta.riskNotice ?? '')}</p></div></div>` : '',
+    ].join('')
     await openForm({
       title: `${meta.name} einschalten`,
-      html: `<div class="tw-risk">${icon('warning')}<div><strong>Benutzung auf eigene Gefahr</strong><p>${escapeHtml(meta.riskNotice ?? '')}</p></div></div>`,
+      html: notices,
       description: `Die Originalwerte werden gesichert und lassen sich jederzeit wiederherstellen.${elevation}`,
-      fields: [{ name: 'accept', label: 'Ich habe die Warnung gelesen und schalte das auf eigene Gefahr ein.', type: 'checkbox', span: 2 }],
+      fields: [
+        {
+          name: 'accept',
+          label: ticket
+            ? 'Das Analyseteam hat mir das per Ticket freigegeben, und ich schalte es auf eigene Gefahr ein.'
+            : 'Ich habe die Warnung gelesen und schalte das auf eigene Gefahr ein.',
+          type: 'checkbox',
+          span: 2,
+        },
+      ],
       submitLabel: 'Auf eigene Gefahr einschalten',
       danger: true,
       onSubmit: async (values) => {
@@ -238,6 +267,26 @@ async function enableTweak(report: TweakReport) {
     const result = await backend.tweakApply(meta.id, false)
     toast(result.written ? `${meta.name} eingeschaltet.` : `${meta.name}: war schon so eingestellt.`)
   })
+}
+
+async function resetToDefault(report: TweakReport) {
+  await openForm({
+    title: `${report.meta.name}: Windows-Standard herstellen`,
+    description:
+      'Setzt die Werte auf den Stand einer frischen Windows-Installation. Der jetzige Zustand wird vorher gesichert – „Originalwerte wiederherstellen“ macht es rückgängig.',
+    html: changesTable(
+      report.settings
+        .filter((row) => row.target !== null)
+        .map((row) => ({ setting: row.label, current: row.current, target: 'Windows-Standard' })),
+    ),
+    fields: [],
+    submitLabel: 'Windows-Standard herstellen',
+    onSubmit: async () => {
+      await backend.tweakResetDefault(report.meta.id)
+      toast(`${report.meta.name}: Windows-Standard hergestellt.`)
+    },
+  })
+  await load()
 }
 
 async function onTweakSwitch(id: TweakId) {
@@ -271,6 +320,12 @@ const KIND: Record<TweakReport['meta']['kind'], [string, string]> = {
   diagnostic: ['Diagnose', 'subtle'],
   inGame: ['Nur im Spiel', 'subtle'],
 }
+const RULE: Record<TweakReport['meta']['serverRule']['status'], [string, string, IconName]> = {
+  allowed: ['NERO-V: erlaubt', 'success', 'checkmarkCircle'],
+  ticketRequired: ['NERO-V: nur mit Ticket', 'warning', 'shieldError'],
+  forbidden: ['NERO-V: verboten', 'danger', 'shieldError'],
+}
+
 const RISK: Record<TweakReport['meta']['risk'], [string, string] | null> = {
   none: null,
   low: ['Risiko gering', 'success'],
@@ -279,9 +334,21 @@ const RISK: Record<TweakReport['meta']['risk'], [string, string] | null> = {
 
 function tweakSection(report: TweakReport) {
   const { meta } = report
-  const switchable = (meta.kind === 'toggle' || meta.kind === 'experimental') && report.state !== 'unsupported'
+  const forbidden = meta.serverRule.status === 'forbidden'
+  // Verbotenes lässt sich nicht einschalten; war es von der App an, bleibt Ausschalten möglich.
+  const switchable = (meta.kind === 'toggle' || meta.kind === 'experimental') && report.state !== 'unsupported' && (!forbidden || isOn(report.state))
   const risk = RISK[meta.risk]
+  const rule = RULE[meta.serverRule.status]
   const notes = [
+    meta.serverRule.status !== 'allowed' || meta.kind === 'experimental'
+      ? `<p class="tw-hint ${forbidden ? 'danger' : 'warning'} type-caption">${icon('shieldError')}<span>NERO-V ${escapeHtml(meta.serverRule.paragraphs)}: ${escapeHtml(meta.serverRule.reason)}</span></p>`
+      : '',
+    report.windowsDefaultSet
+      ? `<p class="tw-hint type-caption">${icon('checkmarkCircle')}<span>Die App hat hier den Windows-Standard hergestellt. „Originalwerte wiederherstellen“ macht das rückgängig.</span></p>`
+      : '',
+    forbidden && report.deviatesFromDefault
+      ? `<p class="tw-hint warning type-caption">${icon('warning')}<span>Weicht vom Windows-Standard ab – vermutlich durch ein früheres Tweak-Programm.</span></p>`
+      : '',
     report.unsupported ? `<p class="tw-hint type-caption">${icon('info')}<span>${escapeHtml(report.unsupported)}</span></p>` : '',
     report.externalChange ? `<p class="tw-hint warning type-caption">${icon('warning')}<span>Ein anderes Programm hat diese Werte nach der App geändert.</span></p>` : '',
     report.alreadyAtTarget && !report.managed ? `<p class="tw-hint type-caption">${icon('checkmarkCircle')}<span>Windows ist schon so eingestellt – Einschalten ändert nichts, sichert aber den Zustand.</span></p>` : '',
@@ -298,11 +365,13 @@ function tweakSection(report: TweakReport) {
             ${pill(report.state)}
             ${badge(KIND[meta.kind][0], KIND[meta.kind][1])}
             ${risk ? badge(risk[0], risk[1]) : ''}
+            ${badge(rule[0], rule[1], rule[2])}
             ${meta.ownRisk ? badge('Benutzung auf eigene Gefahr', 'danger', 'warning') : ''}
             ${meta.inProfile ? badge('Teil des WASD Tweaks', 'brand') : ''}
           </span>
         </div>
-        ${switchable ? switchHtml(`tw-switch-${meta.id}`, isOn(report.state), working || isBusy(report.state), meta.name) : ''}
+        ${switchable ? switchHtml(`tw-switch-${meta.id}`, isOn(report.state), working || isBusy(report.state) || (forbidden && !isOn(report.state)), meta.name) : ''}
+        ${meta.hasWindowsDefault && report.deviatesFromDefault && !isOn(report.state) ? `<fluent-button data-tw-default="${meta.id}" ${working ? 'disabled' : ''}>Windows-Standard herstellen</fluent-button>` : ''}
       </div>
       <p class="type-body muted">${escapeHtml(meta.description)}</p>
       ${notes}
@@ -428,6 +497,7 @@ function renderDetails() {
         ${mainSwitchHtml('tw-main-switch')}
       </div>
       <div class="tw-status">${statusLine(s)}</div>
+      ${rulesNotice(s)}
       <p class="type-caption muted">Der Haupt-Schalter setzt nur die risikoarmen Einstellungen „${s.items.map((i) => escapeHtml(i.name)).join('“ und „')}“. Experimentelles und „auf eigene Gefahr“ schaltest du unten einzeln – jeweils mit Bestätigung.</p>
       ${s.adminFeatures.length ? `<p class="tw-hint type-caption">${icon('shieldError')}<span>Administratorrechte nötig für: ${escapeHtml(s.adminFeatures.join(', '))}. ${s.isAdmin ? 'Die App läuft als Administrator.' : 'Windows fragt beim Umschalten nach.'}</span></p>` : ''}
       ${s.pendingRestart ? `<p class="tw-hint warning type-caption">${icon('arrowSync')}<span>Neustart ausstehend.</span></p>` : ''}
@@ -495,6 +565,11 @@ export function initTweaks() {
       void load()
     } else if (target.closest('#tw-restore-all')) void restoreAll()
     else if (target.closest('#tw-measure') && !measuring) void measure()
+    else if (target.closest('[data-tw-default]')) {
+      const id = target.closest<HTMLElement>('[data-tw-default]')!.dataset.twDefault as TweakId
+      const report = details?.tweaks.find((t) => t.meta.id === id)
+      if (report) void resetToDefault(report)
+    }
   })
   // Schalter: Zustand kommt immer vom Backend, der Klick löst nur den Vorgang aus.
   page.addEventListener('change', (event) => {

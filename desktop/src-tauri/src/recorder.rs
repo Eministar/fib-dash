@@ -59,6 +59,8 @@ pub struct Status {
     /// z. B. "NVIDIA (NVENC)"
     pub encoder: Option<String>,
     pub buffered_seconds: u32,
+    /// Woher der Ton gerade kommt (FiveM direkt oder Standardgerät).
+    pub audio_source: Option<String>,
     pub error: Option<String>,
     pub download_bytes: u64,
 }
@@ -104,6 +106,7 @@ struct Running {
     child: Child,
     _job: Option<Job>,
     audio_stop: Arc<AtomicBool>,
+    audio_source: Arc<Mutex<String>>,
     started: Instant,
     encoder: &'static Encoder,
     buffer_seconds: u32,
@@ -179,47 +182,190 @@ struct AudioFormat {
     float: bool,
 }
 
+/// Was ffmpeg immer bekommt – egal, woher der Ton gerade kommt.
+const AUDIO_FORMAT: AudioFormat = AudioFormat { rate: 48_000, channels: 2, float: false };
+
 impl AudioFormat {
     fn bytes_per_frame(&self) -> usize {
         self.channels as usize * if self.float { 4 } else { 2 }
     }
+
+    fn wave(&self) -> windows::Win32::Media::Audio::WAVEFORMATEX {
+        let block = self.bytes_per_frame() as u16;
+        windows::Win32::Media::Audio::WAVEFORMATEX {
+            wFormatTag: if self.float { 3 } else { 1 },
+            nChannels: self.channels,
+            nSamplesPerSec: self.rate,
+            nAvgBytesPerSec: self.rate * block as u32,
+            nBlockAlign: block,
+            wBitsPerSample: if self.float { 32 } else { 16 },
+            cbSize: 0,
+        }
+    }
 }
 
-/// Lautsprecher-Ton abgreifen. Liefert die WASAPI-Objekte und das Format.
-unsafe fn open_loopback() -> windows::core::Result<(
-    windows::Win32::Media::Audio::IAudioClient,
-    windows::Win32::Media::Audio::IAudioCaptureClient,
-    AudioFormat,
-)> {
+/// Eine laufende WASAPI-Aufnahme samt Herkunft.
+struct Capture {
+    client: windows::Win32::Media::Audio::IAudioClient,
+    capture: windows::Win32::Media::Audio::IAudioCaptureClient,
+    /// Prozess, dessen Ton mitgeschnitten wird (`None` = Standard-Ausgabegerät).
+    pid: Option<u32>,
+}
+
+impl Drop for Capture {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = self.client.Stop();
+        }
+    }
+}
+
+/// Startet einen Client im festen Format; Windows wandelt selbst um (AUTOCONVERTPCM).
+unsafe fn start_client(client: windows::Win32::Media::Audio::IAudioClient, pid: Option<u32>) -> windows::core::Result<Capture> {
     use windows::Win32::{
         Media::Audio::{
-            eConsole, eRender, IAudioCaptureClient, IAudioClient, IMMDeviceEnumerator, MMDeviceEnumerator, AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_LOOPBACK,
+            IAudioCaptureClient, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM, AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+            AUDCLNT_STREAMFLAGS_LOOPBACK, AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
         },
-        System::Com::{CoCreateInstance, CoInitializeEx, CoTaskMemFree, CLSCTX_ALL, COINIT_MULTITHREADED},
+        System::Threading::CreateEventW,
     };
-    let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
+    let wave = AUDIO_FORMAT.wave();
+    let mut flags = AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+    if pid.is_some() {
+        // Prozess-Loopback verlangt den Ereignis-Modus; abgeholt wird trotzdem im Takt.
+        flags |= AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+    }
+    client.Initialize(AUDCLNT_SHAREMODE_SHARED, flags, 2_000_000, 0, &wave, None)?;
+    if pid.is_some() {
+        let event = CreateEventW(None, false, false, windows::core::PCWSTR::null())?;
+        client.SetEventHandle(event)?;
+    }
+    let capture: IAudioCaptureClient = client.GetService()?;
+    client.Start()?;
+    Ok(Capture { client, capture, pid })
+}
+
+/// Ton des Standard-Ausgabegeräts (alles, was aus Lautsprechern oder Headset kommt).
+unsafe fn open_device_loopback() -> windows::core::Result<Capture> {
+    use windows::Win32::{
+        Media::Audio::{eConsole, eRender, IAudioClient, IMMDeviceEnumerator, MMDeviceEnumerator},
+        System::Com::{CoCreateInstance, CLSCTX_ALL},
+    };
     let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
     let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole)?;
     let client: IAudioClient = device.Activate(CLSCTX_ALL, None)?;
-    let mix = client.GetMixFormat()?;
-    let wave = *mix;
-    // Das gemeinsame Mischformat ist praktisch immer 32-Bit-Float (auch als „Extensible“).
-    let float = wave.wFormatTag == 3 || (wave.wFormatTag == 0xFFFE && wave.wBitsPerSample == 32);
-    let format = AudioFormat { rate: wave.nSamplesPerSec, channels: wave.nChannels, float };
-    let result = client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 2_000_000, 0, mix, None);
-    CoTaskMemFree(Some(mix as *const _));
-    result?;
-    let capture: IAudioCaptureClient = client.GetService()?;
-    client.Start()?;
-    Ok((client, capture, format))
+    start_client(client, None)
 }
 
-/// Schreibt Ton im Takt der Uhr in ffmpeg. Wenn nichts läuft (oder kein Gerät da
-/// ist), kommt Stille – sonst würde ffmpeg auf Ton warten und das Bild anhalten.
-fn audio_thread(enabled: bool, stop: Arc<AtomicBool>, format_tx: mpsc::SyncSender<AudioFormat>, stdin_rx: mpsc::Receiver<ChildStdin>) {
-    let capture = if enabled { unsafe { open_loopback() }.ok() } else { None };
-    let format = capture.as_ref().map(|c| c.2).unwrap_or(AudioFormat { rate: 48_000, channels: 2, float: true });
+/// Meldet das Ende der asynchronen Aktivierung (muss „agil“ sein, siehe Microsoft-Doku).
+#[windows::core::implement(windows::Win32::Media::Audio::IActivateAudioInterfaceCompletionHandler, windows::Win32::System::Com::IAgileObject)]
+struct Activated(mpsc::SyncSender<()>);
+
+impl windows::Win32::Media::Audio::IActivateAudioInterfaceCompletionHandler_Impl for Activated_Impl {
+    fn ActivateCompleted(&self, _operation: windows::core::Ref<windows::Win32::Media::Audio::IActivateAudioInterfaceAsyncOperation>) -> windows::core::Result<()> {
+        let _ = self.0.send(());
+        Ok(())
+    }
+}
+
+impl windows::Win32::System::Com::IAgileObject_Impl for Activated_Impl {}
+
+/// Nur der Ton eines Prozesses samt Kindprozessen (wie OBS „Anwendungsaudio“) –
+/// unabhängig davon, auf welchem Gerät das Spiel ihn ausgibt.
+unsafe fn open_process_loopback(pid: u32) -> windows::core::Result<Capture> {
+    use windows::{
+        core::Interface,
+        Win32::{
+            Media::Audio::{
+                ActivateAudioInterfaceAsync, IActivateAudioInterfaceCompletionHandler, IAudioClient, AUDIOCLIENT_ACTIVATION_PARAMS,
+                AUDIOCLIENT_ACTIVATION_PARAMS_0, AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK, AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS,
+                PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE, VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK,
+            },
+            System::{
+                Com::{StructuredStorage::PROPVARIANT, BLOB},
+                Variant::VT_BLOB,
+            },
+        },
+    };
+    let mut params = AUDIOCLIENT_ACTIVATION_PARAMS {
+        ActivationType: AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK,
+        Anonymous: AUDIOCLIENT_ACTIVATION_PARAMS_0 {
+            ProcessLoopbackParams: AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS {
+                TargetProcessId: pid,
+                ProcessLoopbackMode: PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE,
+            },
+        },
+    };
+    // Nie freigeben: Beim Drop würde PROPVARIANT den Blob mit CoTaskMemFree freigeben –
+    // der zeigt aber auf `params` auf dem Stack (das führte zu einer Heap-Beschädigung).
+    let mut prop = std::mem::ManuallyDrop::new(PROPVARIANT::default());
+    {
+        let inner = &mut *prop.Anonymous.Anonymous;
+        inner.vt = VT_BLOB;
+        inner.Anonymous.blob = BLOB {
+            cbSize: std::mem::size_of::<AUDIOCLIENT_ACTIVATION_PARAMS>() as u32,
+            pBlobData: (&mut params as *mut AUDIOCLIENT_ACTIVATION_PARAMS).cast(),
+        };
+    }
+    let (done_tx, done_rx) = mpsc::sync_channel(1);
+    let handler: IActivateAudioInterfaceCompletionHandler = Activated(done_tx).into();
+    let operation = ActivateAudioInterfaceAsync(VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, &IAudioClient::IID, Some(&*prop), &handler)?;
+    done_rx
+        .recv_timeout(Duration::from_secs(5))
+        .map_err(|_| windows::core::Error::new(windows::core::HRESULT(0x8000_000Au32 as i32), "Aktivierung des Prozess-Tons dauert zu lange"))?;
+    let mut result = windows::core::HRESULT(0);
+    let mut unknown = None;
+    operation.GetActivateResult(&mut result, &mut unknown)?;
+    result.ok()?;
+    let client: IAudioClient = unknown.ok_or_else(|| windows::core::Error::from_hresult(windows::core::HRESULT(0x8000_4005u32 as i32)))?.cast()?;
+    start_client(client, Some(pid))
+}
+
+/// Prozess-ID von FiveM (der Starter; das Spiel läuft als dessen Kindprozess).
+pub fn find_game_pid() -> Option<u32> {
+    use windows::Win32::{
+        Foundation::CloseHandle,
+        System::Diagnostics::ToolHelp::{CreateToolhelp32Snapshot, Process32FirstW, Process32NextW, PROCESSENTRY32W, TH32CS_SNAPPROCESS},
+    };
+    unsafe {
+        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0).ok()?;
+        let mut entry = PROCESSENTRY32W { dwSize: std::mem::size_of::<PROCESSENTRY32W>() as u32, ..Default::default() };
+        let mut launcher = None;
+        let mut game = None;
+        if Process32FirstW(snapshot, &mut entry).is_ok() {
+            loop {
+                let len = entry.szExeFile.iter().position(|&c| c == 0).unwrap_or(entry.szExeFile.len());
+                let name = String::from_utf16_lossy(&entry.szExeFile[..len]).to_ascii_lowercase();
+                if name == "fivem.exe" {
+                    launcher = Some(entry.th32ProcessID);
+                } else if name.starts_with("fivem_") && name.contains("gtaprocess") {
+                    game = Some(entry.th32ProcessID);
+                }
+                if Process32NextW(snapshot, &mut entry).is_err() {
+                    break;
+                }
+            }
+        }
+        let _ = CloseHandle(snapshot);
+        launcher.or(game)
+    }
+}
+
+/// Schreibt Ton im Takt der Uhr in ffmpeg. Läuft FiveM, kommt der Ton direkt aus
+/// dem Spielprozess, sonst vom Standard-Ausgabegerät. Wenn nichts zu hören ist (oder
+/// gar keine Quelle da ist), kommt Stille – sonst würde ffmpeg auf Ton warten und
+/// das Bild anhalten.
+fn audio_thread(
+    enabled: bool,
+    stop: Arc<AtomicBool>,
+    source_label: Arc<Mutex<String>>,
+    format_tx: mpsc::SyncSender<AudioFormat>,
+    stdin_rx: mpsc::Receiver<ChildStdin>,
+) {
+    unsafe {
+        let _ = windows::Win32::System::Com::CoInitializeEx(None, windows::Win32::System::Com::COINIT_MULTITHREADED);
+    }
+    let format = AUDIO_FORMAT;
     if format_tx.send(format).is_err() {
         return;
     }
@@ -228,15 +374,37 @@ fn audio_thread(enabled: bool, stop: Arc<AtomicBool>, format_tx: mpsc::SyncSende
     let started = Instant::now();
     let mut written: u64 = 0;
     let mut buffer: Vec<u8> = Vec::new();
+    let mut capture: Option<Capture> = None;
+    let mut last_check = Instant::now() - Duration::from_secs(10);
 
     while !stop.load(Ordering::SeqCst) {
+        // Alle zwei Sekunden prüfen, ob FiveM (neu) läuft oder beendet wurde.
+        if enabled && last_check.elapsed() >= Duration::from_secs(2) {
+            last_check = Instant::now();
+            let game = find_game_pid();
+            let wanted_matches = matches!((&capture, game), (Some(c), g) if c.pid == g);
+            if !wanted_matches {
+                // Alte Aufnahme erst beenden, dann die neue öffnen.
+                drop(capture.take());
+                capture = match game {
+                    Some(pid) => unsafe { open_process_loopback(pid) }.ok().or_else(|| unsafe { open_device_loopback() }.ok()),
+                    None => unsafe { open_device_loopback() }.ok(),
+                };
+                *source_label.lock().unwrap() = match &capture {
+                    Some(Capture { pid: Some(_), .. }) => "FiveM (Spielton direkt)".into(),
+                    Some(_) => "Standard-Ausgabegerät".into(),
+                    None => "kein Ton".into(),
+                };
+            }
+        }
+
         thread::sleep(Duration::from_millis(10));
         buffer.clear();
-        if let Some((_, capture, _)) = &capture {
+        if let Some(Capture { capture: client, .. }) = &capture {
             unsafe {
-                while capture.GetNextPacketSize().unwrap_or(0) > 0 {
+                while client.GetNextPacketSize().unwrap_or(0) > 0 {
                     let (mut data, mut frames, mut flags) = (std::ptr::null_mut(), 0u32, 0u32);
-                    if capture.GetBuffer(&mut data, &mut frames, &mut flags, None, None).is_err() {
+                    if client.GetBuffer(&mut data, &mut frames, &mut flags, None, None).is_err() {
                         break;
                     }
                     let len = frames as usize * frame_bytes;
@@ -246,12 +414,12 @@ fn audio_thread(enabled: bool, stop: Arc<AtomicBool>, format_tx: mpsc::SyncSende
                     } else {
                         buffer.extend_from_slice(std::slice::from_raw_parts(data, len));
                     }
-                    let _ = capture.ReleaseBuffer(frames);
+                    let _ = client.ReleaseBuffer(frames);
                     written += frames as u64;
                 }
             }
         }
-        // Lücken (Stille, kein Gerät) bis auf 20 ms an die Uhr heranfüllen.
+        // Lücken (Stille, Quellenwechsel) bis auf 20 ms an die Uhr heranfüllen.
         let expected = (started.elapsed().as_secs_f64() * format.rate as f64) as u64;
         let slack = format.rate as u64 / 50;
         if expected > written + slack * 5 {
@@ -261,11 +429,6 @@ fn audio_thread(enabled: bool, stop: Arc<AtomicBool>, format_tx: mpsc::SyncSende
         }
         if !buffer.is_empty() && stdin.write_all(&buffer).is_err() {
             break;
-        }
-    }
-    if let Some((client, _, _)) = capture {
-        unsafe {
-            let _ = client.Stop();
         }
     }
 }
@@ -289,6 +452,7 @@ impl Recorder {
                 .map(|r| r.encoder.label.to_string())
                 .or_else(|| self.encoder.lock().unwrap().map(|e| e.label.to_string())),
             buffered_seconds: guard.as_ref().map(|r| (r.started.elapsed().as_secs() as u32).min(r.buffer_seconds)).unwrap_or(0),
+            audio_source: guard.as_ref().map(|r| r.audio_source.lock().unwrap().clone()),
             error: self.error.lock().unwrap().clone(),
             download_bytes: FFMPEG_DOWNLOAD_BYTES,
         }
@@ -344,10 +508,12 @@ impl Recorder {
         let (format_tx, format_rx) = mpsc::sync_channel(1);
         let (stdin_tx, stdin_rx) = mpsc::channel();
         let audio_stop = stop.clone();
+        let audio_source = Arc::new(Mutex::new(String::from("wird gesucht …")));
+        let label = audio_source.clone();
         let audio = config.audio;
         thread::Builder::new()
             .name("self-clip-ton".into())
-            .spawn(move || audio_thread(audio, audio_stop, format_tx, stdin_rx))
+            .spawn(move || audio_thread(audio, audio_stop, label, format_tx, stdin_rx))
             .map_err(|e| e.to_string())?;
         let format = format_rx.recv_timeout(Duration::from_secs(5)).map_err(|_| "Tonaufnahme startet nicht".to_string())?;
 
@@ -373,7 +539,7 @@ impl Recorder {
         let stdin = child.stdin.take().ok_or("Keine Verbindung zu ffmpeg")?;
         let _ = stdin_tx.send(stdin);
 
-        *self.running.lock().unwrap() = Some(Running { child, _job: job, audio_stop: stop, started: Instant::now(), encoder, buffer_seconds: buffer });
+        *self.running.lock().unwrap() = Some(Running { child, _job: job, audio_stop: stop, audio_source, started: Instant::now(), encoder, buffer_seconds: buffer });
         Ok(())
     }
 
@@ -483,6 +649,59 @@ pub async fn install(app: &AppHandle, client: &reqwest::Client) -> Result<(), St
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Prozess-Ton lässt sich aktivieren (hier für den eigenen Testprozess) und
+    /// FiveM wird gefunden, falls es läuft: `cargo test -- --ignored process_loopback --nocapture`.
+    #[test]
+    #[ignore]
+    fn process_loopback_activates() {
+        unsafe {
+            let _ = windows::Win32::System::Com::CoInitializeEx(None, windows::Win32::System::Com::COINIT_MULTITHREADED);
+            let capture = open_process_loopback(std::process::id()).expect("Prozess-Loopback aktivierbar");
+            assert_eq!(capture.pid, Some(std::process::id()));
+            thread::sleep(Duration::from_millis(300));
+            let packet = capture.capture.GetNextPacketSize();
+            println!("Prozess-Loopback läuft, Paketgröße: {packet:?}");
+            let device = open_device_loopback().expect("Geräte-Loopback aktivierbar");
+            assert_eq!(device.pid, None);
+        }
+        println!("FiveM-Prozess: {:?}", find_game_pid());
+    }
+
+    /// Nur Lautstärke messen, nichts speichern: `cargo test -- --ignored fivem_audio_level --nocapture`.
+    #[test]
+    #[ignore]
+    fn fivem_audio_level() {
+        let Some(pid) = std::env::var("FIB_PID").ok().and_then(|p| p.parse().ok()).or_else(find_game_pid) else {
+            println!("FiveM läuft nicht");
+            return;
+        };
+        unsafe {
+            let _ = windows::Win32::System::Com::CoInitializeEx(None, windows::Win32::System::Com::COINIT_MULTITHREADED);
+            let capture = if pid == 0 { open_device_loopback().unwrap() } else { open_process_loopback(pid).unwrap() };
+            let (mut frames_total, mut sum_sq, mut peak) = (0usize, 0f64, 0i32);
+            let until = Instant::now() + Duration::from_secs(2);
+            while Instant::now() < until {
+                thread::sleep(Duration::from_millis(10));
+                while capture.capture.GetNextPacketSize().unwrap_or(0) > 0 {
+                    let (mut data, mut frames, mut flags) = (std::ptr::null_mut(), 0u32, 0u32);
+                    capture.capture.GetBuffer(&mut data, &mut frames, &mut flags, None, None).unwrap();
+                    if flags & 2 == 0 && !data.is_null() {
+                        let samples = std::slice::from_raw_parts(data as *const i16, frames as usize * 2);
+                        for &v in samples {
+                            sum_sq += (v as f64) * (v as f64);
+                            peak = peak.max((v as i32).abs());
+                        }
+                    }
+                    frames_total += frames as usize;
+                    let _ = capture.capture.ReleaseBuffer(frames);
+                }
+            }
+            let rms = (sum_sq / (frames_total.max(1) * 2) as f64).sqrt();
+            let db = 20.0 * (rms / 32768.0).max(1e-9).log10();
+            println!("FiveM {pid}: {frames_total} Frames, Pegel {db:.1} dBFS, Spitze {peak}");
+        }
+    }
 
     /// Echte Aufnahme: ffmpeg aus `FIB_FFMPEG`, 10 s aufnehmen, die letzten 6 s speichern.
     #[test]

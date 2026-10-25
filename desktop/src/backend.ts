@@ -28,6 +28,7 @@ export interface SelfClipStatus {
   running: boolean
   encoder: string | null
   bufferedSeconds: number
+  audioSource: string | null
   error: string | null
   downloadBytes: number
 }
@@ -41,6 +42,7 @@ export interface Region {
 
 export interface KillClipConfig {
   playerName: string
+  useMarker: boolean
   killfeed: Region | null
   hitmarker: Region | null
   hitmarkerThreshold: number
@@ -61,7 +63,7 @@ export interface KillClipStatus {
 }
 
 export interface KillClipEvent {
-  kind: 'kill' | 'rendered' | 'uploaded' | 'error'
+  kind: 'kill' | 'death' | 'rendered' | 'uploaded' | 'error' | 'warning'
   message: string
   link: string | null
   path: string | null
@@ -181,6 +183,9 @@ export interface TweakMeta {
   inProfile: boolean
   ownRisk: boolean
   riskNotice: string | null
+  /** Einstufung nach dem NERO-V-Regelwerk. */
+  serverRule: { status: 'allowed' | 'ticketRequired' | 'forbidden'; paragraphs: string; reason: string }
+  hasWindowsDefault: boolean
 }
 
 export interface SettingRow {
@@ -199,6 +204,8 @@ export interface TweakReport {
   explanation: string[]
   externalChange: boolean
   alreadyAtTarget: boolean
+  deviatesFromDefault: boolean | null
+  windowsDefaultSet: boolean
   managed: boolean
   error: string | null
 }
@@ -213,6 +220,8 @@ export interface WasdStatus {
   items: { id: TweakId; name: string; state: TweakState }[]
   features: string[]
   adminFeatures: string[]
+  blockedByRules: boolean
+  forbiddenDeviations: string[]
   error: string | null
 }
 
@@ -295,6 +304,7 @@ export const backend = {
   tweaksRestoreProfile: (force = false) => invoke<RestoreResult>('restore_wasd_tweak', { force }),
   tweakApply: (id: TweakId, confirmed = false) => invoke<ApplyResult>('apply_tweak', { id, confirmed }),
   tweakRestore: (id: TweakId, force = false) => invoke<RestoreResult>('restore_tweak', { id, force }),
+  tweakResetDefault: (id: TweakId) => invoke<ApplyResult>('reset_tweak_to_default', { id }),
   tweaksRestoreAll: (force = false) => invoke<RestoreResult>('restore_all_tweaks', { force }),
   inputDevices: () => invoke<InputDevice[]>('get_input_devices'),
   measurePolling: (seconds = 3) => invoke<PollingResult[]>('measure_polling_rate', { seconds }),
@@ -307,7 +317,8 @@ export const backend = {
   killClipSetHitmarker: (region: Region) => invoke<void>('killclip_set_hitmarker', { region }),
   killClipReveal: (path?: string) => invoke<void>('killclip_reveal', { path: path ?? null }),
   killClipOpenLink: (url: string) => invoke<void>('killclip_open_link', { url }),
-  killClipTestFeed: (region: Region, name: string) => invoke<{ lines: string[]; kills: string[] }>('killclip_test_feed', { region, name }),
+  killClipTestFeed: (region: Region) => invoke<{ lines: string[]; kills: string[]; deaths: string[] }>('killclip_test_feed', { region }),
+  killClipTestMarker: (region: Region | null) => invoke<number>('killclip_test_marker', { region }),
 }
 
 export function errorText(error: unknown) {

@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::backup::{now_stamp, BackupFile, BackupStore, Entry, Failure, Target, Value};
+use super::backup::{now_stamp, BackupFile, BackupStore, Entry, Failure, Mode, Target, Value};
 use super::model::{meta, ErrorCode, Kind, Meta, TweakError, TweakId, TweakResult, TweakState};
 use super::platform::{Hive, RegValue, Registry, SystemParams, FKF_FILTERKEYSON, FKF_HOTKEYACTIVE};
 
@@ -62,6 +62,10 @@ pub struct TweakReport {
     pub external_change: bool,
     /// Windows stand schon vor der App auf dem Zielwert.
     pub already_at_target: bool,
+    /// Weicht vom Windows-Standard ab (nur wo die App den Standard kennt).
+    pub deviates_from_default: Option<bool>,
+    /// Die App hat hier den Windows-Standard hergestellt (wiederherstellbar).
+    pub windows_default_set: bool,
     /// Die App hat hier Originalwerte gesichert.
     pub managed: bool,
     pub error: Option<String>,
@@ -147,10 +151,33 @@ impl<'a> Engine<'a> {
 
     /// Was ein Tweak ändern würde, ausgehend vom aktuellen Zustand.
     pub fn plan(&self, id: TweakId) -> TweakResult<Vec<Change>> {
+        self.plan_for(id, Mode::Tweak)
+    }
+
+    pub fn plan_for(&self, id: TweakId, mode: Mode) -> TweakResult<Vec<Change>> {
         let change = |target: Target, desired: Value| -> TweakResult<Change> {
             let current = self.read(&target)?;
             Ok(Change { target, current, desired })
         };
+        if mode == Mode::WindowsDefault {
+            // Werte einer frischen Windows-Installation („Zeigerpräzision verbessern“ an,
+            // Wiederholrate 31, Verzögerung 1) – so wie Windows sie selbst speichert.
+            return match id {
+                TweakId::MouseAcceleration => Ok(vec![
+                    change(reg_target(Hive::CurrentUser, MOUSE_KEY, "MouseSpeed"), Value::Reg(RegValue::sz("1")))?,
+                    change(reg_target(Hive::CurrentUser, MOUSE_KEY, "MouseThreshold1"), Value::Reg(RegValue::sz("6")))?,
+                    change(reg_target(Hive::CurrentUser, MOUSE_KEY, "MouseThreshold2"), Value::Reg(RegValue::sz("10")))?,
+                    change(Target::Mouse, Value::Mouse([6, 10, 1]))?,
+                ]),
+                TweakId::KeyboardRepeat => Ok(vec![
+                    change(reg_target(Hive::CurrentUser, KEYBOARD_KEY, "KeyboardSpeed"), Value::Reg(RegValue::sz("31")))?,
+                    change(reg_target(Hive::CurrentUser, KEYBOARD_KEY, "KeyboardDelay"), Value::Reg(RegValue::sz("1")))?,
+                    change(Target::KeyboardSpeed, Value::Number(31))?,
+                    change(Target::KeyboardDelay, Value::Number(1))?,
+                ]),
+                _ => Err(TweakError::unsupported(format!("Für „{}“ kennt die App keinen Windows-Standard.", meta(id).name))),
+            };
+        }
         match id {
             // Erst die gespeicherten Registry-Werte (mit Originaltyp gesichert), dann der Laufzeitwert.
             // [0, 0, 0]: Beschleunigung aus – entspricht „Zeigerpräzision verbessern“ aus.
@@ -212,14 +239,23 @@ impl<'a> Engine<'a> {
     // ── Anwenden ─────────────────────────────────────────────────────
 
     pub fn apply(&self, id: TweakId) -> TweakResult<ApplyResult> {
+        self.apply_mode(id, Mode::Tweak)
+    }
+
+    /// „Windows-Standard herstellen“ – gesichert und wiederherstellbar wie ein Tweak.
+    pub fn apply_default(&self, id: TweakId) -> TweakResult<ApplyResult> {
+        self.apply_mode(id, Mode::WindowsDefault)
+    }
+
+    fn apply_mode(&self, id: TweakId, mode: Mode) -> TweakResult<ApplyResult> {
         let info = meta(id);
-        if matches!(info.kind, Kind::Diagnostic | Kind::InGame) {
+        if mode == Mode::Tweak && matches!(info.kind, Kind::Diagnostic | Kind::InGame) {
             return Err(TweakError::unsupported(format!("„{}“ lässt sich nicht umschalten.", info.name)));
         }
         if info.needs_admin && !self.admin {
             return Err(TweakError::needs_elevation());
         }
-        let changes = self.plan(id)?;
+        let changes = self.plan_for(id, mode)?;
         let mut backup = self.store.load()?;
         let (stamp, stamp_ms) = now_stamp();
 
@@ -229,7 +265,10 @@ impl<'a> Engine<'a> {
             let key = change.target.key();
             match backup.entries.iter_mut().find(|e| e.key == key) {
                 // Erneutes Aktivieren: Original bleibt unangetastet.
-                Some(entry) => entry.applied = change.desired.clone(),
+                Some(entry) => {
+                    entry.applied = change.desired.clone();
+                    entry.mode = mode;
+                }
                 None => {
                     backup.entries.push(Entry {
                         tweak: id,
@@ -237,6 +276,7 @@ impl<'a> Engine<'a> {
                         target: change.target.clone(),
                         original: change.current.clone(),
                         applied: change.desired.clone(),
+                        mode,
                         created_at: stamp.clone(),
                         created_at_ms: stamp_ms,
                         app_version: self.app_version.clone(),
@@ -361,30 +401,34 @@ impl<'a> Engine<'a> {
 
     // ── Zustand ──────────────────────────────────────────────────────
 
-    pub fn state(&self, id: TweakId, backup: &BackupFile) -> (TweakState, bool, bool) {
+    /// (Zustand, fremde Änderung, schon vorher am Ziel, Windows-Standard durch die App gesetzt)
+    pub fn state(&self, id: TweakId, backup: &BackupFile) -> (TweakState, bool, bool, bool) {
         let info = meta(id);
         if matches!(info.kind, Kind::Diagnostic | Kind::InGame) {
-            return (TweakState::Diagnostic, false, false);
+            return (TweakState::Diagnostic, false, false, false);
         }
         let changes = match self.plan(id) {
             Ok(changes) => changes,
-            Err(error) if error.code == ErrorCode::Unsupported => return (TweakState::Unsupported, false, false),
-            Err(_) => return (TweakState::Error, false, false),
+            Err(error) if error.code == ErrorCode::Unsupported => return (TweakState::Unsupported, false, false, false),
+            Err(_) => return (TweakState::Error, false, false, false),
         };
         let entries = backup.entries_for(id);
         let at_target = changes.iter().filter(|c| c.current.same(&c.desired)).count();
         if entries.is_empty() {
-            return (TweakState::Inactive, false, at_target == changes.len());
+            return (TweakState::Inactive, false, at_target == changes.len(), false);
         }
         let mut external = false;
         let mut active = 0;
+        let mut default_kept = 0;
         for change in &changes {
             match entries.iter().find(|e| e.key == change.target.key()) {
-                Some(entry) if change.current.same(&entry.applied) => active += 1,
+                Some(entry) if change.current.same(&entry.applied) && entry.mode == Mode::Tweak => active += 1,
+                Some(entry) if change.current.same(&entry.applied) => default_kept += 1,
                 Some(_) => external = true,
                 None => {}
             }
         }
+        let default_set = default_kept > 0 && default_kept == entries.len();
         let state = if active == changes.len() {
             let fresh = entries.iter().any(|e| e.created_at_ms > self.boot_ms);
             if info.needs_restart && fresh { TweakState::PendingRestart } else { TweakState::Active }
@@ -394,19 +438,24 @@ impl<'a> Engine<'a> {
             TweakState::PartiallyActive
         };
         let already = entries.iter().all(|e| e.original.same(&e.applied));
-        (state, external, already)
+        (state, external, already, default_set)
     }
 
     pub fn report(&self, id: TweakId) -> TweakReport {
         let info = meta(id);
         let backup = self.store.load();
-        let (state, external_change, already_at_target, error) = match &backup {
+        let (state, external_change, already_at_target, windows_default_set, error) = match &backup {
             Ok(file) => {
-                let (state, external, already) = self.state(id, file);
-                (state, external, already, None)
+                let (state, external, already, default_set) = self.state(id, file);
+                (state, external, already, default_set, None)
             }
-            Err(error) => (TweakState::Error, false, false, Some(error.message.clone())),
+            Err(error) => (TweakState::Error, false, false, false, Some(error.message.clone())),
         };
+        let deviates_from_default = info
+            .has_windows_default
+            .then(|| self.plan_for(id, Mode::WindowsDefault).ok())
+            .flatten()
+            .map(|changes| changes.iter().any(|c| !c.current.same(&c.desired)));
         let managed = backup.as_ref().map(|b| !b.entries_for(id).is_empty()).unwrap_or(false);
         let unsupported = match self.plan(id) {
             Err(e) if e.code == ErrorCode::Unsupported && !matches!(info.kind, Kind::Diagnostic | Kind::InGame) => Some(e.message),
@@ -422,6 +471,8 @@ impl<'a> Engine<'a> {
             unsupported,
             external_change,
             already_at_target,
+            deviates_from_default,
+            windows_default_set,
             managed,
             error: error.or(failure.map(|f| format!("Letzte Wiederherstellung fehlgeschlagen: {f}"))),
         }

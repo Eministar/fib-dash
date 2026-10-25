@@ -32,7 +32,12 @@ impl Ocr {
     /// Erkennt Textzeilen; Wortpositionen beziehen sich auf die Breite des Ausschnitts.
     pub fn read(&self, image: &Image) -> Result<Vec<Line>, String> {
         let scale = if image.height < MIN_TEXT_HEIGHT { 2 } else { 1 };
-        let prepared = prepare(image, scale);
+        self.read_with(image, scale, false)
+    }
+
+    /// Wie `read`, mit wählbarer Vergrößerung und optional invertiert (dunkle Schrift auf hell).
+    pub fn read_with(&self, image: &Image, scale: u32, invert: bool) -> Result<Vec<Line>, String> {
+        let prepared = prepare(image, scale, invert);
         let max = OcrEngine::MaxImageDimension().unwrap_or(2600);
         if prepared.width > max || prepared.height > max {
             return Err("Kill-Feed-Bereich ist zu groß".into());
@@ -58,7 +63,6 @@ impl Ocr {
                 words.push(Word {
                     text: word.Text().map(|t| t.to_string()).unwrap_or_default(),
                     x0: rect.X / s,
-                    x1: (rect.X + rect.Width) / s,
                     y0: rect.Y / s,
                     y1: (rect.Y + rect.Height) / s,
                 });
@@ -68,18 +72,29 @@ impl Ocr {
     }
 }
 
-/// Graustufen mit gestrecktem Kontrast, bei Bedarf vergrößert.
-fn prepare(image: &Image, scale: u32) -> Image {
+/// Graustufen mit gestrecktem Kontrast, weich (bilinear) vergrößert – kantige Pixel
+/// verschlechtern die Erkennung kleiner Schrift.
+fn prepare(image: &Image, scale: u32, invert: bool) -> Image {
     let gray = image.gray();
     let (lo, hi) = gray.iter().fold((255u8, 0u8), |(lo, hi), &v| (lo.min(v), hi.max(v)));
-    let range = (hi.saturating_sub(lo)).max(1) as u32;
-    let stretch = |v: u8| (((v.saturating_sub(lo)) as u32 * 255) / range) as u8;
+    let range = (hi.saturating_sub(lo)).max(1) as f32;
+    let (sw, sh) = (image.width as usize, image.height as usize);
+    let at = |x: usize, y: usize| (gray[y.min(sh - 1) * sw + x.min(sw - 1)].saturating_sub(lo)) as f32 * 255.0 / range;
 
     let (w, h) = (image.width * scale, image.height * scale);
     let mut bgra = Vec::with_capacity((w * h * 4) as usize);
     for y in 0..h {
+        let fy = ((y as f32 + 0.5) / scale as f32 - 0.5).max(0.0);
+        let (y0, ty) = (fy as usize, fy.fract());
         for x in 0..w {
-            let v = stretch(gray[((y / scale) * image.width + x / scale) as usize]);
+            let fx = ((x as f32 + 0.5) / scale as f32 - 0.5).max(0.0);
+            let (x0, tx) = (fx as usize, fx.fract());
+            let top = at(x0, y0) * (1.0 - tx) + at(x0 + 1, y0) * tx;
+            let bottom = at(x0, y0 + 1) * (1.0 - tx) + at(x0 + 1, y0 + 1) * tx;
+            let mut v = (top * (1.0 - ty) + bottom * ty).round().clamp(0.0, 255.0) as u8;
+            if invert {
+                v = 255 - v;
+            }
             bgra.extend_from_slice(&[v, v, v, 255]);
         }
     }

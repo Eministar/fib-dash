@@ -66,6 +66,13 @@ pub async fn restore_tweak(state: State<'_, AppState>, id: String, force: Option
 }
 
 #[tauri::command]
+pub async fn reset_tweak_to_default(state: State<'_, AppState>, id: String) -> TweakResult<ApplyResult> {
+    let id = parse(&id)?;
+    let service = state.tweaks.clone();
+    blocking(move || service.reset_to_default(id)).await
+}
+
+#[tauri::command]
 pub async fn restore_all_tweaks(state: State<'_, AppState>, force: Option<bool>) -> TweakResult<RestoreResult> {
     let service = state.tweaks.clone();
     blocking(move || service.restore_all(force.unwrap_or(false))).await

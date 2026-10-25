@@ -34,7 +34,7 @@ use serde_json::Value as Json;
 use backup::BackupStore;
 use elevate::Action;
 use engine::{ApplyResult, Engine, PlannedChange, RestoreResult, TweakReport};
-use model::{meta, ErrorCode, Kind, TweakError, TweakId, TweakResult, TweakState};
+use model::{meta, ErrorCode, Kind, RuleStatus, TweakError, TweakId, TweakResult, TweakState};
 use platform::{Registry, SystemParams};
 
 pub type Elevator = Box<dyn Fn(Action, TweakId, &Path, bool) -> TweakResult<Json> + Send + Sync>;
@@ -63,6 +63,10 @@ pub struct WasdStatus {
     pub features: Vec<&'static str>,
     /// Funktionen, die Administratorrechte brauchen.
     pub admin_features: Vec<&'static str>,
+    /// Der Haupt-Toggle enthält Einstellungen, die das NERO-V-Regelwerk verbietet.
+    pub blocked_by_rules: bool,
+    /// Wie viele Einstellungen vom Windows-Standard abweichen und laut Regelwerk verboten wären.
+    pub forbidden_deviations: Vec<&'static str>,
     pub error: Option<String>,
 }
 
@@ -72,6 +76,14 @@ pub struct WasdDetails {
     pub status: WasdStatus,
     pub tweaks: Vec<TweakReport>,
     pub backup_path: String,
+}
+
+fn forbidden(id: TweakId) -> TweakError {
+    let info = meta(id);
+    TweakError::new(
+        ErrorCode::ForbiddenByRules,
+        format!("„{}“ ist nach dem NERO-V-Regelwerk verboten ({}). {}", info.name, info.server_rule.paragraphs, info.server_rule.reason),
+    )
 }
 
 pub struct Service {
@@ -175,6 +187,12 @@ impl Service {
                 .map(|r| r.meta.name)
                 .collect(),
             admin_features: all.iter().filter(|r| r.meta.needs_admin).map(|r| r.meta.name).collect(),
+            blocked_by_rules: TweakId::PROFILE.iter().any(|id| meta(*id).server_rule.status == RuleStatus::Forbidden),
+            forbidden_deviations: all
+                .iter()
+                .filter(|r| r.meta.server_rule.status == RuleStatus::Forbidden && r.deviates_from_default == Some(true))
+                .map(|r| r.meta.name)
+                .collect(),
             error: backup.err().map(|e| e.message),
         }
     }
@@ -192,9 +210,18 @@ impl Service {
         self.engine().preview(&TweakId::PROFILE)
     }
 
-    /// Haupt-Toggle an: nur das risikoarme Profil, nie Experimentelles.
+    /// Haupt-Toggle an: nur das risikoarme Profil, nie Experimentelles – und nie,
+    /// wenn das NERO-V-Regelwerk eine der Einstellungen verbietet.
     pub fn apply_profile(&self) -> TweakResult<ApplyResult> {
+        if let Some(id) = TweakId::PROFILE.into_iter().find(|id| meta(*id).server_rule.status == RuleStatus::Forbidden) {
+            return Err(forbidden(id));
+        }
         self.exclusive(TweakState::Applying, || self.engine().apply_many(&TweakId::PROFILE))
+    }
+
+    /// „Windows-Standard herstellen“ – z. B. um nach einem früheren Tweak regelkonform zu werden.
+    pub fn reset_to_default(&self, id: TweakId) -> TweakResult<ApplyResult> {
+        self.exclusive(TweakState::Applying, || self.engine().apply_default(id))
     }
 
     /// Haupt-Toggle aus: Originalwerte der Profil-Einstellungen zurück.
@@ -222,6 +249,15 @@ impl Service {
     /// Backend, damit die Warnung nicht übergangen werden kann.
     pub fn apply(&self, id: TweakId, confirmed: bool) -> TweakResult<ApplyResult> {
         let info = meta(id);
+        if info.server_rule.status == RuleStatus::Forbidden {
+            return Err(forbidden(id));
+        }
+        if info.server_rule.status == RuleStatus::TicketRequired && !confirmed {
+            return Err(TweakError::new(
+                ErrorCode::ConfirmationRequired,
+                format!("„{}“ darf auf NERO-V nur nach Freigabe per Analyse-Ticket genutzt werden ({}).", info.name, info.server_rule.paragraphs),
+            ));
+        }
         if info.own_risk && !confirmed {
             return Err(TweakError::new(
                 ErrorCode::ConfirmationRequired,

@@ -526,13 +526,18 @@ fn killclip_open_link(app: AppHandle, url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn killclip_test_marker(app: AppHandle, region: Option<killclip::screen::Region>) -> Result<f32, String> {
+    tauri::async_runtime::spawn_blocking(move || killclip::test_marker(&app, region)).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 fn killclip_set_hitmarker(app: AppHandle, region: killclip::screen::Region) -> Result<(), String> {
     killclip::save_hitmarker_template(&app, region)
 }
 
 #[tauri::command]
-async fn killclip_test_feed(app: AppHandle, region: killclip::screen::Region, name: String) -> Result<killclip::FeedTest, String> {
-    tauri::async_runtime::spawn_blocking(move || killclip::test_killfeed(&app, region, &name))
+async fn killclip_test_feed(app: AppHandle, region: killclip::screen::Region) -> Result<killclip::FeedTest, String> {
+    tauri::async_runtime::spawn_blocking(move || killclip::test_killfeed(&app, region))
         .await
         .map_err(|e| e.to_string())?
 }
@@ -544,6 +549,9 @@ pub fn run() {
         std::process::exit(tweaks::elevate::helper_main(&args[2..]));
     }
     tauri::Builder::default()
+        // Nur eine Instanz: Ein zweiter Start holt das laufende Fenster nach vorne – sonst
+        // würden zwei Kill-Erkennungen gleichzeitig laufen und doppelt posten.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main_window(app)))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
@@ -658,6 +666,7 @@ pub fn run() {
             tweaks::commands::apply_tweak,
             tweaks::commands::restore_tweak,
             tweaks::commands::restore_all_tweaks,
+            tweaks::commands::reset_tweak_to_default,
             tweaks::commands::get_input_devices,
             tweaks::commands::measure_polling_rate,
             killclip_status,
@@ -670,6 +679,7 @@ pub fn run() {
             killclip_reveal,
             killclip_open_link,
             killclip_test_feed,
+            killclip_test_marker,
         ])
         .run(tauri::generate_context!())
         .expect("FIB Desktop konnte nicht gestartet werden");

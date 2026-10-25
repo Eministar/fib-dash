@@ -87,6 +87,17 @@ impl Value {
     }
 }
 
+/// Womit die App den Wert gesetzt hat.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Mode {
+    /// Der Tweak selbst.
+    #[default]
+    Tweak,
+    /// „Windows-Standard herstellen“ (z. B. um regelkonform zu werden).
+    WindowsDefault,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Entry {
@@ -97,6 +108,9 @@ pub struct Entry {
     pub original: Value,
     /// Was die App zuletzt gesetzt hat.
     pub applied: Value,
+    /// Ältere Sicherungen kennen das Feld nicht – dann war es der Tweak.
+    #[serde(default)]
+    pub mode: Mode,
     pub created_at: String,
     pub created_at_ms: u64,
     pub app_version: String,

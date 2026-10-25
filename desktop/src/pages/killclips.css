@@ -91,3 +91,7 @@ kbd {
 .kc-test-line .icon { width: 16px; height: 16px; flex-shrink: 0; }
 .kc-test-line.hit { color: var(--colorNeutralForeground1); }
 .kc-test-line.hit .icon { color: var(--ok); }
+.kc-test-line.death .icon { color: var(--colorPaletteRedForeground1); }
+.kc-test-sep { width: 100%; border: 0; border-top: 1px solid var(--card-stroke); margin: 4px 0; }
+.kc-event.death .kc-event-icon { color: var(--colorPaletteRedForeground1); }
+.kc-event.warning .kc-event-icon { color: var(--colorPaletteYellowForeground2); }

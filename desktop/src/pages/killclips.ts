@@ -20,7 +20,8 @@ const DEFAULT_CONFIG: KillClipConfig = {
   playerName: '',
   killfeed: null,
   hitmarker: null,
-  hitmarkerThreshold: 0.75,
+  hitmarkerThreshold: 0.25,
+  useMarker: true,
   mergeSeconds: 60,
   preSeconds: 3,
   postSeconds: 3,
@@ -85,26 +86,26 @@ function renderStatus() {
 
 function renderConfig() {
   const c = config()
-  const parts = [c.killfeed ? 'Kill-Feed festgelegt' : 'Kill-Feed fehlt', c.hitmarker ? 'Hitmarker festgelegt' : 'kein Hitmarker']
+  const parts = [
+    c.killfeed ? 'Bereich festgelegt – erkennt „Du hast … getötet“' : 'Bereich fehlt',
+    c.useMarker ? (c.hitmarker ? 'Kill-Marker angelernt' : 'Kill-Marker in der Bildmitte') : '',
+  ].filter(Boolean)
   $('kc-setup-state').textContent = parts.join(' · ')
-  const name = $<HTMLElement & { value: string }>('kc-name')
-  if (document.activeElement !== name) name.value = c.playerName
+  ;($('kc-marker') as HTMLElement & { checked: boolean }).checked = c.useMarker
   selectValue($<DropdownElement>('kc-padding'), String(c.preSeconds))
   selectValue($<DropdownElement>('kc-merge'), String(c.mergeSeconds))
   ;($('kc-delete') as HTMLElement & { checked: boolean }).checked = c.deleteSource
   $('kc-clipper').textContent = clipperName(state.settings?.settings.clipper)
 
-  const ready = (!!c.killfeed && !!c.playerName.trim()) || !!c.hitmarker
-  showMessage(
-    'kc-info',
-    ready ? null : 'Richte zuerst die Erkennung ein: Kill-Feed-Bereich und deinen Namen (oder den Hitmarker).',
-  )
+  showMessage('kc-info', c.killfeed ? null : 'Richte zuerst den Kill-Feed ein: Bereich, in dem „Du hast … getötet“ erscheint.')
 }
 
 // ── Verlauf ──────────────────────────────────────────────────────────
 
 const EVENT_ICON: Record<KillClipEvent['kind'], IconName> = {
   kill: 'target',
+  death: 'dismiss',
+  warning: 'warning',
   rendered: 'filmstrip',
   uploaded: 'checkmarkCircle',
   error: 'errorCircle',
@@ -159,29 +160,35 @@ function placeRects() {
 
 async function runFeedTest() {
   const box = $('kc-test')
-  const name = textOf('kc-name').trim()
-  if (!draft.killfeed || !shot) {
+  if (!shot) {
     box.hidden = true
     return
   }
   box.hidden = false
-  box.innerHTML = `<span class="muted">Lese den Kill-Feed …</span>`
+  box.innerHTML = `<span class="muted">Lese den Screenshot …</span>`
   try {
-    const result = await backend.killClipTestFeed(draft.killfeed, name)
-    const lines = result.lines.length
-      ? result.lines
-          .map((line) => {
-            const kill = result.kills.includes(line)
-            return `<div class="kc-test-line ${kill ? 'hit' : ''}">${icon(kill ? 'checkmarkCircle' : 'dismiss')}<span>${escapeHtml(line)}</span>${kill ? '<span class="pill tone-success">dein Kill</span>' : ''}</div>`
-          })
-          .join('')
-      : '<span class="muted">Kein Text erkannt – Rahmen enger um den Kill-Feed ziehen.</span>'
-    const hint = !name
-      ? 'Trag noch deinen Namen ein, damit die App deine Kills erkennt.'
-      : result.kills.length
-        ? 'Passt: Diese Zeile würde als dein Kill zählen.'
-        : 'Kein eigener Kill gefunden – steht dein Name genau so im Feed?'
-    box.innerHTML = `<span class="type-body-strong">So liest die App den Kill-Feed</span>${lines}<span class="type-caption muted">${escapeHtml(hint)}</span>`
+    const parts: string[] = []
+    if (draft.killfeed) {
+      const result = await backend.killClipTestFeed(draft.killfeed)
+      const rows = [
+        ...result.kills.map((name) => `<div class="kc-test-line hit">${icon('checkmarkCircle')}<span>Kill: ${escapeHtml(name)}</span><span class="pill tone-success">Clip</span></div>`),
+        ...result.deaths.map((name) => `<div class="kc-test-line death">${icon('dismiss')}<span>Getötet von ${escapeHtml(name)}</span><span class="pill tone-subtle">kein Clip</span></div>`),
+      ]
+      const read = result.lines.length
+        ? `<span class="type-caption muted">Gelesen: ${escapeHtml(result.lines.join(' · '))}</span>`
+        : '<span class="type-caption muted">Kein Text erkannt – Rahmen enger um die Meldungen ziehen.</span>'
+      parts.push(
+        `<span class="type-body-strong">Kill-Feed</span>${rows.join('') || '<span class="muted">Keine Meldung „Du hast … getötet“ oder „Du wurdest von … getötet“ gefunden.</span>'}${read}`,
+      )
+    }
+    if (config().useMarker) {
+      const score = await backend.killClipTestMarker(draft.hitmarker)
+      const seen = score >= 0.2
+      parts.push(
+        `<span class="type-body-strong">Kill-Marker</span><div class="kc-test-line ${seen ? 'hit' : ''}">${icon(seen ? 'checkmarkCircle' : 'dismiss')}<span>${seen ? 'Türkiser Marker am Fadenkreuz erkannt' : 'Kein Marker auf diesem Screenshot'} (Wert ${score.toFixed(2)})</span></div>`,
+      )
+    }
+    box.innerHTML = parts.join('<hr class="kc-test-sep">') || '<span class="muted">Zieh einen Rahmen um den Kill-Feed.</span>'
   } catch (error) {
     box.innerHTML = `<span class="muted">${escapeHtml(errorText(error))}</span>`
   }
@@ -241,7 +248,7 @@ function bindCanvas() {
       placeRects()
       return
     }
-    if (mode === 'killfeed') void runFeedTest()
+    void runFeedTest()
   })
   window.addEventListener('resize', placeRects)
 }
@@ -270,7 +277,7 @@ async function saveSetup() {
     }
   }
   // Ohne neuen Screenshot bleibt eine bestehende Hitmarker-Vorlage gültig.
-  await saveConfig({ killfeed: draft.killfeed, hitmarker: draft.hitmarker, playerName: textOf('kc-name').trim() || config().playerName })
+  await saveConfig({ killfeed: draft.killfeed, hitmarker: draft.hitmarker })
   $<DialogElement>('kc-setup-dialog').hide()
   toast('Erkennung gespeichert')
 }
@@ -300,7 +307,7 @@ export function initKillClips() {
   $('kc-setup').addEventListener('click', () => void openSetup())
   $('kc-open-settings').addEventListener('click', () => $('nav-settings').click())
   $('kc-folder').addEventListener('click', () => void backend.killClipReveal().catch((e) => toast(errorText(e), 'error')))
-  $('kc-name').addEventListener('change', () => void saveConfig({ playerName: textOf('kc-name').trim() }))
+  $('kc-marker').addEventListener('change', () => void saveConfig({ useMarker: ($('kc-marker') as HTMLElement & { checked: boolean }).checked }))
   $('kc-padding').addEventListener('change', () => {
     const seconds = Number(($('kc-padding') as DropdownElement).value)
     if (seconds && seconds !== config().preSeconds) void saveConfig({ preSeconds: seconds, postSeconds: seconds })

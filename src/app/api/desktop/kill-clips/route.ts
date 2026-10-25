@@ -2,7 +2,9 @@ import { readFile, unlink } from 'node:fs/promises'
 import { z } from 'zod'
 import { getCurrentAuth, type CurrentUser } from '@/lib/auth'
 import { error as badRequest, success, unauthorized } from '@/lib/api-response'
+import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { DiscordApiError, findAgentClipChannel, guildUploadLimitBytes, postDiscordFile } from '@/lib/discord/discord-integration'
+import { killClipMessage } from '@/lib/discord/kill-clip-message'
 import { routeError } from '@/lib/investigations/investigations-server'
 import { consumeUploadSession, UploadSessionError } from '@/lib/media/upload-sessions'
 import { prisma } from '@/lib/prisma'
@@ -15,7 +17,7 @@ async function ownAgent(user: CurrentUser) {
       status: { not: 'TERMINATED' },
       OR: [{ userId: user.id }, ...(user.discordId ? [{ discordId: user.discordId }] : [])],
     },
-    select: { id: true, firstName: true, lastName: true },
+    select: { id: true, firstName: true, lastName: true, badgeNumber: true },
   })
 }
 
@@ -42,23 +44,15 @@ export async function GET() {
 
 const bodySchema = z.object({
   uploadId: z.string().trim().min(1).max(64),
-  /** Zeitpunkt des ersten Kills (ISO). */
+  /** Zeitpunkt des ersten und letzten Kills (ISO). */
   startedAt: z.string().datetime(),
+  endedAt: z.string().datetime().optional(),
   kills: z.number().int().min(1).max(500),
+  /** Namen der Getöteten aus dem Kill-Feed. */
+  victims: z.array(z.string().trim().min(1).max(120)).max(100).optional(),
   /** Teil x von y, wenn eine Serie auf mehrere Videos verteilt werden musste. */
   part: z.number().int().min(1).max(50).default(1),
   parts: z.number().int().min(1).max(50).default(1),
-})
-
-const timeFormat = new Intl.DateTimeFormat('de-DE', {
-  timeZone: 'Europe/Berlin',
-  weekday: 'long',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
 })
 
 /** Übernimmt einen fertigen Upload und postet ihn als Bot in den eigenen Clips-Channel. */
@@ -75,11 +69,16 @@ export async function POST(request: Request) {
     const channel = await findAgentClipChannel(agent.id)
     if (!channel) return badRequest('Für dich gibt es noch keinen Clips-Channel.')
 
-    const when = timeFormat.format(new Date(meta.startedAt)).replace(', ', ', den ').replace(/, (\d{2}:\d{2}:\d{2})$/, ' · $1 Uhr')
-    const content = [
-      `🎯 **Kill-Clip** · ${when}`,
-      `${meta.kills} ${meta.kills === 1 ? 'Kill' : 'Kills'}${meta.parts > 1 ? ` · Teil ${meta.part}/${meta.parts}` : ''}`,
-    ].join('\n')
+    const content = killClipMessage({
+      agentName: `${agent.firstName} ${agent.lastName}`,
+      badge: displayBadgeNumber(agent.badgeNumber),
+      startedAt: new Date(meta.startedAt),
+      endedAt: meta.endedAt ? new Date(meta.endedAt) : null,
+      kills: meta.kills,
+      victims: meta.victims,
+      part: meta.part,
+      parts: meta.parts,
+    })
 
     let link = ''
     await consumeUploadSession(meta.uploadId, auth.user.id, 'CLIP', async (source, extension) => {

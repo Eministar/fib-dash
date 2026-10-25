@@ -27,17 +27,20 @@ use serde_json::json;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{api, clipper, media, AppState};
-use detect::{HitmarkerTracker, KillMerger, KillfeedTracker, Source};
+use detect::{FeedEvent, HitmarkerTracker, KillMerger, KillfeedTracker, Source};
 use screen::{Image, Region, Screen};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Config {
-    /// Name, wie er im Kill-Feed steht.
+    /// Früher für die Namenssuche nötig – der NERO-V-Kill-Feed sagt „Du hast …“ selbst.
     pub player_name: String,
     pub killfeed: Option<Region>,
+    /// Bereich des Kill-Markers; ohne Angabe die Bildschirmmitte (Fadenkreuz).
     pub hitmarker: Option<Region>,
     pub hitmarker_threshold: f32,
+    /// Türkisen Kill-Marker am Fadenkreuz als zweites Signal nutzen.
+    pub use_marker: bool,
     /// Kills mit höchstens so viel Abstand landen im selben Video.
     pub merge_seconds: u32,
     pub pre_seconds: f32,
@@ -54,7 +57,8 @@ impl Default for Config {
             player_name: String::new(),
             killfeed: None,
             hitmarker: None,
-            hitmarker_threshold: 0.75,
+            hitmarker_threshold: 0.25,
+            use_marker: true,
             merge_seconds: 60,
             pre_seconds: 3.0,
             post_seconds: 3.0,
@@ -101,8 +105,15 @@ struct Event {
     at: u64,
 }
 
+/// Ein erkannter Kill; der Name kommt aus dem Kill-Feed (beim Marker allein unbekannt).
+#[derive(Clone, Debug)]
+struct Kill {
+    at: SystemTime,
+    victim: Option<String>,
+}
+
 struct Session {
-    kills: Vec<SystemTime>,
+    kills: Vec<Kill>,
 }
 
 #[derive(Default)]
@@ -162,14 +173,15 @@ impl KillClips {
         let state = app.state::<AppState>();
         let settings = state.settings.lock().unwrap().clone();
         let config = settings.kill_clip.clone();
-        let has_feed = config.killfeed.is_some() && !config.player_name.trim().is_empty();
+        let has_feed = config.killfeed.is_some();
+        // Angelernte Marker-Vorlage (optional) – passend zum festgelegten Bereich.
         let template = config
             .hitmarker
             .and_then(|_| template_path(&app))
             .and_then(|p| Image::load_bmp(&p))
-            .map(|image| image.gray());
-        if !has_feed && template.is_none() {
-            return Err("Bitte zuerst die Erkennung einrichten (Kill-Feed-Bereich mit Namen oder Hitmarker).".into());
+            .map(|image| detect::marker_mask(&image.bgra));
+        if !has_feed && !config.use_marker {
+            return Err("Bitte zuerst den Kill-Feed-Bereich festlegen (oder den Kill-Marker einschalten).".into());
         }
         if settings.clipper == crate::settings::Clipper::SelfClip && !state.recorder.is_running() {
             return Err("FIB Self-Clip nimmt gerade nicht auf – bitte in den Einstellungen prüfen.".into());
@@ -221,25 +233,21 @@ const TICK: Duration = Duration::from_millis(100);
 /// Texterkennung höchstens so oft – reicht für Kill-Feeds, die Sekunden stehen bleiben.
 const OCR_EVERY: f64 = 0.25;
 
+/// Bereich um das Fadenkreuz in der Bildschirmmitte, passend zur Auflösung.
+fn center_region(width: u32, height: u32) -> Region {
+    let size = ((64.0 * height as f32 / 1080.0).round() as u32).max(48);
+    Region { x: (width - size) / 2, y: (height - size) / 2, width: size, height: size }
+}
+
 fn watch(
     app: AppHandle,
     config: Config,
-    template: Option<Vec<u8>>,
+    template: Option<Vec<bool>>,
     running: Arc<AtomicBool>,
     status: Arc<Mutex<Status>>,
     jobs: mpsc::Sender<Session>,
 ) {
-    let name = config.player_name.trim().to_string();
-    let ocr = if config.killfeed.is_some() && !name.is_empty() { ocr::Ocr::new().ok() } else { None };
-    let mut regions = Vec::new();
-    let feed_index = config.killfeed.filter(|_| ocr.is_some()).map(|r| {
-        regions.push(r);
-        regions.len() - 1
-    });
-    let hit_index = config.hitmarker.filter(|_| template.is_some()).map(|r| {
-        regions.push(r);
-        regions.len() - 1
-    });
+    let ocr = if config.killfeed.is_some() { ocr::Ocr::new().ok() } else { None };
 
     let replay = {
         let settings = app.state::<AppState>().settings.lock().unwrap().clone();
@@ -252,14 +260,19 @@ fn watch(
 
     let started = Instant::now();
     let mut screen: Option<Screen> = None;
+    let mut regions: Vec<Region> = Vec::new();
+    let mut feed_index = None;
+    let mut marker_index = None;
     let mut feed = KillfeedTracker::default();
-    let mut hit = HitmarkerTracker::new(config.hitmarker_threshold);
+    // Mit angelernter Vorlage zählt die Überlappung, sonst die eingebaute X-Form.
+    // Feste Schwellen: Ältere Einstellungen enthalten noch den Wert der früheren Vorlagen-Erkennung.
+    let mut marker = HitmarkerTracker::new(if template.is_some() { 0.45 } else { 0.2 });
     let mut merger = KillMerger::default();
     let mut last_feed: Vec<u8> = Vec::new();
     let mut last_ocr = f64::MIN;
-    let mut session: Vec<SystemTime> = Vec::new();
+    let mut session: Vec<Kill> = Vec::new();
 
-    let flush = |session: &mut Vec<SystemTime>| {
+    let flush = |session: &mut Vec<Kill>| {
         if !session.is_empty() {
             let _ = jobs.send(Session { kills: std::mem::take(session) });
         }
@@ -271,7 +284,19 @@ fn watch(
 
         if screen.is_none() {
             match Screen::open() {
-                Ok(opened) => screen = Some(opened),
+                Ok(opened) => {
+                    // Bereiche passend zum (evtl. neuen) Monitor festlegen.
+                    regions.clear();
+                    feed_index = config.killfeed.filter(|_| ocr.is_some()).map(|r| {
+                        regions.push(r);
+                        regions.len() - 1
+                    });
+                    marker_index = config.use_marker.then(|| {
+                        regions.push(config.hitmarker.unwrap_or_else(|| center_region(opened.width, opened.height)));
+                        regions.len() - 1
+                    });
+                    screen = Some(opened);
+                }
                 Err(error) => {
                     update_status(&app, &status, |s| s.error = Some(error));
                     thread::sleep(Duration::from_secs(2));
@@ -279,32 +304,42 @@ fn watch(
                 }
             }
         }
-        let mut found = 0;
+        let mut new_kills: Vec<Kill> = Vec::new();
         match screen.as_mut().unwrap().grab(&regions, 50) {
             Ok(Some(images)) => {
+                if let Some(i) = marker_index {
+                    let image = &images[i];
+                    let mask = detect::marker_mask(&image.bgra);
+                    let score = detect::marker_score(&mask, image.width as usize, image.height as usize, template.as_deref());
+                    if marker.update(score, now) && merger.accept(Source::Hitmarker, now) {
+                        new_kills.push(Kill { at: SystemTime::now(), victim: None });
+                        emit_event(&app, "kill", "Kill erkannt (Kill-Marker)", None, None);
+                    }
+                }
                 if let (Some(i), Some(ocr)) = (feed_index, &ocr) {
                     let gray = images[i].gray();
                     if now - last_ocr >= OCR_EVERY && changed(&gray, &last_feed) {
                         last_feed = gray;
                         last_ocr = now;
                         if let Ok(lines) = ocr.read(&images[i]) {
-                            let text = lines.iter().map(|l| l.text()).collect::<Vec<_>>().join(" | ");
-                            for kill in feed.update(&lines, &name, now) {
-                                if merger.accept(Source::Killfeed, now) {
-                                    found += 1;
-                                    emit_event(&app, "kill", format!("Kill erkannt: {kill}"), None, None);
+                            for event in feed.update(&lines, now) {
+                                match event {
+                                    FeedEvent::Kill(victim) => {
+                                        if merger.accept(Source::Killfeed, now) {
+                                            new_kills.push(Kill { at: SystemTime::now(), victim: Some(victim.clone()) });
+                                        } else if let Some(kill) = new_kills.iter_mut().chain(session.iter_mut()).rev().find(|k| k.victim.is_none()) {
+                                            // Der Marker war schneller – den Namen nachtragen.
+                                            kill.victim = Some(victim.clone());
+                                        }
+                                        emit_event(&app, "kill", format!("Kill: {victim}"), None, None);
+                                    }
+                                    // Eigener Tod: nur anzeigen, kein Clip.
+                                    FeedEvent::Death(killer) => emit_event(&app, "death", format!("Getötet von {killer}"), None, None),
                                 }
                             }
-                            let mut guard = status.lock().unwrap();
-                            guard.last_feed = text;
+                            let text = lines.iter().map(|l| l.text()).collect::<Vec<_>>().join(" | ");
+                            status.lock().unwrap().last_feed = text;
                         }
-                    }
-                }
-                if let (Some(i), Some(template)) = (hit_index, &template) {
-                    let score = detect::ncc(&images[i].gray(), template);
-                    if hit.update(score, now) && merger.accept(Source::Hitmarker, now) {
-                        found += 1;
-                        emit_event(&app, "kill", "Kill erkannt (Hitmarker)", None, None);
                     }
                 }
             }
@@ -315,10 +350,8 @@ fn watch(
             }
         }
 
-        for _ in 0..found {
-            session.push(SystemTime::now());
-        }
-        if found > 0 {
+        if !new_kills.is_empty() {
+            session.extend(new_kills);
             let pending = session.len();
             update_status(&app, &status, |s| {
                 s.pending_kills = pending;
@@ -328,8 +361,8 @@ fn watch(
 
         // Serie abschließen: lange genug Ruhe – oder der Puffer des Clip-Programms läuft bald über.
         if let (Some(first), Some(last)) = (session.first(), session.last()) {
-            let since_last = last.elapsed().map(|d| d.as_secs_f64()).unwrap_or(0.0);
-            let since_first = first.elapsed().map(|d| d.as_secs_f64()).unwrap_or(0.0);
+            let since_last = last.at.elapsed().map(|d| d.as_secs_f64()).unwrap_or(0.0);
+            let since_first = first.at.elapsed().map(|d| d.as_secs_f64()).unwrap_or(0.0);
             let buffer_full = since_first + pre + 10.0 >= replay;
             if since_last >= post + 0.5 && (since_last >= merge || buffer_full) {
                 flush(&mut session);
@@ -344,7 +377,7 @@ fn watch(
 
     // Beim Beenden angefangene Serien nicht verlieren.
     if let Some(last) = session.last() {
-        let wait = (post + 0.5 - last.elapsed().map(|d| d.as_secs_f64()).unwrap_or(0.0)).max(0.0);
+        let wait = (post + 0.5 - last.at.elapsed().map(|d| d.as_secs_f64()).unwrap_or(0.0)).max(0.0);
         thread::sleep(Duration::from_secs_f64(wait));
         flush(&mut session);
     }
@@ -406,7 +439,7 @@ fn process(app: &AppHandle, target: &Target, status: &Arc<Mutex<Status>>, sessio
     let kills: Vec<f64> = session
         .kills
         .iter()
-        .map(|kill| clip_len - saved_at.duration_since(*kill).map(|d| d.as_secs_f64()).unwrap_or(0.0))
+        .map(|kill| clip_len - saved_at.duration_since(kill.at).map(|d| d.as_secs_f64()).unwrap_or(0.0))
         .collect();
     let limit = if target.channel.is_some() && target.limit_bytes > 0 { target.limit_bytes } else { 50 * 1024 * 1024 };
     let outputs = plan::plan(&kills, clip_len, config.pre_seconds as f64, config.post_seconds as f64, limit);
@@ -415,7 +448,8 @@ fn process(app: &AppHandle, target: &Target, status: &Arc<Mutex<Status>>, sessio
     }
 
     update_status(app, status, |s| s.phase = "rendering".into());
-    let first = *session.kills.first().unwrap();
+    let first = session.kills.first().unwrap().at;
+    let last = session.kills.last().unwrap().at;
     let stamp = chrono::DateTime::<chrono::Local>::from(first).format("%Y-%m-%d %H-%M-%S").to_string();
     let parts = outputs.len();
     let mut rendered = Vec::new();
@@ -436,7 +470,15 @@ fn process(app: &AppHandle, target: &Target, status: &Arc<Mutex<Status>>, sessio
             }
         };
         emit_event(app, "rendered", format!("{} gespeichert ({} Kills)", name, output.kills), None, Some(path.display().to_string()));
-        rendered.push((path, output.kills));
+        // Namen der Kills, die in diesem Video zu sehen sind.
+        let victims: Vec<String> = session
+            .kills
+            .iter()
+            .zip(&kills)
+            .filter(|(_, at)| output.ranges.iter().any(|(a, b)| **at >= *a && **at <= *b))
+            .filter_map(|(kill, _)| kill.victim.clone())
+            .collect();
+        rendered.push((path, output.kills, victims));
     }
 
     if config.delete_source {
@@ -449,10 +491,19 @@ fn process(app: &AppHandle, target: &Target, status: &Arc<Mutex<Status>>, sessio
     update_status(app, status, |s| s.phase = "uploading".into());
     let client = app.state::<AppState>().client.clone();
     let started_at = chrono::DateTime::<chrono::Utc>::from(first).to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-    for (index, (path, kills)) in rendered.iter().enumerate() {
+    let ended_at = chrono::DateTime::<chrono::Utc>::from(last).to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+    for (index, (path, kills, victims)) in rendered.iter().enumerate() {
         let link = tauri::async_runtime::block_on(async {
             let upload_id = api::upload_file(&client, path, Arc::default(), |_| {}).await?;
-            let body = json!({ "uploadId": upload_id, "startedAt": started_at, "kills": kills, "part": index + 1, "parts": parts });
+            let body = json!({
+                "uploadId": upload_id,
+                "startedAt": started_at,
+                "endedAt": ended_at,
+                "kills": kills,
+                "victims": victims,
+                "part": index + 1,
+                "parts": parts,
+            });
             let result = api::call(&client, "POST", "/api/desktop/kill-clips", Some(body)).await?;
             Ok::<_, String>(result.get("link").and_then(|l| l.as_str()).map(str::to_string))
         })?;
@@ -487,18 +538,31 @@ pub fn save_hitmarker_template(app: &AppHandle, region: Region) -> Result<(), St
 #[serde(rename_all = "camelCase")]
 pub struct FeedTest {
     pub lines: Vec<String>,
+    /// Erkannte eigene Kills (Name des Opfers).
     pub kills: Vec<String>,
+    /// Erkannte eigene Tode (Name des Gegners) – lösen keinen Clip aus.
+    pub deaths: Vec<String>,
 }
 
 /// Probelauf der Texterkennung auf dem Screenshot – zeigt, was die App liest.
-pub fn test_killfeed(app: &AppHandle, region: Region, name: &str) -> Result<FeedTest, String> {
+pub fn test_killfeed(app: &AppHandle, region: Region) -> Result<FeedTest, String> {
     let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Screenshot aufnehmen")?;
     let crop = shot.crop(region).ok_or("Bereich liegt außerhalb des Screenshots")?;
     let lines = ocr::Ocr::new()?.read(&crop)?;
+    let events: Vec<FeedEvent> = lines.iter().filter_map(detect::classify).collect();
     Ok(FeedTest {
         lines: lines.iter().map(|l| l.text()).collect(),
-        kills: lines.iter().filter(|l| detect::is_own_kill(l, name)).map(|l| l.text()).collect(),
+        kills: events.iter().filter_map(|e| if let FeedEvent::Kill(n) = e { Some(n.clone()) } else { None }).collect(),
+        deaths: events.iter().filter_map(|e| if let FeedEvent::Death(n) = e { Some(n.clone()) } else { None }).collect(),
     })
+}
+
+/// Probelauf des Kill-Markers auf dem Screenshot (Bereich um das Fadenkreuz).
+pub fn test_marker(app: &AppHandle, region: Option<Region>) -> Result<f32, String> {
+    let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Screenshot aufnehmen")?;
+    let crop = shot.crop(region.unwrap_or_else(|| center_region(shot.width, shot.height))).ok_or("Bereich liegt außerhalb des Screenshots")?;
+    let mask = detect::marker_mask(&crop.bgra);
+    Ok(detect::marker_score(&mask, crop.width as usize, crop.height as usize, None))
 }
 
 #[cfg(test)]
@@ -508,22 +572,26 @@ mod tests {
     /// Liest ein Kill-Feed-Bild (Pfad in `FIB_KILLFEED_BMP`) mit der Windows-OCR.
     #[test]
     #[ignore]
-    fn ocr_reads_killfeed_and_finds_own_kill() {
+    fn ocr_reads_nerov_notifications() {
         let path = std::env::var("FIB_KILLFEED_BMP").expect("FIB_KILLFEED_BMP setzen");
         let image = Image::load_bmp(std::path::Path::new(&path)).expect("BMP lesbar");
+        let ocr = ocr::Ocr::new().unwrap();
+        for scale in [1, 2, 3, 4] {
+            for invert in [false, true] {
+                let lines = ocr.read_with(&image, scale, invert).unwrap();
+                let found: Vec<_> = lines.iter().filter_map(detect::classify).collect();
+                println!("Variante {scale}x{}: {found:?}", if invert { " invertiert" } else { "" });
+            }
+        }
         let started = Instant::now();
-        let lines = ocr::Ocr::new().unwrap().read(&image).unwrap();
+        let lines = ocr.read(&image).unwrap();
         println!("OCR in {:?}:", started.elapsed());
         for line in &lines {
-            println!("  {:?} → eigener Kill: {}", line.text(), detect::is_own_kill(line, "Perez"));
+            println!("  {:?} → {:?}", line.text(), detect::classify(line));
         }
-        let kills: Vec<_> = lines.iter().filter(|l| detect::is_own_kill(l, "Perez")).collect();
-        assert_eq!(kills.len(), 1, "genau der Kill von Perez, nicht sein Tod");
-        assert!(normalize_contains(&kills[0].text(), "tonyvagos"));
-    }
-
-    fn normalize_contains(text: &str, needle: &str) -> bool {
-        detect::normalize(text).contains(needle)
+        let events: Vec<FeedEvent> = lines.iter().filter_map(detect::classify).collect();
+        assert!(events.iter().any(|e| matches!(e, FeedEvent::Kill(_))), "Kill erkannt");
+        assert!(events.iter().any(|e| matches!(e, FeedEvent::Death(_))), "Tod erkannt");
     }
 
     /// Echter Bildschirm: Screenshot und kleiner Ausschnitt über DXGI.

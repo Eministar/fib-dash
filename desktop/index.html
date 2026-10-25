@@ -245,13 +245,13 @@
         <div class="setting-group">
           <div class="setting-row">
             <span class="setting-icon"><i data-icon="screenshot"></i></span>
-            <div class="setting-text"><span>Kill-Feed und Hitmarker</span><span class="type-caption muted" id="kc-setup-state">Noch nicht eingerichtet</span></div>
+            <div class="setting-text"><span>Kill-Feed</span><span class="type-caption muted" id="kc-setup-state">Noch nicht eingerichtet</span></div>
             <fluent-button id="kc-setup" class="setting-control">Einrichten …</fluent-button>
           </div>
           <div class="setting-row">
-            <span class="setting-icon"><i data-icon="person"></i></span>
-            <div class="setting-text"><span>Dein Name im Kill-Feed</span><span class="type-caption muted">Genau so, wie er im Spiel angezeigt wird</span></div>
-            <fluent-text-input id="kc-name" class="setting-control kc-name" placeholder="z. B. Perez"></fluent-text-input>
+            <span class="setting-icon"><i data-icon="target"></i></span>
+            <div class="setting-text"><span>Türkiser Kill-Marker am Fadenkreuz</span><span class="type-caption muted">Zweites Signal, falls die Meldung im Kill-Feed verpasst wird</span></div>
+            <fluent-switch id="kc-marker" class="setting-control" aria-label="Kill-Marker nutzen"></fluent-switch>
           </div>
         </div>
 
@@ -383,14 +383,14 @@
       <fluent-button slot="close" appearance="transparent" icon-only aria-label="Schließen"><i data-icon="dismiss"></i></fluent-button>
       <div class="kc-setup">
         <ol class="kc-steps type-body">
-          <li>Geh ins Spiel und warte, bis <strong>ein eigener Kill im Kill-Feed</strong> steht (oder der Kill-Hitmarker zu sehen ist).</li>
+          <li>Geh ins Spiel und warte, bis die Meldung <strong>„Du hast … getötet“</strong> zu sehen ist.</li>
           <li>Drück <kbd id="kc-hotkey">Strg+Alt+K</kbd> – die App macht einen Screenshot, ohne das Spiel zu stören.</li>
-          <li>Zieh hier einen Rahmen um den Kill-Feed bzw. um den Hitmarker.</li>
+          <li>Zieh hier einen Rahmen um den Bereich, in dem diese Meldungen erscheinen. Der Probelauf zeigt sofort, was die App liest – „Du wurdest von … getötet“ zählt nie als Kill.</li>
         </ol>
         <div class="kc-setup-bar">
           <fluent-tablist id="kc-mode" size="small" activeid="kc-mode-feed">
             <fluent-tab id="kc-mode-feed">Kill-Feed-Bereich</fluent-tab>
-            <fluent-tab id="kc-mode-hit">Hitmarker</fluent-tab>
+            <fluent-tab id="kc-mode-hit">Kill-Marker (optional)</fluent-tab>
           </fluent-tablist>
           <span class="spacer"></span>
           <fluent-button id="kc-shot-now" appearance="subtle"><i data-icon="screenshot" slot="start"></i>Jetzt aufnehmen</fluent-button>
@@ -402,7 +402,7 @@
           </div>
           <img id="kc-shot" alt="" hidden draggable="false">
           <div class="kc-rect feed" id="kc-rect-feed" hidden><span>Kill-Feed</span></div>
-          <div class="kc-rect hit" id="kc-rect-hit" hidden><span>Hitmarker</span></div>
+          <div class="kc-rect hit" id="kc-rect-hit" hidden><span>Kill-Marker</span></div>
         </div>
         <div class="kc-test" id="kc-test" hidden></div>
       </div>

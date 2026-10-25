@@ -40,7 +40,8 @@ function renderStatus() {
     install.textContent = 'Einrichten'
   } else if (status.running) {
     const c = config()
-    text.textContent = `Nimmt im Hintergrund auf · ${status.encoder ?? 'Grafikkarte'} · ${c.fps} fps · ${minutes(status.bufferedSeconds)} von ${minutes(c.bufferSeconds)} im Puffer`
+    const sound = c.audio ? ` · Ton: ${status.audioSource ?? '–'}` : ''
+    text.textContent = `Nimmt im Hintergrund auf · ${status.encoder ?? 'Grafikkarte'} · ${c.fps} fps · ${minutes(status.bufferedSeconds)} von ${minutes(c.bufferSeconds)} im Puffer${sound}`
   } else {
     text.textContent = status.error ?? 'Aufnahme ist gestoppt.'
   }
