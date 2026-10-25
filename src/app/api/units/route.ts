@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 
+import { agentUnitKeys } from '@/lib/agents/agent-units'
 import { success, error, unauthorized } from '@/lib/api-response'
 import { requireAuth, requirePermission, type CurrentUser } from '@/lib/auth'
 import { queueAllAgentRoleSync } from '@/lib/discord/discord-integration'
@@ -68,19 +69,19 @@ export async function GET(req: NextRequest) {
     orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
   })
 
-  const agentCounts = includeCounts
-    ? await Promise.all(units.map((unit) => prisma.agent.count({
-        where: {
-          status: { not: 'TERMINATED' },
-          OR: [
-            { unit: unit.key },
-            { units: { array_contains: unit.key } },
-          ],
-        },
-      })))
-    : []
+  // Gleiche Zählweise wie /api/unit-groups und das Löschen einer Unit (agentUnitKeys)
+  const agentCountsByKey = new Map<string, number>()
+  if (includeCounts) {
+    const agents = await prisma.agent.findMany({
+      where: { status: { not: 'TERMINATED' } },
+      select: { unit: true, units: true },
+    })
+    for (const agent of agents) {
+      for (const key of agentUnitKeys(agent)) agentCountsByKey.set(key, (agentCountsByKey.get(key) ?? 0) + 1)
+    }
+  }
 
-  return success(units.map((unit, index) => {
+  return success(units.map((unit) => {
     const { _count, ...unitData } = unit
     return {
       ...unitData,
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest) {
       ])),
       ...(includeCounts ? {
         assignmentCounts: {
-          agents: agentCounts[index] ?? 0,
+          agents: agentCountsByKey.get(unit.key) ?? 0,
           directUsers: _count.userAssignments,
         },
       } : {}),

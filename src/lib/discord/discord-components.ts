@@ -67,9 +67,19 @@ export function componentMessage(
   }
 }
 
+/** Einheitliches Zeilenformat aller Meldungen: Emoji in Inline-Code, `›` als Trenner zum Text. */
+export function iconLine(icon: string, text: string) {
+  return `\`${icon}\` › ${text}`
+}
+
+/** Zwischenüberschrift im selben Format wie die Zeilen. */
+export function markdownSubheading(icon: string, title: string) {
+  return `### ${iconLine(icon, title)}`
+}
+
 /** Titelzeile; der Betreff (meist ein Name) steht fett darunter statt in derselben Zeile. */
 export function markdownHeader(icon: string, title: string, subject?: string | null) {
-  return `## ${icon} ${title}${subject?.trim() ? `\n**${markdownPlain(subject.trim())}**` : ''}`
+  return `# ${icon} ${title}${subject?.trim() ? `\n**${markdownPlain(subject.trim())}**` : ''}`
 }
 
 const ROW_ICONS: Record<string, string> = {
@@ -167,9 +177,9 @@ export function markdownRows(rows: Array<{ label: string; value: string | null |
       const value = row.value.trim()
       // Längere Freitexte (Begründungen, Notizen) lesen sich als Zitat besser als als Code.
       if (value.includes('\n') || value.length > LONG_VALUE_CHARS) {
-        return `${icon} **${row.label}**\n${markdownQuote(value.replace(/\*\*/g, ''))}`
+        return `${iconLine(icon, `**${row.label}**`)}\n${markdownQuote(value.replace(/\*\*/g, ''))}`
       }
-      return `${icon} **${row.label}:** ${markdownPlain(value.replace(/\*\*/g, ''))}`
+      return iconLine(icon, `**${row.label}:** ${markdownPlain(value.replace(/\*\*/g, ''))}`)
     })
     .join('\n')
 }

@@ -80,12 +80,12 @@ test('events use the app-wide component message design, not raw embeds', () => {
   assert.equal(added.flags, DISCORD_COMPONENTS_V2_FLAG)
   assert.deepEqual(added.allowed_mentions, { parse: [] })
   const text = renderComponents(added)
-  assert.match(text, /## ➕ Mitglied hinzugefügt\n\*\*Nord\*\*/)
+  assert.match(text, /# ➕ Mitglied hinzugefügt\n\*\*Nord\*\*/)
   assert.match(text, /> A hat B zur Gruppe hinzugefügt\./)
   assert.match(text, new RegExp(`-# <t:${Math.floor(createdAt.getTime() / 1000)}:f>`))
-  assert.match(renderComponents(groupEventMessage({ kind: 'removed', text: 'x', createdAt }, 'Nord')), /## ➖ Mitglied entfernt/)
+  assert.match(renderComponents(groupEventMessage({ kind: 'removed', text: 'x', createdAt }, 'Nord')), /# ➖ Mitglied entfernt/)
   // An unknown kind must still produce a valid message rather than throw.
-  assert.match(renderComponents(groupEventMessage({ kind: 'kaputt', text: 'x', createdAt }, 'Nord')), /## ℹ️ Ermittlungsgruppe/)
+  assert.match(renderComponents(groupEventMessage({ kind: 'kaputt', text: 'x', createdAt }, 'Nord')), /# ℹ️ Ermittlungsgruppe/)
 })
 
 test('the pinned overview lists every family with its leadership and all members', () => {
@@ -101,11 +101,12 @@ test('the pinned overview lists every family with its leadership and all members
       { id: 'b', displayName: 'Bob', discordId: null },
     ],
   }))
-  assert.match(text, /## 🗂️ Ermittlungsgruppe\n\*\*Nord\*\*/)
-  assert.match(text, /\*\*Familie Cabrera\*\* — <@111111111111111111>/)
+  assert.match(text, /# 🗂️ Ermittlungsgruppe\n\*\*Nord\*\*/)
+  assert.match(text, /`👪` › \*\*Familie Cabrera\*\* · <@111111111111111111>/)
   // A member without a linked Discord account falls back to the display name.
-  assert.match(text, /\*\*Familie Okafor\*\* — <@111111111111111111> & Bob/)
-  assert.match(text, /\*\*Familie Petrov\*\* — Nicht mehr in der Gruppe/)
+  assert.match(text, /\*\*Familie Okafor\*\* · <@111111111111111111> & Bob/)
+  assert.match(text, /\*\*Familie Petrov\*\* · Nicht mehr in der Gruppe/)
+  assert.match(text, /`👤` › Bob/)
   assert.match(text, /3 Familien · 2 Mitglieder · Stand <t:\d+:f>/)
 })
 

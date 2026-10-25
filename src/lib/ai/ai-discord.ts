@@ -3,7 +3,7 @@ import { getUserByDiscordId, type CurrentUser } from '../auth'
 import { hasPermission } from '../permissions'
 import { createAuditLog } from '../audit/audit'
 import { isUniqueConstraintError } from '../core/prisma-errors'
-import { actionRow, componentMessage, textDisplay } from '../discord/discord-components'
+import { actionRow, componentMessage, iconLine, textDisplay } from '../discord/discord-components'
 import { DiscordApiError, discordFetch, postChannelMessage, queueDiscordInvestigationEvent } from '../discord/discord-integration'
 import { describeActions, hasChanges, NO_ACTIONS, readActions, type ProposalActions } from './ai-proposal-actions'
 import { AiError, isAiEnabled, planFromMessage, suggestText } from './ai-server'
@@ -37,7 +37,7 @@ export function aiProposalMessage(input: {
   actions?: ProposalActions
 }) {
   const actions = input.actions ?? NO_ACTIONS
-  const entry = input.content ? `**${input.title}**\n${input.content}` : ''
+  const entry = input.content ? `${iconLine('📝', `**${input.title}**`)}\n${input.content}` : ''
   const changes = describeActions(actions)
   const hints = [
     actions.unresolved.length ? `Nicht zugeordnet: ${actions.unresolved.join(' · ')}` : '',
@@ -45,9 +45,9 @@ export function aiProposalMessage(input: {
     input.note ?? '',
   ].filter(Boolean).map((hint) => `-# ${hint}`)
   const body = [
-    `-# 🤖 Vorschlag für die Akte · <@${input.requesterDiscordId}>`,
+    `-# ${iconLine('🤖', `Vorschlag für die Akte · <@${input.requesterDiscordId}>`)}`,
     entry,
-    changes.length ? `${entry ? '\n' : ''}**Änderungen**\n${changes.join('\n')}` : '',
+    changes.length ? `${entry ? '\n' : ''}${iconLine('🛠️', '**Änderungen**')}\n${changes.join('\n')}` : '',
     ...hints,
   ].filter(Boolean).join('\n')
   return {

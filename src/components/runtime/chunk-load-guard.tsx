@@ -17,11 +17,17 @@ export function isChunkLoadProblem(value: unknown) {
   return /ChunkLoadError|Loading chunk|Failed to load chunk|\/_next\/static\/chunks\//i.test(text)
 }
 
+// Guard und Fehlergrenzen melden denselben Chunk-Fehler oft gleichzeitig –
+// läuft der Reload schon, sollen sie keine zweite Meldung schicken.
+let reloadPending = false
+
 export function reloadOnce(reason: string) {
   if (typeof window === 'undefined') return false
+  if (reloadPending) return true
   const lastReload = Number(sessionStorage.getItem(RELOAD_KEY) || '0')
   if (Date.now() - lastReload < RELOAD_WINDOW_MS) return false
 
+  reloadPending = true
   sessionStorage.setItem(RELOAD_KEY, String(Date.now()))
   fetch('/api/runtime-events', {
     method: 'POST',

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { hasPermission } from '../permissions'
 import { displayBadgeNumber } from '../agents/badge-number'
-import { componentMessage, markdownHeader, markdownMeta, markdownQuote, markdownTextDisplays } from '../discord/discord-components'
+import { componentMessage, iconLine, markdownHeader, markdownMeta, markdownQuote, markdownSubheading, markdownTextDisplays } from '../discord/discord-components'
 
 export function canManageLeadershipGroups(user: { permissions?: string[] | null } | null) {
   return hasPermission(user, 'leadership-groups:manage')
@@ -127,16 +127,16 @@ export function groupOverviewMessage(group: { name: string; families: Leadership
     return member ? mention(member.discordId) ?? member.displayName : 'Nicht mehr in der Gruppe'
   }
   const families = group.families.length
-    ? group.families.map(family => `- **${family.name}** — ${family.leadIds.map(label).join(' & ') || 'Keine Leitung'}`).join('\n')
+    ? group.families.map(family => iconLine('👪', `**${family.name}** · ${family.leadIds.map(label).join(' & ') || 'Keine Leitung'}`)).join('\n')
     : '-# Noch keine Familien zugewiesen.'
   const members = group.members.length
-    ? group.members.map(member => `- ${mention(member.discordId) ?? member.displayName}`).join('\n')
+    ? group.members.map(member => iconLine('👤', mention(member.discordId) ?? member.displayName)).join('\n')
     : '-# Noch keine Mitglieder.'
   return componentMessage(markdownTextDisplays([
     markdownHeader('🗂️', 'Ermittlungsgruppe', group.name),
-    '### `👥` Familien & Leitungen',
+    markdownSubheading('👥', 'Familien & Leitungen'),
     families,
-    '### `🧑‍🤝‍🧑` Mitglieder',
+    markdownSubheading('🧑‍🤝‍🧑', 'Mitglieder'),
     members,
     markdownMeta([
       `${group.families.length} Familien`,

@@ -254,10 +254,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const unitKeys = 'units' in parsed.data
       ? normalizeUnitKeys(parsed.data.units)
       : ('unit' in parsed.data && parsed.data.unit ? normalizeUnitKeys([parsed.data.unit]) : undefined)
-    if (unitKeys && unitKeys.length > 0) {
-      const activeUnits = await prisma.unit.findMany({ where: { key: { in: unitKeys }, active: true } })
+    // Nur neu hinzugefügte Units müssen aktiv sein — bereits zugewiesene, inzwischen
+    // deaktivierte Units dürfen das Speichern des restlichen Formulars nicht blockieren
+    const existingUnitKeys = new Set(agentUnitKeys(existing))
+    const addedUnitKeys = unitKeys?.filter((key) => !existingUnitKeys.has(key)) ?? []
+    if (addedUnitKeys.length > 0) {
+      const activeUnits = await prisma.unit.findMany({ where: { key: { in: addedUnitKeys }, active: true } })
       const activeKeys = new Set(activeUnits.map((unit) => unit.key))
-      const missing = unitKeys.find((key) => !activeKeys.has(key))
+      const missing = addedUnitKeys.find((key) => !activeKeys.has(key))
       if (missing) return error('Unit nicht gefunden')
     }
 

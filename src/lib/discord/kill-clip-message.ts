@@ -4,6 +4,8 @@
  * eigenen Zeitzone, dazu „vor 5 Minuten“.
  */
 
+import { iconLine } from './discord-components'
+
 export type KillClipMessageInput = {
   agentName: string
   badge: string
@@ -39,10 +41,10 @@ export function killClipMessage(input: KillClipMessageInput) {
   const more = names.length > MAX_VICTIMS ? ` und ${names.length - MAX_VICTIMS} weitere` : ''
 
   return [
-    `## 🎯 Kill-Clip · ${kills}${part}`,
-    `👤 **${escapeDiscord(input.agentName)}** (${escapeDiscord(input.badge)})`,
-    `🕒 ${time} (<t:${start}:R>)`,
-    shown.length ? `☠️ ${shown.join(' · ')}${more}` : '',
+    `# 🎯 Kill-Clip · ${kills}${part}`,
+    iconLine('👤', `**${escapeDiscord(input.agentName)}** (${escapeDiscord(input.badge)})`),
+    iconLine('🕒', `${time} (<t:${start}:R>)`),
+    shown.length ? iconLine('☠️', `${shown.join(' · ')}${more}`) : '',
     '-# Je 3 Sekunden vor und nach jedem Kill · automatisch von FIB Desktop',
   ]
     .filter(Boolean)

@@ -3,7 +3,7 @@
  * angepinnte Übersicht und kurze Verlaufsmeldungen. Reine Logik ohne
  * Datenbank und Netzwerk, damit Aufbau und Längen testbar sind.
  */
-import { actionRow, componentMessage, linkButton, mediaGallery, separator, textDisplay } from '@/lib/discord/discord-components'
+import { actionRow, componentMessage, iconLine, linkButton, markdownRows, markdownSubheading, mediaGallery, separator, textDisplay } from '@/lib/discord/discord-components'
 import { INVESTIGATION_PRIORITY_LABELS, INVESTIGATION_STATUS_LABELS } from '@/lib/investigations/investigations'
 
 export type InvestigationStatusKey = keyof typeof INVESTIGATION_STATUS_LABELS
@@ -63,13 +63,13 @@ export type InvestigationCardData = {
 /** Startnachricht eines Akten-Beitrags; wird bei jeder Änderung neu geschrieben. */
 export function investigationCard(data: InvestigationCardData) {
   const facts = [
-    `${STATUS_ICON[data.status]} **${INVESTIGATION_STATUS_LABELS[data.status]}**　${PRIORITY_ICON[data.priority]} Priorität ${INVESTIGATION_PRIORITY_LABELS[data.priority]}`,
-    `🕵️ **Fallführung** ${data.leadAgentName ?? '_nicht zugewiesen_'}`,
-    `👥 ${data.assigneeCount} Ermittler　📝 ${data.entryCount} Einträge　🎥 ${data.clipCount} Clips`,
+    `${iconLine(STATUS_ICON[data.status], `**${INVESTIGATION_STATUS_LABELS[data.status]}**`)}　${iconLine(PRIORITY_ICON[data.priority], `Priorität ${INVESTIGATION_PRIORITY_LABELS[data.priority]}`)}`,
+    iconLine('🕵️', `**Fallführung** ${data.leadAgentName ?? '_nicht zugewiesen_'}`),
+    `${iconLine('👥', `${data.assigneeCount} Ermittler`)}　${iconLine('📝', `${data.entryCount} Einträge`)}　${iconLine('🎥', `${data.clipCount} Clips`)}`,
   ].join('\n')
 
   return componentMessage([
-    textDisplay(`## ${data.title}\n-# 🗂️ Einsatzakte \`${data.caseNumber}\` · angelegt <t:${unix(data.createdAt)}:D>`),
+    textDisplay(`# ${data.title}\n-# 🗂️ Einsatzakte \`${data.caseNumber}\` · angelegt <t:${unix(data.createdAt)}:D>`),
     separator(),
     textDisplay(facts),
     ...(data.summary?.trim() ? [separator(), textDisplay(quote(clip(data.summary, 700)))] : []),
@@ -90,7 +90,7 @@ export const DOSSIER_LINK_LIMIT = 40
 
 function caseLine(item: ForumCaseLink) {
   const label = item.threadId ? `<#${item.threadId}>` : `\`${item.caseNumber}\` ${clip(item.title, 60)}`
-  return `${STATUS_ICON[item.status]} ${label}`
+  return iconLine(STATUS_ICON[item.status], label)
 }
 
 export type DossierCardData = {
@@ -104,9 +104,9 @@ export type DossierCardData = {
   url?: string
 }
 
-function caseSection(heading: string, cases: ForumCaseLink[]) {
+function caseSection(icon: string, heading: string, cases: ForumCaseLink[]) {
   if (cases.length === 0) return null
-  return `**${heading}**\n${cases.map(caseLine).join('\n')}`
+  return `${iconLine(icon, `**${heading}**`)}\n${cases.map(caseLine).join('\n')}`
 }
 
 /** Startnachricht einer Familienakte mit den Links zu allen Ermittlungs-Beiträgen. */
@@ -116,15 +116,15 @@ export function dossierCard(data: DossierCardData) {
   const done = shown.filter((item) => !running.includes(item))
   const hidden = data.cases.length - shown.length
   const facts = [
-    data.leader ? `👑 Fraktionsleiter: ${data.leader}` : null,
-    data.address ? `📍 Anwesen: ${data.address}` : null,
-    `🗂️ ${data.cases.length} Einsatzakten　👤 ${data.personCount} Personen　🚗 ${data.vehicleCount} Fahrzeuge`,
+    data.leader ? iconLine('👑', `**Fraktionsleiter:** ${data.leader}`) : null,
+    data.address ? iconLine('📍', `Anwesen: ${data.address}`) : null,
+    `${iconLine('🗂️', `${data.cases.length} Einsatzakten`)}　${iconLine('👤', `${data.personCount} Personen`)}　${iconLine('🚗', `${data.vehicleCount} Fahrzeuge`)}`,
   ].filter(Boolean).join('\n')
 
-  const links = [caseSection('Laufende Ermittlungen', running), caseSection('Abgeschlossen', done)].filter(Boolean).join('\n\n')
+  const links = [caseSection('🔎', 'Laufende Ermittlungen', running), caseSection('📕', 'Abgeschlossen', done)].filter(Boolean).join('\n\n')
 
   return componentMessage([
-    textDisplay(`## ${data.title}\n-# 📚 Familienakte`),
+    textDisplay(`# ${data.title}\n-# 📚 Familienakte`),
     separator(),
     textDisplay(facts),
     ...(data.description?.trim() ? [textDisplay(quote(clip(data.description, 500)))] : []),
@@ -142,10 +142,10 @@ export const OVERVIEW_LIMIT = 60
 /** Angepinnter Beitrag: alle Familienakten auf einen Blick. */
 export function dossierOverview(dossiers: OverviewDossier[]) {
   const shown = dossiers.slice(0, OVERVIEW_LIMIT)
-  const lines = shown.map((item) => `${item.threadId ? `<#${item.threadId}>` : item.title} · ${item.caseCount} Akten`)
+  const lines = shown.map((item) => iconLine('📁', `${item.threadId ? `<#${item.threadId}>` : item.title} · ${item.caseCount} Akten`))
 
   return componentMessage([
-    textDisplay('## 📚 Familienregister\n-# Alle Familien und Fraktionen – jede mit Links zu ihren Ermittlungen.'),
+    textDisplay('# 📚 Familienregister\n-# Alle Familien und Fraktionen – jede mit Links zu ihren Ermittlungen.'),
     separator(),
     textDisplay(lines.join('\n') || '_Noch keine Familienakten angelegt._'),
     ...(dossiers.length > shown.length ? [textDisplay(`-# … und ${dossiers.length - shown.length} weitere im Dashboard`)] : []),
@@ -154,14 +154,14 @@ export function dossierOverview(dossiers: OverviewDossier[]) {
 
 export type ForumEventType = 'status' | 'clip' | 'closed' | 'assignee' | 'handover' | 'entry' | 'photos'
 
-const EVENT_TITLE: Record<ForumEventType, string> = {
-  status: '🔄 Status geändert',
-  clip: '🎥 Neuer Bodycam-Clip',
-  closed: '📕 Ermittlung abgeschlossen',
-  assignee: '👤 Ermittler zugewiesen',
-  handover: '🤝 Fallführung übergeben',
-  entry: '📝 Neuer Eintrag',
-  photos: '🖼️ Neue Bilder',
+const EVENT_TITLE: Record<ForumEventType, [icon: string, title: string]> = {
+  status: ['🔄', 'Status geändert'],
+  clip: ['🎥', 'Neuer Bodycam-Clip'],
+  closed: ['📕', 'Ermittlung abgeschlossen'],
+  assignee: ['👤', 'Ermittler zugewiesen'],
+  handover: ['🤝', 'Fallführung übergeben'],
+  entry: ['📝', 'Neuer Eintrag'],
+  photos: ['🖼️', 'Neue Bilder'],
 }
 
 /** Kurze Verlaufsmeldung im Beitrag einer Akte. */
@@ -176,13 +176,11 @@ export function forumEventMessage(input: {
   /** Dateinamen der mitgeschickten Anhänge; erscheinen eingebettet unter dem Text. */
   media?: string[]
 }) {
-  const rows = (input.rows ?? [])
-    .filter((row) => row.value?.trim())
-    .map((row) => `**${row.label}** ${row.value!.trim()}`)
+  const rows = markdownRows(input.rows ?? [])
   const time = `<t:${unix(input.at ?? new Date())}:${input.dated ? 'f' : 'R'}>`
   const body = [
-    `### ${EVENT_TITLE[input.type]}`,
-    rows.length ? rows.join('\n') : null,
+    markdownSubheading(...EVENT_TITLE[input.type]),
+    rows || null,
     input.note?.trim() ? quote(clip(input.note, 1200)) : null,
     `-# ${[input.actorName, time].filter(Boolean).join(' · ')}`,
   ].filter(Boolean).join('\n')
@@ -246,7 +244,7 @@ export function caseOverview(cases: OverviewCase[]) {
     .filter(Boolean)
 
   return componentMessage([
-    textDisplay(`## 🗂️ Laufende Einsatzakten\n-# ${cases.length} ${cases.length === 1 ? 'Akte' : 'Akten'} · nach Status, mit zugehöriger Familie`),
+    textDisplay(`# 🗂️ Laufende Einsatzakten\n-# ${cases.length} ${cases.length === 1 ? 'Akte' : 'Akten'} · nach Status, mit zugehöriger Familie`),
     separator(),
     textDisplay(sections.join('\n\n') || '_Derzeit laufen keine Ermittlungen._'),
     ...(cases.length > shown.length ? [textDisplay(`-# … und ${cases.length - shown.length} weitere im Dashboard`)] : []),

@@ -14,6 +14,7 @@ import {
   resolveDutyActivityCheck,
   sendDutyActivityCheck,
 } from '@/lib/discord/discord-integration'
+import { iconLine } from '@/lib/discord/discord-components'
 import { formatDuration } from '@/lib/duty/duty-times'
 import { runAgentStatusAutomation } from '@/lib/agents/absence-status'
 
@@ -107,7 +108,7 @@ export async function clockOutByAdmin(agentId: string, actorName: string) {
   const closed = await closeOpenSession(agentId, 'admin', `⏹️ Du wurdest von ${actorName} ausgestempelt.`)
   if (!closed) throw new DutyClockError(`${agentName(agent)} ist aktuell nicht eingestempelt.`, 409)
   const duration = formatDuration(closed.clockOutAt.getTime() - closed.clockInAt.getTime())
-  await postDutyAdminLog(`⏹️ **${agentName(agent)}** wurde von **${actorName}** nach \`${duration}\` ausgestempelt.`)
+  await postDutyAdminLog(iconLine('⏹️', `**${agentName(agent)}** wurde von **${actorName}** nach \`${duration}\` ausgestempelt.`))
   return closed
 }
 
@@ -210,7 +211,7 @@ async function clockOutUnanswered(now: Date) {
     const duration = formatDuration(sentAt.getTime() - session.clockInAt.getTime())
     await resolveDutyActivityCheck(session.activityCheckChannelId, session.activityCheckMessageId,
       `⏹️ Keine Antwort erhalten – du wurdest automatisch ausgestempelt (Dienstzeit ${duration}). Stemple neu ein, falls du noch im Dienst bist.`)
-    await postDutyAdminLog(`⏹️ **${agentName(session.agent)}** wurde nach \`${duration}\` automatisch ausgestempelt (Aktivitätsabfrage unbeantwortet).`)
+    await postDutyAdminLog(iconLine('⏹️', `**${agentName(session.agent)}** wurde nach \`${duration}\` automatisch ausgestempelt (Aktivitätsabfrage unbeantwortet).`))
   }
   return changed
 }

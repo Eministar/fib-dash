@@ -2,7 +2,7 @@
  * Wöchentlicher Bericht an die Leitung. Reine Logik – Zeitfenster, Vergleich
  * und Nachrichtentext –, damit sie ohne Datenbank und Discord testbar bleibt.
  */
-import { actionRow, componentMessage, linkButton, markdownHeader, markdownMeta, markdownRows, separator, textDisplay } from '@/lib/discord/discord-components'
+import { actionRow, componentMessage, iconLine, linkButton, markdownHeader, markdownMeta, markdownRows, separator, textDisplay } from '@/lib/discord/discord-components'
 
 /** Ab dieser Stunde (Serverzeit) am Montag wird gesendet. */
 export const WEEKLY_REPORT_HOUR = 8
@@ -118,7 +118,7 @@ export function weeklyReportMessage(data: WeeklyReportData, statisticsUrl?: stri
   ])
 
   const top = data.topDuty.length > 0
-    ? `**Meiste Dienstzeit**\n${data.topDuty.map((row, index) => `${index + 1}. ${row.name} · \`${formatDuration(row.durationMs)}\``).join('\n')}`
+    ? `${iconLine('🏆', '**Meiste Dienstzeit**')}\n${data.topDuty.map((row, index) => `${index + 1}. ${row.name} · \`${formatDuration(row.durationMs)}\``).join('\n')}`
     : null
 
   const components = [

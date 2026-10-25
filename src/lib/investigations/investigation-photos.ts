@@ -77,7 +77,7 @@ async function importMessage(channelId: string, message: DiscordPhotoMessage) {
  */
 const PHOTO_CATALOG_URL = `${(process.env.NEXT_PUBLIC_SITE_URL || 'https://nerovfib.de').replace(/\/$/, '')}/investigations/photos`
 const STICKY_TEXT = [
-  '📸 **Bildkatalog**',
+  '`📸` › **Bildkatalog**',
   'Jede Nachricht in diesem Channel wird automatisch als Bild in den Bildkatalog hochgeladen.',
   `Alle Bilder findest du unter ${PHOTO_CATALOG_URL}`,
 ].join('\n')

@@ -55,7 +55,7 @@ test('Familienakte: Leiter, Anwesen, laufende und abgeschlossene Akten getrennt,
     ],
   }))
   assert.ok(json.includes('Familienakte'))
-  assert.ok(json.includes('Fraktionsleiter: Paolo Moretti'))
+  assert.ok(json.includes('**Fraktionsleiter:** Paolo Moretti'))
   assert.ok(json.includes('Anwesen: Vinewood Hills'))
   assert.ok(json.includes('<#111>') && json.includes('<#222>'))
   assert.ok(json.includes('`ERM-3` Ohne Beitrag'))
@@ -82,7 +82,7 @@ test('Übersicht listet alle Familienakten', () => {
 test('Verlaufsmeldung: Titel, Werte ohne leere Zeilen, Notiz als Zitat', () => {
   const json = text(forumEventMessage({ type: 'handover', rows: [{ label: 'Von', value: 'A' }, { label: 'An', value: '' }], note: 'Spur offen', actorName: 'Chef' }))
   assert.ok(json.includes('Fallführung übergeben'))
-  assert.ok(json.includes('**Von** A'))
+  assert.ok(json.includes('**Von:** A'))
   assert.ok(!json.includes('**An**'))
   assert.ok(json.includes('> Spur offen'))
   assert.ok(json.includes('Chef'))
@@ -100,8 +100,8 @@ test('Meldung mit Anhängen bettet Bilder und Videos als Galerie ein', () => {
 test('Chronologie-Eintrag zeigt Art, Titel, Ort, Text und das Datum des Eintrags', () => {
   const occurredAt = new Date('2026-10-20T18:30:00Z')
   const json = text(forumEntryMessage({ kindLabel: 'Observation', title: 'Hafen beobachtet', location: 'Pier 4', content: 'Zwei Fahrzeuge', authorName: 'Agent X', occurredAt }))
-  assert.ok(json.includes('**Observation** Hafen beobachtet'))
-  assert.ok(json.includes('**Ort** Pier 4'))
+  assert.ok(json.includes('**Observation:** Hafen beobachtet'))
+  assert.ok(json.includes('**Ort:** Pier 4'))
   assert.ok(json.includes('> Zwei Fahrzeuge'))
   assert.ok(json.includes(`<t:${occurredAt.getTime() / 1000}:f>`))
   assert.ok(json.includes('Agent X'))

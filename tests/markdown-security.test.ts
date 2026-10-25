@@ -36,17 +36,17 @@ test('discord row values go into code spans while mentions and timestamps stay c
 })
 
 test('discord rows show plain values but cannot inject formatting', () => {
-  assert.equal(markdownRows([{ label: 'Grund', value: 'Fehlen' }]), '📝 **Grund:** Fehlen')
+  assert.equal(markdownRows([{ label: 'Grund', value: 'Fehlen' }]), '`📝` › **Grund:** Fehlen')
   // Formatierung aus Eingaben wird maskiert statt ausgeführt.
   assert.equal(markdownPlain('*fett* _kursiv_ ~~weg~~ ||spoiler|| [link](x)'), String.raw`\*fett\* \_kursiv\_ \~\~weg\~\~ \|\|spoiler\|\| \[link\](x)`)
   assert.equal(markdownPlain('# Überschrift'), String.raw`\# Überschrift`)
   assert.equal(markdownPlain('> Zitat'), String.raw`\> Zitat`)
   // Mentions, Zeitstempel und Links bleiben klickbar.
   assert.equal(markdownPlain('<@123456789012345678> · <t:1791000000:R> · https://a.test/x_y'), '<@123456789012345678> · <t:1791000000:R> · https://a.test/x_y')
-  assert.equal(markdownRows([{ label: 'Grund', value: '**laut**' }]), '📝 **Grund:** laut')
+  assert.equal(markdownRows([{ label: 'Grund', value: '**laut**' }]), '`📝` › **Grund:** laut')
 })
 
 test('discord header puts the subject on its own bold line', () => {
-  assert.equal(markdownHeader('📢', 'Neue Version', 'v1.2'), '## 📢 Neue Version\n**v1.2**')
-  assert.equal(markdownHeader('📢', 'Ohne Betreff'), '## 📢 Ohne Betreff')
+  assert.equal(markdownHeader('📢', 'Neue Version', 'v1.2'), '# 📢 Neue Version\n**v1.2**')
+  assert.equal(markdownHeader('📢', 'Ohne Betreff'), '# 📢 Ohne Betreff')
 })
