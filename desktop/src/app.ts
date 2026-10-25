@@ -5,7 +5,7 @@ import { displayHotkey } from './format'
 import { hotkeyInput } from './hotkey-input'
 import { renderIcons } from './icons'
 import { bodycamQueueLength, initBodycam } from './pages/bodycam'
-import { hideDuty, initDuty, showDuty } from './pages/duty'
+import { initDuty, showDuty } from './pages/duty'
 import { initSelfClip, renderSelfClip } from './pages/selfclip'
 import { initTweaks, showTweaks } from './pages/tweaks'
 import { initKillClips, showKillClips } from './pages/killclips'
@@ -30,7 +30,6 @@ function showView(view: 'login' | 'app') {
 function go(next: Route) {
   const tool = document.querySelector<HTMLElement>(`.nav-item[data-route="${next}"]`)
   if (!tool || tool.hidden) next = 'home'
-  if (route === 'duty' && next !== 'duty') hideDuty()
   if (route === 'news' && next !== 'news') hideNews()
   route = next
   for (const item of document.querySelectorAll<HTMLElement>('.nav-item[data-route]')) {
@@ -82,7 +81,6 @@ async function enterApp() {
 
 function showLogin() {
   state.context = null
-  hideDuty()
   showView('login')
 }
 

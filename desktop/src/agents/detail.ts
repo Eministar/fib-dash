@@ -80,7 +80,7 @@ function empty(text: string) {
 }
 
 function prop(label: string, value: string) {
-  return `<div class="prop"><span class="type-caption muted">${escapeHtml(label)}</span><span class="prop-value">${value}</span></div>`
+  return `<div class="prop"><span class="type-caption muted">${escapeHtml(label)}</span><span class="prop-value"><span class="prop-line">${value}</span></span></div>`
 }
 
 function date(value: string | null | undefined) {
@@ -96,7 +96,7 @@ function text(value: string | null | undefined) {
 }
 
 function stat(label: string, value: string) {
-  return `<div class="stat-tile"><span class="stat-text"><span class="type-caption muted">${escapeHtml(label)}</span><span class="type-body-strong">${escapeHtml(value)}</span></span></div>`
+  return `<div class="card stat-tile"><span class="stat-text"><span class="type-caption muted">${escapeHtml(label)}</span><span class="type-body-strong">${escapeHtml(value)}</span></span></div>`
 }
 
 /** Speichern mit Rückmeldung und frischen Daten. */
@@ -157,7 +157,7 @@ function profileHtml(a: AgentDetail) {
   const status = `${pill(STATUS[a.status as keyof typeof STATUS] ?? a.status, STATUS_TONE[a.status] ?? 'subtle')}${a.status === 'INACTIVE' && can('agents:write') ? ` ${textButton('reset-inactivity', 'Fehlzeit zurücksetzen')}` : ''}`
   return `
     <div class="two-col">
-      <div class="card col props">
+      <div class="card pad props">
         ${sectionHeader('Persönliche Daten')}
         ${prop('Name', escapeHtml(agentName(a)))}
         ${prop('Dienstnummer', `#${escapeHtml(badgeNumber(a.badgeNumber))}`)}
@@ -167,7 +167,7 @@ function profileHtml(a: AgentDetail) {
         ${prop('Markierung', a.flag ? `<span class="flag-label"><span class="flag-dot" style="background:${FLAG_COLOR[a.flag]}"></span>${escapeHtml(FLAG[a.flag as keyof typeof FLAG] ?? a.flag)}</span>` : '<span class="muted">keine</span>')}
         ${prop('Notizen', a.notes ? `<span class="prose">${escapeHtml(a.notes)}</span>` : '<span class="muted">–</span>')}
       </div>
-      <div class="card col props">
+      <div class="card pad props">
         ${sectionHeader('Kontakt & Dienst')}
         ${prop('Discord', discord)}
         ${prop('Telefonnummer', text(a.phoneNumber))}
@@ -190,7 +190,7 @@ function profileExtrasHtml() {
   return `
     ${tasks.length ? `
       ${sectionHeader('Offene Punkte', `<span class="type-caption muted">${tasks.length}</span>`)}
-      <div class="card"><div class="checklist">${tasks.map((task) => `
+      <div class="card pad"><div class="checklist">${tasks.map((task) => `
         <div class="check-row">
           ${pill(kind[task.kind], task.overdue ? 'danger' : task.inProgress ? 'brand' : 'subtle')}
           <span><span class="type-body-strong">${escapeHtml(task.title)}</span><br><span class="type-caption muted">${escapeHtml(task.detail)}${task.dueDate ? ` · fällig ${dateOnly(task.dueDate)}` : ''}</span></span>
@@ -205,7 +205,7 @@ function profileExtrasHtml() {
         </div>`).join('')}</div>` : ''}
     ${codenames ? `
       ${sectionHeader('Decknamen', codenames.current ? `<span class="type-caption">Aktuell: <span class="type-body-strong">${escapeHtml([codenames.prefix, codenames.current.name].filter(Boolean).join(' '))}</span></span>` : '')}
-      <div class="card">${codenames.items.length ? `<div class="checklist">${codenames.items.map((item) => `
+      <div class="card pad">${codenames.items.length ? `<div class="checklist">${codenames.items.map((item) => `
         <div class="check-row">
           <span>${icon('history')}</span>
           <span><span class="type-body-strong">${escapeHtml([codenames.prefix, item.codename?.name].filter(Boolean).join(' '))}</span>
@@ -242,7 +242,7 @@ function activityHtml(a: AgentDetail) {
       </div>
       ${duty.activeSession ? `<p class="type-body">${pill('Im Dienst', 'success')} seit ${date(duty.activeSession.clockInAt)}</p>` : ''}` : empty('Keine Dienstzeiten erfasst.')}
     ${sectionHeader('Abmeldungen', can('agents:write') && !terminated() ? commandButton('absence', 'add', 'Abmeldung eintragen') : '')}
-    <div class="card">${absenceRows.length ? `<div class="checklist">${absenceRows.join('')}</div>` : empty('Keine Abmeldungen.')}</div>
+    <div class="card pad">${absenceRows.length ? `<div class="checklist">${absenceRows.join('')}</div>` : empty('Keine Abmeldungen.')}</div>
     ${daily.length ? `
       ${sectionHeader('Spielzeit der letzten Tage')}
       <div class="card playtime-bars">
@@ -256,7 +256,7 @@ function careerHtml(a: AgentDetail) {
   const promotions = [...a.promotionLogs].sort((x, y) => y.createdAt.localeCompare(x.createdAt))
   return `
     ${sectionHeader('Ausbildungen', `<span class="type-caption muted">${trainings.filter((t) => t.completed).length} von ${trainings.length} abgeschlossen</span>`)}
-    <div class="card">
+    <div class="card pad">
       ${trainings.length ? `<div class="checklist">${trainings.map((row) => `
         <div class="check-row">
           <fluent-checkbox data-training="${escapeHtml(row.trainingId)}" ${row.completed ? 'checked' : ''} ${canTrain ? '' : 'disabled'}></fluent-checkbox>
@@ -266,7 +266,7 @@ function careerHtml(a: AgentDetail) {
     ${sectionHeader('Rangänderungen', can('rank-changes:manage') && !terminated()
       ? `${textButton('list-promotion', 'Zur Up-Rank-Liste')}${textButton('list-demotion', 'Zur D-Rank-Liste')}${commandButton('rank-change', 'arrowUpload', 'Rang ändern')}`
       : '')}
-    <div class="card">
+    <div class="card pad">
       ${promotions.length ? `<div class="checklist">${promotions.map((log) => {
         const up = log.newRank.sortOrder < log.oldRank.sortOrder
         return `
@@ -307,7 +307,7 @@ function licensesHtml() {
     </div>
     ${licenses.history.length ? `
       ${sectionHeader('Historie')}
-      <div class="card"><div class="checklist">${licenses.history.map((entry) => `
+      <div class="card pad"><div class="checklist">${licenses.history.map((entry) => `
         <div class="check-row">
           ${pill(entry.action === 'GRANTED' ? 'Erteilt' : 'Entzogen', entry.action === 'GRANTED' ? 'success' : 'danger')}
           <span><span class="type-body-strong">${escapeHtml(entry.licenseLabel)}</span>${entry.overrodeCooldown ? ` ${pill('Sperrfrist übersteuert', 'warning')}` : ''}${entry.bulk ? ` <span class="type-caption muted">Erstausstattung</span>` : ''}
@@ -324,7 +324,7 @@ function recordsHtml(a: AgentDetail) {
   const entries = records?.entries ?? []
   return `
     ${sectionHeader(`Akteneinträge${records ? ` · ${records.positive} positiv · ${records.negative} negativ` : ''}`, manageRecords ? commandButton('add-record', 'add', 'Eintrag hinzufügen') : '')}
-    <div class="card">
+    <div class="card pad">
       ${!records ? empty('Lade Einträge …') : entries.length ? `<div class="checklist">${entries.map((entry) => `
         <div class="check-row">
           ${pill(entry.kind === 'POSITIVE' ? 'Positiv' : 'Negativ', entry.kind === 'POSITIVE' ? 'success' : 'danger')}
@@ -333,7 +333,7 @@ function recordsHtml(a: AgentDetail) {
         </div>`).join('')}</div>` : empty('Keine Einträge.')}
     </div>
     ${sectionHeader('Notizen', manageNotes ? commandButton('add-note', 'add', 'Notiz hinzufügen') : '')}
-    <div class="card">
+    <div class="card pad">
       ${a.agentNotes.length ? `<div class="checklist">${a.agentNotes.map((note) => `
         <div class="check-row">
           <span>${icon('document')}</span>
@@ -350,7 +350,7 @@ function contractsHtml(a: AgentDetail) {
   const contracts = a.contracts ?? []
   return `
     ${sectionHeader('Verträge', manage ? commandButton('create-contract', 'add', 'Vertrag erstellen und senden') : '')}
-    <div class="card">
+    <div class="card pad">
       ${contracts.length ? `<div class="checklist">${contracts.map((c) => {
         const status = CONTRACT_STATUS[c.status] ?? { label: c.status, tone: 'subtle' }
         const detail = c.status === 'SIGNED' ? `Unterschrieben ${date(c.signedAt)}${c.signedName ? ` als ${escapeHtml(c.signedName)}` : ''}`
@@ -366,7 +366,7 @@ function contractsHtml(a: AgentDetail) {
     </div>
     ${a.jobApplication ? `
       ${sectionHeader('Bewerbung')}
-      <div class="card props">
+      <div class="card pad props">
         ${prop('Bewerber', escapeHtml(a.jobApplication.applicantDisplayName))}
         ${prop('Status', escapeHtml(a.jobApplication.statusText))}
         ${prop('Eingereicht', date(a.jobApplication.submittedAt))}
@@ -386,7 +386,7 @@ function managementHtml(a: AgentDetail) {
   ].filter(Boolean)
   return `
     ${sectionHeader('Sanktionen', canSanction && !terminated() ? commandButton('issue-sanction', 'add', 'Sanktion ausstellen') : '')}
-    <div class="card">
+    <div class="card pad">
       ${sanctions.length ? `<div class="checklist">${sanctions.map((s) => `
         <div class="check-row sanction-row">
           ${pill(SANCTION_STATUS[s.status] ?? s.status, SANCTION_TONE[s.status] ?? 'subtle')}
@@ -414,7 +414,7 @@ function historyHtml() {
   if (!timeline) return empty('Lade Verlauf …')
   if (!timeline.length) return empty('Noch keine Einträge.')
   return `
-    <div class="card"><div class="checklist">${timeline.map((entry) => `
+    <div class="card pad"><div class="checklist">${timeline.map((entry) => `
       <div class="check-row">
         <span class="timeline-dot tone-${TIMELINE_TONE[entry.tone]}"></span>
         <span>
@@ -482,6 +482,16 @@ async function reload() {
   profileExtras = null
   agent = next
   render()
+}
+
+/** Hintergrund-Aktualisierung der offenen Akte (ohne Meldung, Reiter bleibt). */
+export async function refreshOpenAgent() {
+  if (!agent) return
+  try {
+    await reload()
+  } catch {
+    // Beim nächsten Durchlauf erneut versuchen.
+  }
 }
 
 export async function openAgent(id: string) {

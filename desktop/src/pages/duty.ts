@@ -2,9 +2,7 @@ import { backend, UNAUTHORIZED, type DutyAgent, type DutyTimes } from '../backen
 import { $, errorText, escapeHtml, initials, showMessage, textOf } from '../dom'
 import { formatAgo, formatHours } from '../format'
 import { navigation } from '../store'
-
-// Solange die Seite offen ist, regelmäßig nachladen.
-const REFRESH_MS = 30_000
+import { autoRefresh } from '../ui/auto-refresh'
 
 type Filter = 'all' | 'active' | 'off'
 type Sort = 'rank' | 'week' | 'name' | 'badge'
@@ -14,7 +12,6 @@ let filter: Filter = 'all'
 let sort: Sort = 'rank'
 let rankFilter = ''
 let rankKeys = ''
-let timer: number | undefined
 let loading = false
 
 const dayFormat = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit' })
@@ -135,6 +132,8 @@ export function initDuty() {
     rankFilter = ($('duty-rank') as HTMLElement & { value: string | null }).value ?? ''
     render()
   })
+  // Solange die Seite offen und die App im Vordergrund ist, regelmäßig nachladen.
+  autoRefresh('duty', load)
   for (const [id, value] of [['duty-filter-all', 'all'], ['duty-filter-active', 'active'], ['duty-filter-off', 'off']] as const) {
     $(id).addEventListener('click', () => {
       filter = value
@@ -145,10 +144,4 @@ export function initDuty() {
 
 export function showDuty() {
   void load()
-  window.clearInterval(timer)
-  timer = window.setInterval(() => void load(), REFRESH_MS)
-}
-
-export function hideDuty() {
-  window.clearInterval(timer)
 }

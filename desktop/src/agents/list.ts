@@ -302,6 +302,17 @@ export function refreshPermissions() {
   $('ag-new').hidden = !can('agents:write')
 }
 
+/** Hintergrund-Aktualisierung: nur die Agents neu laden, Filter bleiben offen und unverändert. */
+export async function refreshList() {
+  try {
+    agents = await api.get<ListAgent[]>('/api/agents')
+    showMessage('ag-error', null)
+    render()
+  } catch {
+    // Beim nächsten Durchlauf erneut versuchen – keine Meldung für Hintergrundfehler.
+  }
+}
+
 /** Nach Änderungen in der Akte die Liste im Hintergrund auffrischen. */
 export function invalidateList() {
   void loadList()

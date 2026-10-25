@@ -734,6 +734,16 @@ async function load(id: string, resetTab = true) {
   }
 }
 
+/** Hintergrund-Aktualisierung der offenen Akte (ohne Meldung, Reiter bleibt). */
+export async function refreshOpenCase() {
+  if (!detail) return
+  const id = detail.id
+  const next = await api.get<Detail>(`/api/investigations/${id}`)
+  if (detail?.id !== id) return
+  detail = next
+  render()
+}
+
 export async function openCase(id: string) {
   $('inv-list-view').hidden = true
   $('inv-detail-view').hidden = false

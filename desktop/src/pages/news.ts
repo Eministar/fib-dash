@@ -7,6 +7,7 @@ import { formatAgo, formatDateTime } from '../format'
 import { icon } from '../icons'
 import { plainText, renderMarkdown, renderReleaseNotes, roleColored, type Mentions } from '../markdown'
 import { navigation } from '../store'
+import { autoRefresh } from '../ui/auto-refresh'
 
 // Ankündigungen aus dem Discord-Ankündigungs-Channel und die Änderungen der
 // letzten App-Versionen. Ungelesenes zählt die Navigation mit.
@@ -372,6 +373,8 @@ export function initNews() {
   box.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeLightbox()
   })
+
+  autoRefresh('news', () => load())
 
   window.setInterval(() => {
     // Nur angemeldet nachsehen (sonst gibt es keine Navigation).
