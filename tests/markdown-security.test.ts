@@ -47,6 +47,6 @@ test('discord rows show plain values but cannot inject formatting', () => {
 })
 
 test('discord header puts the subject on its own bold line', () => {
-  assert.equal(markdownHeader('📢', 'Neue Version', 'v1.2'), '# 📢 Neue Version\n**v1.2**')
-  assert.equal(markdownHeader('📢', 'Ohne Betreff'), '# 📢 Ohne Betreff')
+  assert.equal(markdownHeader('📢', 'Neue Version', 'v1.2'), '# `📢` Neue Version\n**v1.2**')
+  assert.equal(markdownHeader('📢', 'Ohne Betreff'), '# `📢` Ohne Betreff')
 })

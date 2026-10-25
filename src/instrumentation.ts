@@ -23,6 +23,8 @@ export async function register() {
     ensureDutyStatusPanelRefresher()
     const { ensureDiscordGateway } = await import('./lib/discord/discord-gateway')
     ensureDiscordGateway()
+    const { ensureDiscordRestyle } = await import('./lib/discord/discord-restyle-server')
+    ensureDiscordRestyle()
     const { ensureAgentStatusAutomationWorker } = await import('./lib/agents/absence-status')
     ensureAgentStatusAutomationWorker()
     const { ensureWeeklyReportWorker } = await import('./lib/duty/weekly-report-server')

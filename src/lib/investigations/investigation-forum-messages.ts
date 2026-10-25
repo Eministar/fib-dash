@@ -3,7 +3,7 @@
  * angepinnte Übersicht und kurze Verlaufsmeldungen. Reine Logik ohne
  * Datenbank und Netzwerk, damit Aufbau und Längen testbar sind.
  */
-import { actionRow, componentMessage, iconLine, linkButton, markdownRows, markdownSubheading, mediaGallery, separator, textDisplay } from '@/lib/discord/discord-components'
+import { actionRow, componentMessage, iconLine, linkButton, markdownRows, markdownSubheading, markdownTitle, mediaGallery, separator, textDisplay } from '@/lib/discord/discord-components'
 import { INVESTIGATION_PRIORITY_LABELS, INVESTIGATION_STATUS_LABELS } from '@/lib/investigations/investigations'
 
 export type InvestigationStatusKey = keyof typeof INVESTIGATION_STATUS_LABELS
@@ -145,7 +145,7 @@ export function dossierOverview(dossiers: OverviewDossier[]) {
   const lines = shown.map((item) => iconLine('📁', `${item.threadId ? `<#${item.threadId}>` : item.title} · ${item.caseCount} Akten`))
 
   return componentMessage([
-    textDisplay('# 📚 Familienregister\n-# Alle Familien und Fraktionen – jede mit Links zu ihren Ermittlungen.'),
+    textDisplay(`${markdownTitle('📚', 'Familienregister')}\n-# Alle Familien und Fraktionen – jede mit Links zu ihren Ermittlungen.`),
     separator(),
     textDisplay(lines.join('\n') || '_Noch keine Familienakten angelegt._'),
     ...(dossiers.length > shown.length ? [textDisplay(`-# … und ${dossiers.length - shown.length} weitere im Dashboard`)] : []),
@@ -244,7 +244,7 @@ export function caseOverview(cases: OverviewCase[]) {
     .filter(Boolean)
 
   return componentMessage([
-    textDisplay(`# 🗂️ Laufende Einsatzakten\n-# ${cases.length} ${cases.length === 1 ? 'Akte' : 'Akten'} · nach Status, mit zugehöriger Familie`),
+    textDisplay(`${markdownTitle('🗂️', 'Laufende Einsatzakten')}\n-# ${cases.length} ${cases.length === 1 ? 'Akte' : 'Akten'} · nach Status, mit zugehöriger Familie`),
     separator(),
     textDisplay(sections.join('\n\n') || '_Derzeit laufen keine Ermittlungen._'),
     ...(cases.length > shown.length ? [textDisplay(`-# … und ${cases.length - shown.length} weitere im Dashboard`)] : []),

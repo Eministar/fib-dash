@@ -77,9 +77,14 @@ export function markdownSubheading(icon: string, title: string) {
   return `### ${iconLine(icon, title)}`
 }
 
+/** Großer Titel; das Emoji steht wie in den Zeilen in Inline-Code. */
+export function markdownTitle(icon: string, title: string) {
+  return `# \`${icon}\` ${title}`
+}
+
 /** Titelzeile; der Betreff (meist ein Name) steht fett darunter statt in derselben Zeile. */
 export function markdownHeader(icon: string, title: string, subject?: string | null) {
-  return `# ${icon} ${title}${subject?.trim() ? `\n**${markdownPlain(subject.trim())}**` : ''}`
+  return `${markdownTitle(icon, title)}${subject?.trim() ? `\n**${markdownPlain(subject.trim())}**` : ''}`
 }
 
 const ROW_ICONS: Record<string, string> = {
@@ -169,11 +174,15 @@ export function markdownPlain(value: string) {
 
 const LONG_VALUE_CHARS = 90
 
+export function rowIcon(label: string) {
+  return ROW_ICONS[label] ?? '▫️'
+}
+
 export function markdownRows(rows: Array<{ label: string; value: string | null | undefined; icon?: string }>) {
   return rows
     .filter((row): row is { label: string; value: string; icon?: string } => Boolean(row.value?.trim()))
     .map((row) => {
-      const icon = row.icon ?? ROW_ICONS[row.label] ?? '▫️'
+      const icon = row.icon ?? rowIcon(row.label)
       const value = row.value.trim()
       // Längere Freitexte (Begründungen, Notizen) lesen sich als Zitat besser als als Code.
       if (value.includes('\n') || value.length > LONG_VALUE_CHARS) {

@@ -20,6 +20,7 @@ import {
   markdownHeader,
   markdownMeta,
   markdownSubheading,
+  markdownTitle,
   markdownPlain,
   markdownQuote,
   markdownRows,
@@ -1848,7 +1849,7 @@ async function buildDiscordHrEventPayload(event: DiscordHrEventInput, config: Di
   const agentUrl = agent?.id && baseUrl ? `${baseUrl}/agents/${agent.id}` : null
   const subject = headingSubject && !agentLine ? ` · ${markdownPlain(headingSubject)}` : ''
   return componentMessage([
-    textDisplay(`# ${meta.icon} ${markdownPlain(customHeading)}${subject}${agentLine ? `\n${agentLine}` : ''}`),
+    textDisplay(`${markdownTitle(meta.icon, markdownPlain(customHeading))}${subject}${agentLine ? `\n${agentLine}` : ''}`),
     ...(details.length ? [separator(), ...markdownTextDisplays(details)] : []),
     textDisplay(markdownMeta([`Erfasst von ${actorLabel}`, discordTimestamp(now, 'f')])),
     ...(agentUrl ? [actionRow([linkButton('Im Dashboard öffnen', agentUrl)])] : []),
@@ -2352,7 +2353,7 @@ async function absenceStatusPayload() {
 
   return componentMessage([
     ...markdownTextDisplays([
-      `# 📋 Abmeldungen\n-# \`${absences.length}\` aktuell abgemeldet`,
+      `${markdownTitle('📋', 'Abmeldungen')}\n-# \`${absences.length}\` aktuell abgemeldet`,
       ...listParts,
       ...leaveParts,
       markdownMeta([`Stand ${discordTimestamp(new Date(), 'f')}`]),

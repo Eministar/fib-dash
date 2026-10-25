@@ -13,7 +13,7 @@ test('Kill-Clip-Nachricht: Überschrift, Agent, Discord-Zeitstempel und Namen', 
     kills: 2,
     victims: ['NV | Aki | FIB [865]', 'Max_Muster'],
   })
-  assert.match(text, /^# 🎯 Kill-Clip · 2 Kills$/m)
+  assert.match(text, /^# `🎯` Kill-Clip · 2 Kills$/m)
   assert.match(text, /`👤` › \*\*Agent Perez\*\* \(01\)/)
   const s = Math.floor(startedAt.getTime() / 1000)
   assert.ok(text.includes(`\`🕒\` › <t:${s}:D> · <t:${s}:T> – <t:${s + 44}:T> (<t:${s}:R>)`), text)
