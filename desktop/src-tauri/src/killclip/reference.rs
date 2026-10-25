@@ -177,7 +177,7 @@ pub fn analyze(clip: &Path, at: f64, frame_path: &Path, marker_path: &Path) -> R
                     found = Some((index, region, Some(victim), line.text()));
                     break 'frames;
                 }
-                // Nur „getötet“ lesbar (z. B. „get&et“): als Vermutung merken.
+                // Nur „getötet“ lesbar: Bereich vorschlagen, aber noch kein Kill.
                 None if guess.is_none() && detect::mentions_killed(&line) && !detect::mentions_death(&line) => {
                     guess = Some((index, region, line.text()));
                 }

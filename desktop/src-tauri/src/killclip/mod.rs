@@ -28,7 +28,7 @@ use serde_json::json;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{api, clipper, media, AppState};
-use detect::{FeedEvent, HitmarkerTracker, KillMerger, KillfeedTracker, Source};
+use detect::{FeedEvent, HitmarkerTracker, KillfeedTracker};
 use screen::{Image, Region};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -40,7 +40,7 @@ pub struct Config {
     /// Bereich des Kill-Markers; ohne Angabe die Bildschirmmitte (Fadenkreuz).
     pub hitmarker: Option<Region>,
     pub hitmarker_threshold: f32,
-    /// Türkisen Kill-Marker am Fadenkreuz als zweites Signal nutzen.
+    /// Ohne eingerichteten Kill-Feed kurze Kill-Marker-Pulse auswerten.
     pub use_marker: bool,
     /// Kills mit höchstens so viel Abstand landen im selben Video.
     pub merge_seconds: u32,
@@ -282,7 +282,22 @@ fn watch(
     status: Arc<Mutex<Status>>,
     jobs: mpsc::Sender<Session>,
 ) {
-    let ocr = if config.killfeed.is_some() { ocr::Ocr::new().ok() } else { None };
+    let ocr = if config.killfeed.is_some() {
+        match ocr::Ocr::new() {
+            Ok(ocr) => Some(ocr),
+            Err(error) => {
+                running.store(false, Ordering::SeqCst);
+                update_status(&app, &status, |s| {
+                    s.running = false;
+                    s.phase = "idle".into();
+                    s.error = Some(error);
+                });
+                return;
+            }
+        }
+    } else {
+        None
+    };
 
     let replay = {
         let settings = app.state::<AppState>().settings.lock().unwrap().clone();
@@ -302,7 +317,6 @@ fn watch(
     let mut feed = KillfeedTracker::default();
     // Feste Schwelle: Ältere Einstellungen enthalten noch Werte früherer Erkennungen.
     let mut marker = HitmarkerTracker::new(MARKER_THRESHOLD);
-    let mut merger = KillMerger::default();
     let mut last_feed: Vec<u8> = Vec::new();
     let mut last_ocr = f64::MIN;
     let mut session: Vec<Kill> = Vec::new();
@@ -328,7 +342,9 @@ fn watch(
                     regions.push(r);
                     regions.len() - 1
                 });
-                marker_index = config.use_marker.then(|| {
+                // Mit Kill-Feed entscheidet ausschließlich die bestätigte Meldung.
+                // Ein türkises Objekt darf die Texterkennung niemals umgehen.
+                marker_index = (config.use_marker && config.killfeed.is_none()).then(|| {
                     // Der Marker sitzt immer genau auf dem Fadenkreuz – ein von Hand verrutschter Rahmen zählt nicht.
                     regions.push(center_region(opened.width, opened.height));
                     regions.len() - 1
@@ -344,26 +360,23 @@ fn watch(
                     let image = &images[i];
                     let mask = detect::marker_mask(&image.bgra);
                     let score = detect::marker_score(&mask, image.width as usize, image.height as usize);
-                    if marker.update(score, now) && merger.accept(Source::Hitmarker, now) {
-                        new_kills.push(Kill { at: SystemTime::now(), victim: None });
+                    if let Some(at) = marker.update(score, now) {
+                        new_kills.push(Kill { at: SystemTime::now() - Duration::from_secs_f64(now - at), victim: None });
                         emit_event(&app, "kill", "Kill erkannt (Kill-Marker)", None, None);
                     }
                 }
                 if let (Some(i), Some(ocr)) = (feed_index, &ocr) {
                     let gray = images[i].gray();
-                    if now - last_ocr >= OCR_EVERY && changed(&gray, &last_feed) {
-                        last_feed = gray;
+                    // Auch stehende Meldungen erneut lesen: zur Bestätigung und
+                    // damit sie bei einer späteren Animation nicht nochmals zählen.
+                    if now - last_ocr >= OCR_EVERY && (feed.needs_confirmation() || changed(&gray, &last_feed) || now - last_ocr >= 0.75) {
                         last_ocr = now;
                         if let Ok(lines) = ocr.read_feed(&images[i]) {
+                            last_feed = gray;
                             for event in feed.update(&lines, now) {
                                 match event {
                                     FeedEvent::Kill(victim) => {
-                                        if merger.accept(Source::Killfeed, now) {
-                                            new_kills.push(Kill { at: SystemTime::now(), victim: Some(victim.clone()) });
-                                        } else if let Some(kill) = new_kills.iter_mut().chain(session.iter_mut()).rev().find(|k| k.victim.is_none()) {
-                                            // Der Marker war schneller – den Namen nachtragen.
-                                            kill.victim = Some(victim.clone());
-                                        }
+                                        new_kills.push(Kill { at: SystemTime::now(), victim: Some(victim.clone()) });
                                         emit_event(&app, "kill", format!("Kill: {victim}"), None, None);
                                     }
                                     // Eigener Tod: nur anzeigen, kein Clip.

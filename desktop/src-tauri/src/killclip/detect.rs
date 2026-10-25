@@ -4,7 +4,7 @@
 //!   und „Du wurdest von <Name> getötet“ (eigener Tod). Gelesen per Texterkennung;
 //!   nur Kills lösen einen Clip aus, der Name wird übernommen.
 //! * Kill-Marker: Nach einem Kill erscheint um das Fadenkreuz ein türkises „X“.
-//!   Erkannt an Farbe, Form und plötzlichem Auftauchen – als zweites Signal.
+//!   Erkannt an Farbe, Form und kurzem Puls – nur ohne eingerichteten Kill-Feed.
 //!
 //! Hier steckt nur Logik ohne Windows-Aufrufe, damit sie testbar bleibt.
 
@@ -96,7 +96,7 @@ fn word_is(word: &str, targets: &[&str], max_edits: usize) -> bool {
 
 /// Enthält die Zeile „getötet“? Für die Einrichtung, wenn der Rest unleserlich ist.
 pub fn mentions_killed(line: &Line) -> bool {
-    line.words.iter().any(|w| word_is(&w.text, &["getotet", "getoetet"], 2))
+    line.words.iter().any(|w| word_is(&w.text, &["getotet", "getoetet"], 1))
 }
 
 /// Sieht die Zeile nach „Du wurdest von … getötet“ aus (eigener Tod)?
@@ -115,13 +115,15 @@ pub enum FeedEvent {
 /// Liest eine Kill-Feed-Zeile. Der Name bleibt so, wie er im Spiel steht.
 pub fn classify(line: &Line) -> Option<FeedEvent> {
     let words: Vec<&str> = line.words.iter().map(|w| w.text.as_str()).collect();
-    // „getötet“ – auch als „getotet“, „get6tet“ o. Ä. gelesen.
-    let end = words.iter().rposition(|w| word_is(w, &["getotet", "getoetet"], 2))?;
-    let Some(du) = words[..end].iter().position(|w| word_is(w, &["du"], 0)) else {
-        return unclear_kill(&words, end);
-    };
+    // Nur eine vollständige Meldung akzeptieren. Zwei beliebige OCR-Fehler
+    // machten auch „getestet“, „gerettet“ und andere Benachrichtigungen zu Kills.
+    let end = words.len().checked_sub(1)?;
+    if !word_is(words[end], &["getotet", "getoetet"], 1) {
+        return None;
+    }
+    let du = words[..end].iter().position(|w| word_is(w, &["du"], 0))?;
     let next = words.get(du + 1)?;
-    let (kind, start) = if word_is(next, &["hast"], 1) {
+    let (kind, start) = if word_is(next, &["hast"], 0) {
         ("kill", du + 2)
     } else if word_is(next, &["wurdest"], 2) {
         // „von“ überspringen, falls gelesen.
@@ -133,24 +135,14 @@ pub fn classify(line: &Line) -> Option<FeedEvent> {
     if start >= end {
         return None;
     }
+    if words[start..end].iter().any(|w| matches!(fold(w).as_str(), "nicht" | "niemanden" | "kein" | "keinen")) {
+        return None;
+    }
     let name = clean_name(&words[start..end].join(" "));
-    if name.is_empty() {
+    if fold(&name).is_empty() {
         return None;
     }
     Some(if kind == "kill" { FeedEvent::Kill(name) } else { FeedEvent::Death(name) })
-}
-
-/// „getötet“ ist lesbar, „Du hast“ nicht (live gelesen: „… rost W I Krypto I FIB (4391 get&et“).
-/// Gilt als Kill, solange nichts nach „Du wurdest von“ aussieht – der Name ist dann, was
-/// nach einem „hast“-ähnlichen Wort steht, sonst alles davor.
-fn unclear_kill(words: &[&str], end: usize) -> Option<FeedEvent> {
-    if words[..end].iter().any(|w| word_is(w, &["wurdest", "wurde"], 2) || word_is(w, &["von"], 0)) {
-        return None;
-    }
-    let start = words[..end].iter().rposition(|w| word_is(w, &["hast"], 2)).map_or(0, |i| i + 1);
-    let name = clean_name(&words[start..end].join(" "));
-    // Nur ein, zwei Zeichen davor: eher Rauschen als eine Meldung.
-    (fold(&name).len() >= 3).then_some(FeedEvent::Kill(name))
 }
 
 /// Typische OCR-Verwechslungen in Namen wie „NV | Aki | FIB [865]“ bereinigen.
@@ -177,10 +169,16 @@ fn repair_brackets(part: &str) -> String {
 
 /// Merkt sich, welche Meldungen gerade zu sehen sind, und meldet nur neue.
 pub struct KillfeedTracker {
-    /// (Art + gefalteter Name, zuletzt gesehen in Sekunden)
-    visible: Vec<(String, f64)>,
+    visible: Vec<FeedObservation>,
     /// So lange darf eine Meldung fehlen (Einblenden, OCR-Aussetzer), ohne als neu zu gelten.
     forget_after: f64,
+}
+
+struct FeedObservation {
+    key: String,
+    first_seen: f64,
+    last_seen: f64,
+    confirmed: bool,
 }
 
 impl Default for KillfeedTracker {
@@ -190,20 +188,30 @@ impl Default for KillfeedTracker {
 }
 
 impl KillfeedTracker {
-    /// Neue Kills und Tode in diesem OCR-Ergebnis.
+    pub fn needs_confirmation(&self) -> bool {
+        self.visible.iter().any(|entry| !entry.confirmed)
+    }
+
+    /// Erst zwei zeitlich getrennte Lesungen derselben Meldung bestätigen sie.
+    /// Doppelte Zeilen innerhalb einer Lesung zählen nicht als Bestätigung.
     pub fn update(&mut self, lines: &[Line], now: f64) -> Vec<FeedEvent> {
-        self.visible.retain(|(_, seen)| now - *seen <= self.forget_after);
+        self.visible.retain(|entry| now - entry.last_seen <= if entry.confirmed { self.forget_after } else { 0.9 });
         let mut events = Vec::new();
         for event in lines.iter().filter_map(classify) {
             let key = match &event {
                 FeedEvent::Kill(name) => format!("k:{}", fold(name)),
                 FeedEvent::Death(name) => format!("d:{}", fold(name)),
             };
-            match self.visible.iter_mut().find(|(known, _)| known[..2] == key[..2] && similarity(known, &key) >= 0.75) {
-                Some(entry) => entry.1 = now,
+            match self.visible.iter_mut().find(|entry| entry.key[..2] == key[..2] && similarity(&entry.key, &key) >= 0.85) {
+                Some(entry) => {
+                    entry.last_seen = now;
+                    if !entry.confirmed && now - entry.first_seen >= 0.15 {
+                        entry.confirmed = true;
+                        events.push(event);
+                    }
+                }
                 None => {
-                    self.visible.push((key, now));
-                    events.push(event);
+                    self.visible.push(FeedObservation { key, first_seen: now, last_seen: now, confirmed: false });
                 }
             }
         }
@@ -244,24 +252,36 @@ pub fn marker_mask(bgra: &[u8]) -> Vec<bool> {
 ///
 /// Der NERO-V-Marker sind vier kurze, dicke „Blätter“ auf den Diagonalen, etwa
 /// 3–14 px von der Mitte (bei 1080p; gemessen an einem echten Kill). Gezählt werden
-/// türkise Pixel je Diagonale: Mindestens drei müssen etwas zeigen (in Aufnahmen
+/// türkise Pixel je Diagonale: Alle vier müssen etwas zeigen (in Aufnahmen
 /// verschwimmen die unteren gern), und außerhalb der Diagonalen darf kaum Türkis
 /// sein – sonst ist es Himmel oder Wasser, kein Marker.
 pub fn marker_score(mask: &[bool], width: usize, height: usize) -> f32 {
+    if width == 0 || height == 0 || width.checked_mul(height) != Some(mask.len()) {
+        return 0.0;
+    }
     let scale = height as f32 / 64.0;
     let (cx, cy) = (width as f32 / 2.0, height as f32 / 2.0);
     let (r_in, r_out, band) = (2.5 * scale, 17.0 * scale, 4.0 * scale);
     let mut arm_hits = [0usize; 4];
     let mut outside = 0usize;
     let mut outside_area = 0usize;
+    let mut border = 0usize;
+    let mut center_hits = 0usize;
+    let mut center_area = 0usize;
     for y in 0..height {
         for x in 0..width {
             let (dx, dy) = (x as f32 + 0.5 - cx, y as f32 + 0.5 - cy);
             let r = (dx * dx + dy * dy).sqrt();
-            if r < r_in || r > r_out {
+            let hit = mask[y * width + x];
+            if r > r_out {
+                border += usize::from(hit);
                 continue;
             }
-            let hit = mask[y * width + x];
+            if r < r_in {
+                center_hits += usize::from(hit);
+                center_area += 1;
+                continue;
+            }
             if (dx.abs() - dy.abs()).abs() <= band {
                 arm_hits[usize::from(dx > 0.0) + 2 * usize::from(dy > 0.0)] += usize::from(hit);
             } else {
@@ -273,64 +293,66 @@ pub fn marker_score(mask: &[bool], width: usize, height: usize) -> f32 {
     let mut hits = arm_hits;
     hits.sort_unstable_by(|a, b| b.cmp(a));
     let area = scale * scale;
+    // Ein einzelner Fleck, ein angeschnittenes Objekt oder ein großes türkises
+    // Kreuz ist kein kleiner, freistehender Kill-Marker.
+    if (hits[3] as f32) < area || border > arm_hits.iter().sum::<usize>() * 2 {
+        return 0.0;
+    }
     // Zweit- und drittstärkstes Blatt zusammen gegen ein deutlich sichtbares Blatt (~40 px).
     let strength = ((hits[1] + hits[2]) as f32 / (40.0 * area)).min(1.0);
     let third = (hits[2] as f32 / (4.0 * area)).min(1.0);
     // Wie viel der Fläche neben den Diagonalen ebenfalls türkis ist (Himmel, Wasser …).
     let spill = outside as f32 / outside_area.max(1) as f32;
-    strength * third * (1.0 - spill).powi(4)
+    let center_fill = center_hits as f32 / center_area.max(1) as f32;
+    strength * third * (1.0 - spill).powi(4) * (1.0 - center_fill).powi(2)
 }
 
-/// Meldet einen Marker, sobald die Ähnlichkeit über die Schwelle steigt.
+/// Bestätigt einen kurzen Marker-Puls erst nach dessen Verschwinden. Dauerhafte
+/// Objekte, einzelne Frames und schon beim Start sichtbare Muster zählen nicht.
 pub struct HitmarkerTracker {
-    active: bool,
+    quiet_since: Option<f64>,
+    pulse: Option<(f64, usize)>,
+    last_sample: Option<f64>,
     last_event: f64,
     pub threshold: f32,
 }
 
 impl HitmarkerTracker {
     pub fn new(threshold: f32) -> Self {
-        Self { active: false, last_event: f64::MIN, threshold }
+        Self { quiet_since: None, pulse: None, last_sample: None, last_event: f64::MIN, threshold }
     }
 
-    pub fn update(&mut self, score: f32, now: f64) -> bool {
-        let above = score >= self.threshold;
-        let rising = above && !self.active;
-        // Abfallen erst deutlich unter der Schwelle (Hysterese gegen Flackern).
-        self.active = if self.active { score >= self.threshold * 0.6 } else { above };
-        if rising && now - self.last_event >= 0.8 {
-            self.last_event = now;
-            return true;
+    /// Liefert den Beginn des bestätigten Pulses für den Schnittzeitpunkt.
+    pub fn update(&mut self, score: f32, now: f64) -> Option<f64> {
+        if self.last_sample.is_some_and(|last| now - last > 0.35 || now < last) || !score.is_finite() {
+            self.quiet_since = None;
+            self.pulse = None;
         }
-        false
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Source {
-    Killfeed,
-    Hitmarker,
-}
-
-/// Führt beide Quellen zusammen: Derselbe Kill erscheint als Marker und kurz
-/// darauf im Kill-Feed – das zählt nur einmal.
-#[derive(Default)]
-pub struct KillMerger {
-    recent: Vec<(Source, f64)>,
-}
-
-impl KillMerger {
-    pub fn accept(&mut self, source: Source, now: f64) -> bool {
-        self.recent.retain(|(_, t)| now - *t < 3.0);
-        let duplicate = self.recent.iter().any(|(s, t)| *s != source && (now - *t).abs() <= 2.0);
-        self.recent.push((source, now));
-        if duplicate {
-            if let Some(pos) = self.recent.iter().position(|(s, t)| *s != source && (now - *t).abs() <= 2.0) {
-                self.recent.remove(pos);
+        self.last_sample = Some(now);
+        if !score.is_finite() {
+            return None;
+        }
+        if score < self.threshold * 0.6 {
+            self.quiet_since.get_or_insert(now);
+            if let Some((start, samples)) = self.pulse.take() {
+                if samples >= 2 && (0.08..=0.7).contains(&(now - start)) && start - self.last_event >= 0.8 {
+                    self.last_event = start;
+                    return Some(start);
+                }
             }
-            self.recent.pop();
+        } else if let Some((_, samples)) = self.pulse.as_mut() {
+            if score >= self.threshold {
+                *samples += 1;
+            }
+        } else if score >= self.threshold {
+            if self.quiet_since.is_some_and(|since| now - since >= 0.25) {
+                self.pulse = Some((now, 1));
+            }
+            self.quiet_since = None;
+        } else {
+            self.quiet_since = None;
         }
-        !duplicate
+        None
     }
 }
 
@@ -361,10 +383,10 @@ mod tests {
         // „ö“ als „o“, „|“ als „I“, „getötet“ als „get6tet“.
         assert_eq!(classify(&line("Du hast NV I Aki I FIB [865] getotet")), Some(FeedEvent::Kill("NV | Aki | FIB [865]".into())));
         assert_eq!(classify(&line("Du hast Max_Muster get6tet")), Some(FeedEvent::Kill("Max_Muster".into())));
-        assert_eq!(classify(&line("Du hast NV I Aki I FIB 1865] getÄTtet")), Some(FeedEvent::Kill("NV | Aki | FIB [865]".into())));
+        assert_eq!(classify(&line("Du hast NV I Aki I FIB 1865] getotet")), Some(FeedEvent::Kill("NV | Aki | FIB [865]".into())));
         assert_eq!(classify(&line("Du wurdst von Max_Muster getötet")), Some(FeedEvent::Death("Max_Muster".into())));
-        // Live gelesen: „Du hast“ verstümmelt, „getötet“ als „get&et“.
-        assert_eq!(classify(&line("I e sysTEMA.e,CE5 · rost W I Krypto I FIB (4391 get&et")), Some(FeedEvent::Kill("W | Krypto | FIB (4391".into())));
+        // Zu stark verstümmelte Lesungen brauchen eine spätere, klare Bestätigung.
+        assert_eq!(classify(&line("I e sysTEMA.e,CE5 · rost W I Krypto I FIB (4391 get&et")), None);
         assert_eq!(classify(&line("wurdest von Max_Muster get&et")), None);
         assert_eq!(classify(&line("x getötet")), None);
         // Ein Tod wird nie als Kill gewertet, auch wenn „hast“ fehlt.
@@ -372,18 +394,67 @@ mod tests {
     }
 
     #[test]
+    fn ordinary_notifications_and_incomplete_or_negated_messages_are_not_kills() {
+        for text in [
+            "Du hast Max gerettet", "Du hast das Fahrzeug getestet",
+            "Du hast den Motor gestartet", "Du hast 5000$ erhalten",
+            "SYSTEM SUCCESS Fahrzeug getötet", "Max wurde getötet",
+            "hast Max getötet", "Du hat Max getötet", "Du hast getötet",
+            "Du hast Max nicht getötet", "Du hast niemanden getötet",
+            "Du hast Max getötet oder gerettet", "Du hast Max get&et", "Du hast | getötet",
+        ] {
+            assert_eq!(classify(&line(text)), None, "{text}");
+        }
+        assert!(!mentions_killed(&line("Du hast Max gerettet")));
+        assert!(!mentions_killed(&line("Du hast das Fahrzeug getestet")));
+    }
+
+    #[test]
     fn same_notification_counts_once_until_it_disappears() {
         let mut t = KillfeedTracker::default();
         let kill = line("Du hast NV | Aki | FIB [865] getötet");
-        assert_eq!(t.update(&[kill.clone()], 0.0).len(), 1);
-        assert_eq!(t.update(&[kill.clone()], 0.5).len(), 0);
+        assert_eq!(t.update(&[kill.clone()], 0.0).len(), 0);
+        assert_eq!(t.update(&[kill.clone()], 0.5).len(), 1);
         // OCR liest dieselbe Meldung leicht anders → kein neuer Kill.
         assert_eq!(t.update(&[line("Du hast NV I Aki | FIB [865] getotet")], 1.0).len(), 0);
         // Tod desselben Spielers ist ein eigenes Ereignis.
-        assert_eq!(t.update(&[line("Du wurdest von NV | Aki | FIB [865] getötet")], 1.2), vec![FeedEvent::Death("NV | Aki | FIB [865]".into())]);
+        let death = line("Du wurdest von NV | Aki | FIB [865] getötet");
+        assert!(t.update(&[death.clone()], 1.2).is_empty());
+        assert_eq!(t.update(&[death], 1.5), vec![FeedEvent::Death("NV | Aki | FIB [865]".into())]);
         // Weg und wieder da → neuer Kill.
         assert_eq!(t.update(&[], 6.0).len(), 0);
-        assert_eq!(t.update(&[kill], 6.5).len(), 1);
+        assert_eq!(t.update(&[kill.clone()], 6.5).len(), 0);
+        assert_eq!(t.update(&[kill], 6.8).len(), 1);
+    }
+
+    #[test]
+    fn single_ocr_hallucination_or_duplicate_rows_do_not_trigger() {
+        let mut t = KillfeedTracker::default();
+        let kill = line("Du hast Max getötet");
+        assert!(t.update(&[kill.clone(), kill.clone()], 0.0).is_empty());
+        assert!(t.update(&[], 0.3).is_empty());
+        assert!(t.update(&[kill.clone()], 1.0).is_empty());
+        assert_eq!(t.update(&[kill.clone(), kill], 1.3), vec![FeedEvent::Kill("Max".into())]);
+    }
+
+    #[test]
+    fn standing_notification_and_short_ocr_dropout_do_not_retrigger() {
+        let mut t = KillfeedTracker::default();
+        let kill = line("Du hast Max getötet");
+        assert!(t.update(&[kill.clone()], 0.0).is_empty());
+        assert_eq!(t.update(&[kill.clone()], 0.75).len(), 1);
+        for i in 2..20 {
+            let lines = if i == 10 { vec![] } else { vec![kill.clone()] };
+            assert!(t.update(&lines, i as f64 * 0.75).is_empty());
+        }
+    }
+
+    #[test]
+    fn separate_kills_in_the_same_feed_are_confirmed_independently() {
+        let mut t = KillfeedTracker::default();
+        let kills = [line("Du hast Alice getötet"), line("Du hast Bob getötet")];
+        assert!(t.update(&kills, 0.0).is_empty());
+        assert_eq!(t.update(&kills, 0.3), vec![FeedEvent::Kill("Alice".into()), FeedEvent::Kill("Bob".into())]);
     }
 
     /// Ausschnitt mit dunkelgrünlichem Spielhintergrund wie im Screenshot.
@@ -399,7 +470,7 @@ mod tests {
     fn with_x(size: usize) -> Vec<u8> {
         let mut img = background(size);
         let c = size / 2;
-        for d in 8..26 {
+        for d in 3..11 {
             for t in 0..2 {
                 paint(&mut img, size, c + d + t, c + d);
                 paint(&mut img, size, c - d - t, c + d);
@@ -472,21 +543,59 @@ mod tests {
     #[test]
     fn marker_fires_once_per_appearance() {
         let mut h = HitmarkerTracker::new(0.25);
-        assert!(h.update(0.5, 0.0));
-        assert!(!h.update(0.45, 0.1));
-        assert!(!h.update(0.2, 0.2)); // Hysterese: noch aktiv
-        assert!(!h.update(0.0, 0.3));
-        assert!(h.update(0.5, 1.5));
+        assert_eq!(h.update(0.0, 0.0), None);
+        assert_eq!(h.update(0.0, 0.2), None);
+        assert_eq!(h.update(0.5, 0.3), None);
+        assert_eq!(h.update(0.45, 0.4), None);
+        assert_eq!(h.update(0.2, 0.5), None); // Hysterese: noch aktiv
+        assert_eq!(h.update(0.0, 0.6), Some(0.3));
+        for i in 7..12 {
+            assert_eq!(h.update(0.0, i as f64 / 10.0), None);
+        }
+        assert_eq!(h.update(0.5, 1.2), None);
+        assert_eq!(h.update(0.5, 1.3), None);
+        assert_eq!(h.update(0.0, 1.4), Some(1.2));
     }
 
     #[test]
-    fn marker_and_feed_for_the_same_kill_count_once() {
-        let mut m = KillMerger::default();
-        assert!(m.accept(Source::Hitmarker, 10.0));
-        assert!(!m.accept(Source::Killfeed, 10.6));
-        assert!(m.accept(Source::Hitmarker, 11.2));
-        assert!(!m.accept(Source::Killfeed, 11.9));
-        assert!(m.accept(Source::Killfeed, 20.0));
-        assert!(m.accept(Source::Killfeed, 20.4));
+    fn startup_flash_single_frame_and_sustained_objects_do_not_trigger() {
+        for (quiet, high) in [(0, 2), (3, 1), (3, 12)] {
+            let mut h = HitmarkerTracker::new(0.25);
+            for i in 0..quiet + high + 5 {
+                let score = if i >= quiet && i < quiet + high { 0.8 } else { 0.0 };
+                assert_eq!(h.update(score, i as f64 * 0.1), None, "quiet={quiet}, high={high}, frame={i}");
+            }
+        }
+    }
+
+    #[test]
+    fn capture_gaps_do_not_complete_a_marker_pulse() {
+        let mut h = HitmarkerTracker::new(0.25);
+        for (score, time) in [(0.0, 0.0), (0.0, 0.2), (0.8, 0.3), (0.8, 0.4), (0.0, 1.0)] {
+            assert_eq!(h.update(score, time), None);
+        }
+    }
+
+    #[test]
+    fn turquoise_blobs_partial_markers_and_large_crosses_are_rejected() {
+        let size = 64;
+        for shape in 0..4 {
+            let mut mask = vec![false; size * size];
+            for y in 0..size {
+                for x in 0..size {
+                    let dx = x as f32 + 0.5 - 32.0;
+                    let dy = y as f32 + 0.5 - 32.0;
+                    mask[y * size + x] = match shape {
+                        0 => dx * dx + dy * dy < 12.0 * 12.0,
+                        1 => dx.abs() < 10.0 && dy.abs() < 10.0,
+                        2 => (dx.abs() - dy.abs()).abs() < 2.0 && dy < 0.0,
+                        _ => (dx.abs() - dy.abs()).abs() < 3.0,
+                    };
+                }
+            }
+            assert!(marker_score(&mask, size, size) < 0.25, "shape={shape}");
+        }
+        assert_eq!(marker_score(&[], 0, 0), 0.0);
+        assert_eq!(marker_score(&[true], 64, 64), 0.0);
     }
 }

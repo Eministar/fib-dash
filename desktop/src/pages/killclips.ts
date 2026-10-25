@@ -89,8 +89,8 @@ function renderStatus() {
 function renderConfig() {
   const c = config()
   const parts = [
-    c.killfeed ? 'Bereich festgelegt – erkennt „Du hast … getötet“' : 'Bereich fehlt',
-    c.useMarker ? 'Kill-Marker am Fadenkreuz' : '',
+    c.killfeed ? 'Kill-Feed – bestätigt „Du hast … getötet“ durch zwei Lesungen' : 'Kill-Feed-Bereich fehlt',
+    c.useMarker && !c.killfeed ? 'Kill-Marker am Fadenkreuz' : '',
   ].filter(Boolean)
   $('kc-setup-state').textContent = parts.join(' · ')
   ;($('kc-marker') as HTMLElement & { checked: boolean }).checked = c.useMarker
