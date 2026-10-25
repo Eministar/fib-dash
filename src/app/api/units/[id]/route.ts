@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 
+import { agentUnitKeys, normalizeUnitKeys } from '@/lib/agents/agent-units'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
 import { queueAllAgentRoleSync } from '@/lib/discord/discord-integration'
@@ -105,24 +106,46 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const unit = await prisma.unit.findUnique({ where: { id } })
     if (!unit) return notFound('Unit')
 
-    const agentCount = await prisma.agent.count({
+    const referencingAgents = await prisma.agent.findMany({
       where: {
         OR: [
           { unit: unit.key },
           { units: { array_contains: unit.key } },
         ],
       },
+      select: { id: true, firstName: true, lastName: true, status: true, unit: true, units: true },
     })
+    // Gleiche Zählweise wie die Übersicht: nur aktive (nicht gekündigte) Agents blockieren
+    const activeHolders = referencingAgents.filter((agent) => (
+      agent.status !== 'TERMINATED' && agentUnitKeys(agent).includes(unit.key)
+    ))
     const directUserCount = await prisma.userUnitAssignment.count({ where: { unitId: id } })
-    if (agentCount > 0 || directUserCount > 0) {
+    if (activeHolders.length > 0 || directUserCount > 0) {
+      const names = activeHolders.slice(0, 5).map((agent) => `${agent.firstName} ${agent.lastName}`).join(', ')
+      const more = activeHolders.length > 5 ? `, +${activeHolders.length - 5} weitere` : ''
       const usages = [
-        agentCount > 0 ? `${agentCount} Agent${agentCount === 1 ? '' : 's'}` : '',
+        activeHolders.length > 0
+          ? `${activeHolders.length} Agent${activeHolders.length === 1 ? '' : 's'} (${names}${more})`
+          : '',
         directUserCount > 0 ? `${directUserCount} Benutzer${directUserCount === 1 ? '' : 'n'}` : '',
       ].filter(Boolean).join(' und ')
       return error(`Unit wird noch von ${usages} verwendet. Entferne zuerst die Zuweisungen.`)
     }
 
-    await prisma.unit.delete({ where: { id } })
+    // Gekündigte Agents bzw. veraltete Legacy-Felder referenzieren den Key ggf. noch → bereinigen
+    await prisma.$transaction([
+      ...referencingAgents.map((agent) => {
+        const remaining = normalizeUnitKeys(agent.units).filter((key) => key !== unit.key)
+        return prisma.agent.update({
+          where: { id: agent.id },
+          data: {
+            units: remaining,
+            unit: agent.unit === unit.key ? (remaining[0] ?? null) : agent.unit,
+          },
+        })
+      }),
+      prisma.unit.delete({ where: { id } }),
+    ])
     if (unit.discordRoleId) queueAllAgentRoleSync({ extraManagedRoleIds: [unit.discordRoleId] })
     return success({ message: 'Unit gelöscht' })
   } catch (e: unknown) {
