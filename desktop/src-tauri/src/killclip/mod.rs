@@ -375,7 +375,7 @@ fn watch(
                     regions.len() - 1
                 });
             }
-            opened.grab(&regions, 0)
+            opened.grab(&regions, interval)
         });
         let mut new_kills: Vec<Kill> = Vec::new();
         let ok = grabbed.is_ok();
@@ -474,8 +474,9 @@ fn work(app: AppHandle, target: Target, status: Arc<Mutex<Status>>, jobs: mpsc::
     }
 }
 
-/// Lässt das Clip-Programm speichern und wartet auf die Datei.
-fn save_replay(app: &AppHandle) -> Result<(PathBuf, SystemTime), String> {
+/// Lässt das Clip-Programm speichern und wartet auf die Datei. Self-Clip schreibt nur
+/// die letzten `seconds` (statt bis zu 10 Minuten Puffer mitten im Spiel auf die Platte).
+fn save_replay(app: &AppHandle, seconds: Option<u32>) -> Result<(PathBuf, SystemTime), String> {
     let state = app.state::<AppState>();
     // Bodycam und Kill-Clips teilen sich das Clip-Programm – nie gleichzeitig auslösen.
     while state.capturing.swap(true, Ordering::SeqCst) {
@@ -485,7 +486,9 @@ fn save_replay(app: &AppHandle) -> Result<(PathBuf, SystemTime), String> {
         let settings = state.settings.lock().unwrap().clone();
         let saved_at = SystemTime::now();
         if settings.clipper == crate::settings::Clipper::SelfClip {
-            return Ok((state.recorder.save(app, settings.self_clip.buffer_seconds, &crate::effective_clip_dir(app, &settings))?, saved_at));
+            let buffer = settings.self_clip.buffer_seconds;
+            let seconds = seconds.map_or(buffer, |s| s.min(buffer));
+            return Ok((state.recorder.save(app, seconds, &crate::effective_clip_dir(app, &settings))?, saved_at));
         }
         let keys = clipper::parse_hotkey(&crate::effective_clipper_hotkey(&settings))?;
         clipper::press_hotkey(&keys);
@@ -512,7 +515,10 @@ fn remember_replay_length(app: &AppHandle, clip_len: f64) {
 fn process(app: &AppHandle, target: &Target, status: &Arc<Mutex<Status>>, session: &Session) -> Result<(), String> {
     let config = app.state::<AppState>().settings.lock().unwrap().kill_clip.clone();
     update_status(app, status, |s| s.phase = "saving".into());
-    let (source, saved_at) = save_replay(app)?;
+    // Vom ersten Kill bis jetzt, plus Vorlauf und zwei Puffer-Stücke Reserve.
+    let since_first = session.kills.first().and_then(|k| k.at.elapsed().ok()).map_or(0.0, |d| d.as_secs_f64());
+    let needed = (since_first + config.pre_seconds as f64 + 6.0).ceil() as u32;
+    let (source, saved_at) = save_replay(app, Some(needed))?;
     let clip_len = media::duration_seconds(&source).ok_or("Länge der Aufnahme nicht lesbar")?;
     remember_replay_length(app, clip_len);
 
@@ -595,7 +601,7 @@ fn process(app: &AppHandle, target: &Target, status: &Arc<Mutex<Status>>, sessio
 
 /// Einrichtung: Das Clip-Programm speichert die letzten Sekunden (mit dem Kill darin).
 pub fn record_reference(app: &AppHandle) -> Result<(PathBuf, f64), String> {
-    let (path, _) = save_replay(app)?;
+    let (path, _) = save_replay(app, None)?;
     let duration = media::duration_seconds(&path).ok_or("Länge der Aufnahme nicht lesbar")?;
     Ok((path, duration))
 }
@@ -672,6 +678,50 @@ mod tests {
         assert!(events.iter().any(|e| matches!(e, FeedEvent::Death(_))), "Tod erkannt");
     }
 
+    /// CPU-Zeit des ganzen Prozesses (alle Threads, auch die WinRT-Threads der OCR).
+    fn process_cpu() -> Duration {
+        use windows::Win32::{Foundation::FILETIME, System::Threading::{GetCurrentProcess, GetProcessTimes}};
+        let (mut a, mut b, mut kernel, mut user) = (FILETIME::default(), FILETIME::default(), FILETIME::default(), FILETIME::default());
+        unsafe { GetProcessTimes(GetCurrentProcess(), &mut a, &mut b, &mut kernel, &mut user).unwrap() };
+        let ticks = |t: FILETIME| ((t.dwHighDateTime as u64) << 32) | t.dwLowDateTime as u64;
+        Duration::from_nanos((ticks(kernel) + ticks(user)) * 100)
+    }
+
+    /// Kosten der Live-Erkennung messen – Einrichtungsbild aus `FIB_SHOT_BMP`, Bereich
+    /// aus `FIB_FEED` ("x,y,w,h"): `cargo test --release -- --ignored measure_watch_costs --nocapture`.
+    #[test]
+    #[ignore]
+    fn measure_watch_costs() {
+        let shot = Image::load_bmp(std::path::Path::new(&std::env::var("FIB_SHOT_BMP").expect("FIB_SHOT_BMP"))).unwrap();
+        let r: Vec<u32> = std::env::var("FIB_FEED").expect("FIB_FEED").split(',').map(|v| v.parse().unwrap()).collect();
+        let crop = shot.crop(Region { x: r[0], y: r[1], width: r[2], height: r[3] }).unwrap();
+        let ocr = ocr::Ocr::new().unwrap();
+        let _ = ocr.read_with(&crop, 2, false);
+        for scale in [1, 2, 3] {
+            let (wall, cpu) = (Instant::now(), process_cpu());
+            let runs = 20;
+            for _ in 0..runs {
+                std::hint::black_box(ocr.read_with(&crop, scale, false).unwrap());
+            }
+            let (wall, cpu) = (wall.elapsed() / runs, (process_cpu() - cpu) / runs);
+            println!("OCR {}x{} scale={scale}: {wall:?} Wandzeit, {cpu:?} CPU je Lesung", crop.width, crop.height);
+        }
+        // Bildschirmerfassung allein, im Takt des Kill-Feeds (2 Hz) und des Markers (10 Hz).
+        for (hz, tick) in [(2, FEED_TICK), (10, MARKER_TICK)] {
+            let region = [Region { x: r[0], y: r[1], width: r[2], height: r[3] }];
+            let (wall, cpu) = (Instant::now(), process_cpu());
+            let mut frames = 0;
+            while wall.elapsed() < Duration::from_secs(5) {
+                if screen::with_screen(|s| s.grab(&region, tick)).unwrap().is_some() {
+                    frames += 1;
+                }
+                thread::sleep(tick);
+            }
+            println!("Erfassung {hz} Hz: {frames} Bilder, {:?} CPU in 5 s", process_cpu() - cpu);
+            screen::release();
+        }
+    }
+
     /// Wie in der App: Prozess ist Per-Monitor-DPI-bewusst (v2).
     #[test]
     #[ignore]
@@ -696,11 +746,11 @@ mod tests {
         screen::release();
         let shot = screen::with_screen(|screen| screen.screenshot());
         assert!(shot.is_ok(), "{:?}", shot.err());
-        screen::with_screen(|screen| screen.grab(&[Region { x: 0, y: 0, width: 32, height: 32 }], 50)).unwrap();
+        screen::with_screen(|screen| screen.grab(&[Region { x: 0, y: 0, width: 32, height: 32 }], FEED_TICK)).unwrap();
         screen::release();
     }
 
-    /// Echter Bildschirm: Screenshot und kleiner Ausschnitt über DXGI.
+    /// Echter Bildschirm: Screenshot und kleiner Ausschnitt über WGC.
     #[test]
     #[ignore]
     fn grabs_the_primary_monitor() {
