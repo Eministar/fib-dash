@@ -137,7 +137,7 @@ export async function GET() {
       : Promise.resolve([]),
     canViewNotes
       ? prisma.note.findMany({
-        where: { pinned: true },
+        where: { pinned: true, private: false },
         include: {
           author: { select: { displayName: true } },
           agent: { select: { id: true, firstName: true, lastName: true, badgeNumber: true } },

@@ -6,6 +6,7 @@ import { icon, type IconName } from '../icons'
 import { can } from '../store'
 import { confirmAction, openForm, type Field } from '../ui/form-dialog'
 import { toast } from '../ui/toast'
+import { playClip } from '../ui/clip-player'
 import { invalidateList, listLookups, pill, unitChips } from './list'
 import { openSanctionDialog } from './sanction-dialog'
 import {
@@ -328,7 +329,7 @@ function recordsHtml(a: AgentDetail) {
       ${!records ? empty('Lade Einträge …') : entries.length ? `<div class="checklist">${entries.map((entry) => `
         <div class="check-row">
           ${pill(entry.kind === 'POSITIVE' ? 'Positiv' : 'Negativ', entry.kind === 'POSITIVE' ? 'success' : 'danger')}
-          <span><span class="type-body-strong">${escapeHtml(entry.title)}</span>${entry.content ? `<br><span class="type-caption muted">${escapeHtml(entry.content)}</span>` : ''}<br><span class="type-caption muted">${date(entry.createdAt)} · ${escapeHtml(entry.author ?? 'Gelöscht')}</span></span>
+          <span><span class="type-body-strong">${escapeHtml(entry.title)}</span>${entry.content ? `<br><span class="type-caption muted">${escapeHtml(entry.content)}</span>` : ''}<br><span class="type-caption muted">${date(entry.createdAt)} · ${escapeHtml(entry.author ?? 'Gelöscht')}</span>${entry.clips?.length ? `<br>${entry.clips.map((clip) => `<fluent-button appearance="subtle" size="small" data-action="play-record-clip" data-id="${escapeHtml(clip.id)}">${icon('videoClip').replace('<i ', '<i slot="start" ')}${escapeHtml(clip.title)}</fluent-button>`).join('')}` : ''}</span>
           ${manageRecords ? actionButton('delete-record', 'delete', 'Eintrag löschen', entry.id) : ''}
         </div>`).join('')}</div>` : empty('Keine Einträge.')}
     </div>
@@ -812,6 +813,10 @@ async function handleAction(action: string, id: string) {
       return licenseDialog(id, action === 'license-grant' ? 'grant' : 'revoke')
     case 'add-record':
       return addRecord(a)
+    case 'play-record-clip': {
+      const clip = records?.entries.flatMap((entry) => entry.clips ?? []).find((c) => c.id === id)
+      return clip ? playClip(clip) : undefined
+    }
     case 'delete-record':
       if (!(await confirmAction('Eintrag löschen?', 'Der Akteneintrag wird endgültig entfernt.'))) return
       try {

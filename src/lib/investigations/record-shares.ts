@@ -65,7 +65,8 @@ export async function shareCandidates(client: Client, user: CurrentUser, kind: S
     const [rows, total] = await Promise.all([client.investigation.findMany({ where, select: { id: true, title: true, caseNumber: true }, orderBy: { updatedAt: 'desc' }, take, skip }), client.investigation.count({ where })])
     return { items: rows.map(r => ({ kind, recordId: r.id, title: `${r.caseNumber} · ${r.title}` })), total }
   }
-  const where = { investigation: investigationVisibilityWhere(user), ...(search ? { title: { contains: search } } : {}) }
+  // Nur Akten-Clips teilen – Clips aus Agent-Akten haben eigene Rechte.
+  const where = { investigationId: { not: null }, investigation: investigationVisibilityWhere(user), ...(search ? { title: { contains: search } } : {}) }
   const [rows, total] = await Promise.all([client.bodycamClip.findMany({ where, select: { id: true, title: true }, orderBy: { createdAt: 'desc' }, take, skip }), client.bodycamClip.count({ where })])
   return { items: rows.map(r => ({ kind, recordId: r.id, title: r.title })), total }
 }
@@ -77,7 +78,7 @@ export async function validateShareItems(client: Client, user: CurrentUser, item
       const row = await client.investigation.findFirst({ where: { AND: [{ id }, investigationVisibilityWhere(user)] }, select: { title: true, caseNumber: true } })
       if (row) return { ...item, title: `${row.caseNumber} · ${row.title}` }
     } else if (kind === 'CLIP') {
-      const row = await client.bodycamClip.findFirst({ where: { id, investigation: investigationVisibilityWhere(user) }, select: { title: true } })
+      const row = await client.bodycamClip.findFirst({ where: { id, investigationId: { not: null }, investigation: investigationVisibilityWhere(user) }, select: { title: true } })
       if (row) return { ...item, title: row.title }
     } else if (kind === 'DOSSIER') {
       const row = await client.dossier.findUnique({ where: { id }, select: { title: true } })

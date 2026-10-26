@@ -9,7 +9,7 @@ export async function GET() {
     const user = await requireAuth()
     const agent = await findAgentForUser(user)
     if (!agent) return success({ linked: false, entries: [], positive: 0, negative: 0 })
-    return success({ linked: true, ...(await listAgentRecords(agent.id)) })
+    return success({ linked: true, ...(await listAgentRecords(agent.id, { clips: false })) })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Serverfehler'
     if (msg === 'Unauthorized') return unauthorized()

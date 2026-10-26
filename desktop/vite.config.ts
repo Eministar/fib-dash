@@ -11,5 +11,7 @@ export default defineConfig({
     // WebView2 ist immer ein aktuelles Chromium – kein Transpilieren für alte Browser nötig.
     target: 'chrome120',
     outDir: 'dist',
+    // Zweite Seite: das kleine Fenster der Schnellnotiz.
+    rollupOptions: { input: { main: 'index.html', quicknote: 'quicknote.html' } },
   },
 })

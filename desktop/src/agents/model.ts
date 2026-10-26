@@ -169,7 +169,9 @@ export interface AgentDetail extends ListAgent {
   jobApplication?: { id: string; applicantDisplayName: string; statusText: string; submittedAt: string } | null
 }
 
-export interface RecordEntry { id: string; kind: 'POSITIVE' | 'NEGATIVE'; title: string; content: string | null; source: string; createdAt: string; author: string | null }
+/** Bodycam-Clip als Beweis zu einem Akteneintrag (ältere Server liefern keine). */
+export interface RecordClip { id: string; title: string; durationSeconds: number | null; mimeType: string }
+export interface RecordEntry { id: string; kind: 'POSITIVE' | 'NEGATIVE'; title: string; content: string | null; source: string; createdAt: string; author: string | null; clips?: RecordClip[] }
 export interface Records { entries: RecordEntry[]; positive: number; negative: number }
 
 export interface LicenseRow {

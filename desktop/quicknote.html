@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schnellnotiz</title>
+  <link rel="stylesheet" href="/src/styles.css">
+  <script type="module" src="/src/quicknote.ts"></script>
+</head>
+<body class="quick-note">
+  <main class="quick-note-body">
+    <fluent-textarea id="qn-text" resize="none" rows="6" maxlength="5000" placeholder="Was willst du festhalten?" aria-label="Notiz"></fluent-textarea>
+    <fluent-message-bar id="qn-error" intent="error" hidden></fluent-message-bar>
+    <div class="quick-note-actions">
+      <span class="type-caption muted" id="qn-hint">Privat – nur du siehst sie. Strg+Enter speichert, Esc schließt.</span>
+      <fluent-button id="qn-cancel">Abbrechen</fluent-button>
+      <fluent-button id="qn-save" appearance="primary">Speichern</fluent-button>
+    </div>
+  </main>
+</body>
+</html>

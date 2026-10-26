@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
-import { requirePermission } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit/audit'
 import { deleteClipFile, formatBytes, resolveClipPath } from '@/lib/media/clips'
 import { adoptUploadedFile } from '@/lib/media/upload-adopt'
@@ -14,9 +14,11 @@ import {
   serializeBigInts,
 } from '@/lib/investigations/investigations'
 import { agentDisplayName, cleanText, parseDate, routeError } from '@/lib/investigations/investigations-server'
+import { agentRecordInput } from '@/lib/agents/agent-records'
 import type { Prisma } from '@/generated/prisma'
 import { queueClipCompression } from '@/lib/media/clip-compression'
-import { bodycamAccess } from '@/lib/investigations/bodycam-access'
+import { bodycamAccess, canManageAgentRecordClip } from '@/lib/investigations/bodycam-access'
+import { hasPermission } from '@/lib/permissions'
 import { uploadCors, uploadOptions } from '@/lib/media/upload-cors'
 import { consumeUploadSession, UploadSessionError } from '@/lib/media/upload-sessions'
 import { randomUUID } from 'node:crypto'
@@ -46,7 +48,10 @@ const clipInclude = {
 const uploadSchema = z
   .object({
     uploadId: z.string().trim().min(1).max(64),
-    investigationId: z.string().trim().min(1).max(64),
+    /** Ermittlungsakte – oder stattdessen `agentRecord`. */
+    investigationId: z.string().trim().min(1).max(64).nullish(),
+    /** Statt einer Akte: neuer Eintrag in einer Agent-Akte, an dem der Clip als Beweis hängt. */
+    agentRecord: agentRecordInput.extend({ agentId: z.string().trim().min(1).max(64) }).optional(),
     entryId: z.string().trim().min(1).max(64).nullish(),
     title: z.string().trim().min(1, 'Titel des Clips ist erforderlich').max(200, 'Titel ist zu lang (max. 200 Zeichen)'),
     description: z.string().trim().max(5000).nullish(),
@@ -59,6 +64,9 @@ const uploadSchema = z
     clientCompressed: z.boolean().optional(),
   })
   .strict()
+  .refine((meta) => Boolean(meta.investigationId) !== Boolean(meta.agentRecord), {
+    message: 'Bitte entweder eine Ermittlungsakte oder eine Agent-Akte wählen',
+  })
 
 /** Legt die geprüfte Datei unter einem neuen Namen im Clip-Verzeichnis ab. */
 async function adoptClipFile(source: string, extension: string) {
@@ -77,6 +85,8 @@ async function listClips(req: NextRequest) {
     const to = searchParams.get('to')?.trim()
 
     const filters: Prisma.BodycamClipWhereInput[] = [
+      // Clips aus Agent-Akten gehören nicht in den Bodycam-Katalog (eigene Rechte).
+      { investigationId: { not: null } },
       { investigation: access.where },
     ]
 
@@ -119,17 +129,84 @@ async function listClips(req: NextRequest) {
   }
 }
 
+type UploadMeta = z.infer<typeof uploadSchema>
+
+/** Felder eines neuen Clips, gleich ob er an einer Akte oder einer Agent-Akte hängt. */
+function clipFields(meta: UploadMeta, stored: { filename: string; sizeBytes: number; mimeType: string; originalName: string | null }, userId: string, recordedByAgentId: string | null) {
+  const durationRaw = Number(meta.durationSeconds)
+  return {
+    title: meta.title,
+    description: cleanText(meta.description) || null,
+    recordedAt: parseDate(meta.recordedAt),
+    location: cleanText(meta.location).slice(0, 200) || null,
+    filename: stored.filename,
+    originalName: (stored.originalName || stored.filename).slice(0, 255),
+    sizeBytes: BigInt(stored.sizeBytes),
+    mimeType: stored.mimeType,
+    durationSeconds: Number.isFinite(durationRaw) && durationRaw > 0 ? Math.round(durationRaw) : null,
+    recordedByAgentId,
+    tags: sanitizeTags(meta.tags),
+    uploadedById: userId,
+    ...(meta.clientCompressed
+      ? { compressionStatus: 'SKIPPED', compressionError: 'Bereits in der Desktop-App komprimiert' }
+      : {}),
+  }
+}
+
 async function uploadClip(req: NextRequest) {
   let storedFilename: string | null = null
 
   try {
-    const user = await requirePermission('investigations:manage')
+    const user = await requireAuth()
 
     // Die Videodaten sind bereits ueber /api/uploads eingetroffen und geprueft;
     // hier reisen nur noch die Metadaten plus das Ticket.
     const meta = uploadSchema.parse(await req.json())
-    const investigationId = meta.investigationId
     const title = meta.title
+
+    const recordedByAgentId = cleanText(meta.recordedByAgentId ?? '') || null
+    if (recordedByAgentId) {
+      const agent = await prisma.agent.findUnique({
+        where: { id: recordedByAgentId },
+        select: { id: true },
+      })
+      if (!agent) return notFound('Agent')
+    }
+
+    // Beweis zu einem neuen Eintrag in einer Agent-Akte (Rechte wie für Akteneinträge).
+    if (meta.agentRecord) {
+      if (!canManageAgentRecordClip(user)) return forbidden()
+      const record = meta.agentRecord
+      const agent = await prisma.agent.findUnique({ where: { id: record.agentId }, select: { id: true } })
+      if (!agent) return notFound('Agent')
+
+      const stored = await consumeUploadSession(meta.uploadId, user.id, 'CLIP', adoptClipFile)
+      storedFilename = stored.filename
+      const label = record.kind === 'POSITIVE' ? 'Positiver' : 'Negativer'
+      const clip = await prisma.$transaction(async (tx) => {
+        const entry = await tx.agentRecordEntry.create({
+          data: { agentId: record.agentId, kind: record.kind, title: record.title, content: record.content, source: 'manual', authorId: user.id },
+        })
+        await createAuditLog({
+          action: 'AGENT_RECORD_CREATED',
+          userId: user.id,
+          agentId: record.agentId,
+          details: `${label} Eintrag mit Bodycam-Clip: ${record.title} (${formatBytes(stored.sizeBytes)})`,
+        }, tx)
+        return tx.bodycamClip.create({
+          data: { agentRecordEntryId: entry.id, ...clipFields(meta, stored, user.id, recordedByAgentId) },
+          include: clipInclude,
+        })
+      })
+      // Ab hier ist die Datei über den Datensatz erreichbar.
+      storedFilename = null
+      if (!meta.clientCompressed) queueClipCompression()
+      return success(serializeBigInts(clip), 201)
+    }
+
+    if (!hasPermission(user, 'investigations:manage')) return forbidden()
+    const investigationId = meta.investigationId
+    if (!investigationId) return error('Bitte eine Ermittlungsakte auswählen')
 
     const investigation = await prisma.investigation.findUnique({
       where: { id: investigationId },
@@ -153,43 +230,12 @@ async function uploadClip(req: NextRequest) {
       }
     }
 
-    const recordedByAgentId = cleanText(meta.recordedByAgentId ?? '') || null
-    if (recordedByAgentId) {
-      const agent = await prisma.agent.findUnique({
-        where: { id: recordedByAgentId },
-        select: { id: true },
-      })
-      if (!agent) return notFound('Agent')
-    }
-
     const stored = await consumeUploadSession(meta.uploadId, user.id, 'CLIP', adoptClipFile)
-    const { filename, sizeBytes, mimeType, originalName } = stored
-    storedFilename = filename
-
-    const durationRaw = Number(meta.durationSeconds)
-    const durationSeconds =
-      Number.isFinite(durationRaw) && durationRaw > 0 ? Math.round(durationRaw) : null
+    const { sizeBytes } = stored
+    storedFilename = stored.filename
 
     const clip = await prisma.bodycamClip.create({
-      data: {
-        investigationId,
-        entryId,
-        title,
-        description: cleanText(meta.description) || null,
-        recordedAt: parseDate(meta.recordedAt),
-        location: cleanText(meta.location).slice(0, 200) || null,
-        filename,
-        originalName: (originalName || filename).slice(0, 255),
-        sizeBytes: BigInt(sizeBytes),
-        mimeType,
-        durationSeconds,
-        recordedByAgentId,
-        tags: sanitizeTags(meta.tags),
-        uploadedById: user.id,
-        ...(meta.clientCompressed
-          ? { compressionStatus: 'SKIPPED', compressionError: 'Bereits in der Desktop-App komprimiert' }
-          : {}),
-      },
+      data: { investigationId, entryId, ...clipFields(meta, stored, user.id, recordedByAgentId) },
       include: clipInclude,
     })
 

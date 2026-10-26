@@ -1,4 +1,3 @@
-import { convertFileSrc } from '@tauri-apps/api/core'
 import { api } from '../api'
 import { backend } from '../backend'
 import { $, errorText, escapeHtml, initials } from '../dom'
@@ -7,6 +6,7 @@ import { icon, type IconName } from '../icons'
 import { can, navigation, state } from '../store'
 import { confirmAction, openForm, type Field } from '../ui/form-dialog'
 import { toast } from '../ui/toast'
+import { playClip } from '../ui/clip-player'
 import { badgeHtml, loadList } from './list'
 import { agentOptions, invalidate, lookups, personOptions, vehicleOptions } from './lookups'
 import {
@@ -514,26 +514,6 @@ function renderMedia(d: Detail) {
         <span class="photo-frame"><img data-src="/api/investigations/photos/${p.id}/image" alt=""></span>
         <span class="type-caption truncate">${escapeHtml(p.title)}</span>
       </button>`).join('')}</div>` : `<div class="card">${empty('Keine Fotos verknüpft.')}</div>`}`
-}
-
-async function playClip(clip: Clip) {
-  const dialog = $('player-dialog') as HTMLElement & { show(): void; hide(): void }
-  const video = $('player-dialog-video') as HTMLVideoElement
-  $('player-dialog-title').textContent = clip.title
-  $('player-dialog-status').textContent = 'Clip wird geladen …'
-  $('player-dialog-status').hidden = false
-  video.hidden = true
-  dialog.show()
-  try {
-    const ext = clip.mimeType.includes('webm') ? 'webm' : 'mp4'
-    const local = await api.download(`/api/investigations/clips/${clip.id}/stream`, `${clip.id}.${ext}`)
-    video.src = convertFileSrc(local)
-    video.hidden = false
-    $('player-dialog-status').hidden = true
-    void video.play()
-  } catch (error) {
-    $('player-dialog-status').textContent = `Clip konnte nicht geladen werden: ${errorText(error)}`
-  }
 }
 
 async function clipForm(clip: Clip) {

@@ -7,11 +7,19 @@ export const agentRecordInput = z.object({
   content: z.string().trim().max(5000).optional().transform((value) => value || null),
 })
 
-export async function listAgentRecords(agentId: string) {
+/** `clips: false` für die eigene Ansicht des Agents – die Clips sind interne Beweise (Stream braucht agents:view). */
+export async function listAgentRecords(agentId: string, { clips = true }: { clips?: boolean } = {}) {
   const entries = await prisma.agentRecordEntry.findMany({
     where: { agentId },
     orderBy: { createdAt: 'desc' },
-    include: { author: { select: { displayName: true } } },
+    include: {
+      author: { select: { displayName: true } },
+      // Bodycam-Clips als Beweis zum Eintrag (aus der Desktop-App hochgeladen).
+      clips: {
+        select: { id: true, title: true, durationSeconds: true, mimeType: true, compressionStatus: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
   })
   return {
     entries: entries.map((entry) => ({
@@ -22,6 +30,7 @@ export async function listAgentRecords(agentId: string) {
       source: entry.source,
       createdAt: entry.createdAt,
       author: entry.source === 'manual' ? entry.author?.displayName ?? null : 'System',
+      clips: clips ? entry.clips : [],
     })),
     positive: entries.filter((entry) => entry.kind === 'POSITIVE').length,
     negative: entries.filter((entry) => entry.kind === 'NEGATIVE').length,

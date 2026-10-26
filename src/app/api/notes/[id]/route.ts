@@ -12,7 +12,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params
 
   const note = await prisma.note.findUnique({ where: { id } })
-  if (!note) return notFound('Notiz')
+  // Persönliche Notizen anderer bleiben unsichtbar – auch für notes:manage.
+  if (!note || (note.private && note.authorId !== user.id)) return notFound('Notiz')
   if (note.authorId !== user.id && !hasPermission(user, 'notes:manage')) return error('Keine Berechtigung', 403)
 
   const body = await req.json() as Record<string, unknown>
@@ -47,7 +48,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params
 
   const note = await prisma.note.findUnique({ where: { id } })
-  if (!note) return notFound('Notiz')
+  // Persönliche Notizen anderer bleiben unsichtbar – auch für notes:manage.
+  if (!note || (note.private && note.authorId !== user.id)) return notFound('Notiz')
   if (note.authorId !== user.id && !hasPermission(user, 'notes:manage')) return error('Keine Berechtigung', 403)
 
   await prisma.$transaction(async (tx) => {

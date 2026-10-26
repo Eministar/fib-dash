@@ -36,3 +36,22 @@ export type BodycamAccess = Awaited<ReturnType<typeof resolveBodycamAccess>>
 export function canAccessBodycamClip(access: Pick<BodycamAccess, 'full' | 'roleOnly'>) {
   return access.full || access.roleOnly
 }
+
+/**
+ * Clip in einer Agent-Akte (Beweis zu einem positiven/negativen Eintrag) statt in
+ * einer Ermittlungsakte. Für ihn gelten die Rechte der Agent-Akte – nicht der
+ * Bodycam-Katalog und nicht die Leserolle.
+ */
+export function isAgentRecordClip(clip: { investigationId: string | null; agentRecordEntryId: string | null }) {
+  return !clip.investigationId && !!clip.agentRecordEntryId
+}
+
+/** Ansehen eines Clips aus der Agent-Akte: wie die Agent-Akte selbst. */
+export function canViewAgentRecordClip(user: Parameters<typeof hasPermission>[0]) {
+  return hasPermission(user, 'agents:view')
+}
+
+/** Ändern/Löschen eines Clips aus der Agent-Akte: wie Einträge der Agent-Akte. */
+export function canManageAgentRecordClip(user: Parameters<typeof hasPermission>[0]) {
+  return hasPermission(user, 'agents:write')
+}

@@ -14,6 +14,8 @@ export interface Settings {
   clipQuality: ClipQuality
   killClip?: KillClipConfig
   selfClip?: SelfClipConfig
+  quickNoteHotkey: string
+  crashReports: boolean
 }
 
 export interface SelfClipConfig {
@@ -130,7 +132,10 @@ export interface UploadProgress {
 }
 
 export interface ClipMeta {
-  investigationId: string
+  /** Ermittlungsakte – oder stattdessen `agentRecord`. */
+  investigationId: string | null
+  /** Neuer Eintrag in einer Agent-Akte, an dem der Clip als Beweis hängt. */
+  agentRecord?: { agentId: string; kind: 'POSITIVE' | 'NEGATIVE'; title: string; content?: string }
   title: string
   description: string | null
   location: string | null
@@ -287,6 +292,14 @@ export interface PollingResult {
   note: string | null
 }
 
+/** Verbrauch der App samt WebView2 und ffmpeg (src-tauri/src/resources.rs). */
+export interface AppResources {
+  cpuPercent: number
+  memoryBytes: number
+  threads: number
+  parts: { name: string; processes: number; cpuPercent: number; memoryBytes: number; threads: number }[]
+}
+
 /** Rust meldet einen ungültigen oder fehlenden Token mit genau diesem Text. */
 export const UNAUTHORIZED = 'UNAUTHORIZED'
 
@@ -322,6 +335,11 @@ export const backend = {
   tweaksRestoreAll: (force = false) => invoke<RestoreResult>('restore_all_tweaks', { force }),
   inputDevices: () => invoke<InputDevice[]>('get_input_devices'),
   measurePolling: (seconds = 3) => invoke<PollingResult[]>('measure_polling_rate', { seconds }),
+  appResources: () => invoke<AppResources>('app_resources'),
+  noteAction: (action: string) => invoke<void>('note_action', { action }),
+  reportError: (message: string, stack: string | null) => invoke<void>('report_error', { message, stack }),
+  prepareRestart: () => invoke<void>('prepare_restart'),
+  quickNoteOpen: () => invoke<void>('quick_note_open'),
   killClipStatus: () => invoke<KillClipStatus>('killclip_status'),
   killClipStart: () => invoke<KillClipStatus>('killclip_start'),
   killClipStop: () => invoke<void>('killclip_stop'),

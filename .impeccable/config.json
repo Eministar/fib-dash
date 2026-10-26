@@ -19,7 +19,7 @@
           "desktop/index.html"
         ],
         "createdAt": "2026-10-24T22:15:41.242Z",
-        "reason": "Claude: <img id=kc-shot> ist versteckt und bekommt src erst zur Laufzeit (Einrichtungs-Screenshot)"
+        "reason": "Claude: #news-lightbox-img und #kc-shot bekommen src zur Laufzeit per JS (Lightbox, Kill-Clip-Screenshot), kein kaputtes Bild"
       }
     ]
   }

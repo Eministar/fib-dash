@@ -6,8 +6,9 @@ import { createAuditLog } from '@/lib/audit/audit'
 import { cleanNoteContent, cleanNotePinned, cleanNoteTitle } from '@/lib/core/notes'
 
 export async function GET(req: NextRequest) {
+  let userId: string
   try {
-    await requirePermission('notes:view')
+    userId = (await requirePermission('notes:view')).id
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Serverfehler'
     if (msg === 'Unauthorized') return unauthorized()
@@ -18,7 +19,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const agentId = searchParams.get('agentId')
 
-  const where: Record<string, unknown> = {}
+  // Persönliche Notizen (Schnellnotiz der Desktop-App) sieht nur ihr Autor.
+  const where: Record<string, unknown> = { OR: [{ private: false }, { authorId: userId }] }
   if (agentId) {
     where.agentId = agentId
   }

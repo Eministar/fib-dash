@@ -46,6 +46,7 @@
         <span>FIB Desktop</span>
       </div>
       <div class="nav-items" role="list">
+        <button class="nav-item" id="nav-search" role="listitem" title="Suchen (Strg+K)"><i data-icon="search"></i><span>Suchen</span></button>
         <button class="nav-item" data-route="home" role="listitem"><i data-icon="home"></i><span>Startseite</span></button>
         <button class="nav-item" data-route="news" role="listitem"><i data-icon="megaphone"></i><span>Neuigkeiten</span><span class="nav-badge" id="nav-news-badge" hidden></span></button>
         <button class="nav-item" data-route="bodycam" data-tool="bodycam" role="listitem"><i data-icon="videoClip"></i><span>Bodycam</span></button>
@@ -81,6 +82,7 @@
           <h1 class="type-title" id="home-greeting">Willkommen</h1>
           <p class="type-body muted">Deine Werkzeuge für den Dienst – alles direkt mit dem Dashboard verbunden.</p>
         </header>
+        <div class="overview-grid" id="home-overview" hidden></div>
         <div class="tool-grid" id="tool-grid"></div>
       </section>
 
@@ -149,10 +151,34 @@
                 <label slot="label" for="f-title">Titel</label>
                 <fluent-text-input slot="input" id="f-title" maxlength="200"></fluent-text-input>
               </fluent-field>
-              <fluent-field class="span-2">
+              <fluent-field class="span-2" id="f-target-field" hidden>
+                <label slot="label">Ablegen in</label>
+                <fluent-dropdown slot="input" id="f-target">
+                  <fluent-listbox>
+                    <fluent-option value="investigation">Ermittlungsakte</fluent-option>
+                    <fluent-option value="record">Agent-Akte (Eintrag mit Clip als Beweis)</fluent-option>
+                  </fluent-listbox>
+                </fluent-dropdown>
+              </fluent-field>
+              <fluent-field class="span-2" id="f-investigation-field">
                 <label slot="label">Ermittlungsakte</label>
                 <fluent-dropdown slot="input" id="f-investigation" type="combobox" placeholder="Akte suchen …">
                   <fluent-listbox id="f-investigation-list"></fluent-listbox>
+                </fluent-dropdown>
+              </fluent-field>
+              <fluent-field class="record-only" hidden>
+                <label slot="label">Agent-Akte von</label>
+                <fluent-dropdown slot="input" id="f-record-agent" type="combobox" placeholder="Agent suchen …">
+                  <fluent-listbox id="f-record-agent-list"></fluent-listbox>
+                </fluent-dropdown>
+              </fluent-field>
+              <fluent-field class="record-only" hidden>
+                <label slot="label">Art des Eintrags</label>
+                <fluent-dropdown slot="input" id="f-record-kind">
+                  <fluent-listbox>
+                    <fluent-option value="POSITIVE">Positiv</fluent-option>
+                    <fluent-option value="NEGATIVE">Negativ</fluent-option>
+                  </fluent-listbox>
                 </fluent-dropdown>
               </fluent-field>
               <fluent-field>
@@ -357,6 +383,7 @@
           </header>
           <fluent-message-bar id="tw-error" intent="error" hidden></fluent-message-bar>
           <div class="tw-grid" id="tw-cards"></div>
+          <div class="tw-grid" id="tw-resources"></div>
         </div>
         <div id="tw-details" hidden></div>
       </section>
@@ -601,6 +628,11 @@
             <fluent-text-input id="s-clipper-hotkey" class="setting-control hotkey" readonly data-hotkey data-optional></fluent-text-input>
           </div>
           <div class="setting-row">
+            <span class="setting-icon"><i data-icon="noteAdd"></i></span>
+            <div class="setting-text"><span>Schnellnotiz-Taste</span><span class="type-caption muted">Öffnet ein kleines Fenster für eine private Notiz – auch im Spiel</span></div>
+            <fluent-text-input id="s-quick-note-hotkey" class="setting-control hotkey" readonly data-hotkey></fluent-text-input>
+          </div>
+          <div class="setting-row">
             <span class="setting-icon"><i data-icon="folderOpen"></i></span>
             <div class="setting-text"><span>Clip-Ordner</span><span class="type-caption muted truncate" id="s-clip-dir-label"></span></div>
             <div class="setting-control">
@@ -638,6 +670,11 @@
             <div class="setting-text"><span>FIB Desktop <span id="version"></span></span><span class="type-caption muted" id="update-status" aria-live="polite"></span></div>
             <fluent-progress-bar id="update-progress" class="setting-control" hidden></fluent-progress-bar>
             <fluent-button id="update-check" class="setting-control"><i data-icon="arrowSync" slot="start"></i>Nach Updates suchen</fluent-button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-icon"><i data-icon="shieldError"></i></span>
+            <div class="setting-text"><span>Fehlerberichte senden</span><span class="type-caption muted">Abstürze und Fehler anonym melden: Version, letzte Seite, Fehlertext – keine Namen</span></div>
+            <fluent-switch id="s-crash-reports" class="setting-control" aria-label="Fehlerberichte senden"></fluent-switch>
           </div>
         </div>
       </div>

@@ -10,10 +10,12 @@ import { initSelfClip, renderSelfClip } from './pages/selfclip'
 import { initTweaks, showTweaks } from './pages/tweaks'
 import { initKillClips, showKillClips } from './pages/killclips'
 import { initHome } from './pages/home'
+import { loadOverview } from './pages/overview'
 import { hideNews, initNews, refreshNewsBadge, showNews } from './pages/news'
 import { initInvestigations, showInvestigations } from './pages/investigations'
 import { initAgents, showAgents } from './pages/agents'
 import { navigation, notifyStateChange, state, type Route } from './store'
+import { initSearch, openSearch } from './ui/search-palette'
 
 type ValueElement = HTMLElement & { value: string }
 type DialogElement = HTMLElement & { show(): void; hide(): void }
@@ -32,6 +34,8 @@ function go(next: Route) {
   if (!tool || tool.hidden) next = 'home'
   if (route === 'news' && next !== 'news') hideNews()
   route = next
+  // Für einen späteren Absturzbericht: Wo war der Nutzer zuletzt?
+  void backend.noteAction(`Seite ${next}`).catch(() => {})
   for (const item of document.querySelectorAll<HTMLElement>('.nav-item[data-route]')) {
     if (item.dataset.route === next) item.setAttribute('aria-current', 'page')
     else item.removeAttribute('aria-current')
@@ -74,6 +78,8 @@ async function enterApp() {
     item.hidden = !tools[item.dataset.tool as keyof typeof tools]
   }
   notifyStateChange()
+  // Nach der Anmeldung (auch Kontowechsel) sofort frisch, nicht erst nach der Mindestpause.
+  void loadOverview(true)
   showView('app')
   go(bodycamQueueLength() ? 'bodycam' : route)
   refreshNewsBadge()
@@ -110,6 +116,9 @@ const clipperHotkey = hotkeyInput($<ValueElement>('s-clipper-hotkey'), {
   placeholder: () => `Standard: ${displayHotkey(state.settings?.defaultClipperHotkey ?? '')}`,
   onChange: (hotkey) => updateSettings({ clipperHotkey: hotkey }),
 })
+const quickNoteHotkey = hotkeyInput($<ValueElement>('s-quick-note-hotkey'), {
+  onChange: (hotkey) => updateSettings({ quickNoteHotkey: hotkey }),
+})
 
 function renderSettings(view: SettingsView) {
   state.settings = view
@@ -118,6 +127,8 @@ function renderSettings(view: SettingsView) {
   selectValue($<DropdownElement>('s-quality'), settings.clipQuality)
   bodycamHotkey.set(settings.bodycamHotkey)
   clipperHotkey.set(settings.clipperHotkey)
+  quickNoteHotkey.set(settings.quickNoteHotkey)
+  ;($('s-crash-reports') as HTMLElement & { checked: boolean }).checked = settings.crashReports
   $('s-clip-dir-label').textContent = settings.clipDir || `${view.defaultClipDir} (Standard)`
   $('s-clip-dir-label').title = settings.clipDir || view.defaultClipDir
   $('s-clip-dir-reset').hidden = !settings.clipDir
@@ -154,6 +165,10 @@ function bindSettings() {
     if (typeof dir === 'string') void updateSettings({ clipDir: dir })
   })
   $('s-clip-dir-reset').addEventListener('click', () => updateSettings({ clipDir: '' }))
+  $('s-crash-reports').addEventListener('change', () => {
+    const checked = ($('s-crash-reports') as HTMLElement & { checked: boolean }).checked
+    if (checked !== state.settings?.settings.crashReports) void updateSettings({ crashReports: checked })
+  })
   $('logout-button').addEventListener('click', async () => {
     dialog.hide()
     await backend.logout()
@@ -173,6 +188,8 @@ export async function startApp() {
     item.addEventListener('click', () => go(item.dataset.route as Route))
   }
   bindSettings()
+  initSearch()
+  $('nav-search').addEventListener('click', openSearch)
   initHome()
   initNews()
   initDuty()

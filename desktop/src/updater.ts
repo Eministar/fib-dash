@@ -1,6 +1,7 @@
 import { getVersion } from '@tauri-apps/api/app'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check, type DownloadEvent, type Update } from '@tauri-apps/plugin-updater'
+import { backend } from './backend'
 import { $, escapeHtml, type ButtonElement, type ProgressElement } from './dom'
 import { formatBytes } from './format'
 import { renderReleaseNotes } from './markdown'
@@ -99,6 +100,8 @@ async function install(update: Update) {
     await wait(1000)
   }
   $('update-screen-detail').textContent = 'Wird installiert …'
+  // Der Installer beendet die App – kein Absturz, also nichts melden.
+  await backend.prepareRestart().catch(() => {})
   await update.install()
   await relaunch()
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Bot, Plus, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react'
+import { Bot, Film, Plus, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react'
+import { clipStreamUrl, formatClipDuration } from '@/components/investigations/clip-player'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,6 +23,14 @@ interface AgentRecord {
   source: string
   createdAt: string
   author: string | null
+  /** Bodycam-Clips als Beweis (aus der Desktop-App); in der eigenen Ansicht leer. */
+  clips?: RecordClip[]
+}
+
+interface RecordClip {
+  id: string
+  title: string
+  durationSeconds: number | null
 }
 
 interface AgentRecordList {
@@ -53,6 +62,7 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
   const { addToast } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState<{ kind: RecordKind; title: string; content: string }>({ kind: 'POSITIVE', title: '', content: '' })
+  const [playing, setPlaying] = useState<RecordClip | null>(null)
 
   if (data && data.linked === false) return null
   const manage = canManage && !!agentId
@@ -117,6 +127,23 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-medium text-[#eee]">{entry.title}</p>
                     {entry.content && <p className="mt-0.5 text-[12.5px] leading-relaxed text-[#8e8e93]">{entry.content}</p>}
+                    {entry.clips && entry.clips.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {entry.clips.map((clip) => (
+                          <button
+                            key={clip.id}
+                            type="button"
+                            onClick={() => setPlaying(clip)}
+                            className="ui-press inline-flex items-center gap-1.5 rounded-[6px] bg-[#1c1c1e] px-2 py-1 text-[12px] text-[#eee] hover:bg-[#3a3a3c]"
+                            title="Bodycam-Clip abspielen"
+                          >
+                            <Film size={12} strokeWidth={1.85} className="text-[#8e8e93]" />
+                            <span className="max-w-[220px] truncate">{clip.title}</span>
+                            {clip.durationSeconds ? <span className="tabular-nums text-[#8e8e93]">{formatClipDuration(clip.durationSeconds)}</span> : null}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <p className="mt-1.5 flex items-center gap-1 text-[11px] text-[#8e8e93]">
                       {entry.source !== 'manual' && <Bot size={11} strokeWidth={1.85} />}
                       {formatDateTime(entry.createdAt)} · {entry.author ?? 'Gelöscht'}
@@ -142,6 +169,16 @@ export function AgentRecordsPanel({ agentId, canManage = false, title = 'Einträ
       ) : (
         data ? <p className="text-[12.5px] text-[#8e8e93]">Keine Einträge vorhanden</p> : error ? <div className="space-y-2"><p role="alert" className="text-[13px] text-[#f87171]">{error}</p><Button size="sm" variant="outline" onClick={refetch}>Erneut versuchen</Button></div> : <ListSkeleton rows={3} compact />
       )}
+
+      <Modal open={Boolean(playing)} onClose={() => setPlaying(null)} title={playing?.title ?? ''} size="xl">
+        {playing && (
+          <div className="overflow-hidden rounded-[10px] border border-[#3a3a3c] bg-black">
+            <video key={playing.id} controls autoPlay preload="metadata" className="max-h-[60vh] w-full" src={clipStreamUrl(playing.id)}>
+              Dein Browser kann dieses Video nicht abspielen.
+            </video>
+          </div>
+        )}
+      </Modal>
 
       {manage && (
         <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Eintrag hinzufügen">

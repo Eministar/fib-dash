@@ -34,7 +34,7 @@ async function uploadEvidence(req: Request, { params }: Context) {
     let data: { title: string; clipId?: string; filename?: string; sizeBytes?: number; mimeType?: string }
     if ('clipId' in body) {
       const access = await bodycamAccess()
-      const clip = await prisma.bodycamClip.findFirst({ where: { id: body.clipId, investigation: access.where }, select: { id: true } })
+      const clip = await prisma.bodycamClip.findFirst({ where: { id: body.clipId, investigationId: { not: null }, investigation: access.where }, select: { id: true } })
       if (!clip) return notFound('Bodycam-Clip')
       data = { clipId: body.clipId, title: 'Bodycam-Verknüpfung' }
     } else {

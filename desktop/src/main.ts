@@ -54,7 +54,18 @@ document.addEventListener('error', (event) => {
   if (event.target instanceof HTMLImageElement && event.target.classList.contains('avatar-img')) event.target.remove()
 }, true)
 
+// Echte Programmfehler im Fenster anonym melden (Rust prüft Einstellung und Limit).
+// Abgelehnte Befehle liefern nur Text (z. B. „Dashboard nicht erreichbar“) – das sind
+// erwartete Fehler und werden nicht gemeldet.
+function reportWindowError(error: unknown) {
+  if (!(error instanceof Error)) return
+  void backend.reportError(`${error.name}: ${error.message}`, error.stack ?? null).catch(() => {})
+}
+window.addEventListener('error', (event) => reportWindowError(event.error))
+window.addEventListener('unhandledrejection', (event) => reportWindowError(event.reason))
+
 startApp().catch((error: unknown) => {
+  reportWindowError(error)
   // Nie ein leeres Fenster: Startfehler sichtbar machen statt still abzubrechen.
   console.error(error)
   const bar = document.getElementById('login-error')!

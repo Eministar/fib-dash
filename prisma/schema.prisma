@@ -1194,8 +1194,12 @@ model Note {
   title     String?
   content   String   @db.LongText
   pinned    Boolean  @default(false)
+  /// Persönliche Notiz (Schnellnotiz der Desktop-App): sieht und ändert nur der Autor.
+  private   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([authorId, private, createdAt])
 }
 
 /// Positiver/negativer Eintrag in der Personalakte. `source` = `manual` (von
@@ -1211,6 +1215,8 @@ model AgentRecordEntry {
   authorId  String?
   author    User?           @relation("AgentRecordEntryAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   createdAt DateTime        @default(now())
+
+  clips BodycamClip[]
 
   @@index([agentId, createdAt])
   @@index([agentId, source, createdAt])
@@ -2046,8 +2052,12 @@ model InvestigationPerson {
 /// wird sie ausschließlich über die geschützte Streaming-Route.
 model BodycamClip {
   id              String              @id @default(cuid())
-  investigationId String
-  investigation   Investigation       @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  /// Akte des Clips – leer, wenn er nur an einem Agent-Akteneintrag hängt.
+  investigationId String?
+  investigation   Investigation?      @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  /// Alternativ: Beweis zu einem Eintrag in der Agent-Akte (positiv/negativ).
+  agentRecordEntryId String?
+  agentRecordEntry   AgentRecordEntry? @relation(fields: [agentRecordEntryId], references: [id], onDelete: Cascade)
   /// Optionale Zuordnung zu einem Chronologie-Eintrag.
   entryId         String?
   entry           InvestigationEntry? @relation(fields: [entryId], references: [id], onDelete: SetNull)
@@ -2091,6 +2101,7 @@ model BodycamClip {
   @@index([compressionStatus, createdAt])
   @@index([entryId])
   @@index([recordedByAgentId])
+  @@index([agentRecordEntryId])
   @@index([createdAt])
 }
 

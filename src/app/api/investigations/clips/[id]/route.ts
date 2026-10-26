@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 
 import { error, forbidden, notFound, success } from '@/lib/api-response'
-import { requirePermission } from '@/lib/auth'
+import { requireAuth, type CurrentUser } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit/audit'
 import { deleteClipFile } from '@/lib/media/clips'
 import { prisma } from '@/lib/prisma'
@@ -12,23 +12,42 @@ import {
   serializeBigInts,
 } from '@/lib/investigations/investigations'
 import { cleanText, parseDate, routeError } from '@/lib/investigations/investigations-server'
+import { canManageAgentRecordClip, isAgentRecordClip } from '@/lib/investigations/bodycam-access'
+import { hasPermission } from '@/lib/permissions'
 import type { Prisma } from '@/generated/prisma'
 
 export const dynamic = 'force-dynamic'
 
 const accessInclude = {
   investigation: { include: investigationAccessInclude },
+  agentRecordEntry: { select: { agentId: true, title: true } },
 } as const
+
+type ExistingClip = Prisma.BodycamClipGetPayload<{ include: typeof accessInclude }>
+
+/**
+ * Akten-Clips: Aktenpflege plus Einsicht in genau diese Akte. Clips aus einer
+ * Agent-Akte: dieselben Rechte wie Einträge der Agent-Akte.
+ */
+function canManageClip(user: CurrentUser, clip: ExistingClip) {
+  if (isAgentRecordClip(clip)) return canManageAgentRecordClip(user)
+  return hasPermission(user, 'investigations:manage') && !!clip.investigation && canAccessInvestigation(user, clip.investigation)
+}
+
+/** Wo der Clip hängt – für das Protokoll. */
+function clipPlace(clip: ExistingClip) {
+  return clip.investigation ? `Akte ${clip.investigation.caseNumber}` : `Agent-Akte „${clip.agentRecordEntry?.title ?? '–'}“`
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requirePermission('investigations:manage')
+    const user = await requireAuth()
     const { id } = await params
     const body = await req.json()
 
     const existing = await prisma.bodycamClip.findUnique({ where: { id }, include: accessInclude })
     if (!existing) return notFound('Clip')
-    if (!canAccessInvestigation(user, existing.investigation)) return forbidden()
+    if (!canManageClip(user, existing)) return forbidden()
 
     const data: Prisma.BodycamClipUpdateInput = {}
 
@@ -94,7 +113,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await createAuditLog({
       action: 'CLIP_UPDATED',
       userId: user.id,
-      details: `Akte ${existing.investigation.caseNumber}: Clip "${clip.title}" bearbeitet`,
+      agentId: existing.agentRecordEntry?.agentId,
+      details: `${clipPlace(existing)}: Clip "${clip.title}" bearbeitet`,
     })
 
     return success(serializeBigInts(clip))
@@ -105,12 +125,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requirePermission('investigations:manage')
+    const user = await requireAuth()
     const { id } = await params
 
     const existing = await prisma.bodycamClip.findUnique({ where: { id }, include: accessInclude })
     if (!existing) return notFound('Clip')
-    if (!canAccessInvestigation(user, existing.investigation)) return forbidden()
+    if (!canManageClip(user, existing)) return forbidden()
 
     const deleted = await prisma.bodycamClip.delete({ where: { id } })
     await Promise.all([deleted.filename, deleted.compressionSource, deleted.compressionOutput]
@@ -119,7 +139,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await createAuditLog({
       action: 'CLIP_DELETED',
       userId: user.id,
-      details: `Akte ${existing.investigation.caseNumber}: Clip "${existing.title}" gelöscht`,
+      agentId: existing.agentRecordEntry?.agentId,
+      details: `${clipPlace(existing)}: Clip "${existing.title}" gelöscht`,
     })
 
     return success({ id })

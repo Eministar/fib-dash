@@ -30,6 +30,10 @@ pub struct Settings {
     pub clip_quality: String,
     pub kill_clip: crate::killclip::Config,
     pub self_clip: crate::recorder::Config,
+    /// Taste für die Schnellnotiz (kleines Fenster, auch im Spiel).
+    pub quick_note_hotkey: String,
+    /// Abstürze und Fehler anonym ans Dashboard melden.
+    pub crash_reports: bool,
 }
 
 impl Default for Settings {
@@ -43,6 +47,8 @@ impl Default for Settings {
             clip_quality: "720p".into(),
             kill_clip: crate::killclip::Config::default(),
             self_clip: crate::recorder::Config::default(),
+            quick_note_hotkey: "Ctrl+Shift+N".into(),
+            crash_reports: true,
         }
     }
 }

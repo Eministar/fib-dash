@@ -16,7 +16,7 @@ import {
 } from '../dom'
 import { clipTitle, displayHotkey, formatBytes, formatClock, formatDateTime } from '../format'
 import { icons } from '../icons'
-import { navigation, onStateChange, state } from '../store'
+import { can, navigation, onStateChange, state } from '../store'
 
 // Kürzere Abweichungen vom Clip-Anfang/-Ende gelten nicht als Schnitt.
 const TRIM_TOLERANCE = 0.25
@@ -39,12 +39,35 @@ function renderIdle() {
     `Drücke ${displayHotkey(settings.bodycamHotkey)} im Spiel – ${program} speichert den Clip, danach bearbeitest du ihn hier.`
 }
 
+// ── Ziel: Ermittlungsakte oder Agent-Akte ────────────────────────────
+
+/** Darf Clips als Beweis an einen Eintrag der Agent-Akte hängen (wie Akteneinträge anlegen). */
+const canRecord = () => can('agents:write')
+
+/** Wohin der Clip geht. Ohne Aktenrecht bleibt nur die Agent-Akte. */
+function target(): 'investigation' | 'record' {
+  if (!canRecord()) return 'investigation'
+  if (!state.context?.canUpload) return 'record'
+  return $<DropdownElement>('f-target').value === 'record' ? 'record' : 'investigation'
+}
+
+function applyTarget() {
+  const record = target() === 'record'
+  $('f-investigation-field').hidden = record
+  for (const field of document.querySelectorAll<HTMLElement>('.record-only')) field.hidden = !record
+}
+
 function renderContext() {
   const context = state.context
   if (!context) return
-  $('permission-warning').hidden = context.canUpload
-  ;($('capture-button') as ButtonElement).disabled = !context.canUpload
-  ;($('pick-button') as ButtonElement).disabled = !context.canUpload
+  const allowed = context.canUpload || canRecord()
+  $('permission-warning').hidden = allowed
+  ;($('capture-button') as ButtonElement).disabled = !allowed
+  ;($('pick-button') as ButtonElement).disabled = !allowed
+  // Die Wahl gibt es nur, wenn beides erlaubt ist.
+  $('f-target-field').hidden = !(context.canUpload && canRecord())
+  fillOptions('f-record-agent-list', context.agents)
+  applyTarget()
   // Eigene Akten zuerst – die braucht man fast immer.
   const investigations = [...context.investigations].sort((a, b) => Number(b.mine) - Number(a.mine))
   fillOptions('f-investigation-list', investigations.map((i) => ({ id: i.id, label: i.mine ? `★ ${i.label}` : i.label })))
@@ -89,6 +112,9 @@ function openClip() {
   $<ValueElement>('f-tags').value = ''
   $<ValueElement>('f-description').value = ''
   selectValue($<DropdownElement>('f-agent'), state.context?.ownAgent?.id)
+  selectValue($<DropdownElement>('f-target'), state.context?.canUpload ? 'investigation' : 'record')
+  selectValue($<DropdownElement>('f-record-kind'), 'POSITIVE')
+  applyTarget()
   const last = state.settings?.settings.lastInvestigationId
   if (state.context?.investigations.some((i) => i.id === last)) selectValue($<DropdownElement>('f-investigation'), last)
   showMessage('upload-error', null)
@@ -298,10 +324,14 @@ function setBusy(active: boolean) {
 async function save() {
   const clip = queue[0]
   if (!clip || busy) return
-  const investigationId = $<DropdownElement>('f-investigation').value
+  const toRecord = target() === 'record'
+  const investigationId = toRecord ? null : $<DropdownElement>('f-investigation').value || null
+  const recordAgentId = toRecord ? $<DropdownElement>('f-record-agent').value || null : null
   const title = textOf('f-title')
-  if (!investigationId) return showMessage('upload-error', 'Bitte eine Ermittlungsakte auswählen.')
+  if (!toRecord && !investigationId) return showMessage('upload-error', 'Bitte eine Ermittlungsakte auswählen.')
+  if (toRecord && !recordAgentId) return showMessage('upload-error', 'Bitte den Agent auswählen, in dessen Akte der Eintrag kommt.')
   if (!title) return showMessage('upload-error', 'Bitte einen Titel angeben.')
+  if (toRecord && title.length < 2) return showMessage('upload-error', 'Der Titel ist zu kurz.')
 
   video().pause()
   const quality = state.settings?.settings.clipQuality ?? '720p'
@@ -327,6 +357,17 @@ async function save() {
 
     await backend.uploadClip(upload.path, {
       investigationId,
+      // Agent-Akte: neuer Eintrag mit demselben Titel, die Beschreibung wird sein Text.
+      ...(recordAgentId
+        ? {
+            agentRecord: {
+              agentId: recordAgentId,
+              kind: $<DropdownElement>('f-record-kind').value === 'NEGATIVE' ? 'NEGATIVE' : 'POSITIVE',
+              title,
+              content: text('f-description') ?? undefined,
+            },
+          }
+        : {}),
       title,
       description: text('f-description'),
       location: text('f-location'),
@@ -337,12 +378,18 @@ async function save() {
       clientCompressed: quality !== 'original',
     })
 
-    void backend.rememberInvestigation(investigationId)
-    if (state.settings) state.settings.settings.lastInvestigationId = investigationId
-    const caseLabel = state.context?.investigations.find((i) => i.id === investigationId)?.label ?? 'die Akte'
+    let place: string
+    if (investigationId) {
+      void backend.rememberInvestigation(investigationId)
+      if (state.settings) state.settings.settings.lastInvestigationId = investigationId
+      place = state.context?.investigations.find((i) => i.id === investigationId)?.label ?? 'die Akte'
+    } else {
+      const agent = state.context?.agents.find((a) => a.id === recordAgentId)?.label
+      place = agent ? `die Agent-Akte von ${agent}` : 'die Agent-Akte'
+    }
     queue.shift()
     openClip()
-    showMessage('upload-success', `„${title}“ wurde in ${caseLabel} hochgeladen.`)
+    showMessage('upload-success', `„${title}“ wurde in ${place} hochgeladen.`)
   } catch (error) {
     if (errorText(error) === UNAUTHORIZED) return navigation.signOut()
     showMessage('upload-error', errorText(error))
@@ -358,6 +405,7 @@ export async function initBodycam() {
   $('capture-button').addEventListener('click', () => backend.captureClip())
   $('pick-button').addEventListener('click', pickClip)
   $('upload-button').addEventListener('click', save)
+  $('f-target').addEventListener('change', applyTarget)
   $('cancel-upload-button').addEventListener('click', () => backend.cancelUpload())
   $('discard-button').addEventListener('click', () => {
     queue.shift()

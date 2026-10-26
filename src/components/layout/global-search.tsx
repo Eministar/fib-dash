@@ -26,7 +26,7 @@ import { useNewShortcut } from '@/hooks/use-new-shortcut'
 import { cn } from '@/lib/utils'
 
 /** Reihenfolge der Gruppen im Ergebnis – die häufigsten zuerst. */
-const GROUP_ORDER: SearchGroup[] = ['agents', 'investigations', 'dossiers', 'persons', 'vehicles', 'mapSpots', 'entries']
+const GROUP_ORDER: SearchGroup[] = ['agents', 'investigations', 'dossiers', 'persons', 'vehicles', 'mapSpots', 'entries', 'sanctions', 'ordnungen']
 
 const ACTION_ICONS: Record<PaletteActionIcon, LucideIcon> = {
   investigation: FolderPlus,

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "quick-note",
+  "description": "Rechte des Schnellnotiz-Fensters – nur das Nötigste",
+  "windows": ["quick-note"],
+  "permissions": ["core:default"]
+}

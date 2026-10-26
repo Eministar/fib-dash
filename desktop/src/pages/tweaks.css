@@ -119,3 +119,11 @@
   .tw-row.device { grid-template-columns: 1fr; }
   .tw-row.head { display: none; }
 }
+
+/* Verbrauch der App */
+.tw-res-facts { display: flex; gap: 32px; }
+.tw-res-facts > div { display: flex; flex-direction: column; }
+.tw-res-table { display: flex; flex-direction: column; border: 1px solid var(--card-stroke); border-radius: 4px; overflow: hidden; }
+.tw-res-row { display: grid; grid-template-columns: 1fr 64px 88px 64px; gap: 8px; padding: 6px 12px; font-variant-numeric: tabular-nums; }
+.tw-res-row > span:not(:first-child) { text-align: right; }
+.tw-res-row + .tw-res-row { border-top: 1px solid var(--card-stroke); }

@@ -54,6 +54,11 @@ import chevronDown from '@fluentui/svg-icons/icons/chevron_down_24_regular.svg?r
 import arrowDownload from '@fluentui/svg-icons/icons/arrow_download_24_regular.svg?raw'
 import documentIcon from '@fluentui/svg-icons/icons/document_24_regular.svg?raw'
 import sparkle from '@fluentui/svg-icons/icons/sparkle_24_regular.svg?raw'
+import pulse from '@fluentui/svg-icons/icons/pulse_24_regular.svg?raw'
+import note from '@fluentui/svg-icons/icons/note_24_regular.svg?raw'
+import noteAdd from '@fluentui/svg-icons/icons/note_add_24_regular.svg?raw'
+import calendar from '@fluentui/svg-icons/icons/calendar_ltr_24_regular.svg?raw'
+import clipboardTask from '@fluentui/svg-icons/icons/clipboard_task_24_regular.svg?raw'
 
 export const icons = {
   home, videoClip, timer, documentSearch, settings, open, record, folderOpen, keyboard, play, pause, cut,
@@ -62,6 +67,7 @@ export const icons = {
   target, stop, screenshot, checkmarkCircle, errorCircle, cloudUpload, filmstrip,
   wrench, wasd: keyboard2, cursor, board, games, warning, shieldError, arrowUndo, info, gauge,
   megaphone, chevronDown, arrowDownload, document: documentIcon, sparkle,
+  pulse, note, noteAdd, calendar, clipboardTask,
 }
 
 export type IconName = keyof typeof icons

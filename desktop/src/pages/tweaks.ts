@@ -13,6 +13,7 @@ import { $, errorText, escapeHtml } from '../dom'
 import { icon, type IconName } from '../icons'
 import { openForm } from '../ui/form-dialog'
 import { toast } from '../ui/toast'
+import { startResources } from './resources'
 
 // „Weitere Sachen → Tweaks“. Alle Systemeingriffe laufen im Rust-Backend; diese
 // Seite zeigt nur dessen Zustand und schickt Tweak-IDs. Schalter spiegeln immer
@@ -585,4 +586,5 @@ export function initTweaks() {
 
 export function showTweaks() {
   void load()
+  startResources()
 }

@@ -3,6 +3,7 @@ import { $, escapeHtml } from '../dom'
 import { displayHotkey } from '../format'
 import { icon, type IconName } from '../icons'
 import { navigation, onStateChange, state, type Route } from '../store'
+import { initOverview, loadOverview } from './overview'
 
 interface Tool {
   icon: IconName
@@ -90,6 +91,10 @@ function render() {
 }
 
 export function initHome() {
-  onStateChange(render)
+  initOverview()
+  onStateChange(() => {
+    render()
+    void loadOverview()
+  })
   render()
 }

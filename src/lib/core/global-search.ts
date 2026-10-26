@@ -12,6 +12,8 @@ export const SEARCH_GROUPS = {
   vehicles: 'Fahrzeuge',
   mapSpots: 'Kartenpunkte',
   entries: 'Chronologie-Einträge',
+  sanctions: 'Sanktionskatalog',
+  ordnungen: 'Ordnungen',
 } as const
 
 export type SearchGroup = keyof typeof SEARCH_GROUPS

@@ -4,8 +4,11 @@ mod clipper;
 mod media;
 mod settings;
 mod convert;
+mod crash;
 mod killclip;
+mod quicknote;
 mod recorder;
+mod resources;
 mod tweaks;
 
 use std::{
@@ -104,6 +107,25 @@ fn register_hotkey(app: &AppHandle, hotkey: &str) -> Result<(), String> {
     shortcuts
         .register(shortcut)
         .map_err(|_| format!("„{hotkey}“ ist schon von einem anderen Programm belegt"))
+}
+
+/// Schnellnotiz-Taste anmelden; `previous` (die bisherige) wird vorher gelöst.
+fn register_quick_note_hotkey(app: &AppHandle, hotkey: &str, previous: Option<&str>) -> Result<(), String> {
+    let shortcut: Shortcut = hotkey.parse().map_err(|_| format!("Ungültige Schnellnotiz-Taste „{hotkey}“"))?;
+    let shortcuts = app.global_shortcut();
+    if let Some(previous) = previous.and_then(|p| p.parse::<Shortcut>().ok()) {
+        let _ = shortcuts.unregister(previous);
+    }
+    shortcuts
+        .register(shortcut)
+        .map_err(|_| format!("„{hotkey}“ ist schon von einem anderen Programm belegt"))
+}
+
+/// Ist das die eingestellte Schnellnotiz-Taste?
+fn is_quick_note_shortcut(app: &AppHandle, shortcut: &Shortcut) -> bool {
+    app.try_state::<AppState>()
+        .and_then(|s| s.settings.lock().unwrap().quick_note_hotkey.parse::<Shortcut>().ok())
+        .is_some_and(|quick| &quick == shortcut)
 }
 
 fn inspect(path: &Path) -> Result<ClipInfo, String> {
@@ -210,10 +232,20 @@ fn save_settings(app: AppHandle, state: State<AppState>, mut settings: Settings)
     if !settings.clipper_hotkey.trim().is_empty() {
         clipper::parse_hotkey(&settings.clipper_hotkey)?;
     }
+    if settings.quick_note_hotkey.parse::<Shortcut>().ok() == settings.bodycam_hotkey.parse::<Shortcut>().ok() {
+        return Err("Schnellnotiz und Bodycam brauchen verschiedene Tasten.".into());
+    }
     let previous = state.settings.lock().unwrap().bodycam_hotkey.clone();
     if settings.bodycam_hotkey != previous {
         if let Err(error) = register_hotkey(&app, &settings.bodycam_hotkey) {
             let _ = register_hotkey(&app, &previous);
+            return Err(error);
+        }
+    }
+    let previous_note = state.settings.lock().unwrap().quick_note_hotkey.clone();
+    if settings.quick_note_hotkey != previous_note {
+        if let Err(error) = register_quick_note_hotkey(&app, &settings.quick_note_hotkey, Some(&previous_note)) {
+            let _ = register_quick_note_hotkey(&app, &previous_note, None);
             return Err(error);
         }
     }
@@ -439,6 +471,53 @@ fn selfclip_restart(app: AppHandle) {
     sync_recorder(&app);
 }
 
+// ── Schnellnotiz ─────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn quick_note_open(app: AppHandle) -> Result<(), String> {
+    quicknote::open(&app)
+}
+
+/// Schnellnotiz schließen; das vorher aktive Fenster (meist das Spiel) kommt wieder nach vorne.
+#[tauri::command]
+fn quick_note_close(app: AppHandle) {
+    quicknote::close(&app);
+}
+
+// ── Absturzberichte ──────────────────────────────────────────────────
+
+/// Seite oder Werkzeug, das der Nutzer gerade nutzt – steht in einem späteren Absturzbericht.
+#[tauri::command]
+fn note_action(action: String) {
+    crash::note_action(&action);
+}
+
+/// Fehler im Fenster (JavaScript) anonym melden, sofern erlaubt.
+#[tauri::command]
+fn report_error(state: State<AppState>, message: String, stack: Option<String>) {
+    if !state.settings.lock().unwrap().crash_reports || !crash::accept_window_report(&message) {
+        return;
+    }
+    let client = state.client.clone();
+    let action = crash::last_action();
+    tauri::async_runtime::spawn(async move {
+        let title = format!("FIB Desktop {}: Fehler im Fenster", env!("CARGO_PKG_VERSION"));
+        crash::send(&client, &title, &message, &action, stack.as_deref()).await;
+    });
+}
+
+/// Vor dem Update-Neustart: Das Beenden durch den Installer ist kein Absturz.
+#[tauri::command]
+fn prepare_restart() {
+    crash::clean_exit();
+}
+
+/// CPU, Arbeitsspeicher und Threads der App samt WebView2 und ffmpeg.
+#[tauri::command]
+async fn app_resources() -> Result<resources::Usage, String> {
+    tauri::async_runtime::spawn_blocking(resources::measure).await.map_err(|e| e.to_string())
+}
+
 // ── Kill-Clips ───────────────────────────────────────────────────────
 
 /// Taste für den Einrichtungs-Screenshot (nur aktiv, solange die Einrichtung offen ist).
@@ -579,6 +658,14 @@ pub fn run() {
                     if calibration {
                         let app = app.clone();
                         tauri::async_runtime::spawn_blocking(move || emit_reference_clip(&app));
+                    } else if is_quick_note_shortcut(app, shortcut) {
+                        // Nicht im Handler selbst bauen: Fenster aus dem Hauptthread heraus können hängen.
+                        let app = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            if let Err(error) = quicknote::open(&app) {
+                                eprintln!("Schnellnotiz: {error}");
+                            }
+                        });
                     } else {
                         run_capture(app.clone());
                     }
@@ -596,7 +683,17 @@ pub fn run() {
                 let _ = std::fs::remove_dir_all(dir);
             }
             let settings = settings::load(&handle);
+            // Absturz des letzten Laufs melden (falls erlaubt), neue Laufzeitmarke setzen.
+            let crash_dir = handle.path().app_local_data_dir().unwrap_or_else(|_| std::env::temp_dir()).join("laufzeit");
+            if let (Some(report), true) = (crash::install(crash_dir), settings.crash_reports) {
+                tauri::async_runtime::spawn(async move {
+                    crash::send(&api::client(), &report.title, &report.message, &report.action, None).await;
+                });
+            }
             if let Err(error) = register_hotkey(&handle, &settings.bodycam_hotkey) {
+                eprintln!("{error}");
+            }
+            if let Err(error) = register_quick_note_hotkey(&handle, &settings.quick_note_hotkey, None) {
                 eprintln!("{error}");
             }
             let self_clip = settings.clipper == settings::Clipper::SelfClip;
@@ -642,6 +739,12 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == quicknote::LABEL {
+                    // Per X geschlossen: Fokus wie beim Speichern zurück ins Spiel.
+                    api.prevent_close();
+                    quicknote::close(window.app_handle());
+                    return;
+                }
                 api.prevent_close();
                 let _ = window.hide();
             }
@@ -669,6 +772,12 @@ pub fn run() {
             selfclip_install,
             selfclip_save_config,
             selfclip_restart,
+            app_resources,
+            note_action,
+            report_error,
+            quick_note_open,
+            quick_note_close,
+            prepare_restart,
             tweaks::commands::get_wasd_tweak_status,
             tweaks::commands::get_wasd_tweak_details,
             tweaks::commands::preview_wasd_changes,
@@ -693,6 +802,11 @@ pub fn run() {
             killclip_test_feed,
             killclip_test_marker,
         ])
-        .run(tauri::generate_context!())
-        .expect("FIB Desktop konnte nicht gestartet werden");
+        .build(tauri::generate_context!())
+        .expect("FIB Desktop konnte nicht gestartet werden")
+        .run(|_, event| {
+            if let tauri::RunEvent::Exit = event {
+                crash::clean_exit();
+            }
+        });
 }

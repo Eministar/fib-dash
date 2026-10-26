@@ -10,6 +10,7 @@ import { mapCategory } from '@/lib/investigations/map-spots'
 import { SEARCH_LIMIT_PER_GROUP, excerpt, isSearchable, type SearchHit } from '@/lib/core/global-search'
 import { agentMatchScore, matchesAgent, tokenizedWhere } from '@/lib/core/search-match'
 import { displayBadgeNumber } from '@/lib/agents/badge-number'
+import { PENAL_GRADE_RULES, SANCTION_VIOLATIONS } from '@/lib/sanctions/sanction-catalog'
 
 export const dynamic = 'force-dynamic'
 
@@ -120,6 +121,19 @@ export async function GET(req: NextRequest) {
         : Promise.resolve([]),
     ])
 
+    // Sanktionskatalog und Ordnungen darf jeder Angemeldete lesen (wie ihre eigenen Seiten).
+    const searchWords = term.toLowerCase().split(/\s+/).filter(Boolean)
+    const sanctionHits = SANCTION_VIOLATIONS.filter((violation) => {
+      const haystack = `${violation.label} ${violation.code} pg ${violation.grade} ${PENAL_GRADE_RULES[violation.grade].severity}`.toLowerCase()
+      return searchWords.every((word) => haystack.includes(word))
+    }).slice(0, take)
+    const ordnungen = await prisma.ordnung.findMany({
+      where: words((token) => [{ title: { contains: token } }, { description: { contains: token } }, { content: { contains: token } }]),
+      select: { id: true, slug: true, title: true, description: true, content: true, category: { select: { label: true } } },
+      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+      take,
+    })
+
     const agentHits = agents
       .filter((agent) => matchesAgent(term, agent))
       .map((agent, index) => ({
@@ -190,6 +204,25 @@ export async function GET(req: NextRequest) {
         title: row.title,
         hint: excerpt(row.content, term),
         href: `/investigations/${row.investigationId}?tab=chronologie`,
+      })),
+      ...sanctionHits.map((violation) => {
+        const rule = PENAL_GRADE_RULES[violation.grade]
+        return {
+          id: violation.code,
+          group: 'sanctions' as const,
+          code: `Penal Grade ${violation.grade}`,
+          title: violation.label,
+          hint: `${rule.severity} · Regelfolge: ${rule.typicalConsequence}`,
+          href: '/sanktionen/katalog',
+        }
+      }),
+      ...ordnungen.map((row) => ({
+        id: row.id,
+        group: 'ordnungen' as const,
+        code: row.category.label,
+        title: row.title,
+        hint: excerpt(row.content, term) ?? excerpt(row.description, term),
+        href: `/ordnungen/${row.slug}`,
       })),
     ]
 

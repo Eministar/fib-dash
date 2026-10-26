@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     if (!evidence) return notFound('Beweis')
     if (evidence.clipId) {
       const access = await bodycamAccess()
-      if (!await prisma.bodycamClip.findFirst({ where: { id: evidence.clipId, investigation: access.where }, select: { id: true } })) return notFound('Bodycam-Clip')
+      if (!await prisma.bodycamClip.findFirst({ where: { id: evidence.clipId, investigationId: { not: null }, investigation: access.where }, select: { id: true } })) return notFound('Bodycam-Clip')
       return new Response(null, { status: 307, headers: { Location: `/api/investigations/clips/${evidence.clipId}/stream`, 'Cache-Control': 'private, no-store' } })
     }
     if (!evidence.filename || !evidence.mimeType) return notFound('Datei')
