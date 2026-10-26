@@ -224,12 +224,19 @@ impl KillfeedTracker {
     pub fn update(&mut self, lines: &[Line], now: f64) -> Vec<FeedEvent> {
         self.visible.retain(|entry| now - entry.last_seen <= if entry.confirmed { self.forget_after } else { 0.9 });
         let mut confirmed = Vec::new();
+        // Jede Meldung einer Lesung gehört zu einer eigenen Beobachtung: Zwei Kills am
+        // selben Gegner stehen als zwei gleiche Meldungen untereinander.
+        let mut taken = vec![false; self.visible.len()];
         for event in events(lines) {
             let key = match &event {
                 FeedEvent::Kill(name) => format!("k:{}", fold(name)),
                 FeedEvent::Death(name) => format!("d:{}", fold(name)),
             };
-            match self.visible.iter_mut().find(|entry| entry.keys.iter().any(|seen| same_message(seen, &key))) {
+            let found = self.visible.iter().enumerate().position(|(i, entry)| !taken[i] && entry.keys.iter().any(|seen| same_message(seen, &key)));
+            match found.map(|i| {
+                taken[i] = true;
+                &mut self.visible[i]
+            }) {
                 Some(entry) => {
                     entry.last_seen = now;
                     // Die OCR-Fehler wandern von Lesung zu Lesung („Remard Kaito“ → „Rehhard
@@ -244,6 +251,7 @@ impl KillfeedTracker {
                 }
                 None => {
                     self.visible.push(FeedObservation { keys: vec![key], first_seen: now, last_seen: now, confirmed: false });
+                    taken.push(true);
                 }
             }
         }
@@ -482,6 +490,17 @@ mod tests {
             (19.02, "DJ hast basti Salvatore I FIB [7301 getötet"),
             (20.02, "DJ hast Salvatore I FIB [7301 getötet"),
         ]), 1);
+        // Gestapelt: Derselbe Gegner zweimal kurz hintereinander steht zweimal untereinander.
+        let mut tracker = KillfeedTracker::default();
+        let one = line("Du hast FIB x Reinhard Kaito [163] getötet");
+        let two = line("DJ hast FB x Remard Kdto (1631 getötet");
+        assert_eq!(tracker.update(&[one.clone()], 0.0).len(), 0);
+        assert_eq!(tracker.update(&[one.clone()], 0.5).len(), 1);
+        assert_eq!(tracker.update(&[one.clone(), two.clone()], 1.0).len(), 0);
+        assert_eq!(tracker.update(&[one.clone(), two.clone()], 1.5).len(), 1);
+        // Die obere läuft ab, die untere rückt nach – kein weiterer Kill.
+        assert_eq!(tracker.update(&[two.clone()], 2.0).len(), 0);
+        assert_eq!(tracker.update(&[two], 2.5).len(), 0);
         // Zwei verschiedene Gegner bleiben zwei Kills.
         assert_eq!(replay(&[
             (1.0, "Du hast Max Mustermann [12] getötet"),

@@ -287,13 +287,19 @@ fn report_screen_error(app: &AppHandle, status: &Arc<Mutex<Status>>, failing_sin
 /// Ab diesem Wert gilt der Kill-Marker als gesehen (Live-Erkennung, Einrichtung und Probelauf).
 pub const MARKER_THRESHOLD: f32 = 0.25;
 
-/// Kill-Feed-Bereich für die Live-Erkennung: um die Hälfte nach rechts verbreitert.
-/// Eingerichtet wird an einer einzelnen Meldung; bei längeren Namen reicht die Box
-/// weiter, und „getötet“ fiel am rechten Rand ab (`live_detection_log`).
-fn live_feed_region(region: Region, screen_width: u32) -> Region {
+/// Kill-Feed-Bereich für die Live-Erkennung. Eingerichtet wird an einer einzelnen Meldung:
+/// * um die Hälfte nach rechts verbreitert – bei längeren Namen reicht die Box weiter,
+///   und „getötet“ fiel am rechten Rand ab;
+/// * nach unten über mehrere Plätze verlängert – weitere Meldungen stapeln sich unter
+///   der laufenden und wurden sonst nie gesehen (`live_detection_log`).
+fn live_feed_region(region: Region, screen_width: u32, screen_height: u32) -> Region {
     let width = (region.width * 3 / 2).min(screen_width.saturating_sub(region.x));
-    Region { width, ..region }
+    let height = (region.height * FEED_SLOTS).min(screen_height.saturating_sub(region.y));
+    Region { width, height, ..region }
 }
+
+/// So viele gestapelte Meldungen deckt der Live-Bereich ab.
+const FEED_SLOTS: u32 = 4;
 
 /// Bereich um das Fadenkreuz in der Bildschirmmitte, passend zur Auflösung.
 fn center_region(width: u32, height: u32) -> Region {
@@ -372,7 +378,7 @@ fn watch(
                 size = Some((opened.width, opened.height));
                 regions.clear();
                 feed_index = config.killfeed.filter(|_| ocr.is_some()).map(|r| {
-                    regions.push(live_feed_region(r, opened.width));
+                    regions.push(live_feed_region(r, opened.width, opened.height));
                     regions.len() - 1
                 });
                 // Mit Kill-Feed entscheidet ausschließlich die bestätigte Meldung.
@@ -766,7 +772,7 @@ mod tests {
         let r: Vec<u32> = std::env::var("FIB_FEED").expect("FIB_FEED").split(',').map(|v| v.parse().unwrap()).collect();
         let seconds: u64 = std::env::var("FIB_SECONDS").ok().and_then(|s| s.parse().ok()).unwrap_or(60);
         let out_dir = std::env::var("FIB_OUT_DIR").ok().map(PathBuf::from);
-        let regions = vec![live_feed_region(Region { x: r[0], y: r[1], width: r[2], height: r[3] }, 1920)];
+        let regions = vec![live_feed_region(Region { x: r[0], y: r[1], width: r[2], height: r[3] }, 1920, 1080)];
         let mut ocr = ocr::LiveFeedOcr::new().unwrap();
         let mut feed = KillfeedTracker::default();
         let (mut last_feed, mut last_ocr) = (Vec::new(), f64::MIN);

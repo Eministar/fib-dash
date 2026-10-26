@@ -43,11 +43,11 @@ impl LiveFeedOcr {
     }
 
     pub fn read(&mut self, image: &Image) -> Result<Vec<Line>, String> {
-        let scale = if image.height < MIN_TEXT_HEIGHT { self.scale } else { 1 };
-        let lines = self.ocr.read_with(image, scale, false)?;
+        // Immer vergrößern: Der Live-Bereich ist mehrere Meldungen hoch, die Schrift bleibt klein.
+        let lines = self.ocr.read_with(image, self.scale, false)?;
         if events(&lines).is_empty() {
             self.scale = if self.scale == 3 { 4 } else { 3 };
-            self.retry_pending = image.height < MIN_TEXT_HEIGHT && !self.retry_pending;
+            self.retry_pending = !self.retry_pending;
         } else {
             self.retry_pending = false;
         }
