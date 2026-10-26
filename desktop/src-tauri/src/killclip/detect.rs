@@ -121,7 +121,9 @@ pub fn classify(line: &Line) -> Option<FeedEvent> {
     if !word_is(words[end], &["getotet", "getoetet"], 1) {
         return None;
     }
-    let du = words[..end].iter().position(|w| word_is(w, &["du"], 0))?;
+    // „Du“ ist kurz und wird gern als „DJ“ gelesen – ein Fehler ist erlaubt; „hast“/„wurdest“
+    // direkt danach und „getötet“ am Ende halten die Meldung trotzdem eindeutig.
+    let du = words[..end].iter().position(|w| word_is(w, &["du"], 1))?;
     let next = words.get(du + 1)?;
     let (kind, start) = if word_is(next, &["hast"], 0) {
         ("kill", du + 2)
@@ -143,6 +145,30 @@ pub fn classify(line: &Line) -> Option<FeedEvent> {
         return None;
     }
     Some(if kind == "kill" { FeedEvent::Kill(name) } else { FeedEvent::Death(name) })
+}
+
+/// Alle Meldungen einer Lesung. Die Box hat eine feste Breite und bricht lange Meldungen
+/// um („Du wurdest von FIB x Reinhard Kaito [163“ / „getötet“) – dann gehört die Folgezeile dazu.
+pub fn events(lines: &[Line]) -> Vec<FeedEvent> {
+    let mut found = Vec::new();
+    let mut i = 0;
+    while i < lines.len() {
+        if let Some(event) = classify(&lines[i]) {
+            found.push(event);
+            i += 1;
+            continue;
+        }
+        if let Some(next) = lines.get(i + 1) {
+            let joined = Line { words: lines[i].words.iter().chain(&next.words).cloned().collect() };
+            if let Some(event) = classify(&joined) {
+                found.push(event);
+                i += 2;
+                continue;
+            }
+        }
+        i += 1;
+    }
+    found
 }
 
 /// Typische OCR-Verwechslungen in Namen wie „NV | Aki | FIB [865]“ bereinigen.
@@ -175,7 +201,8 @@ pub struct KillfeedTracker {
 }
 
 struct FeedObservation {
-    key: String,
+    /// Alle Schreibweisen, in denen die OCR diese Meldung bisher gelesen hat.
+    keys: Vec<String>,
     first_seen: f64,
     last_seen: f64,
     confirmed: bool,
@@ -196,27 +223,42 @@ impl KillfeedTracker {
     /// Doppelte Zeilen innerhalb einer Lesung zählen nicht als Bestätigung.
     pub fn update(&mut self, lines: &[Line], now: f64) -> Vec<FeedEvent> {
         self.visible.retain(|entry| now - entry.last_seen <= if entry.confirmed { self.forget_after } else { 0.9 });
-        let mut events = Vec::new();
-        for event in lines.iter().filter_map(classify) {
+        let mut confirmed = Vec::new();
+        for event in events(lines) {
             let key = match &event {
                 FeedEvent::Kill(name) => format!("k:{}", fold(name)),
                 FeedEvent::Death(name) => format!("d:{}", fold(name)),
             };
-            match self.visible.iter_mut().find(|entry| entry.key[..2] == key[..2] && similarity(&entry.key, &key) >= 0.85) {
+            match self.visible.iter_mut().find(|entry| entry.keys.iter().any(|seen| same_message(seen, &key))) {
                 Some(entry) => {
                     entry.last_seen = now;
+                    // Die OCR-Fehler wandern von Lesung zu Lesung („Remard Kaito“ → „Rehhard
+                    // Kdto“) – jede Schreibweise merken, sonst zählt dieselbe Meldung doppelt.
+                    if entry.keys.len() < 16 && !entry.keys.contains(&key) {
+                        entry.keys.push(key);
+                    }
                     if !entry.confirmed && now - entry.first_seen >= 0.15 {
                         entry.confirmed = true;
-                        events.push(event);
+                        confirmed.push(event);
                     }
                 }
                 None => {
-                    self.visible.push(FeedObservation { key, first_seen: now, last_seen: now, confirmed: false });
+                    self.visible.push(FeedObservation { keys: vec![key], first_seen: now, last_seen: now, confirmed: false });
                 }
             }
         }
-        events
+        confirmed
     }
+}
+
+/// Zwei Lesungen derselben Art (Kill/Tod) zeigen dieselbe Meldung: fast gleich, oder die
+/// eine ist ein Stück der anderen (Namensanfang verschluckt: „Salvatore | FIB [730]“).
+fn same_message(a: &str, b: &str) -> bool {
+    if a[..2] != b[..2] {
+        return false;
+    }
+    let (short, long) = if a.len() <= b.len() { (&a[2..], &b[2..]) } else { (&b[2..], &a[2..]) };
+    similarity(a, b) >= 0.85 || (short.chars().count() >= 8 && long.contains(short))
 }
 
 // ── Türkiser Kill-Marker ─────────────────────────────────────────────
@@ -391,6 +433,62 @@ mod tests {
         assert_eq!(classify(&line("x getötet")), None);
         // Ein Tod wird nie als Kill gewertet, auch wenn „hast“ fehlt.
         assert!(!matches!(classify(&line("Du wurdest von Du hast getötet")), Some(FeedEvent::Kill(_))));
+    }
+
+    /// Echte Live-Lesungen aus FiveM (pixelscharf über WGC): „Du“ als „DJ“, und die Box
+    /// bricht lange Meldungen um, sodass „getötet“ in der nächsten Zeile steht.
+    #[test]
+    fn real_live_reads_with_dj_and_wrapped_lines() {
+        assert_eq!(classify(&line("DJ hast FB x Rehhard Kdto (1631 getötet")), Some(FeedEvent::Kill("FB x Rehhard Kdto (1631".into())));
+        assert_eq!(
+            events(&[line("SYSTEMSF,eoe"), line("DJ wudest von FIB x Rehhard Kaito (163"), line("getötet")]),
+            vec![FeedEvent::Death("FIB x Rehhard Kaito (163".into())]
+        );
+        assert_eq!(
+            events(&[line("e SYSTEMA.eE5"), line("DJ hast FIB x Reinhard Kaito [163]"), line("getötet")]),
+            vec![FeedEvent::Kill("FIB x Reinhard Kaito [163]".into())]
+        );
+        // Ohne „getötet“ (abgeschnitten) bleibt es bei keinem Kill.
+        assert_eq!(events(&[line("e SYSTEMA.eE5"), line("DJ hast FB x Rehhard Kdto (1631")]), vec![]);
+        // Eine vollständige Zeile wird nicht noch einmal mit der nächsten verbunden.
+        assert_eq!(
+            events(&[line("Du hast Max getötet"), line("Du hast Moritz getötet")]),
+            vec![FeedEvent::Kill("Max".into()), FeedEvent::Kill("Moritz".into())]
+        );
+    }
+
+    /// Echte Lesefolgen aus FiveM (`live_detection_log`): je ein Kill, die OCR liest den
+    /// Namen bei jeder Lesung etwas anders. Früher wurde daraus ein zweiter Kill.
+    #[test]
+    fn drifting_ocr_names_count_as_one_kill() {
+        let replay = |reads: &[(f64, &str)]| {
+            let mut tracker = KillfeedTracker::default();
+            reads.iter().map(|(now, text)| tracker.update(&[line(text)], *now).len()).sum::<usize>()
+        };
+        assert_eq!(replay(&[
+            (145.16, "DJ hast FB x Remard Kaito (1631 getötet"),
+            (145.66, "DJ hast FB x Remard Kdto (1631 getötet"),
+            (146.67, "DJ hast FB x Remard Kaito (1631 getötet"),
+            (147.67, "DJ hast FB x Remard Kaito (1631 getötet"),
+            (148.67, "DJ hast FB x Rehhard Kdto (1631 getötet"),
+            (149.17, "DJ hast FB x Rehhard Kdto (1631 getötet"),
+        ]), 1);
+        assert_eq!(replay(&[
+            (16.51, "DJ hast basti Salvatore I FIB [7301 getötet"),
+            (17.01, "DJ hast Salvatore I FIB [7301 getötet"),
+            (17.51, "DJ hast Salvatore I FIB [7301 getötet"),
+            (18.01, "DJ hast Salvatore I FIB [7301 getötet"),
+            (18.52, "DJ hast basti Salvatore I FIB [7301 getötet"),
+            (19.02, "DJ hast basti Salvatore I FIB [7301 getötet"),
+            (20.02, "DJ hast Salvatore I FIB [7301 getötet"),
+        ]), 1);
+        // Zwei verschiedene Gegner bleiben zwei Kills.
+        assert_eq!(replay(&[
+            (1.0, "Du hast Max Mustermann [12] getötet"),
+            (1.5, "Du hast Max Mustermann [12] getötet"),
+            (2.0, "Du hast Erika Musterfrau [34] getötet"),
+            (2.5, "Du hast Erika Musterfrau [34] getötet"),
+        ]), 2);
     }
 
     #[test]

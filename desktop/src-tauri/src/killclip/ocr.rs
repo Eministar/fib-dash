@@ -8,7 +8,7 @@ use windows::{
 };
 
 use super::{
-    detect::{classify, group_rows, Line, Word},
+    detect::{events, group_rows, Line, Word},
     screen::Image,
 };
 
@@ -32,7 +32,10 @@ pub struct LiveFeedOcr {
 
 impl LiveFeedOcr {
     pub fn new() -> Result<Self, String> {
-        Ok(Self { ocr: Ocr::new()?, scale: 2, retry_pending: false })
+        // Live kommt das Bild pixelscharf vom Spiel (nicht aus einem Video wie bei der
+        // Einrichtung): 2× las die dünne NERO-V-Schrift dort kaum („t'nst FB x Vdo“),
+        // 3× und 4× brauchbar (`live_detection_log`, `ocr_variants_on_saved_crops`).
+        Ok(Self { ocr: Ocr::new()?, scale: 3, retry_pending: false })
     }
 
     pub fn needs_retry(&self) -> bool {
@@ -42,8 +45,8 @@ impl LiveFeedOcr {
     pub fn read(&mut self, image: &Image) -> Result<Vec<Line>, String> {
         let scale = if image.height < MIN_TEXT_HEIGHT { self.scale } else { 1 };
         let lines = self.ocr.read_with(image, scale, false)?;
-        if !lines.iter().any(|line| classify(line).is_some()) {
-            self.scale = if self.scale == 2 { 3 } else { 2 };
+        if events(&lines).is_empty() {
+            self.scale = if self.scale == 3 { 4 } else { 3 };
             self.retry_pending = image.height < MIN_TEXT_HEIGHT && !self.retry_pending;
         } else {
             self.retry_pending = false;
@@ -69,11 +72,11 @@ impl Ocr {
     /// Lesung keine Meldung, noch einmal stärker vergrößert lesen.
     pub fn read_feed(&self, image: &Image) -> Result<Vec<Line>, String> {
         let first = self.read(image)?;
-        if first.iter().any(|line| classify(line).is_some()) || image.height >= MIN_TEXT_HEIGHT {
+        if !events(&first).is_empty() || image.height >= MIN_TEXT_HEIGHT {
             return Ok(first);
         }
         match self.read_with(image, 3, false) {
-            Ok(closer) if closer.iter().any(|line| classify(line).is_some()) => Ok(closer),
+            Ok(closer) if !events(&closer).is_empty() => Ok(closer),
             _ => Ok(first),
         }
     }

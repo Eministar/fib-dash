@@ -287,6 +287,14 @@ fn report_screen_error(app: &AppHandle, status: &Arc<Mutex<Status>>, failing_sin
 /// Ab diesem Wert gilt der Kill-Marker als gesehen (Live-Erkennung, Einrichtung und Probelauf).
 pub const MARKER_THRESHOLD: f32 = 0.25;
 
+/// Kill-Feed-Bereich für die Live-Erkennung: um die Hälfte nach rechts verbreitert.
+/// Eingerichtet wird an einer einzelnen Meldung; bei längeren Namen reicht die Box
+/// weiter, und „getötet“ fiel am rechten Rand ab (`live_detection_log`).
+fn live_feed_region(region: Region, screen_width: u32) -> Region {
+    let width = (region.width * 3 / 2).min(screen_width.saturating_sub(region.x));
+    Region { width, ..region }
+}
+
 /// Bereich um das Fadenkreuz in der Bildschirmmitte, passend zur Auflösung.
 fn center_region(width: u32, height: u32) -> Region {
     let size = ((64.0 * height as f32 / 1080.0).round() as u32).max(48);
@@ -364,7 +372,7 @@ fn watch(
                 size = Some((opened.width, opened.height));
                 regions.clear();
                 feed_index = config.killfeed.filter(|_| ocr.is_some()).map(|r| {
-                    regions.push(r);
+                    regions.push(live_feed_region(r, opened.width));
                     regions.len() - 1
                 });
                 // Mit Kill-Feed entscheidet ausschließlich die bestätigte Meldung.
@@ -633,7 +641,7 @@ pub fn test_killfeed(app: &AppHandle, region: Region) -> Result<FeedTest, String
     let shot = screenshot_path(app).and_then(|p| Image::load_bmp(&p)).ok_or("Erst einen Kill aufnehmen")?;
     let crop = shot.crop(region).ok_or("Bereich liegt außerhalb des Screenshots")?;
     let lines = ocr::Ocr::new()?.read_feed(&crop)?;
-    let events: Vec<FeedEvent> = lines.iter().filter_map(detect::classify).collect();
+    let events = detect::events(&lines);
     Ok(FeedTest {
         lines: lines.iter().map(|l| l.text()).collect(),
         kills: events.iter().filter_map(|e| if let FeedEvent::Kill(n) = e { Some(n.clone()) } else { None }).collect(),
@@ -663,7 +671,7 @@ mod tests {
         for scale in [1, 2, 3, 4] {
             for invert in [false, true] {
                 let lines = ocr.read_with(&image, scale, invert).unwrap();
-                let found: Vec<_> = lines.iter().filter_map(detect::classify).collect();
+                let found = detect::events(&lines);
                 println!("Variante {scale}x{}: {found:?}", if invert { " invertiert" } else { "" });
             }
         }
@@ -673,7 +681,7 @@ mod tests {
         for line in &lines {
             println!("  {:?} → {:?}", line.text(), detect::classify(line));
         }
-        let events: Vec<FeedEvent> = lines.iter().filter_map(detect::classify).collect();
+        let events = detect::events(&lines);
         assert!(events.iter().any(|e| matches!(e, FeedEvent::Kill(_))), "Kill erkannt");
         assert!(events.iter().any(|e| matches!(e, FeedEvent::Death(_))), "Tod erkannt");
     }
@@ -743,6 +751,110 @@ mod tests {
         screen::release();
         if let (Some(image), Ok(out)) = (last, std::env::var("FIB_OUT")) {
             image.save_bmp(std::path::Path::new(&out)).unwrap();
+        }
+    }
+
+    /// Diagnose im echten Spiel: dieselbe Schleife wie `watch` (Erfassung, OCR-Bedingungen,
+    /// Tracker), jede Runde protokolliert; Ausschnitte mit Text landen in `FIB_OUT_DIR`.
+    /// `FIB_FEED="x,y,w,h" FIB_SECONDS=180 cargo test --release -- --ignored live_detection_log --nocapture`
+    #[test]
+    #[ignore]
+    fn live_detection_log() {
+        unsafe {
+            let _ = windows::Win32::UI::HiDpi::SetProcessDpiAwarenessContext(windows::Win32::UI::HiDpi::DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        }
+        let r: Vec<u32> = std::env::var("FIB_FEED").expect("FIB_FEED").split(',').map(|v| v.parse().unwrap()).collect();
+        let seconds: u64 = std::env::var("FIB_SECONDS").ok().and_then(|s| s.parse().ok()).unwrap_or(60);
+        let out_dir = std::env::var("FIB_OUT_DIR").ok().map(PathBuf::from);
+        let regions = vec![live_feed_region(Region { x: r[0], y: r[1], width: r[2], height: r[3] }, 1920)];
+        let mut ocr = ocr::LiveFeedOcr::new().unwrap();
+        let mut feed = KillfeedTracker::default();
+        let (mut last_feed, mut last_ocr) = (Vec::new(), f64::MIN);
+        let started = Instant::now();
+        let mut saved = 0;
+        while started.elapsed() < Duration::from_secs(seconds) {
+            let tick = Instant::now();
+            let t = started.elapsed().as_secs_f64();
+            match screen::with_screen(|s| s.grab(&regions, FEED_TICK)) {
+                Err(error) => println!("{t:7.2} FEHLER {error}"),
+                Ok(None) => println!("{t:7.2} kein Bild"),
+                Ok(Some(frame)) => {
+                    let now = frame.at.saturating_duration_since(started).as_secs_f64();
+                    let gray = frame.images[0].gray();
+                    let run = feed.needs_confirmation() || ocr.needs_retry() || changed(&gray, &last_feed) || now - last_ocr >= 1.5;
+                    if !run {
+                        println!("{t:7.2} Bild (alt {:.0} ms), unverändert – keine OCR", frame.at.elapsed().as_secs_f64() * 1000.0);
+                    } else {
+                        last_ocr = now;
+                        let read_started = Instant::now();
+                        match ocr.read(&frame.images[0]) {
+                            Ok(lines) => {
+                                last_feed = gray;
+                                let events = feed.update(&lines, now);
+                                let texts: Vec<String> = lines.iter().map(|l| l.text()).collect();
+                                println!("{t:7.2} OCR {:.0} ms: {texts:?} → {:?}", read_started.elapsed().as_secs_f64() * 1000.0, events.iter().map(|e| match e {
+                                    FeedEvent::Kill(v) => format!("KILL {v}"),
+                                    FeedEvent::Death(k) => format!("TOD {k}"),
+                                }).collect::<Vec<_>>());
+                                if let (Some(dir), false) = (&out_dir, texts.is_empty()) {
+                                    let _ = std::fs::create_dir_all(dir);
+                                    let _ = frame.images[0].save_bmp(&dir.join(format!("{saved:04}-{t:.1}s.bmp")));
+                                    saved += 1;
+                                }
+                            }
+                            Err(error) => println!("{t:7.2} OCR-FEHLER {error}"),
+                        }
+                    }
+                }
+            }
+            if let Some(rest) = FEED_TICK.checked_sub(tick.elapsed()) {
+                thread::sleep(rest);
+            }
+        }
+        screen::release();
+    }
+
+    /// Ein Protokoll von `live_detection_log` (`FIB_LOG`) erneut durch den Tracker spielen.
+    #[test]
+    #[ignore]
+    fn replay_detection_log() {
+        let log = std::fs::read_to_string(std::env::var("FIB_LOG").expect("FIB_LOG")).unwrap();
+        let mut feed = KillfeedTracker::default();
+        for row in log.lines() {
+            let Some((time, rest)) = row.trim().split_once(" OCR ") else { continue };
+            let Some((_, texts)) = rest.split_once(": ") else { continue };
+            let texts = texts.split(" → ").next().unwrap();
+            let Ok(texts) = serde_json::from_str::<Vec<String>>(texts) else { continue };
+            let lines: Vec<detect::Line> = texts
+                .iter()
+                .enumerate()
+                .map(|(y, text)| detect::Line {
+                    words: text.split_whitespace().map(|w| detect::Word { text: w.into(), x0: 0.0, x1: 1.0, y0: y as f32 * 20.0, y1: y as f32 * 20.0 + 10.0 }).collect(),
+                })
+                .collect();
+            for event in feed.update(&lines, time.parse().unwrap()) {
+                println!("{time:>7} {event:?}");
+            }
+        }
+    }
+
+    /// OCR-Varianten auf gespeicherten Ausschnitten (`FIB_BMP_DIR`, aus `live_detection_log`).
+    #[test]
+    #[ignore]
+    fn ocr_variants_on_saved_crops() {
+        let dir = PathBuf::from(std::env::var("FIB_BMP_DIR").expect("FIB_BMP_DIR"));
+        let filter = std::env::var("FIB_BMP_FILTER").unwrap_or_default();
+        let ocr = ocr::Ocr::new().unwrap();
+        let mut files: Vec<_> = std::fs::read_dir(&dir).unwrap().filter_map(|e| e.ok()).map(|e| e.path()).filter(|p| p.to_string_lossy().contains(&filter)).collect();
+        files.sort();
+        for path in files {
+            let image = Image::load_bmp(&path).unwrap();
+            println!("{}", path.file_name().unwrap().to_string_lossy());
+            for (scale, invert) in [(2, false), (3, false), (2, true), (3, true), (4, true)] {
+                let lines = ocr.read_with(&image, scale, invert).unwrap();
+                println!("  {scale}x{}: ", if invert { " inv" } else { "" });
+                println!("    {:?} → {:?}", lines.iter().map(|l| l.text()).collect::<Vec<_>>(), detect::events(&lines));
+            }
         }
     }
 
