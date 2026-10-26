@@ -22,20 +22,22 @@ unsafe impl Send for Ocr {}
 /// Kill-Feeds nutzen kleine Schrift – vergrößert erkennt die OCR sie deutlich besser.
 const MIN_TEXT_HEIGHT: u32 = 360;
 
-/// Live keine zweite OCR über dasselbe Bild: Die Vergrößerungen wechseln
-/// zwischen Scans. Eine erfolgreiche bleibt für die Bestätigung erhalten.
+/// Live keine zweite OCR über dasselbe Bild: Die Varianten wechseln zwischen Scans,
+/// wenn keine Meldung gelesen wurde. Eine erfolgreiche bleibt für die Bestätigung erhalten.
 pub struct LiveFeedOcr {
     ocr: Ocr,
-    scale: u32,
+    variant: usize,
     retry_pending: bool,
 }
 
+/// (Helligkeitsschwelle, Vergrößerung) – live kommt das Bild pixelscharf vom Spiel.
+/// Gemessen an echten Ausschnitten (`ocr_variants_on_saved_crops`): 170/4× liest Namen
+/// am besten, 160/3× macht andere Fehler und fängt auf, was 170/4× nicht liest.
+const LIVE_VARIANTS: [(u8, u32); 2] = [(170, 4), (160, 3)];
+
 impl LiveFeedOcr {
     pub fn new() -> Result<Self, String> {
-        // Live kommt das Bild pixelscharf vom Spiel (nicht aus einem Video wie bei der
-        // Einrichtung): 2× las die dünne NERO-V-Schrift dort kaum („t'nst FB x Vdo“),
-        // 3× und 4× brauchbar (`live_detection_log`, `ocr_variants_on_saved_crops`).
-        Ok(Self { ocr: Ocr::new()?, scale: 3, retry_pending: false })
+        Ok(Self { ocr: Ocr::new()?, variant: 0, retry_pending: false })
     }
 
     pub fn needs_retry(&self) -> bool {
@@ -43,10 +45,11 @@ impl LiveFeedOcr {
     }
 
     pub fn read(&mut self, image: &Image) -> Result<Vec<Line>, String> {
-        // Immer vergrößern: Der Live-Bereich ist mehrere Meldungen hoch, die Schrift bleibt klein.
-        let lines = self.ocr.read_with(image, self.scale, false)?;
+        let (threshold, scale) = LIVE_VARIANTS[self.variant];
+        let prepared = Image { width: image.width, height: image.height, bgra: super::pixels::threshold_bgra(&image.bgra, threshold) };
+        let lines = self.ocr.read_with(&prepared, scale, false)?;
         if events(&lines).is_empty() {
-            self.scale = if self.scale == 3 { 4 } else { 3 };
+            self.variant = (self.variant + 1) % LIVE_VARIANTS.len();
             self.retry_pending = !self.retry_pending;
         } else {
             self.retry_pending = false;

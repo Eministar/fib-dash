@@ -123,13 +123,20 @@ pub fn classify(line: &Line) -> Option<FeedEvent> {
     }
     // „Du“ ist kurz und wird gern als „DJ“ gelesen – ein Fehler ist erlaubt; „hast“/„wurdest“
     // direkt danach und „getötet“ am Ende halten die Meldung trotzdem eindeutig.
-    let du = words[..end].iter().position(|w| word_is(w, &["du"], 1))?;
-    let next = words.get(du + 1)?;
+    // Bei 4× verschluckt die OCR das „Du“ am Zeilenanfang oft ganz – dann muss die Zeile
+    // direkt mit „hast“/„wurdest“ beginnen.
+    let is_verb = |w: &str| word_is(w, &["hast"], 0) || word_is(w, &["wurdest"], 2);
+    let verb = match words[..end].iter().position(|w| word_is(w, &["du"], 1)) {
+        Some(du) if words.get(du + 1).is_some_and(|w| is_verb(w)) => du + 1,
+        _ if is_verb(words[0]) => 0,
+        _ => return None,
+    };
+    let next = words[verb];
     let (kind, start) = if word_is(next, &["hast"], 0) {
-        ("kill", du + 2)
+        ("kill", verb + 1)
     } else if word_is(next, &["wurdest"], 2) {
         // „von“ überspringen, falls gelesen.
-        let after = if words.get(du + 2).is_some_and(|w| word_is(w, &["von"], 1)) { du + 3 } else { du + 2 };
+        let after = if words.get(verb + 1).is_some_and(|w| word_is(w, &["von"], 1)) { verb + 2 } else { verb + 1 };
         ("death", after)
     } else {
         return None;
@@ -176,21 +183,32 @@ fn clean_name(raw: &str) -> String {
     let spaced: String = raw.split_whitespace().collect::<Vec<_>>().join(" ");
     spaced
         .split(' ')
-        // Ein einzelnes „I“, „l“, „1“ oder „!“ zwischen Namensteilen ist der Trennstrich.
-        .map(|part| if matches!(part, "I" | "l" | "1" | "!" | "¦") { "|".to_string() } else { repair_brackets(part) })
+        .map(|part| match part {
+            // Ein einzelnes „I“, „l“, „1“ oder „!“ zwischen Namensteilen ist der Trennstrich.
+            "I" | "l" | "1" | "!" | "¦" => "|".to_string(),
+            // Das Fraktionskürzel liest die OCR je nach Schwelle als „FB“, „HB“ …
+            "FB" | "HB" | "F1B" | "FlB" | "FiB" | "HIB" | "HlB" | "hlB" | "F-IB" | "f-IB" | "FI8" => "FIB".to_string(),
+            _ => repair_brackets(part),
+        })
         .collect::<Vec<_>>()
         .join(" ")
         .trim_matches(|c: char| c == ',' || c == '.' || c == ':')
         .to_string()
 }
 
-/// „1865]“ oder „l865]“ → „[865]“: Die OCR liest die eckige Klammer gern als 1/l/I.
+/// Spieler-IDs stehen immer in eckigen Klammern; die OCR liest sie gern als 1/l/I
+/// oder runde Klammer: „1865]“, „[1631“, „(1631“, „11631“ → „[865]“, „[163]“.
 fn repair_brackets(part: &str) -> String {
-    let mut chars: Vec<char> = part.chars().collect();
-    if chars.len() >= 3 && chars.last() == Some(&']') && !chars.contains(&'[') && matches!(chars[0], '1' | 'l' | 'I' | '(' | '{') {
-        chars[0] = '[';
+    let chars: Vec<char> = part.chars().collect();
+    let opens = |c: char| matches!(c, '[' | '(' | '{' | '1' | 'l' | 'I');
+    let closes = |c: char| matches!(c, ']' | ')' | '}' | '1' | 'l' | 'I');
+    if chars.len() >= 4 && opens(chars[0]) && closes(chars[chars.len() - 1]) {
+        let inner = &chars[1..chars.len() - 1];
+        if (2..=4).contains(&inner.len()) && inner.iter().all(char::is_ascii_digit) {
+            return format!("[{}]", inner.iter().collect::<String>());
+        }
     }
-    chars.into_iter().collect()
+    part.to_string()
 }
 
 /// Merkt sich, welche Meldungen gerade zu sehen sind, und meldet nur neue.
@@ -221,7 +239,15 @@ impl KillfeedTracker {
 
     /// Erst zwei zeitlich getrennte Lesungen derselben Meldung bestätigen sie.
     /// Doppelte Zeilen innerhalb einer Lesung zählen nicht als Bestätigung.
+    #[cfg(test)]
     pub fn update(&mut self, lines: &[Line], now: f64) -> Vec<FeedEvent> {
+        self.update_timed(lines, now).into_iter().map(|(event, _)| event).collect()
+    }
+
+    /// Wie `update`, zusätzlich mit dem Zeitpunkt, an dem die Meldung zuerst gelesen
+    /// wurde. Bestätigt wird oft erst Sekunden später (unleserliche Lesungen dazwischen);
+    /// datiert nach der Bestätigung fiel der eigentliche Kill aus dem Clip-Vorlauf.
+    pub fn update_timed(&mut self, lines: &[Line], now: f64) -> Vec<(FeedEvent, f64)> {
         self.visible.retain(|entry| now - entry.last_seen <= if entry.confirmed { self.forget_after } else { 0.9 });
         let mut confirmed = Vec::new();
         // Jede Meldung einer Lesung gehört zu einer eigenen Beobachtung: Zwei Kills am
@@ -232,12 +258,19 @@ impl KillfeedTracker {
                 FeedEvent::Kill(name) => format!("k:{}", fold(name)),
                 FeedEvent::Death(name) => format!("d:{}", fold(name)),
             };
-            let found = self.visible.iter().enumerate().position(|(i, entry)| !taken[i] && entry.keys.iter().any(|seen| same_message(seen, &key)));
-            match found.map(|i| {
-                taken[i] = true;
-                &mut self.visible[i]
-            }) {
-                Some(entry) => {
+            // Die ähnlichste noch freie Beobachtung, nicht einfach die erste passende.
+            let found = self
+                .visible
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| !taken[*i])
+                .filter_map(|(i, entry)| entry.keys.iter().filter_map(|seen| match_score(seen, &key)).reduce(f32::max).map(|score| (i, score)))
+                .max_by(|a, b| a.1.total_cmp(&b.1))
+                .map(|(i, _)| i);
+            match found {
+                Some(i) => {
+                    taken[i] = true;
+                    let entry = &mut self.visible[i];
                     entry.last_seen = now;
                     // Die OCR-Fehler wandern von Lesung zu Lesung („Remard Kaito“ → „Rehhard
                     // Kdto“) – jede Schreibweise merken, sonst zählt dieselbe Meldung doppelt.
@@ -246,7 +279,7 @@ impl KillfeedTracker {
                     }
                     if !entry.confirmed && now - entry.first_seen >= 0.15 {
                         entry.confirmed = true;
-                        confirmed.push(event);
+                        confirmed.push((event, entry.first_seen));
                     }
                 }
                 None => {
@@ -259,14 +292,18 @@ impl KillfeedTracker {
     }
 }
 
-/// Zwei Lesungen derselben Art (Kill/Tod) zeigen dieselbe Meldung: fast gleich, oder die
-/// eine ist ein Stück der anderen (Namensanfang verschluckt: „Salvatore | FIB [730]“).
-fn same_message(a: &str, b: &str) -> bool {
+/// Wie gut zwei Lesungen derselben Art (Kill/Tod) zur selben Meldung passen – `None`,
+/// wenn gar nicht. Live variiert die OCR Namen stark („FB x Rehhard Kdto (1631“ ↔
+/// „FB x Remard Kaito (1631“, Ähnlichkeit ~0,78); verschiedene Gegner liegen deutlich
+/// darunter (z. B. „NV | Aki | FIB [865]“ ↔ „NV | Bob | FIB [866]“ ~0,64). Ein
+/// verschluckter Namensanfang („Salvatore | FIB [730]“) zählt ebenfalls.
+fn match_score(a: &str, b: &str) -> Option<f32> {
     if a[..2] != b[..2] {
-        return false;
+        return None;
     }
     let (short, long) = if a.len() <= b.len() { (&a[2..], &b[2..]) } else { (&b[2..], &a[2..]) };
-    similarity(a, b) >= 0.85 || (short.chars().count() >= 8 && long.contains(short))
+    let score = similarity(a, b);
+    (score >= 0.7 || (short.chars().count() >= 6 && long.contains(short))).then_some(score)
 }
 
 // ── Türkiser Kill-Marker ─────────────────────────────────────────────
@@ -447,7 +484,7 @@ mod tests {
     /// bricht lange Meldungen um, sodass „getötet“ in der nächsten Zeile steht.
     #[test]
     fn real_live_reads_with_dj_and_wrapped_lines() {
-        assert_eq!(classify(&line("DJ hast FB x Rehhard Kdto (1631 getötet")), Some(FeedEvent::Kill("FB x Rehhard Kdto (1631".into())));
+        assert_eq!(classify(&line("DJ hast FB x Rehhard Kdto (1631 getötet")), Some(FeedEvent::Kill("FIB x Rehhard Kdto [163]".into())));
         assert_eq!(
             events(&[line("SYSTEMSF,eoe"), line("DJ wudest von FIB x Rehhard Kaito (163"), line("getötet")]),
             vec![FeedEvent::Death("FIB x Rehhard Kaito (163".into())]
@@ -456,6 +493,8 @@ mod tests {
             events(&[line("e SYSTEMA.eE5"), line("DJ hast FIB x Reinhard Kaito [163]"), line("getötet")]),
             vec![FeedEvent::Kill("FIB x Reinhard Kaito [163]".into())]
         );
+        // Bei 4× fehlt das „Du“ oft ganz – die Zeile beginnt dann mit „hast“.
+        assert_eq!(classify(&line("hast FB x Rehhard Kaito 11631 getötet")), Some(FeedEvent::Kill("FIB x Rehhard Kaito [163]".into())));
         // Ohne „getötet“ (abgeschnitten) bleibt es bei keinem Kill.
         assert_eq!(events(&[line("e SYSTEMA.eE5"), line("DJ hast FB x Rehhard Kdto (1631")]), vec![]);
         // Eine vollständige Zeile wird nicht noch einmal mit der nächsten verbunden.
@@ -516,7 +555,7 @@ mod tests {
             "Du hast Max gerettet", "Du hast das Fahrzeug getestet",
             "Du hast den Motor gestartet", "Du hast 5000$ erhalten",
             "SYSTEM SUCCESS Fahrzeug getötet", "Max wurde getötet",
-            "hast Max getötet", "Du hat Max getötet", "Du hast getötet",
+            "Du hat Max getötet", "Du hast getötet", "Max hast getötet",
             "Du hast Max nicht getötet", "Du hast niemanden getötet",
             "Du hast Max getötet oder gerettet", "Du hast Max get&et", "Du hast | getötet",
         ] {

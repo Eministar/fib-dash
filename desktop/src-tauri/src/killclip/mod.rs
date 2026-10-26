@@ -415,10 +415,12 @@ fn watch(
                         last_ocr = now;
                         if let Ok(lines) = ocr.read(&images[i]) {
                             last_feed = gray;
-                            for event in feed.update(&lines, now) {
+                            for (event, first_seen) in feed.update_timed(&lines, now) {
                                 match event {
                                     FeedEvent::Kill(victim) => {
-                                        new_kills.push(Kill { at: sampled_at, victim: Some(victim.clone()) });
+                                        // Datiert auf das erste Lesen der Meldung, nicht auf die Bestätigung.
+                                        let at = sampled_at - Duration::from_secs_f64((now - first_seen).max(0.0));
+                                        new_kills.push(Kill { at, victim: Some(victim.clone()) });
                                         emit_event(&app, "kill", format!("Kill: {victim}"), None, None);
                                     }
                                     // Eigener Tod: nur anzeigen, kein Clip.
@@ -820,6 +822,26 @@ mod tests {
         screen::release();
     }
 
+    /// Gespeicherte Ausschnitte (`FIB_BMP_DIR`, Name „NNNN-<Sekunden>s.bmp“) durch die
+    /// komplette Live-Kette spielen: Live-OCR, Namenskorrektur, Tracker.
+    #[test]
+    #[ignore]
+    fn replay_saved_crops() {
+        let dir = PathBuf::from(std::env::var("FIB_BMP_DIR").expect("FIB_BMP_DIR"));
+        let mut files: Vec<_> = std::fs::read_dir(&dir).unwrap().filter_map(|e| e.ok()).map(|e| e.path()).collect();
+        files.sort();
+        let mut ocr = ocr::LiveFeedOcr::new().unwrap();
+        let mut feed = KillfeedTracker::default();
+        for path in files {
+            let name = path.file_stem().unwrap().to_string_lossy().to_string();
+            let Some(now) = name.split('-').nth(1).and_then(|t| t.trim_end_matches('s').parse::<f64>().ok()) else { continue };
+            let lines = ocr.read(&Image::load_bmp(&path).unwrap()).unwrap();
+            for (event, first_seen) in feed.update_timed(&lines, now) {
+                println!("{now:7.2} (zuerst {first_seen:.2}) {event:?}");
+            }
+        }
+    }
+
     /// Ein Protokoll von `live_detection_log` (`FIB_LOG`) erneut durch den Tracker spielen.
     #[test]
     #[ignore]
@@ -838,8 +860,8 @@ mod tests {
                     words: text.split_whitespace().map(|w| detect::Word { text: w.into(), x0: 0.0, x1: 1.0, y0: y as f32 * 20.0, y1: y as f32 * 20.0 + 10.0 }).collect(),
                 })
                 .collect();
-            for event in feed.update(&lines, time.parse().unwrap()) {
-                println!("{time:>7} {event:?}");
+            for (event, first_seen) in feed.update_timed(&lines, time.parse().unwrap()) {
+                println!("{time:>7} (zuerst {first_seen:.2}) {event:?}");
             }
         }
     }
@@ -856,10 +878,19 @@ mod tests {
         for path in files {
             let image = Image::load_bmp(&path).unwrap();
             println!("{}", path.file_name().unwrap().to_string_lossy());
-            for (scale, invert) in [(2, false), (3, false), (2, true), (3, true), (4, true)] {
-                let lines = ocr.read_with(&image, scale, invert).unwrap();
-                println!("  {scale}x{}: ", if invert { " inv" } else { "" });
-                println!("    {:?} → {:?}", lines.iter().map(|l| l.text()).collect::<Vec<_>>(), detect::events(&lines));
+            let gray = image.gray();
+            for threshold in [0u8, 150, 160, 170, 180, 190] {
+                // Schwelle 0 = Bild wie bisher; sonst helle Schrift → weiß, Rest → schwarz.
+                let prepared = if threshold == 0 {
+                    image.clone()
+                } else {
+                    Image { width: image.width, height: image.height, bgra: gray.iter().flat_map(|&v| { let b = if v > threshold { 255 } else { 0 }; [b, b, b, 255] }).collect() }
+                };
+                for (scale, invert) in [(3, false), (4, false)] {
+                    let lines = ocr.read_with(&prepared, scale, invert).unwrap();
+                    let texts: Vec<String> = lines.iter().map(|l| l.text()).filter(|t| t.contains("ast") || t.contains("est") || t.contains("get")).collect();
+                    println!("  t={threshold:3} {scale}x{}: {texts:?} → {:?}", if invert { " inv" } else { "    " }, detect::events(&lines));
+                }
             }
         }
     }

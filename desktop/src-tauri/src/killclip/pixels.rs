@@ -36,9 +36,29 @@ pub fn prepare_bgra(source: &[u8], width: usize, height: usize, scale: u32, inve
     result
 }
 
+/// Schwarz-Weiß nach Helligkeit: heller als `threshold` → weiß, sonst schwarz. Die
+/// NERO-V-Meldungen sind weiße Schrift auf dunkler Box; ohne Schwelle las die OCR das
+/// pixelscharfe Live-Bild schlecht („DJ hast FB x Rehhard Kdto“), mit Schwelle 160–170
+/// fast fehlerfrei („Du hast FIB x Reinhard Kaito“, `ocr_variants_on_saved_crops`).
+pub fn threshold_bgra(source: &[u8], threshold: u8) -> Vec<u8> {
+    source
+        .chunks_exact(4)
+        .flat_map(|p| {
+            let v = if ((p[2] as u32 * 77 + p[1] as u32 * 150 + p[0] as u32 * 29) >> 8) as u8 > threshold { 255 } else { 0 };
+            [v, v, v, 255]
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn threshold_keeps_bright_text_and_drops_the_dark_box() {
+        let pixels = [230, 230, 230, 255, 40, 35, 30, 255, 171, 171, 171, 255, 170, 170, 170, 255];
+        assert_eq!(threshold_bgra(&pixels, 170), vec![255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255]);
+    }
 
     // Vorheriger Produktionsalgorithmus als Referenz: Die Optimierung darf die
     // Eingabepixel der OCR auch an Kanten und bei Invertierung nicht verändern.
