@@ -155,6 +155,10 @@ enum Target {
 /// So oft wird geprüft, ob ein anderes Fenster im Vollbild vorne ist (Alt-Tab, Spielstart).
 const TARGET_CHECK: Duration = Duration::from_secs(1);
 
+/// So lange wartet ein Scan höchstens auf ein frisches Bild bzw. auf die fertige Kopie.
+const FRESH_WAIT: Duration = Duration::from_millis(100);
+const READ_WAIT: Duration = Duration::from_millis(30);
+
 /// Eine laufende WGC-Aufnahme. Nur ein Puffer: Windows kopiert erst wieder ein Bild
 /// hinein, wenn wir das vorige abgeholt haben – höchstens einmal pro Intervall.
 struct Session {
@@ -365,6 +369,55 @@ mod tests {
         println!("Monitor {}×{}, Ziel {:?}", shot.width, shot.height, screen.capture.as_ref().map(|c| c.target));
         assert_eq!((shot.width, shot.height), (screen.width, screen.height));
         assert!(shot.bgra.iter().any(|&b| b != 0), "Bild ist schwarz");
+    }
+
+    /// Wie der Wächter im Kill-Feed-Takt: Liefert jeder Scan ein Bild? Die Erkennung
+    /// braucht Lesungen im Abstand unter 0,9 s, sonst wird keine Meldung bestätigt.
+    /// `cargo test --release -- --ignored frame_gaps --nocapture` (nur lesend, kein Fenster).
+    #[test]
+    #[ignore]
+    fn frame_gaps_at_the_feed_tick() {
+        let tick = Duration::from_millis(500);
+        let mut screen = Screen::open().unwrap();
+        let region = [Region { x: 16, y: 208, width: 243, height: 119 }];
+        let started = Instant::now();
+        let (mut stamps, mut ages) = (Vec::new(), Vec::new());
+        while started.elapsed() < Duration::from_secs(10) {
+            if let Some(frame) = screen.grab(&region, tick).unwrap() {
+                ages.push(frame.at.elapsed().as_secs_f64());
+                stamps.push(frame.at);
+            }
+            std::thread::sleep(tick);
+        }
+        let gaps: Vec<f64> = stamps.windows(2).map(|w| (w[1] - w[0]).as_secs_f64()).collect();
+        let max = gaps.iter().copied().fold(0.0, f64::max);
+        let oldest = ages.iter().copied().fold(0.0, f64::max);
+        println!("Ziel {:?}: {} Bilder in 10 s, größte Lücke {max:.2} s, Lücken > 0,9 s: {}, ältestes Bild {oldest:.3} s", screen.capture.as_ref().map(|c| c.target), stamps.len(), gaps.iter().filter(|g| **g > 0.9).count());
+        assert!(max < 0.9, "Lücken {gaps:?}");
+    }
+
+    /// Rohe Bildrate von WGC je Ziel (nur lesend): `cargo test --release -- --ignored raw_frame_rate --nocapture`.
+    #[test]
+    #[ignore]
+    fn raw_frame_rate_per_target() {
+        let screen = Screen::open().unwrap();
+        let foreground = screen.choose_target();
+        for target in [foreground, Target::Monitor] {
+            for poll in [Duration::from_millis(16), Duration::from_millis(500)] {
+                let session = screen.start_session(target, Duration::ZERO).unwrap();
+                let started = Instant::now();
+                let (mut frames, mut polls) = (0, 0);
+                while started.elapsed() < Duration::from_secs(4) {
+                    polls += 1;
+                    if let Ok(frame) = session.pool.TryGetNextFrame() {
+                        frames += 1;
+                        let _ = frame.Close();
+                    }
+                    std::thread::sleep(poll);
+                }
+                println!("{target:?}, abgeholt alle {poll:?}: {frames} Bilder bei {polls} Abfragen in 4 s");
+            }
+        }
     }
 
     /// Wie wiederholtes Starten/Stoppen der Erkennung: jedes Mal ein neuer Thread.
@@ -585,11 +638,10 @@ impl Screen {
             let session = Session { target, interval, pool, session };
             let _ = session.session.SetIsCursorCaptureEnabled(false);
             let _ = session.session.SetIsBorderRequired(false);
-            // Windows 11 24H2+: nicht öfter kopieren, als wir auswerten. Ältere Versionen
-            // kopieren dank des einzelnen Puffers trotzdem nur nach jedem Abholen.
-            if !interval.is_zero() {
-                let _ = session.session.SetMinUpdateInterval(TimeSpan { Duration: (interval.as_nanos() / 100) as i64 });
-            }
+            // Bewusst kein SetMinUpdateInterval: Auf den Scan-Takt gedrosselt kam das nächste
+            // Bild oft knapp nach dem Scan, real nur alle 1–2 s – zu selten, um eine
+            // Kill-Meldung zu bestätigen (`frame_gaps_at_the_feed_tick`). Der einzelne Puffer
+            // begrenzt die Kopien auch so auf eine pro Abholen, also eine pro Scan.
             session.session.StartCapture().map_err(|e| hr(e, "Bildschirmaufnahme starten"))?;
             Ok(session)
         }
@@ -625,31 +677,42 @@ impl Screen {
         Ok(())
     }
 
-    /// Live-Pipeline mit höchstens einer ausstehenden Kopie. Nie synchron auf
-    /// die GPU warten: Bei Überlast diesen Scan auslassen, ohne neue Arbeit zu stauen.
-    /// `interval` ist der Scan-Takt – öfter liefert Windows keine Bilder.
+    /// Ein frisches Bild holen und die kleinen Ausschnitte gleich lesen (die Kopie
+    /// dauert Mikrosekunden). Ist die GPU ausgelastet und die Kopie nach kurzer Zeit
+    /// nicht fertig, bleibt sie ausstehend und wird im nächsten Scan gelesen – ohne neue
+    /// Arbeit zu stauen. `interval` ist der Scan-Takt.
     pub fn grab(&mut self, regions: &[Region], interval: Duration) -> Result<Option<CapturedFrame>, String> {
         if self.pending.as_ref().is_some_and(|pending| pending.regions != regions) {
             self.pending = None;
         }
-        let ready = if let Some(pending) = self.pending.take() {
-            let mut images = Vec::with_capacity(regions.len());
-            for index in 0..regions.len() {
-                match unsafe { self.read_region(index, true)? } {
-                    Some(image) => images.push(image),
-                    None => {
-                        self.pending = Some(pending);
-                        return Ok(None);
-                    }
-                }
-            }
-            // Sehr alte Bilder nach GPU-Hängern dürfen keine nachträglichen Kills auslösen.
-            (pending.at.elapsed().as_secs_f64() <= 2.0).then_some(CapturedFrame { images, at: pending.at })
-        } else {
-            None
-        };
+        if self.pending.is_some() {
+            return self.read_pending(regions, Duration::ZERO);
+        }
         self.grab_inner(regions, interval, false)?;
-        Ok(ready)
+        self.read_pending(regions, READ_WAIT)
+    }
+
+    fn read_pending(&mut self, regions: &[Region], wait: Duration) -> Result<Option<CapturedFrame>, String> {
+        let Some(pending) = self.pending.take() else { return Ok(None) };
+        let deadline = Instant::now() + wait;
+        let mut images = Vec::with_capacity(regions.len());
+        for index in 0..regions.len() {
+            loop {
+                // Das erste Map ohne Warten meldet oft „noch nicht fertig“, obwohl die Kopie
+                // kurz danach bereit ist – darum kurz nachfragen statt den Scan zu verlieren.
+                if let Some(image) = unsafe { self.read_region(index, true)? } {
+                    images.push(image);
+                    break;
+                }
+                if Instant::now() >= deadline {
+                    self.pending = Some(pending);
+                    return Ok(None);
+                }
+                std::thread::sleep(Duration::from_millis(1));
+            }
+        }
+        // Sehr alte Bilder nach GPU-Hängern dürfen keine nachträglichen Kills auslösen.
+        Ok((pending.at.elapsed().as_secs_f64() <= 2.0).then_some(CapturedFrame { images, at: pending.at }))
     }
 
     fn grab_inner(&mut self, regions: &[Region], interval: Duration, any_frame: bool) -> Result<Option<Vec<Image>>, String> {
@@ -660,8 +723,30 @@ impl Screen {
         }
         self.ensure_session(interval)?;
         let Some(capture) = &self.capture else { return Ok(None) };
-        // Kein neues Bild seit dem letzten Abholen (Bild unverändert oder Intervall noch nicht um).
-        let Ok(frame) = capture.pool.TryGetNextFrame() else { return Ok(None) };
+        // Im einzigen Puffer liegt meist ein Bild, das Windows gleich nach dem letzten
+        // Abholen hineinkopiert hat – einen ganzen Scan alt. Live verwerfen und kurz auf
+        // ein frisches warten; sonst wären die Lesungen zu weit auseinander, um eine
+        // Kill-Meldung zu bestätigen (`frame_gaps_at_the_feed_tick`).
+        let stale = capture.pool.TryGetNextFrame().ok();
+        let frame = if any_frame {
+            stale
+        } else {
+            if let Some(stale) = stale {
+                let _ = stale.Close();
+            }
+            let deadline = Instant::now() + FRESH_WAIT;
+            loop {
+                if let Ok(frame) = capture.pool.TryGetNextFrame() {
+                    break Some(frame);
+                }
+                if Instant::now() >= deadline {
+                    break None;
+                }
+                std::thread::sleep(Duration::from_millis(2));
+            }
+        };
+        // Kein neues Bild (Bildschirm unverändert).
+        let Some(frame) = frame else { return Ok(None) };
         let result = (|| unsafe {
             let size = frame.ContentSize().map_err(|e| hr(e, "Bild"))?;
             if (size.Width as u32, size.Height as u32) != (self.width, self.height) {

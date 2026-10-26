@@ -722,6 +722,30 @@ mod tests {
         }
     }
 
+    /// Live wie der Wächter: Kill-Feed-Bereich aus den Einstellungen lesen (OCR) und den
+    /// Ausschnitt nach `FIB_OUT` speichern: `cargo test --release -- --ignored live_feed --nocapture`.
+    #[test]
+    #[ignore]
+    fn live_feed_reads_like_the_watcher() {
+        let r: Vec<u32> = std::env::var("FIB_FEED").expect("FIB_FEED").split(',').map(|v| v.parse().unwrap()).collect();
+        let region = [Region { x: r[0], y: r[1], width: r[2], height: r[3] }];
+        let mut ocr = ocr::LiveFeedOcr::new().unwrap();
+        let mut last = None;
+        let started = Instant::now();
+        while started.elapsed() < Duration::from_secs(5) {
+            if let Some(frame) = screen::with_screen(|s| s.grab(&region, FEED_TICK)).unwrap() {
+                let lines = ocr.read(&frame.images[0]).unwrap();
+                println!("{:.1} s: {:?}", started.elapsed().as_secs_f64(), lines.iter().map(|l| l.text()).collect::<Vec<_>>());
+                last = Some(frame.images[0].clone());
+            }
+            thread::sleep(FEED_TICK);
+        }
+        screen::release();
+        if let (Some(image), Ok(out)) = (last, std::env::var("FIB_OUT")) {
+            image.save_bmp(std::path::Path::new(&out)).unwrap();
+        }
+    }
+
     /// Wie in der App: Prozess ist Per-Monitor-DPI-bewusst (v2).
     #[test]
     #[ignore]
