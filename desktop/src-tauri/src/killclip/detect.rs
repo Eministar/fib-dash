@@ -3,7 +3,7 @@
 //! * Kill-Feed (NERO-V): Benachrichtigungen „Du hast <Name> getötet“ (eigener Kill)
 //!   und „Du wurdest von <Name> getötet“ (eigener Tod). Gelesen per Texterkennung;
 //!   nur Kills lösen einen Clip aus, der Name wird übernommen.
-//! * Kill-Marker: Nach einem Kill erscheint um das Fadenkreuz ein türkises „X“.
+//! * Kill-Marker: Nach einem Kill erscheint um das Fadenkreuz ein türkises oder rotes „X“.
 //!   Erkannt an Farbe, Form und kurzem Puls – nur ohne eingerichteten Kill-Feed.
 //!
 //! Hier steckt nur Logik ohne Windows-Aufrufe, damit sie testbar bleibt.
@@ -157,18 +157,23 @@ pub fn classify(line: &Line) -> Option<FeedEvent> {
 /// Alle Meldungen einer Lesung. Die Box hat eine feste Breite und bricht lange Meldungen
 /// um („Du wurdest von FIB x Reinhard Kaito [163“ / „getötet“) – dann gehört die Folgezeile dazu.
 pub fn events(lines: &[Line]) -> Vec<FeedEvent> {
+    event_lines(lines).into_iter().map(|(event, _)| event).collect()
+}
+
+/// Dieselben vollständigen Meldungen samt Wortpositionen für Live-Erkennung und Einrichtung.
+pub fn event_lines(lines: &[Line]) -> Vec<(FeedEvent, Line)> {
     let mut found = Vec::new();
     let mut i = 0;
     while i < lines.len() {
         if let Some(event) = classify(&lines[i]) {
-            found.push(event);
+            found.push((event, lines[i].clone()));
             i += 1;
             continue;
         }
         if let Some(next) = lines.get(i + 1) {
             let joined = Line { words: lines[i].words.iter().chain(&next.words).cloned().collect() };
             if let Some(event) = classify(&joined) {
-                found.push(event);
+                found.push((event, joined));
                 i += 2;
                 continue;
             }
@@ -306,10 +311,10 @@ fn match_score(a: &str, b: &str) -> Option<f32> {
     (score >= 0.7 || (short.chars().count() >= 6 && long.contains(short))).then_some(score)
 }
 
-// ── Türkiser Kill-Marker ─────────────────────────────────────────────
+// ── Türkiser oder roter Kill-Marker ──────────────────────────────────
 
-/// Türkis wie der NERO-V-Kill-Marker (Farbton ~185°), kräftig genug, um sich
-/// vom grünlich-dunklen Spielhintergrund abzuheben.
+/// Türkis und Rot, einschließlich ausgeblasster Aufnahmefarben. Farbe allein
+/// reicht nie: Form und kurzer Puls werden separat geprüft.
 pub fn is_marker_color(r: u8, g: u8, b: u8) -> bool {
     let (r, g, b) = (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0);
     let max = r.max(g).max(b);
@@ -327,10 +332,10 @@ pub fn is_marker_color(r: u8, g: u8, b: u8) -> bool {
         60.0 * ((r - g) / delta + 4.0)
     };
     let hue = if hue < 0.0 { hue + 360.0 } else { hue };
-    (176.0..=212.0).contains(&hue)
+    (176.0..=212.0).contains(&hue) || hue <= 16.0 || hue >= 344.0
 }
 
-/// Maske der türkisen Pixel eines BGRA-Ausschnitts.
+/// Maske der türkisen oder roten Pixel eines BGRA-Ausschnitts.
 pub fn marker_mask(bgra: &[u8]) -> Vec<bool> {
     bgra.chunks_exact(4).map(|p| is_marker_color(p[2], p[1], p[0])).collect()
 }
@@ -339,8 +344,8 @@ pub fn marker_mask(bgra: &[u8]) -> Vec<bool> {
 ///
 /// Der NERO-V-Marker sind vier kurze, dicke „Blätter“ auf den Diagonalen, etwa
 /// 3–14 px von der Mitte (bei 1080p; gemessen an einem echten Kill). Gezählt werden
-/// türkise Pixel je Diagonale: Alle vier müssen etwas zeigen (in Aufnahmen
-/// verschwimmen die unteren gern), und außerhalb der Diagonalen darf kaum Türkis
+/// farbige Pixel je Diagonale: Alle vier müssen etwas zeigen (in Aufnahmen
+/// verschwimmen die unteren gern), und außerhalb der Diagonalen darf kaum Markerfarbe
 /// sein – sonst ist es Himmel oder Wasser, kein Marker.
 pub fn marker_score(mask: &[bool], width: usize, height: usize) -> f32 {
     if width == 0 || height == 0 || width.checked_mul(height) != Some(mask.len()) {
@@ -650,6 +655,42 @@ mod tests {
         assert!(marker > 0.25, "Marker {marker}");
         assert!(empty < 0.01, "Hintergrund {empty}");
         assert!(sky < 0.05, "türkise Fläche {sky}");
+    }
+
+    #[test]
+    fn red_and_compressed_red_markers_are_found_without_accepting_red_scenery() {
+        for rgb in [[240, 35, 45], [180, 70, 65], [151, 79, 95], [116, 40, 40]] {
+            assert!(is_marker_color(rgb[0], rgb[1], rgb[2]), "{rgb:?}");
+            let mut image = with_x(64);
+            for pixel in image.chunks_exact_mut(4) {
+                if is_marker_color(pixel[2], pixel[1], pixel[0]) {
+                    pixel.copy_from_slice(&[rgb[2], rgb[1], rgb[0], 255]);
+                }
+            }
+            assert!(marker_score(&marker_mask(&image), 64, 64) >= 0.25, "{rgb:?}");
+            let solid: Vec<u8> = (0..64 * 64).flat_map(|_| [rgb[2], rgb[1], rgb[0], 255]).collect();
+            assert!(marker_score(&marker_mask(&solid), 64, 64) < 0.05);
+        }
+        for rgb in [[255, 160, 20], [200, 200, 200], [70, 10, 10], [40, 160, 40]] {
+            assert!(!is_marker_color(rgb[0], rgb[1], rgb[2]), "{rgb:?}");
+        }
+    }
+
+    #[test]
+    fn setup_receives_both_rows_of_wrapped_notifications() {
+        let first = line("Du hast Max Muster [123]");
+        let mut second = line("getötet");
+        for word in &mut second.words {
+            word.y0 += 20.0;
+            word.y1 += 20.0;
+        }
+        let found = event_lines(&[first.clone(), second.clone()]);
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].0, FeedEvent::Kill("Max Muster [123]".into()));
+        assert_eq!(found[0].1.words.len(), first.words.len() + second.words.len());
+        assert_eq!(found[0].1.words.last().unwrap().y0, second.words[0].y0);
+        assert!(event_lines(&[line("Du hast Max Muster gerettet")]).is_empty());
+        assert!(matches!(event_lines(&[line("Du wurdest von Max Muster"), second])[0].0, FeedEvent::Death(_)));
     }
 
     /// Echter NERO-V-Marker aus einem Replay (1080p, Bereich 64×64 um das Fadenkreuz):

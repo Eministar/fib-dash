@@ -323,7 +323,7 @@
           </div>
           <div class="setting-row">
             <span class="setting-icon"><i data-icon="target"></i></span>
-            <div class="setting-text"><span>Türkiser Kill-Marker am Fadenkreuz</span><span class="type-caption muted">Nur ohne Kill-Feed-Bereich aktiv. Mit Kill-Feed zählen ausschließlich bestätigte Kill-Meldungen.</span></div>
+            <div class="setting-text"><span>Kill-Marker am Fadenkreuz · Türkis oder Rot</span><span class="type-caption muted">Nur ohne Kill-Feed-Bereich aktiv. Mit Kill-Feed zählen ausschließlich bestätigte Kill-Meldungen.</span></div>
             <fluent-switch id="kc-marker" class="setting-control" aria-label="Kill-Marker nutzen"></fluent-switch>
           </div>
         </div>
@@ -509,10 +509,11 @@
       <span slot="title">Erkennung einrichten</span>
       <fluent-button slot="close" appearance="transparent" icon-only aria-label="Schließen"><i data-icon="dismiss"></i></fluent-button>
       <div class="kc-setup">
+        <strong id="kc-setup-progress" class="type-body-strong" role="status">Schritt 1 von 3 · Aufnahme wählen</strong>
         <ol class="kc-steps type-body">
-          <li>Mach im Spiel einen Kill und drück <strong>direkt danach</strong> <kbd id="kc-hotkey">Strg+Alt+K</kbd> – dein Clip-Programm speichert die letzten Sekunden.</li>
-          <li>Such in der Zeitleiste den Moment, in dem <strong>„Du hast … getötet“</strong> oder der Kill-Marker erscheint, und klick <strong>Hier ist der Kill</strong>.</li>
-          <li>Die App sieht sich die Stelle an und merkt sich, wie dein Kill aussieht. Die Rahmen kannst du danach noch verschieben.</li>
+          <li><strong>Aufnahme wählen</strong><span>Vorhandenen Clip öffnen oder im Spiel direkt nach einem Kill <kbd id="kc-hotkey">Strg+Alt+K</kbd> drücken.</span></li>
+          <li><strong>Kill markieren</strong><span>Zu „Du hast … getötet“ spulen und „Hier ist der Kill“ wählen. Die App durchsucht auch die Momente davor und danach.</span></li>
+          <li><strong>Ergebnis prüfen</strong><span>Die vollständige Meldung muss im Rahmen liegen, auch bei Zeilenumbrüchen. Nach erfolgreichem Lesetest speichern.</span></li>
         </ol>
         <div class="kc-setup-bar">
           <span class="type-body muted" id="kc-setup-hint"></span>
@@ -540,20 +541,35 @@
             </div>
           </div>
         </div>
-        <div class="kc-canvas" id="kc-canvas">
-          <div class="kc-canvas-empty" id="kc-canvas-empty">
-            <i data-icon="videoClip"></i>
-            <span id="kc-canvas-empty-text">Noch keine Aufnahme – mach im Spiel einen Kill und drück <kbd>Strg+Alt+K</kbd></span>
+        <div class="kc-review">
+          <div class="kc-review-image">
+            <div class="kc-canvas" id="kc-canvas">
+              <div class="kc-canvas-empty" id="kc-canvas-empty">
+                <i data-icon="videoClip"></i>
+                <span id="kc-canvas-empty-text">Noch keine Aufnahme – mach im Spiel einen Kill und drück <kbd>Strg+Alt+K</kbd></span>
+              </div>
+              <div class="kc-stage" id="kc-stage">
+                <img id="kc-shot" alt="Aufnahme zur Einrichtung. Einen Rahmen um die vollständige Kill-Feed-Meldung ziehen." hidden draggable="false">
+                <div class="kc-rect feed" id="kc-rect-feed" hidden><span>Kill-Feed</span></div>
+                <div class="kc-rect hit" id="kc-rect-hit" hidden><span>Kill-Marker</span></div>
+              </div>
+            </div>
+            <div class="kc-region-controls" id="kc-region-controls" hidden>
+              <span class="type-caption muted">Kill-Feed-Bereich in Pixeln</span>
+              <div class="kc-region-fields">
+                <label>X<input id="kc-region-x" type="number" min="0" step="1"></label>
+                <label>Y<input id="kc-region-y" type="number" min="0" step="1"></label>
+                <label>Breite<input id="kc-region-width" type="number" min="8" step="1"></label>
+                <label>Höhe<input id="kc-region-height" type="number" min="8" step="1"></label>
+                <fluent-button id="kc-retest" appearance="subtle">Erneut prüfen</fluent-button>
+                <fluent-button id="kc-clear-feed" appearance="subtle">Kill-Feed-Rahmen entfernen</fluent-button>
+              </div>
+            </div>
           </div>
-          <div class="kc-stage" id="kc-stage">
-            <img id="kc-shot" alt="" hidden draggable="false">
-            <div class="kc-rect feed" id="kc-rect-feed" hidden><span>Kill-Feed</span></div>
-            <div class="kc-rect hit" id="kc-rect-hit" hidden><span>Kill-Marker</span></div>
-          </div>
+          <div class="kc-test" id="kc-test" role="status" aria-live="polite" hidden></div>
         </div>
-        <div class="kc-test" id="kc-test" hidden></div>
       </div>
-      <fluent-button slot="action" id="kc-setup-save" appearance="primary">Speichern</fluent-button>
+      <fluent-button slot="action" id="kc-setup-save" appearance="primary" disabled>Geprüfte Einrichtung speichern</fluent-button>
       <fluent-button slot="action" id="kc-setup-cancel">Abbrechen</fluent-button>
     </fluent-dialog-body>
   </fluent-dialog>
@@ -565,6 +581,14 @@
       <fluent-button slot="close" appearance="transparent" icon-only aria-label="Schließen"><i data-icon="dismiss"></i></fluent-button>
 
       <div class="settings">
+        <h2 class="type-body-strong section-title">Allgemein</h2>
+        <div class="setting-group">
+          <div class="setting-row">
+            <span class="setting-icon"><i data-icon="play"></i></span>
+            <div class="setting-text"><span>Mit Windows starten</span><span class="type-caption muted" id="s-auto-start-note">Öffnet FIB Desktop automatisch, sobald du dich bei Windows anmeldest.</span></div>
+            <fluent-switch id="s-auto-start" class="setting-control" aria-label="Mit Windows starten" aria-describedby="s-auto-start-note"></fluent-switch>
+          </div>
+        </div>
         <h2 class="type-body-strong section-title">Bodycam</h2>
         <div class="setting-group">
           <div class="setting-row">

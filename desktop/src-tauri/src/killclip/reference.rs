@@ -101,21 +101,26 @@ pub struct Reference {
 
 /// Texterkennung über das ganze Bild: in überlappenden Kacheln, vergrößert – die
 /// Schrift im Kill-Feed ist klein, und eine Meldung darf an keiner Kachelgrenze zerfallen.
-fn read_everywhere(ocr: &Ocr, image: &Image) -> Vec<(Line, u32, u32)> {
+fn read_everywhere(ocr: &Ocr, image: &Image) -> Result<Vec<(Line, u32, u32)>, String> {
     let (tile_w, tile_h) = (image.width / 2, image.height / 2);
-    let max = windows::Media::Ocr::OcrEngine::MaxImageDimension().unwrap_or(2600);
-    let scale = if tile_w * 2 <= max && tile_h * 2 <= max { 2 } else { 1 };
     let mut lines = Vec::new();
     for row in 0..3 {
         for col in 0..3 {
             let (x, y) = (col * image.width / 4, row * image.height / 4);
             let Some(tile) = image.crop(Region { x, y, width: tile_w, height: tile_h }) else { continue };
-            for line in ocr.read_with(&tile, scale, false).unwrap_or_default() {
+            let read = ocr.read_feed(&tile)?;
+            // Umgebrochene Meldungen mitsamt beiden Zeilen lokalisieren.
+            // Nicht über Kachelgrenzen hinweg zusammenfügen.
+            for (event, line) in detect::event_lines(&read) {
+                if matches!(event, FeedEvent::Kill(_)) {
+                    return Ok(vec![(line, x, y)]);
+                }
                 lines.push((line, x, y));
             }
+            lines.extend(read.into_iter().map(|line| (line, x, y)));
         }
     }
-    lines
+    Ok(lines)
 }
 
 /// Lage einer Zeile im ganzen Bild.
@@ -142,6 +147,9 @@ fn feed_region(line: (f32, f32, f32, f32), width: u32, height: u32) -> Region {
 
 /// Sieht sich die Bilder um `at` (Sekunden im Clip) an und findet Kill-Feed und Marker.
 pub fn analyze(clip: &Path, at: f64, frame_path: &Path, marker_path: &Path) -> Result<Reference, String> {
+    if !at.is_finite() {
+        return Err("Bitte einen gültigen Zeitpunkt im Clip wählen".into());
+    }
     // In Monitorgröße lesen: Bereiche gelten danach genau so für die Live-Erkennung.
     let (width, height) = screen::with_screen(|s| Ok((s.width, s.height))).unwrap_or((1920, 1080));
     let frames = Frames::open(clip, width, height)?;
@@ -165,12 +173,14 @@ pub fn analyze(clip: &Path, at: f64, frame_path: &Path, marker_path: &Path) -> R
     // Kill-Feed: Die Meldung erscheint mit dem Kill und bleibt ein paar Sekunden stehen.
     let ocr = Ocr::new()?;
     let start = if marker_seen { marker_times[marker_index] } else { at };
-    let feed_times: Vec<f64> = [0.0, 0.3, 0.7, 1.2, 2.0].iter().map(|d| start + d).collect();
+    // Auch vor dem Klick suchen: oft wird erst auf die bereits sichtbare Meldung geklickt.
+    let feed_times: Vec<f64> = [0.0, 0.3, 0.7, -0.5, 1.2, -1.0, 2.0].iter()
+        .map(|d| (start + d).clamp(0.0, (frames.duration - 0.05).max(0.0))).collect();
     let feed_frames = frames.at(&feed_times)?;
     let mut found: Option<(usize, Region, Option<String>, String)> = None;
     let mut guess: Option<(usize, Region, String)> = None;
     'frames: for (index, frame) in feed_frames.iter().enumerate() {
-        for (line, dx, dy) in read_everywhere(&ocr, frame) {
+        for (line, dx, dy) in read_everywhere(&ocr, frame)? {
             let region = feed_region(line_box(&line, dx, dy), width, height);
             match detect::classify(&line) {
                 Some(FeedEvent::Kill(victim)) => {
@@ -210,7 +220,7 @@ pub fn analyze(clip: &Path, at: f64, frame_path: &Path, marker_path: &Path) -> R
         marker_path: marker_file,
         width,
         height,
-        at: image_at.min(frames.duration),
+        at: image_at.clamp(0.0, frames.duration),
         killfeed: found.as_ref().map(|(_, region, ..)| *region),
         victim: found.as_ref().and_then(|(_, _, victim, _)| victim.clone()),
         line: found.map(|(.., text)| text),

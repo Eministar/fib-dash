@@ -483,6 +483,9 @@ button { font: inherit; color: inherit; }
   max-width: min(720px, calc(100vw - 48px));
   max-height: calc(100vh - 48px);
   border-radius: var(--radius);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
 }
 
 .settings { display: flex; flex-direction: column; gap: 4px; }

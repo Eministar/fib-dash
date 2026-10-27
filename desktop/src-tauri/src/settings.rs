@@ -18,6 +18,8 @@ pub enum Clipper {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
+    /// Beim Anmelden an Windows automatisch starten; auch für bestehende Einstellungen aktiv.
+    pub auto_start: bool,
     pub clipper: Clipper,
     /// Eigene Taste der App: löst den Clip im Programm aus und öffnet den Upload.
     pub bodycam_hotkey: String,
@@ -39,6 +41,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            auto_start: true,
             clipper: Clipper::Nvidia,
             bodycam_hotkey: "Ctrl+Shift+B".into(),
             clipper_hotkey: String::new(),
@@ -71,4 +74,17 @@ pub fn save(app: &AppHandle, settings: &Settings) -> Result<(), String> {
     }
     let raw = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
     fs::write(path, raw).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn existing_settings_enable_autostart_but_explicit_opt_out_survives() {
+        assert!(serde_json::from_str::<Settings>(r#"{"clipper":"nvidia"}"#).unwrap().auto_start);
+        let settings: Settings = serde_json::from_str(r#"{"autoStart":false}"#).unwrap();
+        assert!(!settings.auto_start);
+        assert!(!serde_json::from_str::<Settings>(&serde_json::to_string(&settings).unwrap()).unwrap().auto_start);
+    }
 }

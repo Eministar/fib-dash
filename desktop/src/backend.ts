@@ -6,6 +6,7 @@ export type Clipper = 'nvidia' | 'medal' | 'amd' | 'selfclip'
 export type ClipQuality = '720p' | '1080p' | 'original'
 
 export interface Settings {
+  autoStart: boolean
   clipper: Clipper
   bodycamHotkey: string
   clipperHotkey: string
@@ -95,6 +96,8 @@ export interface KillClipReference {
 }
 
 export interface SettingsView {
+  autostartAvailable: boolean
+  autostartError: string | null
   settings: Settings
   defaultClipDir: string
   defaultClipperHotkey: string

@@ -42,8 +42,10 @@ async function saveConfig(patch: Partial<KillClipConfig>) {
   try {
     state.settings = await backend.killClipSaveConfig({ ...config(), ...patch })
     renderConfig()
+    return true
   } catch (error) {
     toast(errorText(error), 'error')
+    return false
   }
 }
 
@@ -149,6 +151,13 @@ let view: SetupView = 'empty'
 let clip: { path: string; duration: number } | null = null
 let reference: KillClipReference | null = null
 let shot: { width: number; height: number } | null = null
+let setupOpen = false
+let analysisPending = false
+let savingSetup = false
+let testRevision = 0
+let feedVerified = false
+let markerVerified = false
+let regionInputsValid = true
 // Der Marker-Bereich liegt immer auf dem Fadenkreuz – nur der Kill-Feed-Rahmen lässt sich ziehen.
 let draft: { killfeed: Region | null; hitmarker: Region | null } = { killfeed: null, hitmarker: null }
 
@@ -161,6 +170,9 @@ const EMPTY_TEXT: Partial<Record<SetupView, string>> = {
 }
 
 function setView(next: SetupView, hint = '') {
+  ++testRevision
+  feedVerified = false
+  markerVerified = false
   view = next
   $('kc-clip').hidden = next !== 'clip'
   $('kc-canvas').hidden = next === 'clip'
@@ -169,9 +181,29 @@ function setView(next: SetupView, hint = '') {
   if (EMPTY_TEXT[next]) $('kc-canvas-empty-text').innerHTML = EMPTY_TEXT[next]!
   $('kc-back').hidden = next !== 'reference' || !clip
   $('kc-test').hidden = next !== 'reference'
+  $('kc-region-controls').hidden = next !== 'reference'
+  const step = next === 'reference' ? 3 : next === 'clip' || next === 'analyzing' ? 2 : 1
+  document.querySelectorAll<HTMLElement>('.kc-steps li').forEach((item, index) => {
+    if (index + 1 === step) item.setAttribute('aria-current', 'step')
+    else item.removeAttribute('aria-current')
+  })
+  $('kc-setup-progress').textContent = `Schritt ${step} von 3 · ${['Aufnahme wählen', 'Kill markieren', 'Ergebnis prüfen'][step - 1]}`
+  setDisabled('kc-mark', analysisPending || clipDuration() <= 0)
   $('kc-setup-hint').textContent = hint
   if (next !== 'clip') kcVideo().pause()
   placeRects()
+  updateSetupSave()
+}
+
+function setDisabled(id: string, disabled: boolean) {
+  ($(id) as HTMLElement & { disabled: boolean }).disabled = disabled
+}
+
+function updateSetupSave() {
+  const verified = draft.killfeed ? feedVerified : config().useMarker && markerVerified
+  setDisabled('kc-setup-save', view !== 'reference' || !verified || !regionInputsValid || savingSetup || analysisPending)
+  setDisabled('kc-pick', savingSetup || analysisPending || view === 'saving')
+  for (const id of ['kc-back', 'kc-clear-feed', 'kc-retest', 'kc-region-x', 'kc-region-y', 'kc-region-width', 'kc-region-height']) setDisabled(id, savingSetup)
 }
 
 // ── Zeitleiste ──
@@ -181,7 +213,10 @@ function clock(seconds: number) {
   return `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0').replace('.', ',')}`
 }
 
-const clipDuration = () => clip?.duration || kcVideo().duration || 0
+const clipDuration = () => {
+  const duration = clip?.duration || kcVideo().duration || 0
+  return Number.isFinite(duration) ? duration : 0
+}
 
 function renderTimeline() {
   const v = kcVideo()
@@ -193,6 +228,12 @@ function renderTimeline() {
   flag.hidden = !reference
   if (reference) flag.style.left = percent(reference.at)
   $('kc-play-icon').innerHTML = (v.paused ? icons.play : icons.pause).replace('<svg ', '<svg aria-hidden="true" fill="currentColor" ')
+  $('kc-play').setAttribute('aria-label', v.paused ? 'Abspielen' : 'Pausieren')
+  const track = $('kc-track')
+  track.setAttribute('aria-valuemin', '0')
+  track.setAttribute('aria-valuemax', String(duration))
+  track.setAttribute('aria-valuenow', String(v.currentTime))
+  track.setAttribute('aria-valuetext', `${clock(v.currentTime)} von ${clock(duration)}`)
 }
 
 function seek(seconds: number) {
@@ -204,10 +245,13 @@ function seek(seconds: number) {
 function loadClip(path: string, duration: number, startAt: number) {
   clip = { path, duration }
   reference = null
+  shot = null
+  draft = { killfeed: null, hitmarker: null }
   const v = kcVideo()
   v.onloadedmetadata = () => {
     if (!clip!.duration && Number.isFinite(v.duration)) clip!.duration = v.duration
     seek(startAt < 0 ? clip!.duration + startAt : startAt)
+    setDisabled('kc-mark', false)
   }
   v.src = convertFileSrc(path)
   setView('clip', 'Spul zum Kill und klick „Hier ist der Kill“ – mit ← und → gehst du in kleinen Schritten.')
@@ -232,15 +276,22 @@ function bindTimeline() {
   track.addEventListener('pointermove', (event) => {
     if (track.hasPointerCapture(event.pointerId)) seek(at(event))
   })
-  const togglePlay = () => void (v.paused ? v.play() : v.pause())
+  const togglePlay = () => {
+    if (v.paused) void v.play().catch((error) => toast(errorText(error), 'error'))
+    else v.pause()
+  }
   $('kc-play').addEventListener('click', togglePlay)
   $('kc-step-back').addEventListener('click', () => seek(v.currentTime - 0.1))
   $('kc-step-forward').addEventListener('click', () => seek(v.currentTime + 0.1))
   $('kc-setup-dialog').addEventListener('keydown', (event) => {
     if (view !== 'clip') return
+    if (event.composedPath().some((target) => target instanceof HTMLElement &&
+      target.matches('input, textarea, fluent-button, button, [contenteditable="true"]'))) return
     const step = event.shiftKey ? 1 : 0.1
     if (event.key === 'ArrowLeft') seek(v.currentTime - step)
     else if (event.key === 'ArrowRight') seek(v.currentTime + step)
+    else if (event.key === 'Home') seek(0)
+    else if (event.key === 'End') seek(clipDuration())
     else if (event.key === ' ') togglePlay()
     else return
     event.preventDefault()
@@ -251,17 +302,20 @@ function bindTimeline() {
 // ── Auswertung und Referenz ──
 
 async function analyze(at: number) {
-  if (!clip) return
+  if (!clip || analysisPending || !Number.isFinite(at)) return
+  analysisPending = true
   setView('analyzing')
   try {
     reference = await backend.killClipAnalyze(clip.path, at)
   } catch (error) {
+    analysisPending = false
     toast(errorText(error), 'error')
-    return setView('clip')
+    return setView('clip', 'Auswertung fehlgeschlagen. Wähle einen anderen Moment oder versuche es erneut.')
   }
+  analysisPending = false
   draft = {
-    killfeed: reference.killfeed ?? draft.killfeed,
-    hitmarker: reference.hitmarker ?? draft.hitmarker,
+    killfeed: reference.killfeed,
+    hitmarker: reference.hitmarker,
   }
   showReferenceImage()
   const found = [reference.killfeed && 'Kill-Feed', reference.hitmarker && 'Kill-Marker'].filter(Boolean)
@@ -286,6 +340,11 @@ function showReferenceImage() {
 
 // Rahmen in Prozent des Bildes: bleibt richtig, egal wann und wie groß das Bild gerade dargestellt wird.
 function placeRects() {
+  regionInputsValid = true
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    const input = $<HTMLInputElement>(`kc-region-${key}`)
+    if (document.activeElement !== input) input.value = draft.killfeed ? String(draft.killfeed[key]) : ''
+  }
   for (const [key, id] of [['killfeed', 'kc-rect-feed'], ['hitmarker', 'kc-rect-hit']] as const) {
     const rect = draft[key]
     const el = $(id)
@@ -329,14 +388,24 @@ function referenceHtml() {
 
 async function runFeedTest() {
   const box = $('kc-test')
-  if (!shot || view !== 'reference') return
+  if (!shot || view !== 'reference' || !regionInputsValid || savingSetup) return
+  const revision = ++testRevision
+  feedVerified = false
+  markerVerified = false
+  updateSetupSave()
+  const region = draft.killfeed ? { ...draft.killfeed } : null
+  const current = () => revision === testRevision && view === 'reference' && setupOpen
   box.innerHTML = `<span class="muted">Lese das Bild …</span>`
   try {
     const parts: string[] = []
     const crops = referenceHtml()
     if (crops) parts.push(crops)
-    if (draft.killfeed) {
-      const result = await backend.killClipTestFeed(draft.killfeed)
+    let validFeed = false
+    let validMarker = false
+    if (region) {
+      const result = await backend.killClipTestFeed(region)
+      if (!current()) return
+      validFeed = result.kills.length > 0
       const rows = [
         ...result.kills.map((name) => `<div class="kc-test-line hit">${icon('checkmarkCircle')}<span>Kill: ${escapeHtml(name)}</span><span class="pill tone-success">Clip</span></div>`),
         ...result.deaths.map((name) => `<div class="kc-test-line death">${icon('dismiss')}<span>Getötet von ${escapeHtml(name)}</span><span class="pill tone-subtle">kein Clip</span></div>`),
@@ -349,19 +418,32 @@ async function runFeedTest() {
       )
     }
     if (config().useMarker) {
-      const score = await backend.killClipTestMarker()
-      const seen = score >= 0.25
+      // Der optionale Marker-Test darf einen erfolgreichen Kill-Feed-Test nicht blockieren.
+      const score = await backend.killClipTestMarker().catch((error) => {
+        if (!region) throw error
+        return null
+      })
+      if (!current()) return
+      const seen = score !== null && score >= 0.25
+      validMarker = seen
       parts.push(
-        `<span class="type-body-strong">Kill-Marker</span><div class="kc-test-line ${seen ? 'hit' : ''}">${icon(seen ? 'checkmarkCircle' : 'dismiss')}<span>${seen ? 'Türkiser Marker am Fadenkreuz erkannt' : 'Kein Marker an dieser Stelle'} (Wert ${score.toFixed(2)})</span></div>`,
+        `<span class="type-body-strong">Kill-Marker · Türkis oder Rot</span><div class="kc-test-line ${seen ? 'hit' : ''}">${icon(seen ? 'checkmarkCircle' : 'dismiss')}<span>${seen ? 'Marker am Fadenkreuz erkannt' : score === null ? 'Marker-Test nicht verfügbar' : 'Kein Marker an dieser Stelle'}${score === null ? '' : ` (Wert ${score.toFixed(2)})`}</span></div><span class="type-caption muted">${region ? 'Mit Kill-Feed zählen nur bestätigte Textmeldungen. Der Marker ist dafür nicht erforderlich.' : 'Ohne Kill-Feed wird der kurze Marker-Puls verwendet; Namen werden dabei nicht gelesen.'}</span>`,
       )
     }
+    if (!current()) return
+    feedVerified = validFeed
+    markerVerified = validMarker
     box.innerHTML = parts.join('<hr class="kc-test-sep">') || '<span class="muted">Zieh einen Rahmen um den Kill-Feed.</span>'
   } catch (error) {
+    if (!current()) return
     box.innerHTML = `<span class="muted">${escapeHtml(errorText(error))}</span>`
+  } finally {
+    if (current()) updateSetupSave()
   }
 }
 
 function onReferenceClip(payload: KillClipReferenceClip) {
+  if (!setupOpen || analysisPending || savingSetup) return
   if (payload.saving) return setView('saving')
   if (payload.error || !payload.path) {
     toast(payload.error ?? 'Aufnahme fehlgeschlagen', 'error')
@@ -373,6 +455,7 @@ function onReferenceClip(payload: KillClipReferenceClip) {
 }
 
 async function pickClip() {
+  if (analysisPending || savingSetup || view === 'saving') return
   const settings = state.settings
   const path = await open({
     multiple: false,
@@ -380,12 +463,13 @@ async function pickClip() {
     defaultPath: settings?.settings.clipDir || settings?.defaultClipDir,
     filters: [{ name: 'Videos', extensions: ['mp4', 'mkv', 'mov', 'webm'] }],
   })
-  if (typeof path === 'string') loadClip(path, 0, 0)
+  if (typeof path === 'string' && setupOpen && !analysisPending && (view as SetupView) !== 'saving') loadClip(path, 0, 0)
 }
 
 function bindCanvas() {
   const canvas = $('kc-canvas')
   let start: { x: number; y: number } | null = null
+  let previous: Region | null = null
   const point = (event: PointerEvent) => {
     const box = $<HTMLImageElement>('kc-shot').getBoundingClientRect()
     return {
@@ -394,9 +478,13 @@ function bindCanvas() {
     }
   }
   canvas.addEventListener('pointerdown', (event) => {
-    if (!shot || view !== 'reference') return
+    if (!shot || view !== 'reference' || savingSetup || event.button !== 0) return
     canvas.setPointerCapture(event.pointerId)
     start = point(event)
+    previous = draft.killfeed
+    ++testRevision
+    feedVerified = false
+    updateSetupSave()
   })
   canvas.addEventListener('pointermove', (event) => {
     if (!start) return
@@ -415,23 +503,30 @@ function bindCanvas() {
     const rect = draft.killfeed
     // Versehentliche Klicks verwerfen.
     if (rect && (rect.width < 8 || rect.height < 8)) {
-      draft.killfeed = null
+      draft.killfeed = previous
       placeRects()
-      return
     }
+    void runFeedTest()
+  })
+  canvas.addEventListener('pointercancel', () => {
+    if (!start) return
+    start = null
+    draft.killfeed = previous
+    placeRects()
     void runFeedTest()
   })
 }
 
 async function openSetup() {
+  if (setupOpen) return
+  setupOpen = true
   const c = config()
+  draft = { killfeed: c.killfeed, hitmarker: c.hitmarker }
   if (!reference) {
-    draft = { killfeed: c.killfeed, hitmarker: c.hitmarker }
     // Nach einem Neustart die gespeicherte Einrichtung zeigen statt eines leeren Dialogs.
-    const saved = c.killfeed ? await backend.killClipSavedReference().catch(() => null) : null
+    const saved = c.killfeed || c.hitmarker ? await backend.killClipSavedReference().catch(() => null) : null
     if (saved) {
-      reference = { ...saved, at: 0, killfeed: c.killfeed, victim: null, line: null, markerScore: 0 }
-      draft.hitmarker = saved.hitmarker
+      reference = { ...saved, at: 0, killfeed: c.killfeed, hitmarker: c.hitmarker, victim: null, line: null, markerScore: 0 }
       showReferenceImage()
     }
   }
@@ -441,15 +536,21 @@ async function openSetup() {
   } catch (error) {
     toast(errorText(error), 'error')
   }
-  setView(reference ? 'reference' : clip ? 'clip' : 'empty', reference ? 'Deine gespeicherte Einrichtung – oder nimm einen neuen Kill auf.' : '')
+  setView(analysisPending ? 'analyzing' : reference ? 'reference' : clip ? 'clip' : 'empty', reference ? 'Prüfe den Kill-Feed-Ausschnitt. Zum Korrigieren einen neuen Rahmen ziehen oder die Werte darunter ändern.' : '')
   $<DialogElement>('kc-setup-dialog').show()
   if (reference) void runFeedTest()
 }
 
 async function saveSetup() {
-  await saveConfig({ killfeed: draft.killfeed, hitmarker: draft.hitmarker })
+  if (view !== 'reference' || savingSetup || analysisPending || !regionInputsValid || !(draft.killfeed ? feedVerified : config().useMarker && markerVerified)) return
+  savingSetup = true
+  updateSetupSave()
+  const saved = await saveConfig({ killfeed: draft.killfeed, hitmarker: draft.hitmarker })
+  savingSetup = false
+  updateSetupSave()
+  if (!saved) return
   $<DialogElement>('kc-setup-dialog').hide()
-  toast('Erkennung gespeichert')
+  toast(status?.running ? 'Gespeichert – Erkennung neu starten, um die Bereiche zu übernehmen.' : 'Erkennung gespeichert')
 }
 
 // ── Start ────────────────────────────────────────────────────────────
@@ -498,7 +599,35 @@ export function initKillClips() {
   // Einrichtung
   bindCanvas()
   bindTimeline()
-  $('kc-pick').addEventListener('click', () => void pickClip())
+  $('kc-pick').addEventListener('click', () => void pickClip().catch((error) => toast(errorText(error), 'error')))
+  $('kc-retest').addEventListener('click', () => void runFeedTest())
+  $('kc-clear-feed').addEventListener('click', () => {
+    if (savingSetup) return
+    draft.killfeed = null
+    placeRects()
+    void runFeedTest()
+  })
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    $(`kc-region-${key}`).addEventListener('input', () => {
+      if (!shot || savingSetup) return
+      ++testRevision
+      regionInputsValid = false
+      feedVerified = false
+      updateSetupSave()
+    })
+    $(`kc-region-${key}`).addEventListener('change', () => {
+      if (!shot || savingSetup) return
+      const fields = ['x', 'y', 'width', 'height'].map((name) => $<HTMLInputElement>(`kc-region-${name}`).valueAsNumber)
+      const [x, y, width, height] = fields
+      if (!fields.every(Number.isInteger) || x < 0 || y < 0 || width < 8 || height < 8 || x + width > shot.width || y + height > shot.height) {
+        $('kc-test').textContent = `Gib einen Bereich innerhalb des Bildes (${shot.width} × ${shot.height}) ein, mindestens 8 × 8 Pixel.`
+        return
+      }
+      draft.killfeed = { x, y, width, height }
+      placeRects()
+      void runFeedTest()
+    })
+  }
   $('kc-back').addEventListener('click', () => {
     setView('clip', 'Spul zum Kill und klick „Hier ist der Kill“.')
     if (reference) seek(reference.at)
@@ -506,7 +635,12 @@ export function initKillClips() {
   $('kc-setup-save').addEventListener('click', () => void saveSetup())
   $('kc-setup-cancel').addEventListener('click', () => $<DialogElement>('kc-setup-dialog').hide())
   $('kc-setup-dialog').addEventListener('toggle', (event) => {
-    if ((event as unknown as CustomEvent<{ newState: string }>).detail?.newState === 'closed') void backend.killClipCalibration(false)
+    if ((event as unknown as CustomEvent<{ newState: string }>).detail?.newState === 'closed') {
+      setupOpen = false
+      ++testRevision
+      kcVideo().pause()
+      void backend.killClipCalibration(false).catch((error) => toast(errorText(error), 'error'))
+    }
   })
 
   void listen<KillClipStatus>('killclip-status', (event) => {

@@ -71,11 +71,18 @@ impl Ocr {
         self.read_with(image, scale, false)
     }
 
-    /// Für den Kill-Feed: Die Meldung ist dünn und halb durchsichtig. Findet die erste
-    /// Lesung keine Meldung, noch einmal stärker vergrößert lesen.
+    /// Einrichtung mit denselben Schwellen wie live prüfen. Für komprimierte,
+    /// halb durchsichtige Replay-Schrift zusätzlich Graustufen versuchen.
     pub fn read_feed(&self, image: &Image) -> Result<Vec<Line>, String> {
+        for (threshold, scale) in LIVE_VARIANTS {
+            let prepared = Image { width: image.width, height: image.height, bgra: super::pixels::threshold_bgra(&image.bgra, threshold) };
+            let lines = self.read_with(&prepared, scale, false)?;
+            if !events(&lines).is_empty() {
+                return Ok(lines);
+            }
+        }
         let first = self.read(image)?;
-        if !events(&first).is_empty() || image.height >= MIN_TEXT_HEIGHT {
+        if !events(&first).is_empty() {
             return Ok(first);
         }
         match self.read_with(image, 3, false) {

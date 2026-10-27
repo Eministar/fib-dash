@@ -123,6 +123,12 @@ const quickNoteHotkey = hotkeyInput($<ValueElement>('s-quick-note-hotkey'), {
 function renderSettings(view: SettingsView) {
   state.settings = view
   const { settings } = view
+  const autoStart = $('s-auto-start') as HTMLElement & { checked: boolean; disabled: boolean }
+  autoStart.checked = settings.autoStart
+  autoStart.disabled = !view.autostartAvailable
+  $('s-auto-start-note').textContent = view.autostartError ?? (view.autostartAvailable
+    ? 'Öffnet FIB Desktop automatisch, sobald du dich bei Windows anmeldest.'
+    : 'In der installierten App verfügbar. Entwicklungsstarts ändern den Windows-Autostart nicht.')
   selectValue($<DropdownElement>('s-clipper'), settings.clipper)
   selectValue($<DropdownElement>('s-quality'), settings.clipQuality)
   bodycamHotkey.set(settings.bodycamHotkey)
@@ -150,6 +156,12 @@ async function updateSettings(patch: Partial<Settings>) {
 function bindSettings() {
   const dialog = $<DialogElement>('settings-dialog')
   $('nav-settings').addEventListener('click', () => dialog.show())
+  $('s-auto-start').addEventListener('change', async () => {
+    const control = $('s-auto-start') as HTMLElement & { checked: boolean; disabled: boolean }
+    if (!state.settings?.autostartAvailable || control.checked === state.settings.settings.autoStart) return
+    control.disabled = true
+    await updateSettings({ autoStart: control.checked })
+  })
   $('s-clipper').addEventListener('change', () => {
     const clipper = $<DropdownElement>('s-clipper').value as Clipper | null
     // Ordner und Taste gehören zum jeweiligen Programm – beim Wechsel auf dessen Standard.

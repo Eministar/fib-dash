@@ -1,5 +1,6 @@
 mod api;
 mod auth;
+mod autostart;
 mod clipper;
 mod media;
 mod settings;
@@ -54,6 +55,8 @@ struct AppState {
 #[serde(rename_all = "camelCase")]
 struct SettingsView {
     settings: Settings,
+    autostart_available: bool,
+    autostart_error: Option<String>,
     default_clip_dir: String,
     default_clipper_hotkey: String,
 }
@@ -76,6 +79,8 @@ fn videos_dir(app: &AppHandle) -> PathBuf {
 fn settings_view(app: &AppHandle, settings: &Settings) -> SettingsView {
     SettingsView {
         settings: settings.clone(),
+        autostart_available: autostart::AVAILABLE,
+        autostart_error: autostart::status_error(settings.auto_start),
         default_clip_dir: clipper::default_clip_dir(settings.clipper, &videos_dir(app)).display().to_string(),
         default_clipper_hotkey: clipper::default_hotkey(settings.clipper),
     }
@@ -249,7 +254,18 @@ fn save_settings(app: AppHandle, state: State<AppState>, mut settings: Settings)
             return Err(error);
         }
     }
-    settings::save(&app, &settings)?;
+    let previous_autostart = state.settings.lock().unwrap().auto_start;
+    if settings.auto_start != previous_autostart {
+        autostart::sync(settings.auto_start)?;
+    }
+    if let Err(error) = settings::save(&app, &settings) {
+        if settings.auto_start != previous_autostart {
+            if let Err(rollback) = autostart::sync(previous_autostart) {
+                return Err(format!("{error}. Autostart konnte nicht zurückgesetzt werden: {rollback}"));
+            }
+        }
+        return Err(error);
+    }
     let clipper_changed = state.settings.lock().unwrap().clipper != settings.clipper;
     *state.settings.lock().unwrap() = settings.clone();
     if clipper_changed {
@@ -541,8 +557,10 @@ fn killclip_stop(app: AppHandle, state: State<AppState>) {
 #[tauri::command]
 fn killclip_save_config(app: AppHandle, state: State<AppState>, config: killclip::Config) -> Result<SettingsView, String> {
     let mut settings = state.settings.lock().unwrap();
-    settings.kill_clip = config;
-    settings::save(&app, &settings)?;
+    let mut updated = settings.clone();
+    updated.kill_clip = config;
+    settings::save(&app, &updated)?;
+    *settings = updated;
     Ok(settings_view(&app, &settings))
 }
 
@@ -683,6 +701,9 @@ pub fn run() {
                 let _ = std::fs::remove_dir_all(dir);
             }
             let settings = settings::load(&handle);
+            if let Err(error) = autostart::sync(settings.auto_start) {
+                eprintln!("{error}");
+            }
             // Absturz des letzten Laufs melden (falls erlaubt), neue Laufzeitmarke setzen.
             let crash_dir = handle.path().app_local_data_dir().unwrap_or_else(|_| std::env::temp_dir()).join("laufzeit");
             if let (Some(report), true) = (crash::install(crash_dir), settings.crash_reports) {
