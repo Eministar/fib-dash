@@ -12,6 +12,7 @@ import {
 } from '@/lib/agents/badge-blacklist'
 import { nextBadgeForRank, normalizeBadgeNumber, rankHasBadgeRange } from '@/lib/agents/badge-number'
 import { normalizeUnitKeys } from '@/lib/agents/agent-units'
+import { findActiveDiscordIdOwner, releaseTerminatedDiscordId } from '@/lib/agents/discord-id-release'
 import {
   getDiscordApplicationId,
   DUTY_GAME_CLOCK_IN_PREFIX,
@@ -471,8 +472,7 @@ async function performHire(
   const rank = await findRank(textOption(options, 'rang'))
   if (!discordId || !firstName || !lastName || !rank) return 'Discord-User, Vorname, Nachname und Rang sind erforderlich.'
 
-  const existingDiscord = await prisma.agent.findFirst({ where: { discordId } })
-  if (existingDiscord) return 'Dieser Discord-User ist bereits einem Agent zugeordnet.'
+  if (await findActiveDiscordIdOwner(discordId)) return 'Dieser Discord-User ist bereits einem Agent zugeordnet.'
 
   const prefix = await getBadgePrefix()
   let badgeNumber = textOption(options, 'dienstnummer')
@@ -497,6 +497,8 @@ async function performHire(
     const leadershipError = await unitAssignmentError(actor, [], unitKeys, discordAdministrator)
     if (leadershipError) return leadershipError
   }
+
+  await releaseTerminatedDiscordId(discordId)
 
   const agent = await prisma.agent.create({
     data: {

@@ -9,6 +9,7 @@ import { getAllowDuplicateBadgeNumbers, getBadgePrefix } from '@/lib/core/settin
 import { nextBadgeForRank, normalizeBadgeNumber } from '@/lib/agents/badge-number'
 import { findBadgeNumberConflict, getBlacklistedBadgeRows, releaseTerminatedBadgeNumberConflicts } from '@/lib/agents/badge-blacklist'
 import { normalizeUnitKeys } from '@/lib/agents/agent-units'
+import { findActiveDiscordIdOwner, releaseTerminatedDiscordId } from '@/lib/agents/discord-id-release'
 import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, unitLeadershipChangeError } from '@/lib/units/unit-leadership'
 import { eligibleTrainingsForRank, withAgentTrainingRows } from '@/lib/agents/agent-trainings'
 import {
@@ -139,8 +140,7 @@ export async function POST(req: NextRequest) {
 
     const did = parsed.data.discordId ?? null
     if (did) {
-      const existingDiscord = await prisma.agent.findFirst({ where: { discordId: did } })
-      if (existingDiscord) return error('Discord-ID bereits vergeben')
+      if (await findActiveDiscordIdOwner(did)) return error('Discord-ID bereits vergeben')
     }
 
     const applicationId = parsed.data.applicationId ?? null
@@ -166,6 +166,8 @@ export async function POST(req: NextRequest) {
       const leadershipError = unitLeadershipChangeError([], unitKeys, managedUnitKeys)
       if (leadershipError) return error(leadershipError, 403)
     }
+
+    if (did) await releaseTerminatedDiscordId(did)
 
     const agent = await prisma.agent.create({
       data: {

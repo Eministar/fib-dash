@@ -11,6 +11,7 @@ import { createAuditLog } from '@/lib/audit/audit'
 import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import { hasPermission } from '@/lib/permissions'
 import { normalizeUnitKeys, agentUnitKeys } from '@/lib/agents/agent-units'
+import { findActiveDiscordIdOwner, releaseTerminatedDiscordId } from '@/lib/agents/discord-id-release'
 import { getManagedUnitKeysForUser, hasGlobalAdministratorAccess, hasAgentWriteAccess, unitLeadershipChangeError } from '@/lib/units/unit-leadership'
 import { findBadgeNumberConflict, releaseTerminatedBadgeNumber, releaseTerminatedBadgeNumberConflicts } from '@/lib/agents/badge-blacklist'
 import {
@@ -235,10 +236,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     if ('discordId' in parsed.data && parsed.data.discordId && parsed.data.discordId !== existing.discordId) {
-      const dup = await prisma.agent.findFirst({
-        where: { discordId: parsed.data.discordId, NOT: { id } },
-      })
-      if (dup) return error('Discord-ID bereits vergeben')
+      if (await findActiveDiscordIdOwner(parsed.data.discordId, id)) return error('Discord-ID bereits vergeben')
+      await releaseTerminatedDiscordId(parsed.data.discordId, id)
     }
 
     // Wer abgemeldet oder beurlaubt ist, fehlt entschuldigt und darf nicht als inaktiv gelten.
