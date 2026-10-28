@@ -161,10 +161,14 @@
                 </fluent-dropdown>
               </fluent-field>
               <fluent-field class="span-2" id="f-investigation-field">
-                <label slot="label">Ermittlungsakte</label>
+                <label slot="label" for="f-investigation">Ermittlungsakte</label>
                 <fluent-dropdown slot="input" id="f-investigation" type="combobox" placeholder="Akte suchen …">
                   <fluent-listbox id="f-investigation-list"></fluent-listbox>
                 </fluent-dropdown>
+                <div slot="message">
+                  <p id="f-investigation-empty" class="type-caption muted" hidden>Noch keine Akte vorhanden. Lege eine neue Akte für diesen Clip an.</p>
+                  <fluent-button id="f-investigation-new" appearance="subtle" hidden>Neue Akte</fluent-button>
+                </div>
               </fluent-field>
               <fluent-field class="record-only" hidden>
                 <label slot="label">Agent-Akte von</label>

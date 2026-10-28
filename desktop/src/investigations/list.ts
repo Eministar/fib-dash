@@ -3,14 +3,11 @@ import { $, errorText, escapeHtml, showMessage, textOf } from '../dom'
 import { formatAgo } from '../format'
 import { icon } from '../icons'
 import { can } from '../store'
-import { openForm } from '../ui/form-dialog'
-import { toast } from '../ui/toast'
-import { agentOptions, invalidate, lookups } from './lookups'
+import { createCase } from './create-case'
 import {
   agentAvatar,
   agentName,
   checklistOf,
-  options,
   PRIORITY,
   PRIORITY_TONE,
   STATUS,
@@ -78,39 +75,19 @@ export async function loadList() {
   }
 }
 
-async function createCase() {
-  const [agents, templates] = await Promise.all([agentOptions(), lookups.templates()])
-  let createdId = ''
-  const saved = await openForm({
-    title: 'Neue Ermittlungsakte',
-    submitLabel: 'Anlegen',
-    fields: [
-      { name: 'title', label: 'Titel', type: 'text', required: true, span: 2, maxLength: 200 },
-      ...(templates.length
-        ? [{ name: 'templateId', label: 'Vorlage', type: 'select' as const, options: [{ value: '', label: 'Ohne Vorlage' }, ...templates.map((t) => ({ value: t.id, label: t.name }))], span: 2 as const, hint: 'Übernimmt Arbeitsplan, offene Rollen und Team der Vorlage.' }]
-        : []),
-      { name: 'status', label: 'Status', type: 'select', options: options(STATUS), value: 'OPEN' },
-      { name: 'priority', label: 'Priorität', type: 'select', options: options(PRIORITY), value: 'NORMAL' },
-      { name: 'leadAgentId', label: 'Fallführung', type: 'combobox', options: agents, span: 2 },
-      { name: 'summary', label: 'Zusammenfassung', type: 'textarea' },
-    ],
-    onSubmit: async (values) => {
-      const created = await api.post<{ id: string; caseNumber: string }>('/api/investigations', values)
-      createdId = created.id
-      toast(`Akte ${created.caseNumber} angelegt`)
-    },
-  })
-  if (saved) {
-    invalidate('cases')
-    await loadList()
-    onOpen(createdId)
-  }
-}
-
 export function initList(open: (id: string) => void) {
   onOpen = open
   $('inv-new').hidden = !can('investigations:manage')
-  $('inv-new').addEventListener('click', () => void createCase())
+  $('inv-new').addEventListener('click', async () => {
+    try {
+      const created = await createCase()
+      if (!created) return
+      await loadList()
+      onOpen(created.id)
+    } catch (error) {
+      showMessage('inv-error', errorText(error))
+    }
+  })
   $('inv-refresh').addEventListener('click', () => void loadList())
   $('inv-search').addEventListener('input', () => {
     window.clearTimeout(searchTimer)

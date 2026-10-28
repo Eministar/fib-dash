@@ -16,6 +16,7 @@ import {
 } from '../dom'
 import { clipTitle, displayHotkey, formatBytes, formatClock, formatDateTime } from '../format'
 import { icons } from '../icons'
+import { createCase } from '../investigations/create-case'
 import { can, navigation, onStateChange, state } from '../store'
 
 // Kürzere Abweichungen vom Clip-Anfang/-Ende gelten nicht als Schnitt.
@@ -24,6 +25,7 @@ const MIN_RANGE = 1
 
 const queue: ClipInfo[] = []
 let busy = false
+let creatingCase = false
 const trim = { duration: 0, start: 0, end: 0 }
 
 const video = () => $('clip-video') as HTMLVideoElement
@@ -54,6 +56,11 @@ function target(): 'investigation' | 'record' {
 function applyTarget() {
   const record = target() === 'record'
   $('f-investigation-field').hidden = record
+  $('f-investigation-new').hidden = record || !state.context?.canUpload || !can('investigations:manage')
+  $('f-investigation-empty').hidden = record || !!state.context?.investigations.length
+  $('f-investigation-empty').textContent = can('investigations:manage')
+    ? 'Noch keine Akte vorhanden. Lege eine neue Akte für diesen Clip an.'
+    : 'Keine Akte verfügbar. Zum Anlegen einer Akte benötigst du die Berechtigung zur Aktenverwaltung.'
   for (const field of document.querySelectorAll<HTMLElement>('.record-only')) field.hidden = !record
 }
 
@@ -68,12 +75,38 @@ function renderContext() {
   $('f-target-field').hidden = !(context.canUpload && canRecord())
   fillOptions('f-record-agent-list', context.agents)
   applyTarget()
-  // Eigene Akten zuerst – die braucht man fast immer.
-  const investigations = [...context.investigations].sort((a, b) => Number(b.mine) - Number(a.mine))
-  fillOptions('f-investigation-list', investigations.map((i) => ({ id: i.id, label: i.mine ? `★ ${i.label}` : i.label })))
+  renderInvestigations()
   fillOptions('f-agent-list', context.agents)
   renderIdle()
   updateGpuWarning()
+}
+
+function renderInvestigations(selected = $<DropdownElement>('f-investigation').value) {
+  // Eigene Akten zuerst – die braucht man fast immer.
+  const investigations = [...(state.context?.investigations ?? [])].sort((a, b) => Number(b.mine) - Number(a.mine))
+  fillOptions('f-investigation-list', investigations.map((i) => ({ id: i.id, label: i.mine ? `★ ${i.label}` : i.label })))
+  if (investigations.some((i) => i.id === selected)) selectValue($<DropdownElement>('f-investigation'), selected)
+}
+
+async function createClipCase() {
+  const context = state.context
+  if (busy || creatingCase || !context?.canUpload || !can('investigations:manage')) return
+  creatingCase = true
+  $<ButtonElement>('f-investigation-new').disabled = true
+  video().pause()
+  try {
+    const created = await createCase()
+    if (!created || state.context !== context) return
+    context.investigations.push({ id: created.id, label: `${created.caseNumber} · ${created.title}`, mine: true })
+    renderInvestigations(created.id)
+    applyTarget()
+    showMessage('upload-error', null)
+  } catch (error) {
+    showMessage('upload-error', errorText(error))
+  } finally {
+    creatingCase = false
+    $<ButtonElement>('f-investigation-new').disabled = busy
+  }
 }
 
 // ── Clip laden ───────────────────────────────────────────────────────
@@ -312,6 +345,7 @@ function renderUploadProgress(progress: UploadProgress) {
 
 function setBusy(active: boolean) {
   busy = active
+  $<ButtonElement>('f-investigation-new').disabled = active || creatingCase
   if (!active) $('progress-row').hidden = true
   $('cancel-upload-button').hidden = !active
   $('discard-button').hidden = active
@@ -328,7 +362,9 @@ async function save() {
   const investigationId = toRecord ? null : $<DropdownElement>('f-investigation').value || null
   const recordAgentId = toRecord ? $<DropdownElement>('f-record-agent').value || null : null
   const title = textOf('f-title')
-  if (!toRecord && !investigationId) return showMessage('upload-error', 'Bitte eine Ermittlungsakte auswählen.')
+  if (!toRecord && !investigationId) return showMessage('upload-error', can('investigations:manage')
+    ? 'Bitte eine Ermittlungsakte auswählen oder über „Neue Akte“ anlegen.'
+    : 'Bitte eine Ermittlungsakte auswählen.')
   if (toRecord && !recordAgentId) return showMessage('upload-error', 'Bitte den Agent auswählen, in dessen Akte der Eintrag kommt.')
   if (!title) return showMessage('upload-error', 'Bitte einen Titel angeben.')
   if (toRecord && title.length < 2) return showMessage('upload-error', 'Der Titel ist zu kurz.')
@@ -405,6 +441,7 @@ export async function initBodycam() {
   $('capture-button').addEventListener('click', () => backend.captureClip())
   $('pick-button').addEventListener('click', pickClip)
   $('upload-button').addEventListener('click', save)
+  $('f-investigation-new').addEventListener('click', () => void createClipCase())
   $('f-target').addEventListener('change', applyTarget)
   $('cancel-upload-button').addEventListener('click', () => backend.cancelUpload())
   $('discard-button').addEventListener('click', () => {
