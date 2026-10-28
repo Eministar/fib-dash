@@ -170,7 +170,7 @@ fn save_clip_now(app: &AppHandle, settings: &Settings) -> Result<PathBuf, String
     }
     let keys = clipper::parse_hotkey(&effective_clipper_hotkey(settings))?;
     let since = SystemTime::now() - Duration::from_millis(500);
-    clipper::press_hotkey(&keys);
+    clipper::press_hotkey(&keys)?;
     clipper::wait_for_new_clip(&effective_clip_dir(app, settings), since, CLIP_WAIT)
 }
 

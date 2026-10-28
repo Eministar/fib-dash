@@ -507,7 +507,7 @@ fn save_replay(app: &AppHandle, seconds: Option<u32>) -> Result<(PathBuf, System
             return Ok((state.recorder.save(app, seconds, &crate::effective_clip_dir(app, &settings))?, saved_at));
         }
         let keys = clipper::parse_hotkey(&crate::effective_clipper_hotkey(&settings))?;
-        clipper::press_hotkey(&keys);
+        clipper::press_hotkey(&keys)?;
         let path = clipper::wait_for_new_clip(&crate::effective_clip_dir(app, &settings), saved_at - Duration::from_secs(1), Duration::from_secs(90))?;
         Ok((path, saved_at))
     })();

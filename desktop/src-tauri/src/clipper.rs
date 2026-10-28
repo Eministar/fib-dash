@@ -1,4 +1,4 @@
-//! Auslösen und Wiederfinden von Clips aus NVIDIA (Instant Replay) und Medal.
+//! Auslösen und Wiederfinden von Clips aus NVIDIA, AMD (Instant Replay) und Medal.
 
 use std::{
     fs,
@@ -170,19 +170,37 @@ fn is_down(vk: u16) -> bool {
 /// Drückt das Speicherkürzel des Clip-Programms. Vorher wird gewartet, bis die
 /// Modifier der Bodycam-Taste losgelassen sind – sonst sähe das Programm z. B.
 /// Strg+Umschalt+Alt+F10 statt Alt+F10.
-pub fn press_hotkey(keys: &[u16]) {
+pub fn press_hotkey(keys: &[u16]) -> Result<(), String> {
     let deadline = Instant::now() + Duration::from_millis(1500);
-    while [VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN].iter().any(|&vk| is_down(vk)) && Instant::now() < deadline {
+    while [VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN].iter().any(|&vk| is_down(vk)) {
+        if Instant::now() >= deadline {
+            return Err("Bitte die Tasten der Aufnahme-Tastenkombination loslassen und erneut versuchen.".into());
+        }
         thread::sleep(Duration::from_millis(15));
     }
 
-    let send = |inputs: &[INPUT]| unsafe {
-        SendInput(inputs.len() as u32, inputs.as_ptr(), std::mem::size_of::<INPUT>() as i32);
-    };
-    send(&keys.iter().map(|&vk| key_input(vk, false)).collect::<Vec<_>>());
-    // Manche Overlays werten zu kurze Tastendrücke nicht aus.
-    thread::sleep(Duration::from_millis(40));
-    send(&keys.iter().rev().map(|&vk| key_input(vk, true)).collect::<Vec<_>>());
+    send_hotkey(keys, |inputs| unsafe {
+        SendInput(inputs.len() as u32, inputs.as_ptr(), std::mem::size_of::<INPUT>() as i32)
+    }, || thread::sleep(Duration::from_millis(40)))
+}
+
+fn send_hotkey(keys: &[u16], mut send: impl FnMut(&[INPUT]) -> u32, hold: impl FnOnce()) -> Result<(), String> {
+    if keys.is_empty() { return Err("Keine Speichertaste angegeben".into()); }
+    let down: Vec<_> = keys.iter().map(|&vk| key_input(vk, false)).collect();
+    let pressed = (send(&down) as usize).min(keys.len());
+    // Auch bei unvollständiger Eingabe die bereits gedrückten Tasten lösen.
+    if pressed > 0 {
+        if pressed == keys.len() { hold(); }
+        let up: Vec<_> = keys[..pressed].iter().rev().map(|&vk| key_input(vk, true)).collect();
+        let released = (send(&up) as usize).min(up.len());
+        if released < up.len() && send(&up[released..]) as usize != up.len() - released {
+            return Err("Windows konnte die Speichertasten nicht vollständig loslassen. Bitte die Tasten einmal selbst drücken und loslassen.".into());
+        }
+    }
+    if pressed != keys.len() {
+        return Err("Windows hat die Speichertaste nicht vollständig an das Clip-Programm übergeben. Prüfe, ob Spiel, Clip-Programm und FIB Desktop mit derselben Berechtigungsstufe laufen.".into());
+    }
+    Ok(())
 }
 
 // ── Clip finden ──────────────────────────────────────────────────────
@@ -257,6 +275,76 @@ pub fn wait_for_new_clip(dir: &Path, since: SystemTime, timeout: Duration) -> Re
 mod tests {
     use super::*;
     use std::io::Write;
+
+    #[test]
+    fn reports_blocked_input_without_waiting_for_a_clip() {
+        let error = send_hotkey(&[VK_CONTROL, VK_SHIFT, 0x53], |_| 0, || panic!("Keine Taste gedrückt")).unwrap_err();
+        assert!(error.contains("Speichertaste nicht vollständig"));
+    }
+
+    #[test]
+    fn releases_partially_sent_hotkeys() {
+        let mut calls = 0;
+        let error = send_hotkey(&[VK_CONTROL, VK_SHIFT, 0x53], |inputs| {
+            calls += 1;
+            if calls == 1 { return 2; }
+            assert_eq!(inputs.len(), 2);
+            unsafe {
+                assert_eq!(inputs[0].Anonymous.ki.wVk, VK_SHIFT);
+                assert_eq!(inputs[1].Anonymous.ki.wVk, VK_CONTROL);
+                assert!(inputs.iter().all(|input| input.Anonymous.ki.dwFlags == KEYEVENTF_KEYUP));
+            }
+            inputs.len() as u32
+        }, || panic!("Unvollständige Kombination nicht halten")).unwrap_err();
+        assert_eq!(calls, 2);
+        assert!(error.contains("Speichertaste nicht vollständig"));
+    }
+
+    #[test]
+    fn sends_and_releases_complete_hotkey() {
+        let mut calls = 0;
+        let mut held = false;
+        send_hotkey(&[VK_CONTROL, VK_SHIFT, 0x53], |inputs| {
+            calls += 1;
+            assert_eq!(inputs.len(), 3);
+            unsafe {
+                assert_eq!(inputs[0].Anonymous.ki.wVk, if calls == 1 { VK_CONTROL } else { 0x53 });
+                assert!(inputs.iter().all(|input| input.Anonymous.ki.dwFlags == if calls == 1 { 0 } else { KEYEVENTF_KEYUP }));
+            }
+            inputs.len() as u32
+        }, || held = true).unwrap();
+        assert!(held);
+        assert_eq!(calls, 2);
+    }
+
+    #[test]
+    fn retries_only_the_keys_that_were_not_released() {
+        let mut calls = 0;
+        send_hotkey(&[VK_CONTROL, 0x53], |inputs| {
+            calls += 1;
+            match calls {
+                1 => 2,
+                2 => 1,
+                _ => {
+                    assert_eq!(inputs.len(), 1);
+                    unsafe { assert_eq!(inputs[0].Anonymous.ki.wVk, VK_CONTROL); }
+                    1
+                }
+            }
+        }, || {}).unwrap();
+        assert_eq!(calls, 3);
+    }
+
+    #[test]
+    fn reports_keys_that_windows_could_not_release() {
+        let mut calls = 0;
+        let error = send_hotkey(&[VK_CONTROL, 0x53], |_| {
+            calls += 1;
+            if calls == 1 { 2 } else { 0 }
+        }, || {}).unwrap_err();
+        assert_eq!(calls, 3);
+        assert!(error.contains("nicht vollständig loslassen"));
+    }
 
     #[test]
     fn parses_hotkeys() {

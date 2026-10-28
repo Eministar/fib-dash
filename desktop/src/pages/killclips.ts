@@ -10,11 +10,12 @@ import {
   type KillClipStatus,
   type Region,
 } from '../backend'
-import { $, errorText, escapeHtml, selectValue, showMessage, textOf, type DropdownElement } from '../dom'
+import { $, errorText, escapeHtml, selectValue, showMessage, type DropdownElement } from '../dom'
 import { clipperName, formatBytes, formatDateTime } from '../format'
 import { icon, icons, type IconName } from '../icons'
 import { onStateChange, state } from '../store'
 import { toast } from '../ui/toast'
+import { loadVideoFrame, videoErrorText } from '../ui/video-loading'
 
 type DialogElement = HTMLElement & { show(): void; hide(): void }
 
@@ -145,10 +146,12 @@ function renderHistory() {
 // Zeitleiste den Moment des Kills markieren → die App wertet die Bilder darum aus und
 // zeigt das Ergebnis als Referenz. Die Rahmen lassen sich danach noch verschieben.
 
-type SetupView = 'empty' | 'saving' | 'clip' | 'analyzing' | 'reference'
+type SetupView = 'empty' | 'saving' | 'loading' | 'clip' | 'analyzing' | 'reference'
 
 let view: SetupView = 'empty'
 let clip: { path: string; duration: number } | null = null
+let clipLoad: AbortController | null = null
+let clipReady = false
 let reference: KillClipReference | null = null
 let shot: { width: number; height: number } | null = null
 let setupOpen = false
@@ -166,6 +169,7 @@ const kcVideo = () => $<HTMLVideoElement>('kc-video')
 const EMPTY_TEXT: Partial<Record<SetupView, string>> = {
   empty: 'Noch keine Aufnahme – mach im Spiel einen Kill und drück <kbd>Strg+Alt+K</kbd>',
   saving: 'Dein Clip-Programm speichert die Aufnahme …',
+  loading: 'Das Videobild wird geladen …',
   analyzing: 'Die App sieht sich deinen Kill an …',
 }
 
@@ -182,13 +186,13 @@ function setView(next: SetupView, hint = '') {
   $('kc-back').hidden = next !== 'reference' || !clip
   $('kc-test').hidden = next !== 'reference'
   $('kc-region-controls').hidden = next !== 'reference'
-  const step = next === 'reference' ? 3 : next === 'clip' || next === 'analyzing' ? 2 : 1
+  const step = next === 'reference' ? 3 : next === 'clip' || next === 'loading' || next === 'analyzing' ? 2 : 1
   document.querySelectorAll<HTMLElement>('.kc-steps li').forEach((item, index) => {
     if (index + 1 === step) item.setAttribute('aria-current', 'step')
     else item.removeAttribute('aria-current')
   })
   $('kc-setup-progress').textContent = `Schritt ${step} von 3 · ${['Aufnahme wählen', 'Kill markieren', 'Ergebnis prüfen'][step - 1]}`
-  setDisabled('kc-mark', analysisPending || clipDuration() <= 0)
+  setDisabled('kc-mark', !clipReady || analysisPending || clipDuration() <= 0)
   $('kc-setup-hint').textContent = hint
   if (next !== 'clip') kcVideo().pause()
   placeRects()
@@ -237,31 +241,50 @@ function renderTimeline() {
 }
 
 function seek(seconds: number) {
+  if (!clipReady) return
   kcVideo().currentTime = Math.min(Math.max(0, seconds), Math.max(0, clipDuration() - 0.05))
   renderTimeline()
 }
 
 /** `startAt` negativ = so viele Sekunden vor dem Ende. */
-function loadClip(path: string, duration: number, startAt: number) {
+async function loadClip(path: string, duration: number, startAt: number) {
+  clipLoad?.abort()
+  const request = new AbortController()
+  clipLoad = request
+  clipReady = false
   clip = { path, duration }
   reference = null
   shot = null
   draft = { killfeed: null, hitmarker: null }
   const v = kcVideo()
-  v.onloadedmetadata = () => {
-    if (!clip!.duration && Number.isFinite(v.duration)) clip!.duration = v.duration
-    seek(startAt < 0 ? clip!.duration + startAt : startAt)
-    setDisabled('kc-mark', false)
+  setView('loading')
+  try {
+    const loadedDuration = await loadVideoFrame(v, convertFileSrc(path), { duration, startAt, signal: request.signal })
+    if (request.signal.aborted || !setupOpen) return
+    clip = { path, duration: loadedDuration }
+    clipReady = true
+    setView('clip', 'Spul zum Kill und klick „Hier ist der Kill“ – mit ← und → gehst du in kleinen Schritten.')
+    renderTimeline()
+  } catch (error) {
+    if (request.signal.aborted) return
+    clip = null
+    v.removeAttribute('src')
+    v.load()
+    setView('empty', `Clip konnte nicht geöffnet werden: ${errorText(error)}`)
+  } finally {
+    if (clipLoad === request) clipLoad = null
   }
-  v.src = convertFileSrc(path)
-  setView('clip', 'Spul zum Kill und klick „Hier ist der Kill“ – mit ← und → gehst du in kleinen Schritten.')
 }
 
 function bindTimeline() {
   const v = kcVideo()
   for (const event of ['timeupdate', 'play', 'pause', 'seeked']) v.addEventListener(event, renderTimeline)
   v.addEventListener('error', () => {
-    if (view === 'clip') setView('empty', 'Der Clip lässt sich hier nicht abspielen – nimm einen anderen.')
+    if (clipReady && v.error) {
+      clipReady = false
+      clip = null
+      if (view === 'clip') setView('empty', `Wiedergabe fehlgeschlagen: ${videoErrorText(v.error)}`)
+    }
   })
   const track = $('kc-track')
   const at = (event: PointerEvent) => {
@@ -277,6 +300,7 @@ function bindTimeline() {
     if (track.hasPointerCapture(event.pointerId)) seek(at(event))
   })
   const togglePlay = () => {
+    if (!clipReady) return
     if (v.paused) void v.play().catch((error) => toast(errorText(error), 'error'))
     else v.pause()
   }
@@ -302,7 +326,7 @@ function bindTimeline() {
 // ── Auswertung und Referenz ──
 
 async function analyze(at: number) {
-  if (!clip || analysisPending || !Number.isFinite(at)) return
+  if (!clip || !clipReady || analysisPending || !Number.isFinite(at)) return
   analysisPending = true
   setView('analyzing')
   try {
@@ -444,14 +468,22 @@ async function runFeedTest() {
 
 function onReferenceClip(payload: KillClipReferenceClip) {
   if (!setupOpen || analysisPending || savingSetup) return
-  if (payload.saving) return setView('saving')
+  if (payload.saving) {
+    if (clipLoad) {
+      clipLoad.abort()
+      clipLoad = null
+      clip = null
+      clipReady = false
+    }
+    return setView('saving')
+  }
   if (payload.error || !payload.path) {
     toast(payload.error ?? 'Aufnahme fehlgeschlagen', 'error')
     return setView(reference ? 'reference' : clip ? 'clip' : 'empty')
   }
   // Der Kill war kurz vor dem Druck auf die Taste – dort anfangen.
-  loadClip(payload.path, payload.duration ?? 0, -3)
-  toast('Aufnahme gespeichert – jetzt den Kill markieren')
+  void loadClip(payload.path, payload.duration ?? 0, -3)
+  toast('Aufnahme gespeichert – Videobild wird geladen')
 }
 
 async function pickClip() {
@@ -463,7 +495,7 @@ async function pickClip() {
     defaultPath: settings?.settings.clipDir || settings?.defaultClipDir,
     filters: [{ name: 'Videos', extensions: ['mp4', 'mkv', 'mov', 'webm'] }],
   })
-  if (typeof path === 'string' && setupOpen && !analysisPending && (view as SetupView) !== 'saving') loadClip(path, 0, 0)
+  if (typeof path === 'string' && setupOpen && !analysisPending && (view as SetupView) !== 'saving') await loadClip(path, 0, 0)
 }
 
 function bindCanvas() {
@@ -637,6 +669,14 @@ export function initKillClips() {
   $('kc-setup-dialog').addEventListener('toggle', (event) => {
     if ((event as unknown as CustomEvent<{ newState: string }>).detail?.newState === 'closed') {
       setupOpen = false
+      if (clipLoad) {
+        clipLoad.abort()
+        clipLoad = null
+        clip = null
+        clipReady = false
+        kcVideo().removeAttribute('src')
+        kcVideo().load()
+      }
       ++testRevision
       kcVideo().pause()
       void backend.killClipCalibration(false).catch((error) => toast(errorText(error), 'error'))
