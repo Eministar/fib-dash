@@ -26,7 +26,8 @@ import { InvestigationsNavigation } from '@/components/investigations/investigat
 import { EmptyState } from '@/components/ui/empty-state'
 import { FilterBar, SearchInput } from '@/components/ui/filter-bar'
 import { PersonLinks } from '@/components/investigations/person-links'
-import { PhotoField } from '@/components/investigations/photo-catalog'
+import { PersonPortrait, PersonPortraitField } from './person-portrait'
+import { DEFAULT_CROP, type PhotoCrop } from '@/lib/investigations/person-profile'
 import { PersonDossiers } from '@/components/investigations/dossiers-workspace'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
 import type {
@@ -49,6 +50,11 @@ type PersonForm = {
   firstName: string
   lastName: string
   alias: string
+  occupation: string
+  organization: string
+  rank: string
+  photoCrop: PhotoCrop
+  photoUrl: string | null
   identifier: string
   dateOfBirth: string
   phone: string
@@ -63,6 +69,11 @@ function formFromPerson(person: PersonDetail): PersonForm {
     firstName: person.firstName,
     lastName: person.lastName,
     alias: person.alias ?? '',
+    occupation: person.occupation ?? '',
+    organization: person.organization ?? '',
+    rank: person.rank ?? '',
+    photoCrop: person.photoCrop ?? { ...DEFAULT_CROP },
+    photoUrl: person.photoUrl,
     identifier: person.identifier ?? '',
     // Das native Date-Input akzeptiert ausschließlich `YYYY-MM-DD`.
     dateOfBirth: person.dateOfBirth ? new Date(person.dateOfBirth).toISOString().slice(0, 10) : '',
@@ -79,6 +90,11 @@ function emptyForm(): PersonForm {
     firstName: '',
     lastName: '',
     alias: '',
+    occupation: '',
+    organization: '',
+    rank: '',
+    photoCrop: { ...DEFAULT_CROP },
+    photoUrl: null,
     identifier: '',
     dateOfBirth: '',
     phone: '',
@@ -251,7 +267,7 @@ export function PersonRegister() {
           value={search}
           onChange={setSearch}
           label="Person suchen"
-          placeholder="Name, Alias, Kennung oder PER-Nummer"
+          placeholder="Name, Beruf, Organisation, Rang oder Registernummer"
         />
         <Checkbox checked={wantedOnly} onCheckedChange={setWantedOnly} label="Nur zur Fahndung" />
       </FilterBar>
@@ -289,24 +305,20 @@ export function PersonRegister() {
               onClick={() => setSelectedId(person.id)}
               className="rounded-[12px] border border-[#3a3a3c] bg-[#161617] p-3.5 text-left transition-colors hover:border-[#48484a] hover:bg-[#1c1c1e]"
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-[11.5px] text-[#d4af37]">{person.personNumber}</span>
-                {person.wanted && <Badge variant="danger">Fahndung</Badge>}
-                {person.dangerous && (
-                  <Badge variant="warning" className="gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Gefährlich
-                  </Badge>
-                )}
+              <div className="flex items-start gap-4">
+                <PersonPortrait src={personPhoto(person)} name={`${person.firstName} ${person.lastName}`} crop={person.photoCrop} size={72} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-semibold text-white">{person.firstName} {person.lastName}</p>
+                  <p className="text-xs text-[#98989d]">{person.personNumber}{person.alias ? ` · Alias: ${person.alias}` : ''}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">{person.wanted && <Badge variant="danger">Fahndung</Badge>}{person.dangerous && <Badge variant="warning"><AlertTriangle className="mr-1 h-3 w-3" />Gefährlich</Badge>}{!person.wanted && !person.dangerous && <span className="text-xs text-[#98989d]">Keine Warnhinweise erfasst</span>}</div>
+                </div>
               </div>
-              <p className="mt-1.5 text-[14px] font-semibold text-white">
-                {person.firstName} {person.lastName}
-              </p>
-              {person.alias && <p className="text-[12px] text-[#98989d]">alias &bdquo;{person.alias}&ldquo;</p>}
-              <p className="mt-1 text-[11.5px] text-[#8e8e93]">
-                {person._count ? `${person._count.investigations} Ermittlung(en)` : ''}
-                {person.identifier ? ` · Kennung ${person.identifier}` : ''}
-              </p>
+              <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[#38383a] pt-3 text-sm">
+                <div><dt className="text-xs text-[#98989d]">Beruf / Tätigkeit</dt><dd className="text-[#e4e4e4]">{person.occupation || 'Nicht erfasst'}</dd></div>
+                <div><dt className="text-xs text-[#98989d]">Rang / Position</dt><dd className="text-[#e4e4e4]">{person.rank || 'Nicht erfasst'}</dd></div>
+                <div><dt className="text-xs text-[#98989d]">Organisation / Arbeitgeber</dt><dd className="text-[#e4e4e4]">{person.organization || 'Nicht erfasst'}</dd></div>
+                <div><dt className="text-xs text-[#98989d]">Verknüpfte Ermittlungen</dt><dd className="text-[#e4e4e4]">{person._count?.investigations ?? 0}</dd></div>
+              </dl>
             </button>
           ))}
         </div>
@@ -359,14 +371,14 @@ export function PersonRegister() {
             </div>
 
             <dl className="grid gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-2">
-              <div className="sm:col-span-2"><PhotoField value={personPhoto(detail)} readOnly={!canManage} onChange={async photo => {
-                try {
-                  await execute(`/api/persons/${detail.id}`, { method: 'PATCH', body: JSON.stringify({ photoId: photo?.id ?? null }) })
-                  await refetchDetail()
-                  await refetch()
-                  toastSuccess('Foto gespeichert', 'Die Personenakte wurde aktualisiert.')
-                } catch (cause) { toastError('Foto nicht gespeichert', cause instanceof Error ? cause.message : 'Unbekannter Fehler') }
-              }} /></div>
+              <div className="sm:col-span-2 flex items-center gap-5 rounded-xl bg-[#161617] p-4">
+                <PersonPortrait src={personPhoto(detail)} name={`${detail.firstName} ${detail.lastName}`} crop={detail.photoCrop} size={104} />
+                <div className="grid flex-1 gap-3 sm:grid-cols-3">
+                  <div><dt className="text-[#98989d]">Beruf / Tätigkeit</dt><dd>{detail.occupation || 'Nicht erfasst'}</dd></div>
+                  <div><dt className="text-[#98989d]">Organisation / Arbeitgeber</dt><dd>{detail.organization || 'Nicht erfasst'}</dd></div>
+                  <div><dt className="text-[#98989d]">Rang / Position</dt><dd>{detail.rank || 'Nicht erfasst'}</dd></div>
+                </div>
+              </div>
               <div className="sm:col-span-2"><PersonDossiers personId={detail.id} /></div>
               {detail.alias && (
                 <div>
@@ -469,7 +481,7 @@ export function PersonRegister() {
       {/* Person anlegen / bearbeiten */}
       <Modal
         open={editor !== null}
-        onClose={() => setEditor(null)}
+        onClose={() => { if (!saving) setEditor(null) }}
         title={editor === 'edit' ? 'Personenakte bearbeiten' : 'Neue Person'}
         description={
           editor === 'edit' ? detail?.personNumber : 'Die Personenaktennummer wird automatisch vergeben.'
@@ -515,7 +527,16 @@ export function PersonRegister() {
             />
           </div>
           {editor === 'create' && <CrossHitHint query={personCrossHitQuery(form)} />}
-          <PhotoField value={form.photoId ? catalogPhotoUrl(form.photoId) : null} onChange={photo => setForm(prev => ({ ...prev, photoId: photo?.id ?? null }))} />
+          <fieldset className="space-y-4 rounded-xl border border-[#38383a] p-4">
+            <legend className="px-2 text-sm font-semibold text-white">Beruf und Zugehörigkeit</legend>
+            <p className="text-xs text-[#98989d]">Rang oder Position innerhalb der Organisation. Die Rolle als Zeuge oder Verdächtiger wird pro Ermittlung vergeben.</p>
+            <Input label="Beruf / Tätigkeit" maxLength={120} value={form.occupation} onChange={e => setForm(prev => ({ ...prev, occupation: e.target.value }))} placeholder="z. B. Mechaniker" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input label="Organisation / Arbeitgeber" maxLength={120} value={form.organization} onChange={e => setForm(prev => ({ ...prev, organization: e.target.value }))} />
+              <Input label="Rang / Position" maxLength={120} value={form.rank} onChange={e => setForm(prev => ({ ...prev, rank: e.target.value }))} placeholder="z. B. Werkstattleiter" />
+            </div>
+          </fieldset>
+          <PersonPortraitField value={form.photoId ? catalogPhotoUrl(form.photoId) : form.photoUrl} crop={form.photoCrop} onPhoto={photo => setForm(prev => ({ ...prev, photoId: photo?.id ?? null, photoUrl: null, photoCrop: { ...DEFAULT_CROP } }))} onCrop={photoCrop => setForm(prev => ({ ...prev, photoCrop }))} />
           <Textarea
             label="Notizen"
             value={form.notes}
@@ -536,7 +557,7 @@ export function PersonRegister() {
           </div>
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="ghost" onClick={() => setEditor(null)}>
+            <Button variant="ghost" disabled={saving} onClick={() => setEditor(null)}>
               Abbrechen
             </Button>
             <Button onClick={handleSave} loading={saving}>

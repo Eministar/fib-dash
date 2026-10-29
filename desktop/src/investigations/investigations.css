@@ -1,6 +1,31 @@
 /* ── Ermittlungsakten ──────────────────────────────────────────── */
 .page.wide { max-width: 1240px; }
 
+.register-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+#register-navigation { justify-content: flex-start; flex-wrap: wrap; margin-bottom: 24px; }
+#register-view .toolbar { flex-wrap: wrap; }
+#register-search { flex: 1 1 220px; }
+.register-card { padding: 20px; }
+.register-heading { display: flex; align-items: center; gap: 16px; }
+.register-heading > div { min-width: 0; overflow-wrap: anywhere; }
+.register-photo { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 96px; height: 72px; overflow: hidden; border-radius: 8px; background: var(--subtle-selected); color: var(--text-secondary); }
+.register-photo.round { width: 72px; border-radius: 50%; }
+.register-photo img, .register-crop img { position: absolute; width: 100%; height: 100%; inset: 0; object-fit: cover; }
+.register-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0; padding-top: 16px; border-top: 1px solid var(--colorNeutralStroke2); }
+.register-facts dt { font-size: 12px; color: var(--text-secondary); }
+.register-facts dd { margin: 4px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.register-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.register-photo-editor { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin-bottom: 16px; }
+.register-crop { position: relative; width: 180px; height: 180px; overflow: hidden; flex-shrink: 0; background: var(--subtle-selected); border-radius: 8px; touch-action: none; cursor: grab; }
+.register-crop.round { border-radius: 50%; }
+.register-crop img { pointer-events: none; }
+.register-slider { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.register-slider input { flex: 1; min-width: 80px; }
+.register-photo-catalog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-height: 260px; overflow-y: auto; margin: 16px 0; }
+.register-photo-catalog button { display: flex; flex-direction: column; text-align: left; gap: 6px; border: 1px solid var(--colorNeutralStroke2); border-radius: 8px; padding: 8px; background: var(--subtle-selected); color: inherit; overflow-wrap: anywhere; }
+.register-photo-catalog img { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; }
+.register-photo-catalog button:focus-visible { outline: 2px solid var(--colorStrokeFocus2); }
+
 .toolbar #inv-search { flex: 1 1 220px; width: auto; min-width: 180px; max-width: 340px; }
 .toolbar .status-filter { flex: 0 1 220px; }
 

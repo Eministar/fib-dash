@@ -27,6 +27,10 @@ export type Person = {
   personNumber: string
   firstName: string
   lastName: string
+  occupation?: string | null
+  organization?: string | null
+  rank?: string | null
+  photoCrop?: { x: number; y: number; zoom: number } | null
   alias: string | null
   identifier: string | null
   dateOfBirth: string | null

@@ -90,10 +90,15 @@ export type Person = {
   personNumber: string
   firstName: string
   lastName: string
+  occupation?: string | null
+  organization?: string | null
+  rank?: string | null
+  photoCrop?: { x: number; y: number; zoom: number } | null
   alias: string | null
   identifier: string | null
   dateOfBirth: string | null
   phone: string | null
+  photoId?: string | null
   photoUrl: string | null
   notes: string | null
   wanted: boolean
@@ -101,6 +106,8 @@ export type Person = {
 }
 
 export type Vehicle = {
+  photoId?: string | null
+  ownerPersonId?: string | null
   id: string
   vehicleNumber: string
   plate: string | null
@@ -140,6 +147,7 @@ export type Evidence = {
   seizedAt: string | null
   seizedLocation: string | null
   storageLocation: string | null
+  photoId?: string | null
   photoUrl: string | null
   createdAt: string
   seizedByAgent?: Agent | null

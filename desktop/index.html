@@ -233,6 +233,22 @@
 
       <!-- Ermittlungsakten -->
       <section class="page wide" data-page="investigations" hidden>
+        <nav id="register-navigation" class="toolbar" aria-label="Ermittlungsbereiche">
+          <fluent-button data-register="cases" appearance="primary">Ermittlungsakten</fluent-button>
+          <fluent-button data-register="persons">Personenregister</fluent-button>
+          <fluent-button data-register="vehicles">Fahrzeugregister</fluent-button>
+        </nav>
+        <div id="register-view" hidden>
+          <header class="page-header"><h1 id="register-title" class="type-title"></h1><p id="register-description" class="type-body muted"></p></header>
+          <div class="toolbar">
+            <fluent-text-input id="register-search" aria-label="Register durchsuchen" placeholder="Register durchsuchen"></fluent-text-input>
+            <div class="checkbox-field"><fluent-checkbox id="register-flagged"></fluent-checkbox><label for="register-flagged">Nur Warnhinweise</label></div>
+            <span class="spacer"></span><fluent-button id="register-new" appearance="primary">Neu anlegen</fluent-button>
+          </div>
+          <p id="register-count" class="type-caption muted" role="status"></p>
+          <fluent-message-bar id="register-error" intent="error" hidden></fluent-message-bar>
+          <div id="register-list" class="register-grid"></div>
+        </div>
         <div id="inv-list-view">
           <header class="page-header">
             <h1 class="type-title">Ermittlungsakten</h1>

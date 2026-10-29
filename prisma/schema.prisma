@@ -2004,6 +2004,10 @@ model Person {
   firstName    String              @db.VarChar(100)
   lastName     String              @db.VarChar(100)
   alias        String?             @db.VarChar(100)
+  occupation   String?             @db.VarChar(120)
+  organization String?             @db.VarChar(120)
+  rank         String?             @db.VarChar(120)
+  photoCrop    Json?
   /// Ausweis-/Spielerkennung.
   identifier   String?             @db.VarChar(100)
   dateOfBirth  DateTime?

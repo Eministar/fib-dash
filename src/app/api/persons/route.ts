@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { investigationVisibilityWhere } from '@/lib/investigations/investigations'
 import { cleanText, nextPersonNumber, parseDate, routeError } from '@/lib/investigations/investigations-server'
 import type { Prisma } from '@/generated/prisma'
+import { parsePersonProfile } from '@/lib/investigations/person-profile'
 import { tokenizedWhere } from '@/lib/core/search-match'
 
 export const dynamic = 'force-dynamic'
@@ -25,6 +26,9 @@ export async function GET(req: NextRequest) {
       { firstName: { contains: token } },
       { lastName: { contains: token } },
       { alias: { contains: token } },
+      { occupation: { contains: token } },
+      { organization: { contains: token } },
+      { rank: { contains: token } },
       { identifier: { contains: token } },
       { personNumber: { contains: token } },
     ])
@@ -58,6 +62,9 @@ export async function POST(req: NextRequest) {
     if (!firstName || !lastName) return error('Vor- und Nachname sind erforderlich')
     if (firstName.length > 100 || lastName.length > 100) return error('Name ist zu lang (max. 100 Zeichen)')
 
+    const profile = parsePersonProfile(body)
+    if (typeof profile === 'string') return error(profile)
+
     const photoId = cleanText(body.photoId) || null
     if (photoId && !(await prisma.investigationPhoto.findUnique({ where: { id: photoId }, select: { id: true } }))) {
       return notFound('Bild')
@@ -67,6 +74,7 @@ export async function POST(req: NextRequest) {
 
     const person = await prisma.person.create({
       data: {
+        ...profile,
         personNumber,
         firstName,
         lastName,

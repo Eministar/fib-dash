@@ -208,19 +208,23 @@ export function VehicleRegister() {
               onClick={() => setSelectedId(vehicle.id)}
               className="rounded-[12px] border border-[#3a3a3c] bg-[#161617] p-3.5 text-left transition-colors hover:border-[#48484a] hover:bg-[#1c1c1e]"
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-[11.5px] text-[#d4af37]">{vehicle.vehicleNumber}</span>
-                {vehicle.stolen && <Badge variant="danger">Gestohlen</Badge>}
-                {vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}
+              <div className="flex items-start gap-4">
+                <div className="relative flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#2c2c2e]">
+                  {vehicle.photoId ? <Image unoptimized src={catalogPhotoUrl(vehicle.photoId)} alt={`Fahrzeug ${vehicle.plate || vehicle.model || vehicle.vehicleNumber}`} fill sizes="112px" className="object-cover" /> : <Car className="h-8 w-8 text-[#98989d]" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-[#98989d]">Kennzeichen</p>
+                  <p className="break-words text-lg font-semibold text-white">{vehicle.plate || 'Nicht erfasst'}</p>
+                  <p className="text-xs text-[#98989d]">{vehicle.vehicleNumber}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">{vehicle.stolen && <Badge variant="danger">Gestohlen</Badge>}{vehicle.wanted && <Badge variant="warning">Fahndung</Badge>}{!vehicle.stolen && !vehicle.wanted && <span className="text-xs text-[#98989d]">Keine Warnhinweise erfasst</span>}</div>
+                </div>
               </div>
-              <p className="mt-1.5 text-[14px] font-semibold text-white">{vehicleLabel(vehicle)}</p>
-              <p className="mt-1 text-[11.5px] text-[#8e8e93]">
-                {vehicle.color ? `${vehicle.color} · ` : ''}
-                {vehicle.ownerPerson
-                  ? `Halter: ${vehicle.ownerPerson.firstName} ${vehicle.ownerPerson.lastName}`
-                  : 'Halter unbekannt'}
-                {vehicle._count ? ` · ${vehicle._count.investigations} Ermittlung(en)` : ''}
-              </p>
+              <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-[#38383a] pt-3 text-sm">
+                <div><dt className="text-xs text-[#98989d]">Modell</dt><dd className="text-[#e4e4e4]">{vehicle.model || 'Nicht erfasst'}</dd></div>
+                <div><dt className="text-xs text-[#98989d]">Farbe</dt><dd className="text-[#e4e4e4]">{vehicle.color || 'Nicht erfasst'}</dd></div>
+                <div><dt className="text-xs text-[#98989d]">Halter</dt><dd className="text-[#e4e4e4]">{vehicle.ownerPerson ? `${vehicle.ownerPerson.firstName} ${vehicle.ownerPerson.lastName}` : 'Unbekannt'}</dd></div>
+                <div><dt className="text-xs text-[#98989d]">Verknüpfte Ermittlungen</dt><dd className="text-[#e4e4e4]">{vehicle._count?.investigations ?? 0}</dd></div>
+              </dl>
             </button>
           ))}
         </div>

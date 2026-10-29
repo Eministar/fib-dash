@@ -91,11 +91,11 @@ export function PhotoGrid({ onSelect, selectedIds = [], onUpload }: { onSelect?:
   </div>
 }
 
-export function PhotoField({ value, onChange, readOnly = false }: { value: string | null; onChange: (photo: CatalogPhoto | null) => void; readOnly?: boolean }) {
+export function PhotoField({ value, onChange, readOnly = false, preview }: { value: string | null; onChange: (photo: CatalogPhoto | null) => void; readOnly?: boolean; preview?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return <div className="space-y-2">
     <p className="text-[12.5px] font-medium text-[#98989d]">Foto</p>
-    {value ? <Image unoptimized src={value} alt="Aktenfoto" width={400} height={300} className="max-h-56 rounded-lg object-contain" /> : <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#38383a] px-4 text-sm text-[#8e8e93]"><ImageIcon size={20} />Kein Foto ausgewählt</div>}
+    {preview ?? (value ? <Image unoptimized src={value} alt="Aktenfoto" width={400} height={300} className="max-h-56 rounded-lg object-contain" /> : <div className="flex h-24 items-center gap-2 rounded-lg border border-dashed border-[#38383a] px-4 text-sm text-[#8e8e93]"><ImageIcon size={20} />Kein Foto ausgewählt</div>)}
     {!readOnly && <div className="flex flex-wrap items-center gap-2">
       <Button type="button" size="sm" variant="outline" onClick={() => setOpen(true)}>Aus Bildkatalog wählen</Button>
       <PhotoUploadButton onUploaded={photo => onChange(photo)} />

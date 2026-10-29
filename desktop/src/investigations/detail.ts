@@ -278,10 +278,11 @@ function renderPeople(d: Detail) {
       ${d.persons.length ? d.persons.map((link) => {
         const p = link.person
         return `<div class="list-row person-row">
-          <span class="avatar large" data-photo="${p.photoUrl ? escapeHtml(p.photoUrl) : ''}">${escapeHtml(initials(`${p.firstName} ${p.lastName}`))}</span>
+          <span class="avatar large" style="overflow:hidden;position:relative" data-crop="${escapeHtml(JSON.stringify(p.photoCrop ?? { x: 50, y: 50, zoom: 1 }))}" data-photo="${p.photoId ? `/api/investigations/photos/${p.photoId}/image` : p.photoUrl ? escapeHtml(p.photoUrl) : ''}">${escapeHtml(initials(`${p.firstName} ${p.lastName}`))}</span>
           <span class="agent-name">
             <span class="type-body-strong truncate">${escapeHtml(personName(p))}</span>
             <span class="type-caption muted truncate">${escapeHtml(p.personNumber)}${p.identifier ? ` · ${escapeHtml(p.identifier)}` : ''}${p.phone ? ` · ${escapeHtml(p.phone)}` : ''}</span>
+            <span class="type-caption">Beruf: ${escapeHtml(p.occupation || 'Nicht erfasst')} · Rang: ${escapeHtml(p.rank || 'Nicht erfasst')}</span>
             ${link.note ? `<span class="type-caption truncate">${escapeHtml(link.note)}</span>` : ''}
             ${crossHitChips(hits?.persons, p.id)}
           </span>
@@ -313,6 +314,9 @@ const personFields = (): Field[] => [
   { name: 'firstName', label: 'Vorname', type: 'text', required: true },
   { name: 'lastName', label: 'Nachname', type: 'text', required: true },
   { name: 'alias', label: 'Alias', type: 'text' },
+  { name: 'occupation', label: 'Beruf / Tätigkeit', type: 'text', maxLength: 120 },
+  { name: 'organization', label: 'Organisation / Arbeitgeber', type: 'text', maxLength: 120 },
+  { name: 'rank', label: 'Rang / Position', type: 'text', maxLength: 120 },
   { name: 'identifier', label: 'Ausweis / Kennung', type: 'text' },
   { name: 'phone', label: 'Telefon', type: 'text' },
   { name: 'dateOfBirth', label: 'Geburtsdatum', type: 'datetime' },
@@ -552,8 +556,13 @@ async function loadPhotos(root: HTMLElement) {
     avatar.removeAttribute('data-photo')
     if (!url) continue
     const apply = (src: string) => {
-      avatar.textContent = ''
-      avatar.style.backgroundImage = `url("${src}")`
+      const crop = JSON.parse(avatar.dataset.crop || '{"x":50,"y":50,"zoom":1}')
+      const img = document.createElement('img')
+      img.className = 'avatar-img'
+      img.alt = ''
+      Object.assign(img.style, { objectPosition: `${crop.x}% ${crop.y}%`, transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` })
+      img.src = src
+      avatar.append(img)
     }
     if (url.startsWith('/api/')) api.image(url).then(apply).catch(() => {})
     else if (url.startsWith('https://')) apply(url)

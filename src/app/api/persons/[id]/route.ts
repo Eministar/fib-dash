@@ -6,6 +6,7 @@ import { createAuditLog } from '@/lib/audit/audit'
 import { prisma } from '@/lib/prisma'
 import { investigationVisibilityWhere } from '@/lib/investigations/investigations'
 import { cleanText, parseDate, routeError } from '@/lib/investigations/investigations-server'
+import { parsePersonProfile } from '@/lib/investigations/person-profile'
 import type { Prisma } from '@/generated/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -60,7 +61,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const existing = await prisma.person.findUnique({ where: { id } })
     if (!existing) return notFound('Person')
 
-    const data: Prisma.PersonUpdateInput = {}
+    const profile = parsePersonProfile(body)
+    if (typeof profile === 'string') return error(profile)
+    const data: Prisma.PersonUpdateInput = { ...profile }
+    // Ein neues Foto beginnt mittig, sofern kein Ausschnitt mitgeschickt wurde.
+    if (body.photoId !== undefined && body.photoId !== existing.photoId && body.photoCrop === undefined) {
+      data.photoCrop = { x: 50, y: 50, zoom: 1 }
+    }
 
     if (body.firstName !== undefined) {
       const firstName = cleanText(body.firstName)
