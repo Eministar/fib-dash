@@ -190,6 +190,16 @@ export type ListItem = {
   _count: { entries: number; clips: number; persons: number }
 }
 
+export type MapSpotRef = { id: string; title: string; category: string; icon: string | null; x: number; y: number }
+
+export type CorruptionCheckRef = {
+  id: string
+  conductedAt: string
+  result: string
+  location: string | null
+  official: { id: number; firstName: string; lastName: string; agency: string }
+}
+
 export type Detail = Omit<ListItem, '_count' | 'assignees'> & {
   createdBy: User | null
   template: { id: string; name: string } | null
@@ -203,6 +213,8 @@ export type Detail = Omit<ListItem, '_count' | 'assignees'> & {
   photos: { id: string; title: string; createdAt: string }[]
   linksFrom: { id: string; note: string | null; to?: LinkedCase }[]
   linksTo: { id: string; note: string | null; from?: LinkedCase }[]
+  mapSpots: MapSpotRef[]
+  corruptionChecks: { check: CorruptionCheckRef }[]
   crossHits?: unknown
 }
 

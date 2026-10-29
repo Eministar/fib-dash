@@ -146,6 +146,15 @@ export type LinkedCase = {
   priority: InvestigationPriorityKey
 }
 
+export type LinkedCorruptionCheck = {
+  id: string
+  conductedAt: string
+  /// CLEAR | FINDINGS
+  result: string
+  location: string | null
+  official: { id: number; firstName: string; lastName: string; agency: string }
+}
+
 export type InvestigationCrossLink = {
   id: string
   note: string | null
@@ -206,6 +215,7 @@ export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assign
   photos: { id: string; title: string; createdAt: string; uploadedById: string | null }[]
   linksFrom: InvestigationCrossLink[]
   linksTo: InvestigationCrossLink[]
+  corruptionChecks: { check: LinkedCorruptionCheck }[]
   /** Nur im GET der Akte: weitere Akten je beteiligter Person / Fahrzeug. */
   crossHits?: CaseCrossHits
 }

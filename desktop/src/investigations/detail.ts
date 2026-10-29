@@ -7,7 +7,10 @@ import { can, navigation, state } from '../store'
 import { confirmAction, openForm, type Field } from '../ui/form-dialog'
 import { toast } from '../ui/toast'
 import { playClip } from '../ui/clip-player'
+import { createCityMap } from '../ui/city-map'
+import { pickMapSpots, spotPin } from '../ui/map-picker'
 import { badgeHtml, loadList } from './list'
+import { mapCategory } from '../../../src/lib/investigations/map-spots'
 import { agentOptions, invalidate, lookups, personOptions, vehicleOptions } from './lookups'
 import {
   agentAvatar,
@@ -27,6 +30,7 @@ import {
   STATUS,
   STATUS_TONE,
   type Clip,
+  type CorruptionCheckRef,
   type Custody,
   type Detail,
   type Entry,
@@ -128,7 +132,7 @@ function tabCount(d: Detail, id: Tab) {
     evidence: d.evidence.length,
     media: d.clips.length + d.photos.length,
     team: d.assignees.length + (d.leadAgent ? 1 : 0),
-    links: d.linksFrom.length + d.linksTo.length,
+    links: d.linksFrom.length + d.linksTo.length + d.mapSpots.length + d.corruptionChecks.length,
   }[id as string]
   return count ? `<span class="tab-count">${count}</span>` : ''
 }
@@ -627,8 +631,34 @@ async function handover() {
 
 // ── Verknüpfungen ────────────────────────────────────────────────────
 
+function corruptionRow(check: CorruptionCheckRef, manage: boolean) {
+  const findings = check.result === 'FINDINGS'
+  return `
+    <div class="list-row person-row">
+      <span class="avatar large square">${icon('shieldTask')}</span>
+      <button class="agent-name link-button" data-action="open-corruption" data-id="${check.official.id}">
+        <span class="type-body-strong truncate">${escapeHtml(`${check.official.firstName} ${check.official.lastName}`)} · ${escapeHtml(check.official.agency)}</span>
+        <span class="type-caption muted truncate">${date(check.conductedAt)}${check.location ? ` · ${escapeHtml(check.location)}` : ''}</span>
+      </button>
+      <span class="case-badges">${badgeHtml(findings ? 'Befund' : 'Ohne Befund', findings ? 'danger' : 'success')}</span>
+      <span class="row-actions">${manage ? actionButton('unlink-corruption', 'dismiss', 'Verknüpfung lösen', check.id) : ''}</span>
+    </div>`
+}
+
 function renderLinks(d: Detail) {
   const manage = canManage()
+  const pickSpots = manage && can('map:view')
+  const checks = d.corruptionChecks.map((link) => link.check)
+  const places = `
+    ${sectionHeader(`Einsatzorte · ${d.mapSpots.length}`, pickSpots ? commandButton('pick-spots', 'location', 'Ort auf Karte wählen', !d.mapSpots.length) : '')}
+    <div class="card pad case-places">
+      ${d.mapSpots.length ? `
+        <div class="case-map" data-case-map></div>
+        <div class="chips">${d.mapSpots.map((spot) => `<button class="chip" data-action="focus-spot" data-id="${spot.id}"><span class="map-dot" style="background:${mapCategory(spot.category).hex}"></span>${escapeHtml(spot.title)}</button>`).join('')}</div>`
+        : empty(pickSpots ? 'Noch kein Einsatzort. Wähle den Ort direkt auf der Karte.' : 'Noch kein Einsatzort hinterlegt.')}
+    </div>
+    ${sectionHeader(`Korruptionskontrollen · ${checks.length}`, manage ? commandButton('link-corruption', 'shieldTask', 'Kontrolle anknüpfen') : '')}
+    <div class="card list">${checks.length ? checks.map((check) => corruptionRow(check, manage)).join('') : empty('Keine Korruptionskontrolle verknüpft.')}</div>`
   const linked = [
     ...d.linksFrom.filter((l) => l.to).map((l) => ({ id: l.id, note: l.note, other: l.to! })),
     ...d.linksTo.filter((l) => l.from).map((l) => ({ id: l.id, note: l.note, other: l.from! })),
@@ -646,7 +676,50 @@ function renderLinks(d: Detail) {
           <span class="case-badges">${badgeHtml(STATUS[l.other.status], STATUS_TONE[l.other.status])}</span>
           <span class="row-actions">${manage ? actionButton('remove-link', 'dismiss', 'Verknüpfung lösen', l.id) : ''}</span>
         </div>`).join('') : empty('Keine verknüpften Akten.')}
-    </div>`
+    </div>
+    ${places}`
+}
+
+let caseMap: ReturnType<typeof createCityMap> | null = null
+
+function mountCaseMap(container: HTMLElement) {
+  const host = container.querySelector<HTMLElement>('[data-case-map]')
+  caseMap = host && detail ? createCityMap(host) : null
+  caseMap?.setPins(detail!.mapSpots.map((spot) => spotPin(spot)))
+}
+
+async function pickSpots() {
+  const d = detail!
+  const ids = await pickMapSpots({
+    title: `Einsatzort für ${d.caseNumber}`,
+    description: 'Wähle einen oder mehrere Orte. Neue Orte erscheinen auch auf der Stadtkarte im Dashboard.',
+    selected: d.mapSpots.map((spot) => spot.id),
+  })
+  if (ids) await mutate(() => api.patch(base(), { mapSpotIds: ids }), 'Einsatzorte gespeichert')
+}
+
+/** Neueste Kontrollen; die Auswahl filtert lokal weiter. */
+async function linkCorruption() {
+  const taken = new Set(detail!.corruptionChecks.map((link) => link.check.id))
+  const pages = await Promise.all([1, 2, 3, 4].map((page) => api.get<{ items: CorruptionCheckRef[] }>(`/api/corruption-checks?page=${page}`).catch(() => ({ items: [] }))))
+  const checks = pages.flatMap((page) => page.items).filter((check) => !taken.has(check.id))
+  if (!checks.length) return toast('Keine weitere Korruptionskontrolle gefunden.', 'info')
+  await openForm({
+    title: 'Korruptionskontrolle anknüpfen',
+    description: 'Die Kontrolle wird Teil dieser Einsatzakte. Zur Auswahl stehen die letzten 100 Kontrollen.',
+    fields: [{
+      name: 'checkId', label: 'Kontrolle', type: 'combobox', required: true, span: 2,
+      options: checks.map((check) => ({
+        value: check.id,
+        label: `${check.official.firstName} ${check.official.lastName} (${check.official.agency}) · ${formatDateTime(new Date(check.conductedAt))} · ${check.result === 'FINDINGS' ? 'Befund' : 'ohne Befund'}`,
+      })),
+    }],
+    submitLabel: 'Anknüpfen',
+    onSubmit: async (values) => {
+      await api.post(`${base()}/corruption-checks`, { checkId: values.checkId })
+      toast('Korruptionskontrolle verknüpft')
+    },
+  }) && reload()
 }
 
 async function addLink() {
@@ -699,6 +772,7 @@ function renderTab() {
     team: renderTeam,
     links: renderLinks,
   }[tab](d)
+  if (tab === 'links') mountCaseMap(container)
   void loadPhotos(container)
 }
 
@@ -852,6 +926,17 @@ async function handleAction(action: string, id: string) {
       return mutate(() => api.del(`/api/investigations/assignees/${id}`), 'Aus dem Team entfernt')
     case 'add-link':
       return addLink()
+    case 'pick-spots':
+      return pickSpots()
+    case 'focus-spot':
+      return caseMap?.focus(id)
+    case 'link-corruption':
+      return linkCorruption()
+    case 'unlink-corruption':
+      if (!(await confirmAction('Kontrolle lösen?', 'Die Korruptionskontrolle bleibt erhalten, gehört aber nicht mehr zu dieser Akte.', 'Lösen'))) return
+      return mutate(() => api.del(`${base()}/corruption-checks`, { checkId: id }), 'Verknüpfung gelöst')
+    case 'open-corruption':
+      return backend.openDashboard(`/corruption-checks?official=${encodeURIComponent(id)}`)
     case 'remove-link':
       if (!(await confirmAction('Verknüpfung lösen?', 'Die beiden Akten sind danach nicht mehr verknüpft.', 'Lösen'))) return
       return mutate(() => api.del(`/api/investigations/links/${id}`), 'Verknüpfung gelöst')

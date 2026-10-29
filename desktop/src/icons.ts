@@ -59,6 +59,12 @@ import note from '@fluentui/svg-icons/icons/note_24_regular.svg?raw'
 import noteAdd from '@fluentui/svg-icons/icons/note_add_24_regular.svg?raw'
 import calendar from '@fluentui/svg-icons/icons/calendar_ltr_24_regular.svg?raw'
 import clipboardTask from '@fluentui/svg-icons/icons/clipboard_task_24_regular.svg?raw'
+import location from '@fluentui/svg-icons/icons/location_24_regular.svg?raw'
+import mapIcon from '@fluentui/svg-icons/icons/map_24_regular.svg?raw'
+import zoomIn from '@fluentui/svg-icons/icons/zoom_in_24_regular.svg?raw'
+import zoomOut from '@fluentui/svg-icons/icons/zoom_out_24_regular.svg?raw'
+import homePerson from '@fluentui/svg-icons/icons/home_person_24_regular.svg?raw'
+import shieldTask from '@fluentui/svg-icons/icons/shield_task_24_regular.svg?raw'
 
 export const icons = {
   home, videoClip, timer, documentSearch, settings, open, record, folderOpen, keyboard, play, pause, cut,
@@ -68,6 +74,7 @@ export const icons = {
   wrench, wasd: keyboard2, cursor, board, games, warning, shieldError, arrowUndo, info, gauge,
   megaphone, chevronDown, arrowDownload, document: documentIcon, sparkle,
   pulse, note, noteAdd, calendar, clipboardTask,
+  location, map: mapIcon, zoomIn, zoomOut, homePerson, shieldTask,
 }
 
 export type IconName = keyof typeof icons

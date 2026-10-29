@@ -15,7 +15,9 @@ export async function GET(_req: Request, { params }: Context) {
       leader: { select: { id: true, firstName: true, lastName: true, personNumber: true } },
       photos: { select: { id: true, title: true }, orderBy: { createdAt: 'desc' } },
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
-      investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } } }, orderBy: { updatedAt: 'desc' } },
+      investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } },
+        // Einsatzorte für die Einsatzkarte der Familie.
+        mapSpots: { select: { id: true, title: true, category: true, icon: true, x: true, y: true } } }, orderBy: { updatedAt: 'desc' } },
       vehicles: { select: { id: true, vehicleNumber: true, plate: true, model: true }, orderBy: { vehicleNumber: 'asc' } },
       mapSpots: { select: { id: true, title: true, category: true, icon: true, x: true, y: true }, orderBy: { title: 'asc' } },
       // Nur Namen: Mitglieder der Gruppen bleiben vertraulich.

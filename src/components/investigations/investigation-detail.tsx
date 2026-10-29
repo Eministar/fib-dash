@@ -43,6 +43,7 @@ import { ClipUploadDialog } from '@/components/investigations/clip-upload-dialog
 import { InvestigationAssignees } from '@/components/investigations/investigation-assignees'
 import { InvestigationEvidence } from '@/components/investigations/investigation-evidence'
 import { InvestigationLinks } from '@/components/investigations/investigation-links'
+import { InvestigationCorruptionChecks } from '@/components/investigations/investigation-corruption-checks'
 import { InvestigationVehicles } from '@/components/investigations/investigation-vehicles'
 import { InvestigationDossiers } from '@/components/investigations/dossiers-workspace'
 import { SpotPickerField } from '@/components/map/spot-picker'
@@ -170,7 +171,11 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
     {
       id: 'verknuepfungen',
       label: 'Verknüpfungen',
-      count: investigation.mapSpots.length + investigation.linksFrom.length + investigation.linksTo.length,
+      count:
+        investigation.mapSpots.length +
+        investigation.linksFrom.length +
+        investigation.linksTo.length +
+        investigation.corruptionChecks.length,
     },
     { id: 'verlauf', label: 'Verlauf' },
   ]
@@ -628,6 +633,13 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             investigationId={investigationId}
             linksFrom={investigation.linksFrom}
             linksTo={investigation.linksTo}
+            canManage={canManage}
+            onChanged={refetch}
+          />
+
+          <InvestigationCorruptionChecks
+            investigationId={investigationId}
+            checks={investigation.corruptionChecks.map((link) => link.check)}
             canManage={canManage}
             onChanged={refetch}
           />

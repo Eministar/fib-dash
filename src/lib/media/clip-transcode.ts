@@ -5,6 +5,8 @@ import { setPriority } from 'node:os'
 export type CompressionOptions = {
   codec: 'av1' | 'vp9'
   crf: number
+  /** SVT-AV1: kleiner = langsamer, aber deutlich kleinere Dateien bei gleicher Qualität. */
+  preset: number
   maxWidth: number
   maxHeight: number
   threads: number
@@ -19,7 +21,10 @@ function integerEnv(key: string, fallback: number, min: number, max: number) {
 export function compressionOptions(): CompressionOptions {
   return {
     codec: process.env.CLIP_VIDEO_CODEC === 'vp9' ? 'vp9' : 'av1',
-    crf: integerEnv('CLIP_VIDEO_CRF', 36, 20, 50),
+    // Gemessen an echten Bodycam-Clips: Preset 6 mit CRF 44 halbiert die Größe
+    // gegenüber Preset 10 / CRF 36 bei gleicher Bildqualität (SSIM).
+    crf: integerEnv('CLIP_VIDEO_CRF', 44, 20, 55),
+    preset: integerEnv('CLIP_VIDEO_PRESET', 6, 2, 12),
     maxWidth: integerEnv('CLIP_VIDEO_MAX_WIDTH', 1280, 320, 3840),
     maxHeight: integerEnv('CLIP_VIDEO_MAX_HEIGHT', 720, 240, 2160),
     threads: integerEnv('CLIP_VIDEO_THREADS', 1, 1, 8),
@@ -85,10 +90,12 @@ export function transcodeArgs(input: string, output: string, options: Compressio
     '-map', '0:V:0', '-map', '0:a?', '-sn', '-dn', '-map_metadata', '-1', '-map_chapters', '-1',
     '-vf', filter, '-fpsmax', '30', '-pix_fmt', 'yuv420p',
     ...(options.codec === 'av1'
-      ? ['-c:v', 'libsvtav1', '-preset', '10', '-crf', String(options.crf), '-svtav1-params', `lp=${options.threads}`]
+      // tune=0 (visuelle Qualität) und Quantisierungsmatrizen sparen Bits, ohne Kanten zu verwischen.
+      ? ['-c:v', 'libsvtav1', '-preset', String(options.preset), '-crf', String(options.crf), '-svtav1-params', `lp=${options.threads}:tune=0:enable-qm=1:qm-min=0`]
       : ['-c:v', 'libvpx-vp9', '-deadline', 'good', '-cpu-used', '5', '-crf', String(options.crf), '-b:v', '0', '-row-mt', '1']),
-    '-threads', String(options.threads), '-g', '240',
-    '-c:a', 'libopus', '-b:a', '64k', '-ac', '2', '-vbr', 'on',
+    '-threads', String(options.threads), '-g', '300',
+    // Funk und Stimmen brauchen kein Stereo; 32 kbit/s Opus bleibt gut verständlich.
+    '-c:a', 'libopus', '-b:a', '32k', '-ac', '1', '-vbr', 'on',
     '-f', 'webm', output,
   ]
 }
@@ -159,6 +166,8 @@ export async function checkMediaTools() {
   return picked
 }
 
+const LONG_CLIP_SECONDS = 20 * 60
+
 /** Produces a verified candidate only. The caller owns the DB switch and source deletion. */
 export async function transcodeClip(input: string, output: string, options = compressionOptions()) {
   try {
@@ -166,6 +175,8 @@ export async function transcodeClip(input: string, output: string, options = com
     // Avoid silently washing out HDR footage; keep it intact for a separate HDR workflow.
     if (['smpte2084', 'arib-std-b67'].includes(source.video.color_transfer ?? '')) return { skipped: true as const, reason: 'HDR-Aufnahme bleibt unverändert' }
     const original = await stat(input)
+    // Lange Aufnahmen mit einem Thread würden mit dem langsamen Preset das Zeitlimit reißen.
+    if (source.duration > LONG_CLIP_SECONDS) options = { ...options, preset: Math.max(options.preset, 8) }
     await runMediaTool(process.env.FFMPEG_PATH?.trim() || 'ffmpeg', transcodeArgs(input, output, options), options.timeoutMs)
     const result = await probeClip(output)
     if (!validCompressedDuration(source.duration, result.duration) || result.audioCount !== source.audioCount) throw new Error('Komprimiertes Video ist unvollständig')

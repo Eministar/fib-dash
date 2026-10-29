@@ -1,0 +1,142 @@
+/* ── Stadtkarte ─────────────────────────────────────────────────── */
+.city-map {
+  position: relative;
+  overflow: hidden;
+  min-height: 320px;
+  border-radius: var(--radius);
+  background: #0b1a24;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.city-map.placing { cursor: crosshair; }
+.city-map.dragging { cursor: grabbing; }
+.city-map-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.city-map-image { display: block; width: 100%; height: 100%; pointer-events: none; }
+.city-map-pins { position: absolute; inset: 0; }
+
+.map-pin {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  /* Spitze der Nadel sitzt auf dem Punkt; Größe bleibt beim Zoomen gleich. */
+  transform: translate(-50%, -100%) scale(var(--pin-scale, 1));
+  transform-origin: 50% 100%;
+  cursor: pointer;
+}
+.map-pin-head {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--pin-color);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1;
+  color: #fff;
+  transition: transform 120ms ease-out;
+}
+.map-pin-glyph { transform: rotate(45deg); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.map-pin:hover .map-pin-head { transform: rotate(-45deg) scale(1.15); }
+.map-pin:focus-visible { outline: none; }
+.map-pin:focus-visible .map-pin-head { outline: 2px solid var(--colorStrokeFocus2); outline-offset: 2px; }
+.map-pin.selected { z-index: 2; }
+.map-pin.selected .map-pin-head { border-color: #ffd54a; box-shadow: 0 0 0 3px rgba(255, 213, 74, 0.45), 0 2px 8px rgba(0, 0, 0, 0.5); }
+.map-pin.muted { opacity: 0.35; }
+.map-pin.pending .map-pin-head { animation: map-pin-pulse 1.2s ease-in-out infinite; font-weight: 700; }
+@keyframes map-pin-pulse { 50% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.25); } }
+@media (prefers-reduced-motion: reduce) {
+  .map-pin.pending .map-pin-head { animation: none; }
+  .map-pin-head { transition: none; }
+}
+
+.city-map-controls {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--card-stroke);
+  border-radius: 6px;
+  background: var(--colorNeutralBackground1);
+  box-shadow: var(--shadow8, 0 2px 6px rgba(0, 0, 0, 0.2));
+  cursor: default;
+}
+.city-map-controls button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--colorNeutralForeground1);
+}
+.city-map-controls button + button { border-top: 1px solid var(--card-stroke); }
+.city-map-controls button:hover { background: var(--subtle-hover); }
+.city-map-controls .icon { width: 18px; height: 18px; }
+
+.map-dot { display: inline-block; width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15); }
+
+/* ── Ortswahl (Dialog) ──────────────────────────────────────────── */
+.map-dialog {
+  width: min(1180px, calc(100vw - 48px));
+  height: min(820px, calc(100vh - 48px));
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--radius);
+  background: var(--colorNeutralBackground1);
+  color: var(--colorNeutralForeground1);
+  box-shadow: var(--shadow64, 0 24px 64px rgba(0, 0, 0, 0.35));
+}
+.map-dialog[open] { display: flex; flex-direction: column; }
+.map-dialog::backdrop { background: var(--shade); }
+.map-dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 20px 12px; }
+.map-dialog-header h2 { margin: 0 0 2px; }
+.map-dialog-close { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 4px; background: transparent; color: inherit; }
+.map-dialog-close:hover { background: var(--subtle-hover); }
+.map-dialog-close .icon { width: 18px; height: 18px; }
+.map-dialog-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; padding: 0 20px; }
+.map-dialog-map { height: 100%; }
+.map-dialog-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.map-dialog-side .chips { max-height: 112px; overflow-y: auto; }
+.map-dialog-side .chip .icon { width: 12px; height: 12px; opacity: 0.7; }
+.map-field { display: flex; flex-direction: column; gap: 4px; }
+.map-field .native-input, .map-search { width: 100%; box-sizing: border-box; }
+.map-new { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--colorBrandStroke2, var(--card-stroke)); border-radius: var(--radius); background: var(--subtle-pressed); }
+.map-new h3 { margin: 0; }
+.map-new-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.map-spot-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; border: 1px solid var(--card-stroke); border-radius: var(--radius); }
+.map-spot-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.map-spot-row + .map-spot-row { border-top: 1px solid var(--card-stroke); }
+.map-spot-row:hover { background: var(--subtle-hover); }
+.map-spot-row.selected { background: var(--subtle-selected); }
+.map-spot-row .icon { width: 16px; height: 16px; color: var(--colorBrandForeground1); }
+.map-spot-text { display: flex; flex-direction: column; min-width: 0; }
+.map-spot-list > p { padding: 12px; margin: 0; }
+.map-hint { margin: 0; }
+.map-dialog-error { margin: 8px 20px 0; color: var(--colorPaletteRedForeground1); }
+.map-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px 18px; }
+@media (max-width: 760px) {
+  .map-dialog-body { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) auto; }
+  .map-spot-list { max-height: 180px; }
+}

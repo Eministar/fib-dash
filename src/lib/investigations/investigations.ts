@@ -130,6 +130,15 @@ const linkedCaseSelect = {
   priority: true,
 } as const
 
+/// Kopf einer verknüpften Korruptionskontrolle; Befunde stehen in der Kontrolle selbst.
+export const linkedCorruptionCheckSelect = {
+  id: true,
+  conductedAt: true,
+  result: true,
+  location: true,
+  official: { select: { id: true, firstName: true, lastName: true, agency: true } },
+} as const
+
 export const investigationListInclude = {
   leadAgent: { select: agentSelect },
   createdBy: { select: userSelect },
@@ -195,6 +204,10 @@ export const investigationDetailInclude = {
   linksTo: {
     orderBy: [{ createdAt: 'asc' }],
     include: { from: { select: linkedCaseSelect } },
+  },
+  corruptionChecks: {
+    orderBy: [{ createdAt: 'desc' }],
+    select: { check: { select: linkedCorruptionCheckSelect } },
   },
 } as const satisfies Prisma.InvestigationInclude
 

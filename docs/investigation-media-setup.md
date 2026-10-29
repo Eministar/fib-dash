@@ -13,6 +13,8 @@ Neue und vorhandene Clips werden automatisch in einer Datenbank-Warteschlange ve
 
 FFmpeg und ffprobe müssen im PATH liegen; alternativ `FFMPEG_PATH` und `FFPROBE_PATH` setzen. FFmpeg benötigt libsvtav1 und libopus. Das Docker-Image installiert FFmpeg. `CLIP_VIDEO_CODEC=vp9` nutzt libvpx-vp9 als Alternative für breitere Browserunterstützung. AV1 kann insbesondere auf älteren Apple-Geräten nicht im Browser abspielbar sein.
 
+Standard ist AV1 mit `CLIP_VIDEO_PRESET=6` und `CLIP_VIDEO_CRF=44` (max. 720p, 30 fps, Opus 32 kbit/s mono). An echten Bodycam-Clips ist das etwa halb so groß wie die frühere Einstellung (Preset 10 / CRF 36) bei gleicher Bildqualität; ein 20-Sekunden-Clip schrumpft von 7,8 MB auf rund 350 KB. Clips über 20 Minuten nutzen automatisch Preset 8, damit `CLIP_TRANSCODE_TIMEOUT_MS` hält. Wer noch kleiner will, erhöht `CLIP_VIDEO_CRF` (bis 55) – ab etwa 48 werden kleine Schriften unscharf.
+
 Ein Original wird erst nach Prüfung von Laufzeit, Tonspuranzahl, vollständiger Dekodierung und Dateigröße ersetzt. Größere Ergebnisse, HDR-Videos und fehlgeschlagene Konvertierungen behalten das Original. Nach erfolgreicher Datenbankumschaltung wird das Original entfernt; fehlgeschlagene Dateibereinigung wird erneut versucht. Beim Konvertieren ist vorübergehend Platz für beide Dateien nötig. Der Player zeigt Status und Ersparnis an.
 
 Abgebrochene Verarbeitungen werden nach fünf Minuten ohne Lebenszeichen wieder aufgenommen. `FAILED` wird nicht endlos wiederholt: nach Behebung der Ursache kann ein Administrator gezielt betroffene Datensätze zurück auf `PENDING` setzen. Fehlende FFmpeg-Encoder stoppen die Warteschlange, ohne alle Clips als fehlgeschlagen zu markieren.

@@ -315,3 +315,7 @@ button.chip:hover { background: var(--subtle-hover); }
   .case-row .case-lead,
   .case-row .case-meta { display: none; }
 }
+
+/* Einsatzorte im Reiter „Verknüpfungen“ */
+.case-places { gap: 12px; }
+.case-map { height: 340px; }

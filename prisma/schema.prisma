@@ -1903,6 +1903,8 @@ model Investigation {
   vehicles  InvestigationVehicle[]
   linksFrom InvestigationLink[]     @relation("InvestigationLinkFrom")
   linksTo   InvestigationLink[]     @relation("InvestigationLinkTo")
+  /// Korruptionskontrollen, die zu dieser Einsatzakte gehören.
+  corruptionChecks InvestigationCorruptionCheck[]
   /// Offene KI-Vorschläge im Discord-Beitrag dieser Akte.
   aiProposals AiProposal[]
 
@@ -2419,6 +2421,7 @@ model OfficialRevision {
 }
 
 model CorruptionCheck {
+  investigations InvestigationCorruptionCheck[]
   version     Int                    @default(1)
   revisions   CorruptionRevision[]
   evidence    CorruptionEvidence[]
@@ -2440,6 +2443,18 @@ model CorruptionCheck {
   @@index([officialId, conductedAt])
   @@index([conductedAt])
   @@index([result, conductedAt])
+}
+
+/// Korruptionskontrolle, die als Teil einer Einsatzakte geführt wird (n:m).
+model InvestigationCorruptionCheck {
+  investigationId String
+  checkId         String
+  investigation   Investigation   @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  check           CorruptionCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+
+  @@id([investigationId, checkId])
+  @@index([checkId])
 }
 
 /// Snapshot erhält die Namen der Durchführenden auch nach Umbenennung oder Löschung.

@@ -75,3 +75,4 @@ startApp().catch((error: unknown) => {
 })
 startAutoUpdates()
 import './pages/families.css'
+import './ui/map.css'

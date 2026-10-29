@@ -1,9 +1,91 @@
-.family-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-block: 16px; }
-.family-toolbar label { display: grid; gap: 6px; min-width: 200px; }
-.family-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-block: 16px; }
-.family-card { padding: 20px; min-width: 0; overflow-wrap: anywhere; }
-.family-card h2, .family-card h3 { margin: 0 0 16px; }
-.family-card dl { display: grid; gap: 6px; }
-.family-card dt { color: var(--text-secondary); font-size: 12px; }
-.family-card dd { margin: 0 0 10px; }
-.family-notes { white-space: pre-wrap; }
+/* ── Familienregister ───────────────────────────────────────────── */
+#families-search { flex: 1 1 260px; width: auto; min-width: 200px; max-width: 380px; }
+.family-sort { width: 190px; height: 32px; padding: 0 10px; border-radius: 4px; color: inherit; font: inherit; }
+
+.family-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.family-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 132px;
+  padding: 16px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+  transition: background 120ms ease-out, border-color 120ms ease-out;
+}
+.family-tile:hover { background: var(--card-hover); border-color: var(--colorNeutralStroke1Hover, var(--card-stroke)); }
+.family-tile:focus-visible { outline: 2px solid var(--colorStrokeFocus2); outline-offset: -2px; }
+.family-tile.skeleton { animation: family-skeleton 1.4s ease-in-out infinite; }
+@keyframes family-skeleton { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .family-tile.skeleton { animation: none; } .family-tile { transition: none; } }
+.family-tile-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.family-tile-head > .pill { align-self: flex-start; }
+.family-tile-title { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.family-tile-address { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.family-tile-address .icon, .family-tile-stats .icon { width: 14px; height: 14px; flex-shrink: 0; }
+.family-tile-stats { display: flex; align-items: center; gap: 14px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--card-stroke); }
+.family-tile-stats > span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Monogramm oder Titelbild der Familie */
+.family-mark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--colorBrandBackground2) center / cover no-repeat;
+  color: var(--colorBrandForeground2);
+  font-weight: 600;
+}
+.family-mark.large { width: 44px; height: 44px; font-size: 15px; }
+.family-mark.xl { width: 56px; height: 56px; font-size: 19px; border-radius: 12px; }
+.family-mark.has-photo > span { visibility: hidden; }
+
+.family-pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; }
+.family-pagination [data-action='prev'] .icon { transform: scaleX(-1); }
+
+/* Kopf der Familienakte */
+.family-title { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.family-title-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.family-title-text h1 { margin: 0; overflow-wrap: anywhere; }
+.command-bar fluent-button[data-action='delete'] { --colorNeutralForeground1: var(--colorPaletteRedForeground1); }
+
+.family-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.two-col.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Akten-Zeilen: Akte · Status · Einsatzorte · Aktionen */
+.family-case-row { grid-template-columns: minmax(0, 1.6fr) auto minmax(0, 1.2fr) auto; gap: 12px; }
+.family-case-row.highlighted { background: var(--subtle-selected); box-shadow: inset 3px 0 0 var(--colorBrandBackground); }
+.family-case-places { min-width: 0; }
+.family-case-places .chip { max-width: 100%; }
+.family-member-row { grid-template-columns: 40px minmax(0, 1fr) auto auto; }
+
+/* Einsatzkarte */
+.family-map-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); gap: 12px; align-items: start; }
+.family-map-card { display: flex; flex-direction: column; overflow: hidden; }
+.family-map { height: min(640px, calc(100vh - 300px)); min-height: 420px; border-radius: var(--radius) var(--radius) 0 0; }
+.family-map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 8px 12px; border-top: 1px solid var(--card-stroke); }
+.family-map-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.legend-ring { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); }
+.legend-ring.own { background: #2dd4bf; }
+.legend-ring.case { background: #e5484d; }
+.family-map-side { gap: 8px; }
+.family-map-side .family-case-row { grid-template-columns: minmax(0, 1fr) auto; }
+.family-map-side .family-case-row .family-case-places { grid-column: 1 / -1; }
+.family-map-side .family-case-row .row-actions { grid-row: 1; grid-column: 2; }
+.family-map-side .family-case-row .case-badges { grid-column: 1; }
+.family-map-cases { max-height: min(600px, calc(100vh - 340px)); overflow-y: auto; }
+.family-focus { gap: 4px; }
+.family-focus .section-header { gap: 8px; min-height: 28px; }
+
+@media (max-width: 1100px) {
+  .family-map-layout, .two-col.even { grid-template-columns: 1fr; }
+  .family-map-cases { max-height: none; }
+  .family-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .family-case-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .family-case-row .family-case-places { grid-column: 1 / -1; }
+}
