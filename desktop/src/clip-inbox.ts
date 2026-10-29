@@ -1,4 +1,4 @@
-import type { ClipInfo } from './backend'
+import type { ClipInfo } from './clip-types'
 
 export type InboxClip = ClipInfo & {
   draft?: { fields: Record<string, string>; duration: number; start: number; end: number }

@@ -1,4 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
+import type { ClipInfo } from './clip-types'
+
+export type { ClipInfo } from './clip-types'
 
 // Spiegel der Rust-Befehle in src-tauri/src/lib.rs.
 
@@ -101,14 +104,6 @@ export interface SettingsView {
   settings: Settings
   defaultClipDir: string
   defaultClipperHotkey: string
-}
-
-export interface ClipInfo {
-  path: string
-  name: string
-  sizeBytes: number
-  durationSeconds: number | null
-  savedAt: number
 }
 
 export interface Option {
