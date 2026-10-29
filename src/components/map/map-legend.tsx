@@ -2,9 +2,9 @@
 
 import { useMemo } from 'react'
 
-import { MAP_CATEGORIES, type MapSpot } from '@/lib/investigations/map-spots'
+import { MAP_CATEGORIES, mapLayer, type MapLayer, type MapSpot } from '@/lib/investigations/map-spots'
 
-export function MapLegend({ spots }: { spots: MapSpot[] }) {
+export function MapLegend({ spots, layer }: { spots: MapSpot[]; layer?: MapLayer }) {
   const counts = useMemo(() => {
     const result = new Map<string, number>()
     for (const spot of spots) result.set(spot.category, (result.get(spot.category) ?? 0) + 1)
@@ -18,7 +18,7 @@ export function MapLegend({ spots }: { spots: MapSpot[] }) {
         <span className="font-mono text-[11px] text-[#8e8e93]">{spots.length}</span>
       </div>
       <div className="grid grid-cols-2 gap-0.5 sm:grid-cols-4 lg:grid-cols-2">
-        {MAP_CATEGORIES.map((category) => (
+        {MAP_CATEGORIES.filter(category => !layer || mapLayer(category.id) === layer).map((category) => (
           <div key={category.id} className="flex items-center gap-2 rounded-[7px] px-1 py-1.5">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: category.hex }} />
             <span className="min-w-0 flex-1 truncate text-[11px] text-[#98989d]">{category.label}</span>

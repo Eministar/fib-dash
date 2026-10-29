@@ -136,7 +136,7 @@ type Formulated = { title: string; content: string; missing: string[]; note: str
 /** Vorschlag formulieren; ohne KI (Fehler, Limit) bleibt der Originaltext ohne Änderungen. */
 async function formulate(message: ThreadMessageForAi, investigationId: string, user: CurrentUser): Promise<Formulated> {
   const fallbackTitle = `Discord · ${message.authorName}`.slice(0, 200)
-  const onlyFiles = { ...NO_ACTIONS, attachments: message.attachments, unresolved: [] }
+  const onlyFiles = { ...readActions(null), attachments: message.attachments, unresolved: [] }
   if (!message.text) return { title: fallbackTitle, content: '', missing: [], note: null, actions: onlyFiles }
   try {
     const text = await resolveMentions(message.text)

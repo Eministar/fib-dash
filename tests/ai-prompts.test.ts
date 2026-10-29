@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { buildSystemPrompt, buildUserPrompt, parseSuggestion, parseThreadPlan, reviewSuggestion, MAX_KEYWORDS_LENGTH, MAX_MESSAGE_LENGTH } from '../src/lib/ai/ai-prompts'
 import { aiProposalMessage, AI_ACCEPT_PREFIX, AI_REJECT_PREFIX } from '../src/lib/ai/ai-discord'
-import { describeActions, hasChanges, NO_ACTIONS, splitName, type ProposalActions } from '../src/lib/ai/ai-proposal-actions'
+import { describeActions, hasChanges, readActions, NO_ACTIONS, splitName, type ProposalActions } from '../src/lib/ai/ai-proposal-actions'
 
 test('Systemprompt verbietet Erfindungen und Ausschmückung, verlangt JSON und behandelt Eingaben als Daten', () => {
   for (const kind of ['entry', 'investigation'] as const) {
@@ -166,4 +166,27 @@ test('FIB-Agents: Agent-Liste im Prompt, Regel für Vornamen/Spitznamen, "agents
 test('Vorschlag zeigt beteiligte Agents an', () => {
   const lines = describeActions({ ...NO_ACTIONS, participants: [{ id: 'geber', name: 'Agent Geber', badgeNumber: '02', rank: null }] })
   assert.ok(lines.some((line) => line.includes('Beteiligte Agents: Agent Geber')))
+})
+
+
+test('KI-Aktionen teilen keine Personenlisten zwischen Vorschlägen', () => {
+  const first = readActions(null)
+  first.persons.push({ personId: null, firstName: 'Max', lastName: 'Muster', role: 'OTHER' })
+  first.participants.push({ id: 'a', name: 'Agent A', badgeNumber: null, rank: null })
+  assert.deepEqual(readActions(null).persons, [])
+  assert.deepEqual(readActions({}).participants, [])
+  assert.deepEqual(NO_ACTIONS.persons, [])
+  const restored = readActions(first)
+  restored.persons.length = 0
+  assert.equal(first.persons.length, 1)
+})
+
+test('Entfernen einer Person ist eine eigene sichtbare Aktenaktion', () => {
+  const plan = parseThreadPlan('{"changes":{"removePersons":["Max Muster"]}}')
+  assert.deepEqual(plan.changes.removePersons, ['Max Muster'])
+  assert.deepEqual(plan.changes.persons, [])
+  const actions = { ...readActions(null), removePersons: [{ id: 'p1', name: 'Max Muster' }] }
+  assert.equal(hasChanges(actions), true)
+  assert.match(describeActions(actions).join(' '), /aus dieser Akte entfernen: Max Muster/)
+  assert.match(buildSystemPrompt('entry', 'message'), /Niemals gleichzeitig/)
 })

@@ -247,7 +247,7 @@ export const CityMap = forwardRef<CityMapHandle, CityMapProps>(function CityMap(
                       aria-label={selectable ? `${spot.title} auswählen` : `${spot.title}. Rechtsklick für Details.`}
                       aria-pressed={selectable ? selectedIds.includes(spot.id) : undefined}
                     >
-                      <MapNeedle color={category.hex} icon={spot.icon} pending={relocating} />
+                      <MapNeedle color={category.hex} icon={spot.icon ?? category.icon} pending={relocating} />
                       {hovered === spot.id && (
                         <span className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-[calc(100%+8px)] whitespace-nowrap rounded-[8px] border border-[#38383a] bg-[#1c1c1e] px-2.5 py-1.5 text-[11.5px] font-medium text-white shadow-lg">
                           {spot.title}

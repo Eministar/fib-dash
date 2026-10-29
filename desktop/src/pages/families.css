@@ -1,0 +1,9 @@
+.family-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-block: 16px; }
+.family-toolbar label { display: grid; gap: 6px; min-width: 200px; }
+.family-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-block: 16px; }
+.family-card { padding: 20px; min-width: 0; overflow-wrap: anywhere; }
+.family-card h2, .family-card h3 { margin: 0 0 16px; }
+.family-card dl { display: grid; gap: 6px; }
+.family-card dt { color: var(--text-secondary); font-size: 12px; }
+.family-card dd { margin: 0 0 10px; }
+.family-notes { white-space: pre-wrap; }

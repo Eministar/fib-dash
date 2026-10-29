@@ -51,6 +51,7 @@
         <button class="nav-item" data-route="news" role="listitem"><i data-icon="megaphone"></i><span>Neuigkeiten</span><span class="nav-badge" id="nav-news-badge" hidden></span></button>
         <button class="nav-item" data-route="bodycam" data-tool="bodycam" role="listitem"><i data-icon="videoClip"></i><span>Bodycam</span></button>
         <button class="nav-item" data-route="investigations" data-tool="investigations" role="listitem"><i data-icon="documentSearch"></i><span>Ermittlungsakten</span></button>
+        <button class="nav-item" data-route="families" data-tool="investigations" role="listitem"><i data-icon="peopleTeam"></i><span>Familienregister</span></button>
         <button class="nav-item" data-route="agents" data-tool="agents" role="listitem"><i data-icon="peopleTeam"></i><span>Agents</span></button>
         <button class="nav-item" data-route="killclips" data-tool="killClips" role="listitem"><i data-icon="target"></i><span>Kill-Clips</span></button>
         <button class="nav-item" data-route="duty" data-tool="dutyTimes" role="listitem"><i data-icon="timer"></i><span>Dienstzeiten</span></button>
@@ -111,6 +112,18 @@
         <fluent-message-bar id="capture-error" intent="error" hidden></fluent-message-bar>
         <fluent-message-bar id="upload-success" intent="success" hidden></fluent-message-bar>
 
+        <section class="card" aria-label="Clip-Posteingang" style="padding:16px;margin-bottom:16px">
+          <h2 class="type-subtitle">Clip-Posteingang</h2>
+          <p class="type-caption muted">Entwürfe bleiben auf diesem Gerät gespeichert. Originaldateien im Clip-Ordner behalten.</p>
+          <div class="toolbar" style="flex-wrap:wrap;margin-top:12px">
+            <fluent-button id="inbox-select-all">Alle auswählen</fluent-button>
+            <fluent-button id="inbox-assign">Auswahl der gewählten Akte zuordnen</fluent-button>
+            <fluent-button id="inbox-upload" appearance="primary">Auswahl hochladen / wiederholen</fluent-button>
+            <fluent-button id="inbox-pause">Warteschlange pausieren</fluent-button>
+          </div>
+          <p id="inbox-message" role="status"></p>
+          <div id="inbox-list"></div>
+        </section>
         <div id="clip-editor" class="clip-editor" hidden>
           <!-- Player mit Schnitt-Zeitleiste -->
           <div class="card player-card">
@@ -221,7 +234,7 @@
             </div>
             <fluent-message-bar id="upload-error" intent="error" hidden></fluent-message-bar>
             <div class="actions">
-              <span class="type-caption muted" id="queue-label"></span>
+              <span class="type-caption muted" id="queue-label"></span><fluent-button id="inbox-save">Für später speichern</fluent-button>
               <span class="spacer"></span>
               <fluent-button id="discard-button">Verwerfen</fluent-button>
               <fluent-button id="cancel-upload-button" hidden>Abbrechen</fluent-button>
@@ -282,6 +295,7 @@
       </section>
 
       <!-- Agents -->
+      <section class="page wide" data-page="families" hidden><div id="families-root"></div></section>
       <section class="page wide" data-page="agents" hidden>
         <div id="ag-list-view">
           <header class="page-header">

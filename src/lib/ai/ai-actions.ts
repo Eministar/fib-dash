@@ -13,7 +13,7 @@ import {
 import { nextPersonNumber } from '../investigations/investigations-server'
 import { buildAgentNameMatcher, normalizePersonName } from '../storage-logs/storage-logs'
 import type { AiChanges, AiThreadPlan } from './ai-prompts'
-import { hasChanges, NO_ACTIONS, splitName, type Named, type Participant, type ProposalActions } from './ai-proposal-actions'
+import { hasChanges, readActions, splitName, type Named, type Participant, type ProposalActions } from './ai-proposal-actions'
 
 /**
  * KI-Vorschlag aus dem Akten-Beitrag gegen die Datenbank auflösen und
@@ -42,7 +42,7 @@ export async function resolvePlan(plan: Pick<AiThreadPlan, 'kind' | 'changes'>, 
       vehicles: { select: { vehicleId: true } },
     },
   })
-  const actions: ProposalActions = { ...NO_ACTIONS, entryKind: plan.kind ?? 'NOTE', attachments: context.attachments, unresolved: [] }
+  const actions: ProposalActions = { ...readActions(null), entryKind: plan.kind ?? 'NOTE', attachments: context.attachments, unresolved: [] }
 
   if (changes.status && changes.status !== investigation.status) actions.status = { from: investigation.status, to: changes.status }
   if (changes.priority && changes.priority !== investigation.priority) actions.priority = { from: investigation.priority, to: changes.priority }
@@ -91,7 +91,19 @@ export async function resolvePlan(plan: Pick<AiThreadPlan, 'kind' | 'changes'>, 
 
   // Personen: vorhandene im Register verknüpfen, sonst neu anlegen. Mehrdeutiges bleibt offen.
   const linked = new Set(investigation.persons.map((row) => `${row.personId}:${row.role}`))
+  const removing = new Set((changes.removePersons ?? []).map(normalizePersonName))
+  actions.removePersons = []
+  for (const name of changes.removePersons ?? []) {
+    const candidates = await prisma.person.findMany({
+      where: { investigations: { some: { investigationId: context.investigationId } } },
+      select: { id: true, firstName: true, lastName: true },
+    })
+    const hits = candidates.filter(person => normalizePersonName(`${person.firstName} ${person.lastName}`) === normalizePersonName(name))
+    if (hits.length === 1) actions.removePersons.push({ id: hits[0].id, name })
+    else actions.unresolved.push(`Person „${name}“ (nicht eindeutig in dieser Akte)`)
+  }
   for (const { name, role } of changes.persons) {
+    if (removing.has(normalizePersonName(name))) continue
     // Ein FIB-Agent („Ben Geber“) wird Beteiligter am Eintrag, keine Person in der Akte.
     const agentId = matchAgent?.(name)
     if (agentId) {
@@ -177,7 +189,12 @@ export async function applyActions(investigationId: string, actions: ProposalAct
     done.push(`Ermittler entfernt: ${actions.removeAssignees.map((agent) => agent.name).join(', ')}`)
   }
 
+  if (actions.removePersons?.length) {
+    await prisma.investigationPerson.deleteMany({ where: { investigationId, personId: { in: actions.removePersons.map(person => person.id) } } })
+    done.push(`Personen aus der Akte entfernt: ${actions.removePersons.map(person => person.name).join(', ')}`)
+  }
   for (const person of actions.persons) {
+    if (actions.removePersons?.some(removed => removed.id === person.personId)) continue
     let personId = person.personId
     if (!personId) {
       const personNumber = await nextPersonNumber()

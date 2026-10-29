@@ -11,8 +11,18 @@ export const MAP_CATEGORIES = [
   { id: 'waffen', label: 'Waffen', hex: '#ff3333', icon: '🔫' },
   { id: 'munition', label: 'Munition', hex: '#ffcc00', icon: '🎯' },
   { id: 'schwarzmarkt', label: 'Schwarzmarkt', hex: '#888888', icon: '🖤' },
+  { id: 'route', label: 'Route', hex: '#38bdf8', icon: '↗' },
+  { id: 'processor', label: 'Verarbeiter', hex: '#f59e0b', icon: '⚙' },
+  { id: 'estate', label: 'Anwesen', hex: '#2dd4bf', icon: '⌂' },
+  { id: 'faction', label: 'Fraktion', hex: '#f472b6', icon: '⚑' },
   { id: 'other', label: 'Sonstiges', hex: '#aaaaaa', icon: '📍' },
 ] as const
+
+export const MAP_LAYERS = [{ id: 'routes', label: 'Routen & Verarbeiter' }, { id: 'estates', label: 'Anwesen & Fraktionen' }] as const
+export type MapLayer = (typeof MAP_LAYERS)[number]['id']
+export function mapLayer(category: string): MapLayer {
+  return category === 'estate' || category === 'faction' ? 'estates' : 'routes'
+}
 
 export type MapCategory = (typeof MAP_CATEGORIES)[number]['id']
 

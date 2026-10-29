@@ -84,6 +84,7 @@ export type AiChanges = {
   leadAgent: string | null
   addAssignees: string[]
   removeAssignees: string[]
+  removePersons?: string[]
   persons: { name: string; role: typeof AI_PERSON_ROLE_VALUES[number] }[]
   vehicles: string[]
   /** FIB-Agents, die am Geschehen beteiligt sind oder genannt werden. */
@@ -100,6 +101,7 @@ export function readChanges(value: unknown): AiChanges {
     leadAgent: textOrNull(raw.leadAgent, 120),
     addAssignees: textList(raw.addAssignees),
     removeAssignees: textList(raw.removeAssignees),
+    removePersons: textList(raw.removePersons),
     persons: (Array.isArray(raw.persons) ? raw.persons : []).flatMap((item) => {
       const person = (item && typeof item === 'object' ? item : {}) as { name?: unknown; role?: unknown }
       const name = textOrNull(person.name, 200)
@@ -139,6 +141,8 @@ const THREAD_TASK = [
   `- "status": ${AI_STATUS_VALUES.join(', ')} (offen, in Bearbeitung, ruhend, abgeschlossen, archiviert)`,
   `- "priority": ${AI_PRIORITY_VALUES.join(', ')}`,
   '- "title": neuer Aktentitel, nur wenn ausdrücklich umbenannt werden soll',
+  '- "removePersons": vollständige Namen der Personen, die ausdrücklich aus dieser Akte entfernt werden sollen. Niemals gleichzeitig in "persons" aufnehmen. Entfernen betrifft nur die Aktenverknüpfung, nicht das Personenregister. Bei unklaren Namen nachfragen über "missing".',
+  '- Alte Hinzufügungen niemals wiederholen. Nur die aktuelle Nachricht ausführen; Kontext ist kein neuer Auftrag.',
   '- "leadAgent": Name des neuen Fallführers; „ich“ meint den Verfasser',
   '- "addAssignees" / "removeAssignees": Namen von Agents, die mitermitteln bzw. nicht mehr mitermitteln',
   `- "persons": [{"name": "Vorname Nachname", "role": eine von ${AI_PERSON_ROLE_VALUES.join(', ')}}] – Personen, die zur Akte gehören (Verdächtige, Zeugen …)`,
@@ -150,14 +154,14 @@ const THREAD_TASK = [
 const THREAD_EXAMPLE = [
   'Beispiel',
   'Eingabe: diego vasquez am pier festgenommen, hat ausgesagt dass rosa die ware bringt. ich übernehm die fallführung, prio hoch',
-  'Antwort: {"title": "Festnahme Diego Vasquez", "content": "Diego Vasquez wurde am Pier festgenommen. Er sagte aus, dass Rosa die Ware bringe.", "kind": "OPERATION", "missing": [], "changes": {"status": null, "priority": "HIGH", "title": null, "leadAgent": "ich", "addAssignees": [], "removeAssignees": [], "persons": [{"name": "Diego Vasquez", "role": "SUSPECT"}], "vehicles": [], "agents": []}}',
+  'Antwort: {"title": "Festnahme Diego Vasquez", "content": "Diego Vasquez wurde am Pier festgenommen. Er sagte aus, dass Rosa die Ware bringe.", "kind": "OPERATION", "missing": [], "changes": {"status": null, "priority": "HIGH", "title": null, "leadAgent": "ich", "addAssignees": [], "removeAssignees": [], "removePersons": [], "persons": [{"name": "Diego Vasquez", "role": "SUSPECT"}], "vehicles": [], "agents": []}}',
   '',
   'Beispiel (Agent-Liste enthält „Agent Geber“)',
   'Eingabe: hab mit ben geber den laden observiert, nix passiert',
-  'Antwort: {"title": "Observation des Ladens", "content": "Der Laden wurde zusammen mit Agent Geber observiert. Es gab keine Auffälligkeiten.", "kind": "OBSERVATION", "missing": [], "changes": {"status": null, "priority": null, "title": null, "leadAgent": null, "addAssignees": [], "removeAssignees": [], "persons": [], "vehicles": [], "agents": ["Agent Geber"]}}',
+  'Antwort: {"title": "Observation des Ladens", "content": "Der Laden wurde zusammen mit Agent Geber observiert. Es gab keine Auffälligkeiten.", "kind": "OBSERVATION", "missing": [], "changes": {"status": null, "priority": null, "title": null, "leadAgent": null, "addAssignees": [], "removeAssignees": [], "removePersons": [], "persons": [], "vehicles": [], "agents": ["Agent Geber"]}}',
 ]
 
-const THREAD_FORMAT = '{"title": "…", "content": "…", "kind": "NOTE", "missing": [], "changes": {"status": null, "priority": null, "title": null, "leadAgent": null, "addAssignees": [], "removeAssignees": [], "persons": [], "vehicles": [], "agents": []}}'
+const THREAD_FORMAT = '{"title": "…", "content": "…", "kind": "NOTE", "missing": [], "changes": {"status": null, "priority": null, "title": null, "leadAgent": null, "addAssignees": [], "removeAssignees": [], "removePersons": [], "persons": [], "vehicles": [], "agents": []}}'
 
 /** Systemprompt: Rolle, harte Regeln gegen Erfindungen und Längen, Ausgabeformat. */
 export function buildSystemPrompt(kind: AiSuggestionKind, source: AiSource = 'keywords') {

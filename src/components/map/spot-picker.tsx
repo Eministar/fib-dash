@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
-import { mapCategory, type MapSpot } from '@/lib/investigations/map-spots'
+import { MAP_LAYERS, mapLayer, type MapLayer, mapCategory, type MapSpot } from '@/lib/investigations/map-spots'
 import { CityMap } from '@/components/map/city-map'
 import { SpotEditorDialog, type SpotFormValues } from '@/components/map/spot-editor-dialog'
 import { matchesSearch } from '@/lib/core/search-match'
@@ -23,7 +23,8 @@ export type PickedSpot = { id: string; title: string; category: string }
  * wie die Kartenseite – ein zweiter, kleinerer Kartenrenderer würde nur
  * auseinanderlaufen.
  */
-export function SpotPickerField({ value, onChange, canCreate }: { value: PickedSpot[]; onChange: (spots: PickedSpot[]) => void; canCreate: boolean }) {
+export function SpotPickerField({ value, onChange, canCreate, initialLayer = 'routes' }: { value: PickedSpot[]; onChange: (spots: PickedSpot[]) => void; canCreate: boolean; initialLayer?: MapLayer }) {
+  const [layer, setLayer] = useState<MapLayer>(initialLayer)
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [pendingPosition, setPendingPosition] = useState<{ x: number; y: number } | null>(null)
@@ -38,7 +39,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
       ? value.filter((entry) => entry.id !== spot.id)
       : [...value, { id: spot.id, title: spot.title, category: spot.category }])
 
-  const visible = spots.filter((spot) => matchesSearch(search, [spot.title, mapCategory(spot.category).label]))
+  const visible = spots.filter((spot) => mapLayer(spot.category) === layer && matchesSearch(search, [spot.title, mapCategory(spot.category).label]))
 
   // Fehler zeigt der Editor-Dialog selbst an – deshalb hier bewusst kein catch.
   const createSpot = async (values: SpotFormValues) => {
@@ -84,6 +85,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
       </Button>
 
       <Modal open={open} onClose={() => { setOpen(false); setPlacing(false); setPendingPosition(null) }} title="Kartenpunkte verknüpfen" size="xl">
+        <div className="mb-3 flex flex-wrap gap-2">{MAP_LAYERS.map(item => <Button key={item.id} type="button" variant={layer === item.id ? 'primary' : 'outline'} aria-pressed={layer === item.id} onClick={() => { setLayer(item.id); setPendingPosition(null); setPlacing(false) }}>{item.label}</Button>)}</div>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="h-[52dvh] min-h-[320px]">
             <CityMap
@@ -137,6 +139,7 @@ export function SpotPickerField({ value, onChange, canCreate }: { value: PickedS
       </Modal>
 
       <SpotEditorDialog
+        layer={layer}
         open={Boolean(pendingPosition)}
         spot={null}
         position={pendingPosition}

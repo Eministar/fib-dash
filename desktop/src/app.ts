@@ -13,6 +13,7 @@ import { initHome } from './pages/home'
 import { loadOverview } from './pages/overview'
 import { hideNews, initNews, refreshNewsBadge, showNews } from './pages/news'
 import { initInvestigations, showInvestigations } from './pages/investigations'
+import { initFamilies, showFamilies } from './pages/families'
 import { initAgents, showAgents } from './pages/agents'
 import { navigation, notifyStateChange, state, type Route } from './store'
 import { initSearch, openSearch } from './ui/search-palette'
@@ -47,6 +48,7 @@ function go(next: Route) {
   if (next === 'news') showNews()
   if (next === 'investigations') showInvestigations()
   if (next === 'agents') showAgents()
+  if (next === 'families') showFamilies()
   if (next === 'killclips') showKillClips()
   if (next === 'tweaks') showTweaks()
 }
@@ -208,6 +210,7 @@ export async function startApp() {
   initDuty()
   initInvestigations()
   initAgents()
+  initFamilies()
   initKillClips()
   initSelfClip()
   initTweaks()

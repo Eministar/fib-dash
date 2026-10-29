@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Textarea } from '@/components/ui/textarea'
-import { MAP_CATEGORIES, MAP_SPOT_LIMITS, type MapCategory, type MapSpot } from '@/lib/investigations/map-spots'
+import { MAP_CATEGORIES, MAP_SPOT_LIMITS, mapLayer, type MapLayer, type MapCategory, type MapSpot } from '@/lib/investigations/map-spots'
 
 export interface SpotFormValues {
   title: string
@@ -30,12 +30,14 @@ function initialValues(spot: MapSpot | null): SpotFormValues {
  */
 export function SpotEditorDialog({
   open,
+  layer,
   spot,
   position,
   saving,
   onClose,
   onSubmit,
 }: {
+  layer?: MapLayer
   open: boolean
   spot: MapSpot | null
   position: { x: number; y: number } | null
@@ -50,10 +52,10 @@ export function SpotEditorDialog({
 
   useEffect(() => {
     if (!open) return
-    setForm(initialValues(spot))
+    setForm({ ...initialValues(spot), category: spot?.category ?? (layer === 'estates' ? 'estate' : 'route') })
     setIconTouched(Boolean(spot?.icon))
     setFailure('')
-  }, [open, spot])
+  }, [open, spot, layer])
 
   const selectCategory = (next: MapCategory) => {
     setForm((prev) => ({
@@ -124,7 +126,7 @@ export function SpotEditorDialog({
         <fieldset>
           <legend className="mb-1.5 block text-[12.5px] font-medium text-[#98989d]">Kategorie</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {MAP_CATEGORIES.map((category) => (
+            {MAP_CATEGORIES.filter(category => spot || !layer || mapLayer(category.id) === layer).map((category) => (
               <button
                 key={category.id}
                 type="button"

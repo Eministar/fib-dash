@@ -1,5 +1,8 @@
 'use client'
 
+import { useAuth } from '@/context/auth-context'
+import { hasPermission } from '@/lib/permissions'
+import { FamilyDossierField } from '@/components/leadership/family-dossier-field'
 import { useState } from 'react'
 import Link from 'next/link'
 import { LocateFixed, Move, Pencil, Plus, Trash2 } from 'lucide-react'
@@ -38,11 +41,22 @@ export function SpotDetailDialog({
   onDelete: () => void
   onChanged: () => void
 }) {
+  const { user } = useAuth()
+  const canLink = hasPermission(user, 'investigations:manage')
   const category = spot ? mapCategory(spot.category) : null
   const [note, setNote] = useState('')
   const [observedAt, setObservedAt] = useState(localDateTimeValue)
   const [failure, setFailure] = useState('')
   const { execute, loading: savingNote } = useApi()
+
+  const linkDossier = async (dossierId: string, linked: boolean) => {
+    if (!spot) return
+    setFailure('')
+    try {
+      await execute(`/api/map/spots/${spot.id}/dossiers`, { method: 'POST', body: JSON.stringify({ dossierId, linked }) })
+      onChanged()
+    } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Verknüpfung fehlgeschlagen') }
+  }
 
   const addObservation = async () => {
     if (!spot || !note.trim()) return
@@ -91,7 +105,7 @@ export function SpotDetailDialog({
               className="absolute grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-[#f5f5f7] text-[15px] leading-none shadow-md"
               style={{ background: category.hex, left: `${spot.x}%`, top: `${spot.y}%` }}
             >
-              {spot.icon}
+              {spot.icon ?? category.icon}
             </span>
           </div>
 
@@ -120,6 +134,7 @@ export function SpotDetailDialog({
                       >
                         {dossier.title}
                       </Link>
+                      {canLink && <Button size="sm" variant="ghost" disabled={savingNote} onClick={() => linkDossier(dossier.id, false)}>Verknüpfung lösen</Button>}
                     </li>
                   ))}
                   {spot.investigations.map((investigation) => (
@@ -135,6 +150,8 @@ export function SpotDetailDialog({
                 </ul>
               </div>
             )}
+
+            {canLink && <div className="mt-3"><FamilyDossierField disabled={savingNote} onChange={id => { if (id) void linkDossier(id, true) }} /></div>}
 
             {/* Chronologie des Punkts: was hier wann beobachtet wurde. Belegt
                 über die Zeit, wer eine Route oder einen Sammler beansprucht. */}

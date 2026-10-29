@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { List, MapPin } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
@@ -12,7 +12,7 @@ import { useAuth } from '@/context/auth-context'
 import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { hasPermission } from '@/lib/permissions'
-import type { MapSpot } from '@/lib/investigations/map-spots'
+import { MAP_LAYERS, mapLayer, type MapLayer, type MapSpot } from '@/lib/investigations/map-spots'
 import { CityMap, type CityMapHandle } from '@/components/map/city-map'
 import { MapLegend } from '@/components/map/map-legend'
 import { SpotDetailDialog } from '@/components/map/spot-detail-dialog'
@@ -31,6 +31,7 @@ export function MapWorkspace() {
   const canView = hasPermission(user, 'map:view')
   const canManage = hasPermission(user, 'map:manage')
 
+  const deepLinkOpened = useRef(false)
   const mapRef = useRef<CityMapHandle | null>(null)
   const [editorSpot, setEditorSpot] = useState<MapSpot | null>(null)
   const [pendingPosition, setPendingPosition] = useState<{ x: number; y: number } | null>(null)
@@ -38,16 +39,23 @@ export function MapWorkspace() {
   const [detailSpotId, setDetailSpotId] = useState<string | null>(null)
   const [movingSpot, setMovingSpot] = useState<MapSpot | null>(null)
   const [listOpen, setListOpen] = useState(false)
+  const [layer, setLayer] = useState<MapLayer>('routes')
   const [dossierId, setDossierId] = useState<string | null>(null)
 
   const { data, loading, refetch } = useFetch<MapSpot[]>(canView ? '/api/map/spots' : null)
   const allSpots = data ?? []
   // Der Filter wirkt auf Karte, Legende und Liste gemeinsam – sonst zeigt die
   // Legende Zahlen, die auf der Karte nicht zu finden sind.
-  const spots = filterSpotsByDossier(allSpots, dossierId)
+  const spots = filterSpotsByDossier(allSpots.filter(spot => mapLayer(spot.category) === layer), dossierId)
   // Aus der Liste abgeleitet statt kopiert: nach dem Nachladen zeigt der
   // Dialog sofort die neuen Beobachtungen.
   const detailSpot = allSpots.find((spot) => spot.id === detailSpotId) ?? null
+
+  useEffect(() => {
+    const selected = new URLSearchParams(window.location.search).get('spot')
+    const spot = data?.find(item => item.id === selected)
+    if (spot && !deepLinkOpened.current) { deepLinkOpened.current = true; setLayer(mapLayer(spot.category)); setDetailSpotId(spot.id) }
+  }, [data])
 
   const focus = useCallback((spot: MapSpot) => {
     mapRef.current?.focusSpot(spot.id)
@@ -82,6 +90,7 @@ export function MapWorkspace() {
       editing ? 'Markierung gespeichert' : 'Markierung gesetzt',
       editing ? 'Die Änderungen wurden übernommen.' : 'Die Markierung wurde angelegt.',
     )
+    setLayer(mapLayer(values.category))
     closeEditor()
     setDetailSpotId(null)
     await refetch()
@@ -119,11 +128,11 @@ export function MapWorkspace() {
     <div className="mx-auto flex min-h-0 max-w-[1600px] flex-col pb-2">
       <PageHeader
         eyebrow="Einsatzmittel"
-        title="Karte"
+        title="Karten"
         description={
           canManage
-            ? 'Routen, Schwarzmarkt-Orte und Beobachtungen. Klicke auf eine freie Stelle, um eine Nadel zu setzen.'
-            : 'Routen, Schwarzmarkt-Orte und Beobachtungen. Rechtsklick auf eine Nadel öffnet die Details.'
+            ? 'Routen, Verarbeiter, Anwesen und Fraktionen auf getrennten Karten. Klicke auf eine freie Stelle, um eine Nadel zu setzen.'
+            : 'Routen, Verarbeiter, Anwesen und Fraktionen auf getrennten Karten. Rechtsklick auf eine Nadel öffnet die Details.'
         }
         action={
           <Button variant="outline" className="lg:hidden" onClick={() => setListOpen(true)}>
@@ -133,6 +142,11 @@ export function MapWorkspace() {
         }
       />
 
+      <div className="mb-4 flex flex-wrap gap-2" aria-label="Karte auswählen">
+        {MAP_LAYERS.map(item => <Button key={item.id} variant={layer === item.id ? 'primary' : 'outline'} aria-pressed={layer === item.id} onClick={() => {
+          setLayer(item.id); setMovingSpot(null); setDetailSpotId(null); setDossierId(null); closeEditor()
+        }}>{item.label} ({allSpots.filter(spot => mapLayer(spot.category) === item.id).length})</Button>)}
+      </div>
       {loading ? (
         <PageLoader />
       ) : (
@@ -154,7 +168,7 @@ export function MapWorkspace() {
 
           <div className="hidden min-h-0 flex-col gap-4 lg:flex">
             <DossierFilter spots={allSpots} value={dossierId} onChange={setDossierId} />
-            <MapLegend spots={spots} />
+            <MapLegend spots={spots} layer={layer} />
             <SpotList
               spots={spots}
               className="min-h-0 flex-1"
@@ -185,6 +199,7 @@ export function MapWorkspace() {
       </Modal>
 
       <SpotEditorDialog
+        layer={layer}
         open={editorOpen}
         spot={editorSpot}
         position={editorSpot ? { x: editorSpot.x, y: editorSpot.y } : pendingPosition}
@@ -220,17 +235,17 @@ export function MapWorkspace() {
 
       {spots.length === 0 && !loading && dossierId && (
         <p className="mt-3 text-[12px] text-[#8e8e93]">
-          Diese Familienakte hat keine Kartenpunkte.{' '}
+          Diese Familienakte hat auf dieser Karte keine Punkte.{' '}
           <button type="button" className="text-[#c4b5fd] hover:underline" onClick={() => setDossierId(null)}>
             Filter lösen
           </button>
         </p>
       )}
 
-      {allSpots.length === 0 && !loading && canManage && (
+      {spots.length === 0 && !dossierId && !loading && canManage && (
         <p className="mt-3 flex items-center gap-2 text-[12px] text-[#8e8e93]">
           <MapPin className="h-3.5 w-3.5" />
-          Noch keine Markierungen. Klicke auf die Karte, um die erste zu setzen.
+          Auf dieser Karte sind noch keine Markierungen. Klicke auf die Karte, um die erste zu setzen.
         </p>
       )}
     </div>

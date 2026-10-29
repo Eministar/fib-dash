@@ -19,6 +19,7 @@ interface Tool {
 
 // Neue Werkzeuge kommen hier dazu (Seite in index.html + Modul in pages/).
 const tools: Tool[] = [
+  { icon: 'peopleTeam', title: 'Familienregister', description: 'Familienakten, Anwesen, Mitglieder und verknüpfte Einsatzakten.', route: 'families', available: () => !!state.context?.tools.investigations },
   {
     icon: 'videoClip',
     title: 'Bodycam',

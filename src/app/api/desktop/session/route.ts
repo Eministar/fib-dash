@@ -69,7 +69,7 @@ export async function GET() {
     const avatars = await resolveAgentAvatarUrls(agents)
 
     return success({
-      user: { displayName: user.displayName, avatarUrl: user.avatarUrl },
+      user: { id: user.id, displayName: user.displayName, avatarUrl: user.avatarUrl },
       /** Damit die App nur anbietet, was das Konto auch darf (Bearbeiten, Löschen …). */
       permissions: user.permissions,
       canUpload,

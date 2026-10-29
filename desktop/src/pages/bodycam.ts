@@ -5,6 +5,7 @@ import { backend, UNAUTHORIZED, type ClipInfo, type UploadProgress } from '../ba
 import {
   $,
   errorText,
+  escapeHtml,
   fillOptions,
   selectValue,
   showMessage,
@@ -15,6 +16,7 @@ import {
   type ValueElement,
 } from '../dom'
 import { clipTitle, displayHotkey, formatBytes, formatClock, formatDateTime } from '../format'
+import { readInbox, type InboxClip } from '../clip-inbox'
 import { icons } from '../icons'
 import { createCase } from '../investigations/create-case'
 import { autoRefresh } from '../ui/auto-refresh'
@@ -24,7 +26,61 @@ import { can, navigation, onStateChange, state } from '../store'
 const TRIM_TOLERANCE = 0.25
 const MIN_RANGE = 1
 
-const queue: ClipInfo[] = []
+const queue: InboxClip[] = []
+const selectedClips = new Set<string>()
+let pendingUploads: string[] = []
+let inboxKey: string | null = null
+let inboxLoaded = false
+const draftFields = ['f-title', 'f-location', 'f-tags', 'f-description', 'f-agent', 'f-target', 'f-record-kind', 'f-record-agent', 'f-investigation']
+
+function persistInbox() {
+  if (!inboxKey || !inboxLoaded) return
+  try { localStorage.setItem(inboxKey, JSON.stringify(queue)) }
+  catch { showMessage('capture-error', 'Posteingang konnte nicht gespeichert werden. Bitte freien Speicher prüfen.') }
+}
+
+function saveDraft() {
+  const clip = queue[0]
+  if (!clip || busy) return
+  clip.draft = { fields: Object.fromEntries(draftFields.map(id => [id, String($<ValueElement>(id).value ?? '')])), ...trim }
+  persistInbox()
+}
+
+function restoreInbox() {
+  const user = state.context?.user
+  const key = user?.id ? `fib-clip-inbox:${user.id}` : state.context?.ownAgent?.id ? `fib-clip-inbox:agent:${state.context.ownAgent.id}` : null
+  if (key === inboxKey) return
+  queue.length = 0
+  selectedClips.clear()
+  pendingUploads = []
+  inboxKey = key
+  inboxLoaded = false
+  try {
+    if (key) queue.push(...readInbox(localStorage.getItem(key)))
+    inboxLoaded = true
+  } catch (error) { showMessage('capture-error', errorText(error)) }
+  openClip()
+}
+
+function focusClip(path: string) {
+  if (busy) return
+  saveDraft()
+  const index = queue.findIndex(clip => clip.path === path)
+  if (index < 0) return
+  queue.unshift(...queue.splice(index, 1))
+  openClip()
+}
+
+async function runUploads() {
+  if (busy) return
+  const path = pendingUploads.shift()
+  if (!path) return
+  focusClip(path)
+  // Fluent übernimmt neue Auswahlwerte erst nach seinem Renderdurchlauf.
+  await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  await save()
+}
+
 let busy = false
 let creatingCase = false
 const trim = { duration: 0, start: 0, end: 0 }
@@ -80,6 +136,7 @@ function renderContext() {
   fillOptions('f-agent-list', context.agents)
   renderIdle()
   updateGpuWarning()
+  restoreInbox()
 }
 
 function renderInvestigations(selected = $<DropdownElement>('f-investigation').value) {
@@ -113,16 +170,35 @@ async function createClipCase() {
 // ── Clip laden ───────────────────────────────────────────────────────
 
 function addClip(clip: ClipInfo) {
+  if (!state.context) return
   if (queue.some((queued) => queued.path === clip.path)) return
   queue.push(clip)
+  persistInbox()
   showMessage('upload-success', null)
   if (queue.length === 1) openClip()
   else renderQueue()
 }
 
 function renderQueue() {
+  $('inbox-list').innerHTML = queue.map(clip => {
+    const assigned = clip.draft?.fields['f-investigation'] || (clip.draft?.fields['f-target'] === 'record' && clip.draft.fields['f-record-agent'])
+    const label = clip.uploadState === 'uploading' ? 'Wird hochgeladen …' : clip.uploadState === 'failed' ? `Fehlgeschlagen: ${clip.failure || 'Bitte erneut versuchen'}` : assigned ? 'Zugeordnet · bereit zum Hochladen' : 'Noch nicht zugeordnet'
+    return `<div class="setting-row" style="gap:12px"><input type="checkbox" data-inbox-select="${escapeHtml(clip.path)}" aria-label="${escapeHtml(clip.name)} auswählen" ${selectedClips.has(clip.path) ? 'checked' : ''}><button type="button" data-inbox-open="${escapeHtml(clip.path)}" style="flex:1;text-align:left;background:none;border:0;padding:12px" ${busy ? 'disabled' : ''}><strong>${escapeHtml(clip.draft?.fields['f-title'] || clip.name)}</strong><br><span class="type-caption muted">${escapeHtml(label)} · ${formatBytes(clip.sizeBytes)}</span></button></div>`
+  }).join('') || '<p class="muted">Noch keine Clips. Aufnahme starten oder eine Videodatei auswählen.</p>'
   const rest = queue.length - 1
   $('queue-label').textContent = rest > 0 ? `Danach noch ${rest} ${rest === 1 ? 'Clip' : 'Clips'} in der Warteschlange` : ''
+}
+
+const selectionVersions = new Map<string, number>()
+function setClipSelection(id: string, value: string) {
+  const version = (selectionVersions.get(id) ?? 0) + 1
+  selectionVersions.set(id, version)
+  const apply = (attempts: number) => {
+    if (selectionVersions.get(id) !== version) return
+    try { $<DropdownElement>(id).value = value || null; return } catch { /* Fluent ist noch nicht bereit. */ }
+    if (attempts) requestAnimationFrame(() => apply(attempts - 1))
+  }
+  apply(30)
 }
 
 function openClip() {
@@ -145,12 +221,21 @@ function openClip() {
   $<ValueElement>('f-location').value = ''
   $<ValueElement>('f-tags').value = ''
   $<ValueElement>('f-description').value = ''
-  selectValue($<DropdownElement>('f-agent'), state.context?.ownAgent?.id)
-  selectValue($<DropdownElement>('f-target'), state.context?.canUpload ? 'investigation' : 'record')
-  selectValue($<DropdownElement>('f-record-kind'), 'POSITIVE')
+  setClipSelection('f-agent', state.context?.ownAgent?.id ?? '')
+  setClipSelection('f-target', state.context?.canUpload ? 'investigation' : 'record')
+  setClipSelection('f-record-kind', 'POSITIVE')
+  setClipSelection('f-record-agent', '')
   applyTarget()
-  const last = state.settings?.settings.lastInvestigationId
-  if (state.context?.investigations.some((i) => i.id === last)) selectValue($<DropdownElement>('f-investigation'), last)
+  setClipSelection('f-investigation', '')
+  if (clip.draft) {
+    Object.assign(trim, { duration: clip.draft.duration, start: clip.draft.start, end: clip.draft.end })
+    for (const [id, value] of Object.entries(clip.draft.fields)) {
+      if (!draftFields.includes(id)) continue
+      if ($(id).tagName === 'FLUENT-DROPDOWN') setClipSelection(id, value)
+      else $<ValueElement>(id).value = value
+    }
+  }
+  applyTarget()
   showMessage('upload-error', null)
   renderTrim()
 }
@@ -163,14 +248,14 @@ function recordingStart(clip: ClipInfo) {
 async function pickClip() {
   const settings = state.settings
   const path = await open({
-    multiple: false,
+    multiple: true,
     directory: false,
     defaultPath: settings?.settings.clipDir || settings?.defaultClipDir,
     filters: [{ name: 'Videos', extensions: ['mp4', 'mkv', 'mov', 'webm'] }],
   })
-  if (typeof path !== 'string') return
+  if (!path) return
   try {
-    addClip(await backend.inspectClip(path))
+    for (const file of Array.isArray(path) ? path : [path]) addClip(await backend.inspectClip(file))
   } catch (error) {
     showMessage('capture-error', errorText(error))
   }
@@ -251,10 +336,12 @@ function secondsAt(clientX: number) {
 }
 
 function moveHandle(which: 'start' | 'end', seconds: number) {
+  if (busy) return
   if (which === 'start') trim.start = Math.min(Math.max(0, seconds), trim.end - MIN_RANGE)
   else trim.end = Math.max(Math.min(trim.duration, seconds), trim.start + MIN_RANGE)
   video().currentTime = which === 'start' ? trim.start : trim.end
   renderTrim()
+  saveDraft()
 }
 
 function bindTrimControls() {
@@ -346,6 +433,7 @@ function renderUploadProgress(progress: UploadProgress) {
 
 function setBusy(active: boolean) {
   busy = active
+  for (const id of draftFields) ($<ValueElement>(id) as ValueElement & { disabled: boolean }).disabled = active
   $<ButtonElement>('f-investigation-new').disabled = active || creatingCase
   if (!active) $('progress-row').hidden = true
   $('cancel-upload-button').hidden = !active
@@ -354,11 +442,13 @@ function setBusy(active: boolean) {
   for (const id of ['set-start', 'set-end', 'reset-trim']) ($(id) as ButtonElement).disabled = active
   progressStartedAt = 0
   updateGpuWarning()
+  renderQueue()
 }
 
 async function save() {
   const clip = queue[0]
   if (!clip || busy) return
+  saveDraft()
   const toRecord = target() === 'record'
   const investigationId = toRecord ? null : $<DropdownElement>('f-investigation').value || null
   const recordAgentId = toRecord ? $<DropdownElement>('f-record-agent').value || null : null
@@ -375,24 +465,7 @@ async function save() {
   const trimmed = isTrimmed()
   const text = (id: string) => textOf(id) || null
   showMessage('upload-error', null)
-  setBusy(true)
-
-  let converted: ClipInfo | null = null
-  try {
-    let upload = clip
-    if (willConvert()) {
-      const verb = trimmed && quality !== 'original' ? 'zugeschnitten und komprimiert' : trimmed ? 'zugeschnitten' : 'komprimiert'
-      showProgress(`Clip wird ${verb} …`, 'Über die Grafikkarte', 0)
-      converted = await backend.convertClip(clip.path, {
-        start: trimmed ? trim.start : null,
-        end: trimmed ? trim.end : null,
-        duration: trim.duration,
-        quality,
-      })
-      upload = converted
-    }
-
-    await backend.uploadClip(upload.path, {
+  const metadata: import('../backend').ClipMeta = {
       investigationId,
       // Agent-Akte: neuer Eintrag mit demselben Titel, die Beschreibung wird sein Text.
       ...(recordAgentId
@@ -413,7 +486,31 @@ async function save() {
       durationSeconds: trim.duration ? trim.end - trim.start : clip.durationSeconds,
       tags: textOf('f-tags').split(',').map((tag) => tag.trim()).filter(Boolean),
       clientCompressed: quality !== 'original',
-    })
+    }
+
+  clip.uploadState = 'uploading'
+  clip.failure = undefined
+  persistInbox()
+  renderQueue()
+  setBusy(true)
+
+
+  let converted: ClipInfo | null = null
+  try {
+    let upload = clip
+    if (willConvert()) {
+      const verb = trimmed && quality !== 'original' ? 'zugeschnitten und komprimiert' : trimmed ? 'zugeschnitten' : 'komprimiert'
+      showProgress(`Clip wird ${verb} …`, 'Über die Grafikkarte', 0)
+      converted = await backend.convertClip(clip.path, {
+        start: trimmed ? trim.start : null,
+        end: trimmed ? trim.end : null,
+        duration: trim.duration,
+        quality,
+      })
+      upload = converted
+    }
+
+    await backend.uploadClip(upload.path, metadata)
 
     let place: string
     if (investigationId) {
@@ -425,20 +522,29 @@ async function save() {
       place = agent ? `die Agent-Akte von ${agent}` : 'die Agent-Akte'
     }
     queue.shift()
+    selectedClips.delete(clip.path)
+    persistInbox()
     openClip()
     showMessage('upload-success', `„${title}“ wurde in ${place} hochgeladen.`)
   } catch (error) {
+    clip.uploadState = 'failed'
+    clip.failure = errorText(error)
+    pendingUploads = []
+    persistInbox()
+    renderQueue()
     if (errorText(error) === UNAUTHORIZED) return navigation.signOut()
     showMessage('upload-error', errorText(error))
   } finally {
     if (converted) void backend.discardTrim(converted.path)
     setBusy(false)
+    if (pendingUploads.length) void runUploads()
   }
 }
 
 // ── Start ────────────────────────────────────────────────────────────
 
 export async function initBodycam() {
+  video().addEventListener('error', () => showMessage('upload-error', 'Vorschau nicht verfügbar. Prüfe, ob die Originaldatei noch im Clip-Ordner liegt und lesbar ist.'))
   autoRefresh('bodycam', refreshBodycamContext)
   $('capture-button').addEventListener('click', () => backend.captureClip())
   $('pick-button').addEventListener('click', pickClip)
@@ -447,9 +553,50 @@ export async function initBodycam() {
   $('f-target').addEventListener('change', applyTarget)
   $('cancel-upload-button').addEventListener('click', () => backend.cancelUpload())
   $('discard-button').addEventListener('click', () => {
+    if (busy) return
+    selectedClips.delete(queue[0]?.path)
     queue.shift()
+    persistInbox()
     openClip()
   })
+  $('inbox-save').addEventListener('click', () => { saveDraft(); renderQueue(); $('inbox-message').textContent = 'Entwurf für später gespeichert.' })
+  $('clip-editor').addEventListener('input', saveDraft)
+  $('clip-editor').addEventListener('change', () => { saveDraft(); renderQueue() })
+  window.addEventListener('beforeunload', saveDraft)
+  $('inbox-list').addEventListener('click', event => {
+    const element = (event.target as HTMLElement).closest<HTMLElement>('[data-inbox-open]')
+    if (element) focusClip(element.dataset.inboxOpen!)
+  })
+  $('inbox-list').addEventListener('change', event => {
+    const element = event.target as HTMLInputElement
+    const path = element.dataset.inboxSelect
+    if (path) { if (element.checked) selectedClips.add(path); else selectedClips.delete(path) }
+  })
+  $('inbox-select-all').addEventListener('click', () => { for (const clip of queue) selectedClips.add(clip.path); renderQueue() })
+  $('inbox-assign').addEventListener('click', () => {
+    if (busy) return
+    saveDraft()
+    const id = $<DropdownElement>('f-investigation').value
+    if (!id || !selectedClips.size) { $('inbox-message').textContent = 'Clips markieren und im Editor eine Akte auswählen.'; return }
+    for (const clip of queue) if (selectedClips.has(clip.path)) {
+      clip.draft ??= { fields: { 'f-title': clipTitle(new Date(clip.savedAt)) }, duration: clip.durationSeconds ?? 0, start: 0, end: clip.durationSeconds ?? 0 }
+      clip.draft.fields['f-target'] = 'investigation'
+      clip.draft.fields['f-investigation'] = id
+    }
+    persistInbox(); openClip(); renderQueue()
+    $('inbox-message').textContent = 'Ausgewählte Clips sind der Akte zugeordnet.'
+  })
+  $('inbox-upload').addEventListener('click', () => {
+    if (busy) return
+    saveDraft()
+    const items = queue.filter(clip => selectedClips.has(clip.path))
+    if (!items.length || items.some(clip => !clip.draft?.fields['f-title'] || !(clip.draft.fields['f-target'] === 'record' ? clip.draft.fields['f-record-agent'] : clip.draft.fields['f-investigation']))) {
+      $('inbox-message').textContent = 'Bitte Clips auswählen und jedem Clip einen Titel und ein Ziel zuordnen.'; return
+    }
+    pendingUploads = items.map(clip => clip.path)
+    void runUploads()
+  })
+  $('inbox-pause').addEventListener('click', () => { pendingUploads = []; $('inbox-message').textContent = 'Pausiert. Der laufende Upload wird noch abgeschlossen.' })
   bindTrimControls()
   onStateChange(renderContext)
 

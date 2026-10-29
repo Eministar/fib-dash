@@ -29,6 +29,7 @@ export type ProposalActions = {
   removeAssignees: Named[]
   /** `personId: null` = wird neu im Personenregister angelegt. */
   persons: { personId: string | null; firstName: string; lastName: string; role: PersonRoleKey }[]
+  removePersons?: Named[]
   vehicles: Named[]
   /** Am Eintrag beteiligte Agents. */
   participants: Participant[]
@@ -44,12 +45,12 @@ export const NO_ACTIONS: ProposalActions = {
 
 /** Gespeicherte Aktionen lesen; alte Vorschläge ohne Aktionen ergeben „nichts zu tun“. */
 export function readActions(value: unknown): ProposalActions {
-  return value && typeof value === 'object' ? { ...NO_ACTIONS, ...(value as Partial<ProposalActions>) } : NO_ACTIONS
+  return structuredClone(value && typeof value === 'object' ? { ...NO_ACTIONS, ...(value as Partial<ProposalActions>) } : NO_ACTIONS)
 }
 
 export function hasChanges(actions: ProposalActions) {
   return Boolean(actions.status || actions.priority || actions.title || actions.leadAgent || actions.addAssignees.length
-    || actions.removeAssignees.length || actions.persons.length || actions.vehicles.length)
+    || actions.removePersons?.length || actions.removeAssignees.length || actions.persons.length || actions.vehicles.length)
 }
 
 /** Zeilen für die Vorschlagsnachricht. Reine Funktion, damit sie testbar ist. */
@@ -64,6 +65,7 @@ export function describeActions(actions: ProposalActions) {
   for (const person of actions.persons) {
     lines.push(`Person: ${person.firstName} ${person.lastName} (${INVESTIGATION_PERSON_ROLE_LABELS[person.role]})${person.personId ? '' : ' · neu im Register'}`)
   }
+  if (actions.removePersons?.length) lines.push(`Personen aus dieser Akte entfernen: ${actions.removePersons.map(person => person.name).join(', ')}`)
   if (actions.vehicles.length) lines.push(`Fahrzeuge: ${actions.vehicles.map((vehicle) => vehicle.name).join(', ')}`)
   if (actions.participants?.length) lines.push(`Beteiligte Agents: ${actions.participants.map((agent) => agent.name).join(', ')}`)
   const { images, videos } = actions.attachments

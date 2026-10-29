@@ -3,6 +3,7 @@ import { backend } from '../backend'
 import { escapeHtml } from '../dom'
 import { icon } from '../icons'
 import { openAgent } from '../agents/detail'
+import { openFamily } from '../pages/families'
 import { openCase } from '../investigations/detail'
 import { navigation, state } from '../store'
 
@@ -143,6 +144,9 @@ function activate(hit: Hit) {
   if (hit.group === 'agents' && state.context?.tools.agents) {
     navigation.go('agents')
     void openAgent(hit.id)
+  } else if (hit.group === 'dossiers' && state.context?.tools.investigations) {
+    navigation.go('families')
+    void openFamily(hit.id)
   } else if (hit.group === 'investigations' && state.context?.tools.investigations) {
     navigation.go('investigations')
     void openCase(hit.id)

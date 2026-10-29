@@ -74,3 +74,4 @@ startApp().catch((error: unknown) => {
   document.getElementById('view-login')!.hidden = false
 })
 startAutoUpdates()
+import './pages/families.css'

@@ -279,7 +279,7 @@ function DossierDetail({ id, dossier, error, manage, onEdit, onChanged }: {
               </Link>
             </li>)}
             {dossier.mapSpots?.map(spot => <li key={spot.id}>
-              <Link href="/map" className="inline-flex items-center gap-1.5 rounded-full border border-[#38383a] px-3 py-1.5 text-[12.5px] text-[#d4d4d4] hover:border-[#a78bfa]">
+              <Link href={`/map?spot=${encodeURIComponent(spot.id)}`} className="inline-flex items-center gap-1.5 rounded-full border border-[#38383a] px-3 py-1.5 text-[12.5px] text-[#d4d4d4] hover:border-[#a78bfa]">
                 <span className="h-2 w-2 rounded-full" style={{ background: mapCategory(spot.category).hex }} aria-hidden />
                 {spot.title}
                 <span className="text-[#8e8e93]">{mapCategory(spot.category).label}</span>
@@ -412,7 +412,7 @@ function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onC
       optional: true,
       content: <div className="space-y-3">
         <p className="text-[12.5px] text-[#98989d]">Routen, Sammler und Orte, die zu dieser Familie gehören.</p>
-        <SpotPickerField value={mapSpots} onChange={setMapSpots} canCreate={hasPermission(user, 'map:manage')} />
+        <SpotPickerField initialLayer="estates" value={mapSpots} onChange={setMapSpots} canCreate={hasPermission(user, 'map:manage')} />
       </div>,
     },
     {
