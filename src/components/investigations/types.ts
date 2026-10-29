@@ -215,7 +215,8 @@ export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assign
   photos: { id: string; title: string; createdAt: string; uploadedById: string | null }[]
   linksFrom: InvestigationCrossLink[]
   linksTo: InvestigationCrossLink[]
-  corruptionChecks: { check: LinkedCorruptionCheck }[]
+  /** Anlass der Akte, falls sie aus einer Korruptionskontrolle hervorgeht. */
+  corruptionCheck: LinkedCorruptionCheck | null
   /** Nur im GET der Akte: weitere Akten je beteiligter Person / Fahrzeug. */
   crossHits?: CaseCrossHits
 }

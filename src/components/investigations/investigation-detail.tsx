@@ -43,7 +43,7 @@ import { ClipUploadDialog } from '@/components/investigations/clip-upload-dialog
 import { InvestigationAssignees } from '@/components/investigations/investigation-assignees'
 import { InvestigationEvidence } from '@/components/investigations/investigation-evidence'
 import { InvestigationLinks } from '@/components/investigations/investigation-links'
-import { InvestigationCorruptionChecks } from '@/components/investigations/investigation-corruption-checks'
+import { CorruptionCheckSelect, CorruptionReason } from '@/components/investigations/corruption-check-select'
 import { InvestigationVehicles } from '@/components/investigations/investigation-vehicles'
 import { InvestigationDossiers } from '@/components/investigations/dossiers-workspace'
 import { SpotPickerField } from '@/components/map/spot-picker'
@@ -171,11 +171,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
     {
       id: 'verknuepfungen',
       label: 'Verknüpfungen',
-      count:
-        investigation.mapSpots.length +
-        investigation.linksFrom.length +
-        investigation.linksTo.length +
-        investigation.corruptionChecks.length,
+      count: investigation.mapSpots.length + investigation.linksFrom.length + investigation.linksTo.length,
     },
     { id: 'verlauf', label: 'Verlauf' },
   ]
@@ -370,6 +366,8 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             )}
           </div>
         </div>
+
+        {investigation.corruptionCheck && <CorruptionReason check={investigation.corruptionCheck} />}
 
         {investigation.summary && (
           <p className="mt-4 whitespace-pre-wrap text-[12.5px] leading-relaxed text-[#c7c7cc]">
@@ -637,13 +635,6 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             onChanged={refetch}
           />
 
-          <InvestigationCorruptionChecks
-            investigationId={investigationId}
-            checks={investigation.corruptionChecks.map((link) => link.check)}
-            canManage={canManage}
-            onChanged={refetch}
-          />
-
           <Card className="mb-4">
             <InvestigationDossiers investigationId={investigationId} />
           </Card>
@@ -856,6 +847,16 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
             value={investigation.leadAgent?.id ?? ''}
             onValueChange={(value) =>
               void patchInvestigation({ leadAgentId: value || null }, 'Die Fallführung wurde geändert.')
+            }
+          />
+
+          <CorruptionCheckSelect
+            value={investigation.corruptionCheck}
+            onChange={(check) =>
+              void patchInvestigation(
+                { corruptionCheckId: check?.id ?? null },
+                check ? 'Die Korruptionskontrolle ist jetzt Anlass der Akte.' : 'Der Anlass wurde entfernt.',
+              )
             }
           />
 

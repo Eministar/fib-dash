@@ -1,19 +1,20 @@
 import { api } from '../api'
 import { openForm } from '../ui/form-dialog'
 import { toast } from '../ui/toast'
-import { agentOptions, invalidate, lookups } from './lookups'
+import { agentOptions, corruptionCheckOptions, corruptionField, invalidate, lookups } from './lookups'
 import { options, PRIORITY, STATUS } from './model'
 
 type CreatedCase = { id: string; caseNumber: string; title: string }
 
 export async function createCase(): Promise<CreatedCase | null> {
-  const [agents, templates] = await Promise.all([agentOptions(), lookups.templates()])
+  const [agents, templates, reasons] = await Promise.all([agentOptions(), lookups.templates(), corruptionCheckOptions()])
   let created: CreatedCase | null = null
   const saved = await openForm({
     title: 'Neue Ermittlungsakte',
     submitLabel: 'Anlegen',
     fields: [
       { name: 'title', label: 'Titel', type: 'text', required: true, span: 2, maxLength: 200 },
+      corruptionField(reasons),
       ...(templates.length
         ? [{ name: 'templateId', label: 'Vorlage', type: 'select' as const, options: [{ value: '', label: 'Ohne Vorlage' }, ...templates.map((t) => ({ value: t.id, label: t.name }))], span: 2 as const, hint: 'Übernimmt Arbeitsplan, offene Rollen und Team der Vorlage.' }]
         : []),

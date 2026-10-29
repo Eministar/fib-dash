@@ -97,6 +97,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data.priority = priority
     }
 
+    if (body.corruptionCheckId !== undefined) {
+      const corruptionCheckId = cleanText(body.corruptionCheckId) || null
+      if (corruptionCheckId) {
+        const check = await prisma.corruptionCheck.findUnique({ where: { id: corruptionCheckId }, select: { id: true } })
+        if (!check) return notFound('Korruptionskontrolle')
+        data.corruptionCheck = { connect: { id: corruptionCheckId } }
+      } else {
+        data.corruptionCheck = { disconnect: true }
+      }
+    }
+
     if (body.leadAgentId !== undefined) {
       const leadAgentId = cleanText(body.leadAgentId) || null
       if (leadAgentId) {

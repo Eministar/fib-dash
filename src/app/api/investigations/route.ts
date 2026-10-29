@@ -126,6 +126,9 @@ export async function POST(req: NextRequest) {
       return error('Bild wurde nicht gefunden', 404)
     }
 
+    const corruptionCheckId = cleanText(body.corruptionCheckId) || null
+    if (corruptionCheckId && !await prisma.corruptionCheck.findUnique({ where: { id: corruptionCheckId }, select: { id: true } })) return error('Korruptionskontrolle wurde nicht gefunden', 404)
+
     const dossierId = cleanText(body.dossierId) || null
     if (dossierId && !await prisma.dossier.findUnique({ where: { id: dossierId }, select: { id: true } })) return error('Familienakte wurde nicht gefunden', 404)
 
@@ -150,6 +153,7 @@ export async function POST(req: NextRequest) {
         status,
         priority,
         leadAgentId,
+        corruptionCheckId,
         createdById: user.id,
         ...(templateCopy ? { templateId, checklist: templateCopy.checklist, openRoles: templateCopy.openRoles } : {}),
         ...(dossierId ? { dossiers: { connect: { id: dossierId } } } : {}),

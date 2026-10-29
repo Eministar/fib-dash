@@ -1,6 +1,7 @@
 import { api } from '../api'
-import type { Option } from '../ui/form-dialog'
-import { agentName, personName, type Agent, type ListItem, type Person, type Vehicle } from './model'
+import { formatDateTime } from '../format'
+import type { Field, Option } from '../ui/form-dialog'
+import { agentName, personName, type Agent, type CorruptionCheckRef, type ListItem, type Person, type Vehicle } from './model'
 
 // Auswahllisten für Dialoge. Einmal geladen, bis zur nächsten Änderung gemerkt.
 
@@ -20,6 +21,12 @@ export const lookups = {
   persons: () => cached('persons', () => api.get<Person[]>('/api/persons')),
   vehicles: () => cached('vehicles', () => api.get<Vehicle[]>('/api/vehicles')),
   cases: () => cached('cases', () => api.get<ListItem[]>('/api/investigations?status=ALL')),
+  /** Die letzten 100 Korruptionskontrollen – Auswahl für den Anlass einer Akte. */
+  corruptionChecks: () =>
+    cached('corruptionChecks', async () => {
+      const pages = await Promise.all([1, 2, 3, 4].map((page) => api.get<{ items: CorruptionCheckRef[] }>(`/api/corruption-checks?page=${page}`).catch(() => ({ items: [] }))))
+      return pages.flatMap((page) => page.items)
+    }),
   templates: () =>
     cached('templates', () => api.get<{ id: string; name: string; description: string | null }[]>('/api/investigation-templates').catch(() => [])),
 }
@@ -37,4 +44,33 @@ export async function vehicleOptions(): Promise<Option[]> {
     value: v.id,
     label: [v.plate ?? 'ohne Kennzeichen', v.model, v.color].filter(Boolean).join(' · ') + ` · ${v.vehicleNumber}`,
   }))
+}
+
+export function corruptionCheckLabel(check: CorruptionCheckRef) {
+  return `${check.official.firstName} ${check.official.lastName} (${check.official.agency})`
+}
+
+/** Optionen für den Anlass; die aktuelle Kontrolle bleibt wählbar, auch wenn sie älter ist. */
+export async function corruptionCheckOptions(current?: CorruptionCheckRef | null): Promise<Option[]> {
+  const checks = await lookups.corruptionChecks()
+  const list = current && !checks.some((c) => c.id === current.id) ? [current, ...checks] : checks
+  return [
+    { value: '', label: 'Kein besonderer Anlass' },
+    ...list.map((c) => ({
+      value: c.id,
+      label: `${corruptionCheckLabel(c)} · ${formatDateTime(new Date(c.conductedAt))} · ${c.result === 'FINDINGS' ? 'Befund' : 'ohne Befund'}`,
+    })),
+  ]
+}
+
+export function corruptionField(options: Option[], value = ''): Field {
+  return {
+    name: 'corruptionCheckId',
+    value,
+    label: 'Anlass: Korruptionskontrolle',
+    type: 'combobox',
+    options,
+    span: 2,
+    hint: 'Optional – die Kontrolle, aus der diese Ermittlung hervorgeht.',
+  }
 }

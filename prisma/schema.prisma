@@ -1881,6 +1881,10 @@ model Investigation {
 
   closedAt DateTime?
 
+  /// Anlass der Akte: Korruptionskontrolle, aus der die Ermittlung hervorgeht.
+  corruptionCheckId String?
+  corruptionCheck   CorruptionCheck? @relation(fields: [corruptionCheckId], references: [id], onDelete: SetNull)
+
   /// Vorlage, aus der die Akte angelegt wurde (nur zur Nachvollziehbarkeit).
   templateId String?
   template   InvestigationTemplate? @relation("InvestigationTemplateUsage", fields: [templateId], references: [id], onDelete: SetNull)
@@ -1903,8 +1907,6 @@ model Investigation {
   vehicles  InvestigationVehicle[]
   linksFrom InvestigationLink[]     @relation("InvestigationLinkFrom")
   linksTo   InvestigationLink[]     @relation("InvestigationLinkTo")
-  /// Korruptionskontrollen, die zu dieser Einsatzakte gehören.
-  corruptionChecks InvestigationCorruptionCheck[]
   /// Offene KI-Vorschläge im Discord-Beitrag dieser Akte.
   aiProposals AiProposal[]
 
@@ -1913,6 +1915,7 @@ model Investigation {
   @@index([leadAgentId])
   @@index([createdById])
   @@index([templateId])
+  @@index([corruptionCheckId])
 }
 
 /// Vorlage für neue Einsatzakten (z. B. Drogen, Korruption, Raub). Füllt beim
@@ -2421,7 +2424,8 @@ model OfficialRevision {
 }
 
 model CorruptionCheck {
-  investigations InvestigationCorruptionCheck[]
+  /// Einsatzakten, deren Anlass diese Kontrolle ist.
+  investigations Investigation[]
   version     Int                    @default(1)
   revisions   CorruptionRevision[]
   evidence    CorruptionEvidence[]
@@ -2443,18 +2447,6 @@ model CorruptionCheck {
   @@index([officialId, conductedAt])
   @@index([conductedAt])
   @@index([result, conductedAt])
-}
-
-/// Korruptionskontrolle, die als Teil einer Einsatzakte geführt wird (n:m).
-model InvestigationCorruptionCheck {
-  investigationId String
-  checkId         String
-  investigation   Investigation   @relation(fields: [investigationId], references: [id], onDelete: Cascade)
-  check           CorruptionCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
-  createdAt       DateTime        @default(now())
-
-  @@id([investigationId, checkId])
-  @@index([checkId])
 }
 
 /// Snapshot erhält die Namen der Durchführenden auch nach Umbenennung oder Löschung.

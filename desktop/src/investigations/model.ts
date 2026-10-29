@@ -214,7 +214,8 @@ export type Detail = Omit<ListItem, '_count' | 'assignees'> & {
   linksFrom: { id: string; note: string | null; to?: LinkedCase }[]
   linksTo: { id: string; note: string | null; from?: LinkedCase }[]
   mapSpots: MapSpotRef[]
-  corruptionChecks: { check: CorruptionCheckRef }[]
+  /** Anlass der Akte, falls sie aus einer Korruptionskontrolle hervorgeht. */
+  corruptionCheck: CorruptionCheckRef | null
   crossHits?: unknown
 }
 

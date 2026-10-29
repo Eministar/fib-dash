@@ -38,7 +38,8 @@ import { SpotPickerField, type PickedSpot } from '@/components/map/spot-picker'
 import { PhotoPicker, type CatalogPhoto } from '@/components/investigations/photo-catalog'
 import { InvestigationsNavigation } from '@/components/investigations/investigations-navigation'
 import { useInvestigationToast } from '@/components/investigations/use-investigation-toast'
-import type { AgentLite, InvestigationListItem } from '@/components/investigations/types'
+import type { AgentLite, InvestigationListItem, LinkedCorruptionCheck } from '@/components/investigations/types'
+import { CorruptionCheckSelect, corruptionCheckTitle } from '@/components/investigations/corruption-check-select'
 import { useUrlState } from '@/hooks/use-url-state'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { checklistProgress, composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigations/investigation-templates'
@@ -75,6 +76,8 @@ type CreateForm = {
   dossierId: string
   affiliation: '' | 'yes' | 'no'
   summary: string
+  /** Anlass: Korruptionskontrolle, aus der die Akte hervorgeht. */
+  corruptionCheck: LinkedCorruptionCheck | null
   status: string
   priority: string
   leadAgentId: string
@@ -90,6 +93,7 @@ function emptyForm(): CreateForm {
     dossierId: '',
     affiliation: '',
     summary: '',
+    corruptionCheck: null,
     status: 'OPEN',
     priority: 'NORMAL',
     leadAgentId: '',
@@ -182,6 +186,7 @@ export function InvestigationsWorkspace() {
           templateId: form.templateId || null,
           dossierId: form.affiliation === 'yes' ? form.dossierId : null,
           summary: form.summary,
+          corruptionCheckId: form.corruptionCheck?.id ?? null,
           status: form.status,
           priority: form.priority,
           leadAgentId: form.leadAgentId || null,
@@ -292,6 +297,20 @@ export function InvestigationsWorkspace() {
             dossierId={form.affiliation === 'yes' ? form.dossierId : null}
             onAccept={(suggestion) => setForm((prev) => ({ ...prev, title: suggestion.title, summary: suggestion.content }))}
           />
+          <CorruptionCheckSelect
+            value={form.corruptionCheck}
+            onChange={(corruptionCheck) =>
+              setForm((prev) => ({
+                ...prev,
+                corruptionCheck,
+                // Leerer Titel (oder nur das Vorlagenpräfix) → aus der Kontrolle vorschlagen.
+                title:
+                  corruptionCheck && (!prev.title.trim() || prev.title.trim() === prefill.title.trim())
+                    ? `Korruptionskontrolle – ${corruptionCheckTitle(corruptionCheck)}`
+                    : prev.title,
+              }))
+            }
+          />
           <Input
             label="Titel"
             value={form.title}
@@ -385,6 +404,7 @@ export function InvestigationsWorkspace() {
                   ['Offene Rollen', selectedTemplate.roles.length ? selectedTemplate.roles.map((role) => role.label).join(', ') : 'Keine'],
                 ]
               : []),
+            ['Anlass', form.corruptionCheck ? `Korruptionskontrolle · ${corruptionCheckTitle(form.corruptionCheck)}` : 'Kein besonderer Anlass'],
             ['Status', INVESTIGATION_STATUS_LABELS[form.status as keyof typeof INVESTIGATION_STATUS_LABELS] ?? form.status],
             ['Priorität', INVESTIGATION_PRIORITY_LABELS[form.priority as keyof typeof INVESTIGATION_PRIORITY_LABELS] ?? form.priority],
             ['Fallführung', agentOptions.find((option) => option.value === form.leadAgentId)?.label ?? 'Keine Fallführung'],
