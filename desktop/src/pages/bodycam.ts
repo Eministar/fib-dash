@@ -17,6 +17,7 @@ import {
 import { clipTitle, displayHotkey, formatBytes, formatClock, formatDateTime } from '../format'
 import { icons } from '../icons'
 import { createCase } from '../investigations/create-case'
+import { autoRefresh } from '../ui/auto-refresh'
 import { can, navigation, onStateChange, state } from '../store'
 
 // Kürzere Abweichungen vom Clip-Anfang/-Ende gelten nicht als Schnitt.
@@ -438,6 +439,7 @@ async function save() {
 // ── Start ────────────────────────────────────────────────────────────
 
 export async function initBodycam() {
+  autoRefresh('bodycam', refreshBodycamContext)
   $('capture-button').addEventListener('click', () => backend.captureClip())
   $('pick-button').addEventListener('click', pickClip)
   $('upload-button').addEventListener('click', save)
@@ -475,4 +477,24 @@ export async function initBodycam() {
 
 export function bodycamQueueLength() {
   return queue.length
+}
+
+let refreshingContext = false
+export async function refreshBodycamContext() {
+  const previous = state.context
+  if (!previous || refreshingContext || busy || creatingCase) return
+  refreshingContext = true
+  try {
+    const next = await backend.sessionContext()
+    if (state.context !== previous) return
+    // Nur die Auswahlliste ersetzen: laufender Schnitt und Formulare bleiben erhalten.
+    previous.investigations = next.investigations
+    renderInvestigations()
+    applyTarget()
+  } catch (error) {
+    if (errorText(error) === UNAUTHORIZED) navigation.signOut()
+    else showMessage('capture-error', `Akten konnten nicht aktualisiert werden: ${errorText(error)}`)
+  } finally {
+    refreshingContext = false
+  }
 }

@@ -76,7 +76,7 @@ pub async fn exchange_code(client: &Client, code: &str, verifier: &str) -> Resul
 }
 
 pub async fn session(client: &Client) -> Result<Value, String> {
-    send(request(client, Method::GET, "/api/desktop/session")?).await
+    send(request(client, Method::GET, "/api/desktop/session")?.timeout(Duration::from_secs(30))).await
 }
 
 // ── Allgemeiner Zugang zu den Dashboard-APIs ─────────────────────────
@@ -113,7 +113,11 @@ pub async fn call(client: &Client, method: &str, path: &str, body: Option<Value>
         "DELETE" => Method::DELETE,
         other => return Err(format!("Methode {other} nicht erlaubt")),
     };
-    let mut builder = request(client, method, checked_path(path)?)?;
+    // JSON-Abfragen dürfen weder den Start der Erkennung noch die
+    // Aktualisierungssperre der Oberfläche unbegrenzt festhalten.
+    // Video-Uploads verwenden ihren eigenen Request-Pfad.
+    let mut builder = request(client, method, checked_path(path)?)?
+        .timeout(Duration::from_secs(30));
     if let Some(body) = body {
         builder = builder.json(&body);
     }

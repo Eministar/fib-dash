@@ -4,7 +4,7 @@ import { $, errorText, initials, selectValue, showMessage, type ButtonElement, t
 import { displayHotkey } from './format'
 import { hotkeyInput } from './hotkey-input'
 import { renderIcons } from './icons'
-import { bodycamQueueLength, initBodycam } from './pages/bodycam'
+import { bodycamQueueLength, initBodycam, refreshBodycamContext } from './pages/bodycam'
 import { initDuty, showDuty } from './pages/duty'
 import { initSelfClip, renderSelfClip } from './pages/selfclip'
 import { initTweaks, showTweaks } from './pages/tweaks'
@@ -43,6 +43,7 @@ function go(next: Route) {
   for (const page of document.querySelectorAll<HTMLElement>('.page')) page.hidden = page.dataset.page !== next
   $('content').scrollTop = 0
   if (next === 'duty') showDuty()
+  if (next === 'bodycam') void refreshBodycamContext()
   if (next === 'news') showNews()
   if (next === 'investigations') showInvestigations()
   if (next === 'agents') showAgents()

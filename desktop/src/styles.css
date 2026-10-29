@@ -486,6 +486,19 @@ button { font: inherit; color: inherit; }
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
+  /* Der Scrollbereich liegt im Fluent-Shadow-DOM und wird von den globalen
+     ::-webkit-scrollbar-Regeln nicht erreicht. Direkt am Part gestalten. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+
+#settings-dialog::part(dialog):hover {
+  scrollbar-color: var(--scroll-thumb-hover) transparent;
+}
+
+@media (forced-colors: active) {
+  #settings-dialog::part(dialog),
+  #settings-dialog::part(dialog):hover { scrollbar-color: auto; }
 }
 
 .settings { display: flex; flex-direction: column; gap: 4px; }

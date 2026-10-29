@@ -601,6 +601,7 @@ async function toggle() {
   } catch (error) {
     toast(errorText(error), 'error')
   } finally {
+    renderStatus()
     button.disabled = false
   }
 }
@@ -705,5 +706,8 @@ export function showKillClips() {
   void backend.killClipStatus().then((s) => {
     status = s
     renderStatus()
+  }).catch((error) => {
+    renderStatus()
+    showMessage('kc-error', `Status konnte nicht geladen werden: ${errorText(error)}`)
   })
 }
