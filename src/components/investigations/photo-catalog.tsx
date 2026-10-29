@@ -9,6 +9,7 @@ import { useAuth } from '@/context/auth-context'
 import { uploadInChunks } from '@/lib/media/chunked-upload'
 import { hasPermission } from '@/lib/permissions'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { PageHeader } from '@/components/layout/page-header'
@@ -20,14 +21,15 @@ import { useUrlState } from '@/hooks/use-url-state'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { ListSkeleton } from '@/components/ui/loading'
 
-export type CatalogPhoto = { id: string; title: string; url: string }
+export type CatalogPhoto = { id: string; title: string; url: string; description?: string | null }
 
-/** Rohbody-Upload statt `useApi`: der Hook nagelt jeden Request auf
- *  `application/json` fest, hier gehen aber reine Bytes raus. */
+/** Bilddatei in Chunks hochladen und anschließend mit Beschreibung speichern. */
 export function PhotoUploadButton({ onUploaded }: { onUploaded: (photo: CatalogPhoto) => void }) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [description, setDescription] = useState('')
 
   const upload = async (file: File) => {
     setBusy(true)
@@ -42,12 +44,15 @@ export function PhotoUploadButton({ onUploaded }: { onUploaded: (photo: CatalogP
         body: JSON.stringify({
           uploadId: ticket.uploadId,
           title: file.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 200) || 'Upload',
+          description,
         }),
       })
       const parsed = (await response.json().catch(() => null)) as { success?: boolean; error?: string; data?: CatalogPhoto } | null
       if (!response.ok || !parsed?.success || !parsed.data) {
         throw new Error(parsed?.error || `Upload fehlgeschlagen (HTTP ${response.status})`)
       }
+      setFile(null)
+      setDescription('')
       onUploaded(parsed.data)
     } catch (cause) {
       setFailure(cause instanceof Error ? cause.message : 'Upload fehlgeschlagen')
@@ -58,37 +63,78 @@ export function PhotoUploadButton({ onUploaded }: { onUploaded: (photo: CatalogP
 
   return <div className="space-y-2">
     <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden"
-      onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void upload(file) }} />
+      onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) { setFile(file); setDescription(''); setFailure('') } }} />
     <Button type="button" size="sm" variant="outline" loading={busy} onClick={() => inputRef.current?.click()}>
       <Upload size={14} />Bild hochladen
     </Button>
-    {failure && <p role="alert" className="text-xs text-red-300">{failure}</p>}
+    <Modal open={file !== null} onClose={() => { if (!busy) setFile(null) }} title="Bild hochladen">
+      <div className="space-y-4">
+        <p className="break-all text-sm text-[#98989d]">{file?.name}</p>
+        <Textarea label="Beschreibung (optional)" value={description} onChange={event => setDescription(event.target.value)} maxLength={5000} rows={5} disabled={busy} />
+        {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" disabled={busy} onClick={() => setFile(null)}>Abbrechen</Button>
+          <Button type="button" loading={busy} onClick={() => { if (file) void upload(file) }}>Hochladen</Button>
+        </div>
+      </div>
+    </Modal>
   </div>
 }
 
 export function PhotoGrid({ onSelect, selectedIds = [], onUpload }: { onSelect?: (photo: CatalogPhoto) => void; selectedIds?: string[]; onUpload?: (photo: CatalogPhoto) => void }) {
+  const { user } = useAuth()
+  const canManage = hasPermission(user, 'investigations:manage')
+  const [editing, setEditing] = useState<CatalogPhoto | null>(null)
   const [search, setSearch] = useUrlState('q', '')
   const debouncedSearch = useDebouncedValue(search)
   const [page, setPage] = useState(1)
   const [preview, setPreview] = useState<string | null>(null)
-  const { data, error, loading } = useFetch<{ items: CatalogPhoto[]; total: number }>(`/api/investigations/photos?search=${encodeURIComponent(debouncedSearch)}&page=${page}`)
+  const { data, error, loading, refetch } = useFetch<{ items: CatalogPhoto[]; total: number }>(`/api/investigations/photos?search=${encodeURIComponent(debouncedSearch)}&page=${page}`)
   return <div className="space-y-4">
-    <Input aria-label="Bild suchen" placeholder="Bild nach Beschriftung suchen …" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
-    {onUpload && <PhotoUploadButton onUploaded={photo => { onUpload(photo); setSearch(''); setPage(1) }} />}
+    <Input aria-label="Bild suchen" placeholder="Nach Titel oder Beschreibung suchen …" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
+    {onUpload && canManage && <PhotoUploadButton onUploaded={photo => { onUpload(photo); setSearch(''); setPage(1); void refetch() }} />}
     {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
     {loading && !data ? <ListSkeleton /> : !data?.items.length ? <p className="py-8 text-sm text-[#8e8e93]">Noch keine passenden Bilder. Lade eines hoch oder poste es im eingerichteten Discord-Channel.</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {data.items.map(photo => <button key={photo.id} type="button" onClick={() => onSelect ? onSelect(photo) : setPreview(photo.id)} aria-pressed={selectedIds.includes(photo.id)} className={cn(
-        'overflow-hidden rounded-xl bg-[#1c1c1e] text-left border hover:border-[#a78bfa] focus-visible:outline-2 focus-visible:outline-[#a78bfa]',
+      {data.items.map(photo => <div key={photo.id} className="min-w-0"><button type="button" onClick={() => onSelect ? onSelect(photo) : setPreview(photo.id)} aria-pressed={selectedIds.includes(photo.id)} className={cn(
+        'w-full overflow-hidden rounded-xl bg-[#1c1c1e] text-left border hover:border-[#a78bfa] focus-visible:outline-2 focus-visible:outline-[#a78bfa]',
         selectedIds.includes(photo.id) ? 'border-[#a78bfa] ring-2 ring-[#a78bfa]/40' : 'border-[#38383a]',
       )}>
         <Image unoptimized src={photo.url} alt={photo.title} width={320} height={240} className="aspect-[4/3] w-full object-cover" />
         <p className="truncate px-3 py-2 text-xs text-[#d4d4d4]">{photo.title}</p>
-      </button>)}
+        {photo.description && <p className="line-clamp-3 whitespace-pre-wrap break-words px-3 pb-3 text-xs text-[#98989d]">{photo.description}</p>}
+      </button>
+      {canManage && <Button type="button" size="sm" variant="ghost" aria-label={`Beschreibung für ${photo.title} bearbeiten`} onClick={() => setEditing(photo)}>{photo.description ? 'Beschreibung bearbeiten' : 'Beschreibung hinzufügen'}</Button>}
+      </div>)}
     </div>}
     <div className="flex items-center justify-between gap-3"><span className="text-xs text-[#8e8e93]">{data?.total ?? 0} Bilder · Seite {page}</span><div className="flex gap-2"><Button size="sm" variant="outline" disabled={page === 1 || loading} onClick={() => setPage(page - 1)}>Zurück</Button><Button size="sm" variant="outline" disabled={page * 30 >= (data?.total ?? 0) || loading} onClick={() => setPage(page + 1)}>Weiter</Button></div></div>
     {/* Ein gemeinsamer Betrachter statt einer eigenen Vorschau je Ansicht. */}
     <ImageLightbox images={data?.items ?? []} startId={preview} onClose={() => setPreview(null)} />
+    {editing && <PhotoDescriptionEditor photo={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void refetch() }} />}
   </div>
+}
+
+function PhotoDescriptionEditor({ photo, onClose, onSaved }: { photo: CatalogPhoto; onClose: () => void; onSaved: () => void }) {
+  const [description, setDescription] = useState(photo.description ?? '')
+  const [failure, setFailure] = useState('')
+  const { execute, loading } = useApi<CatalogPhoto>()
+  const save = async () => {
+    setFailure('')
+    try {
+      await execute(`/api/investigations/photos/${photo.id}`, { method: 'PATCH', body: JSON.stringify({ description }) })
+      onSaved()
+    } catch (cause) { setFailure(cause instanceof Error ? cause.message : 'Speichern fehlgeschlagen') }
+  }
+  return <Modal open onClose={() => { if (!loading) onClose() }} title="Bildbeschreibung bearbeiten">
+    <div className="space-y-4">
+      <p className="break-words text-sm text-[#98989d]">{photo.title}</p>
+      <Textarea label="Beschreibung (optional)" value={description} onChange={event => setDescription(event.target.value)} maxLength={5000} rows={6} disabled={loading} />
+      {failure && <p role="alert" className="text-sm text-red-300">{failure}</p>}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="ghost" disabled={loading} onClick={onClose}>Abbrechen</Button>
+        <Button type="button" loading={loading} onClick={() => void save()}>Speichern</Button>
+      </div>
+    </div>
+  </Modal>
 }
 
 export function PhotoField({ value, onChange, readOnly = false, preview }: { value: string | null; onChange: (photo: CatalogPhoto | null) => void; readOnly?: boolean; preview?: React.ReactNode }) {

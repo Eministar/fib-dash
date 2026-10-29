@@ -10,6 +10,7 @@ import { consumeUploadSession, UploadSessionError } from '@/lib/media/upload-ses
 import { error } from '@/lib/api-response'
 import { randomUUID } from 'node:crypto'
 import { uploadCors, uploadOptions } from '@/lib/media/upload-cors'
+import { photoDescriptionSchema } from '@/lib/investigations/photo-description'
 
 export const dynamic = 'force-dynamic'
 export const OPTIONS = uploadOptions
@@ -20,15 +21,15 @@ export async function POST(req: Request) {
 
 /**
  * Das Bild ist bereits über `/api/uploads` eingetroffen und geprüft; hier
- * reisen nur noch Titel und Ticket. Dasselbe Muster nutzen Clips und Asservate.
+ * reisen nur noch Titel, Beschreibung und Ticket. Dasselbe Muster nutzen Clips und Asservate.
  */
 async function uploadPhoto(req: Request) {
   let stored: string | undefined
   try {
     const user = await requirePermission('investigations:manage')
 
-    const { uploadId, title } = z
-      .object({ uploadId: z.string().trim().min(1).max(64), title: z.string().trim().min(1).max(200) })
+    const { uploadId, title, description } = z
+      .object({ uploadId: z.string().trim().min(1).max(64), title: z.string().trim().min(1).max(200), description: photoDescriptionSchema.optional() })
       .strict()
       .parse(await req.json())
 
@@ -44,6 +45,7 @@ async function uploadPhoto(req: Request) {
           mimeType: file.mimeType,
           sizeBytes: file.sizeBytes,
           title,
+          description,
           uploadedById: user.id,
         },
       })
@@ -56,7 +58,7 @@ async function uploadPhoto(req: Request) {
     stored = undefined
 
     return success(
-      { id: photo.id, title: photo.title, url: `/api/investigations/photos/${photo.id}/image` },
+      { id: photo.id, title: photo.title, description: photo.description, url: `/api/investigations/photos/${photo.id}/image` },
       201,
     )
   } catch (cause) {

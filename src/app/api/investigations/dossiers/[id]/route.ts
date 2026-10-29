@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: Context) {
     const item = await prisma.dossier.findUnique({ where: { id: (await params).id }, include: {
       photo: { select: { id: true, title: true } },
       leader: { select: { id: true, firstName: true, lastName: true, personNumber: true } },
-      photos: { select: { id: true, title: true }, orderBy: { createdAt: 'desc' } },
+      photos: { select: { id: true, title: true, description: true }, orderBy: { createdAt: 'desc' } },
       persons: { select: { id: true, personNumber: true, firstName: true, lastName: true } },
       investigations: { where: investigationVisibilityWhere(user), select: { id: true, caseNumber: true, title: true, status: true, priority: true, updatedAt: true, createdBy: { select: { id: true, displayName: true } },
         // Einsatzorte für die Einsatzkarte der Familie.

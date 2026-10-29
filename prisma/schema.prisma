@@ -2314,6 +2314,7 @@ model InvestigationPhoto {
   channelId String?  @db.VarChar(30)
   messageId String?  @db.VarChar(30)
   title     String   @db.VarChar(200)
+  description String? @db.Text
   filename  String   @unique @db.VarChar(80)
   mimeType  String   @db.VarChar(80)
   sizeBytes Int

@@ -39,7 +39,7 @@ type PersonRef = { id: string; firstName: string; lastName: string; personNumber
 
 type Dossier = {
   id: string; title: string; description: string | null; address: string | null;
-  photoId: string | null; photos?: { id: string; title: string }[];
+  photoId: string | null; photos?: { id: string; title: string; description?: string | null }[];
   leaderId?: string | null; leader?: PersonRef | null;
   updatedAt?: string; lastActivityAt?: string; openInvestigations?: number;
   createdBy?: { displayName: string } | null;
@@ -188,7 +188,7 @@ function DossierDetail({ id, dossier, error, manage, onEdit, onChanged }: {
   const investigations = dossier?.investigations ?? []
   const openCount = investigations.filter(item => isOpen(item.status)).length
   const lastActivity = [dossier?.updatedAt, ...investigations.map(item => item.updatedAt)].filter((value): value is string => Boolean(value)).sort().at(-1)
-  const galleryImages = (dossier?.photos ?? []).map(photo => ({ id: photo.id, title: photo.title, url: photoUrl(photo.id) }))
+  const galleryImages = (dossier?.photos ?? []).map(photo => ({ ...photo, url: photoUrl(photo.id) }))
   const members = [...(dossier?.persons ?? [])].sort((a, b) => Number(b.id === dossier?.leaderId) - Number(a.id === dossier?.leaderId))
 
   const menuItems: ActionMenuItem[] = dossier ? [
@@ -341,7 +341,7 @@ function DossierEditor({ existing, onClose, onSaved }: { existing?: Dossier; onC
   const [description, setDescription] = useState(existing?.description ?? '')
   const [address, setAddress] = useState(existing?.address ?? '')
   const [photoId, setPhotoId] = useState(existing?.photoId ?? null)
-  const [photos, setPhotos] = useState<CatalogPhoto[]>(existing?.photos?.map(photo => ({ id: photo.id, title: photo.title, url: photoUrl(photo.id) })) ?? [])
+  const [photos, setPhotos] = useState<CatalogPhoto[]>(existing?.photos?.map(photo => ({ ...photo, url: photoUrl(photo.id) })) ?? [])
   const [personIds, setPersonIds] = useState(existing?.persons?.map(p => p.id) ?? [])
   const [investigationIds, setInvestigationIds] = useState(existing?.investigations?.map(i => i.id) ?? [])
   const [vehicleIds, setVehicleIds] = useState(existing?.vehicles?.map(v => v.id) ?? [])

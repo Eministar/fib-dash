@@ -155,6 +155,7 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   const photoImages = investigation.photos.map((photo) => ({
     id: photo.id,
     title: photo.title,
+    description: photo.description,
     url: `/api/investigations/photos/${photo.id}/image`,
   }))
 

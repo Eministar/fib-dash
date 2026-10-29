@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Download, X } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-export type LightboxImage = { id: string; title: string; url: string }
+export type LightboxImage = { id: string; title: string; url: string; description?: string | null }
 
 /**
  * Vollbild-Betrachter für die Bilder einer Akte. Blättert mit Pfeiltasten
@@ -119,6 +119,7 @@ export function ImageLightbox({
         {images.length > 1 && <LightboxArrow side="right" onClick={() => step(1)} />}
       </div>
 
+      {current.description && <p className="mx-auto max-h-32 w-full max-w-3xl shrink-0 overflow-y-auto whitespace-pre-wrap break-words px-4 pb-4 text-sm text-[#c7c7cc]" onClick={event => event.stopPropagation()}>{current.description}</p>}
       {images.length > 1 && (
         <div className="flex justify-center gap-2 overflow-x-auto px-4 pb-4" onClick={(event) => event.stopPropagation()}>
           {images.map((image, position) => (

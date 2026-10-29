@@ -196,7 +196,7 @@ export const investigationDetailInclude = {
   },
   photos: {
     orderBy: [{ createdAt: 'desc' }],
-    select: { id: true, title: true, createdAt: true, uploadedById: true },
+    select: { id: true, title: true, description: true, createdAt: true, uploadedById: true },
   },
   linksFrom: {
     orderBy: [{ createdAt: 'asc' }],

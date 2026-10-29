@@ -23,6 +23,8 @@ Abgebrochene Verarbeitungen werden nach fünf Minuten ohne Lebenszeichen wieder 
 
 ## Discord-Bildkatalog
 
+Bilder können beim Upload eine optionale Beschreibung (maximal 5000 Zeichen) erhalten. Im Bildkatalog können Nutzer mit `investigations:manage` Beschreibungen auch nachträglich bearbeiten oder leeren, einschließlich importierter Discord-Bilder. Beschreibungen werden durchsucht und in der Großansicht angezeigt. Dafür muss vor dem Start das aktuelle Prisma-Schema angewendet werden (`npm run db:push`); bestehende Bilder behalten eine leere Beschreibung.
+
 Unter **Einstellungen → Discord → Bildkatalog-Channel** den von euch angelegten Textchannel wählen. Alternativ `DISCORD_PHOTO_CATALOG_CHANNEL_ID` setzen (hat Vorrang). Der konfigurierte Bot benötigt Zugriff auf den Channel und die Berechtigung, den Nachrichtenverlauf zu lesen. Im Discord Developer Portal muss **Message Content Intent** aktiviert sein, damit die Nachrichten-Attachments verfügbar sind.
 
 Nach jedem Abgleich sorgt der Bot dafür, dass ein kurzer Hinweis die letzte Nachricht im Channel bleibt: jede Nachricht wird als Bild übernommen, alle Bilder stehen unter `<Basis-URL>/investigations/photos`. Steht der Hinweis bereits unten, passiert nichts; sonst wird die alte Nachricht gelöscht und neu gepostet. Der Bot braucht dafür zusätzlich das Recht, in diesem Channel Nachrichten zu senden und eigene zu löschen. Die Basis-URL stammt aus `NEXT_PUBLIC_SITE_URL`. Schlägt der Hinweis fehl, läuft der Bildimport trotzdem weiter.
