@@ -30,6 +30,7 @@ let running = false
 let ready: Update | null = null
 let lastCheck: Date | null = null
 
+
 const timeFormat = new Intl.DateTimeFormat('de-DE', { timeStyle: 'short' })
 
 // ── Einstellungen → Info ─────────────────────────────────────────────
