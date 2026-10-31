@@ -62,6 +62,8 @@ interface DiscordConfigResponse {
     photoCatalogChannelId: string
     dutyStatusChannelId: string
     codenameBoardChannelId: string
+    agentOfWeekBoardChannelId: string
+    agentOfWeekRoleId: string
     dutyAdminLogChannelId: string
     dutyStatusMessageId: string
     absenceStatusChannelId: string
@@ -158,6 +160,8 @@ export default function SettingsPage() {
     photoCatalogChannelId: '',
     dutyStatusChannelId: '',
     codenameBoardChannelId: '',
+    agentOfWeekBoardChannelId: '',
+    agentOfWeekRoleId: '',
     dutyAdminLogChannelId: '',
     dutyStatusMessageId: '',
     absenceStatusChannelId: '',
@@ -787,8 +791,9 @@ export default function SettingsPage() {
               {channelField('Bildkatalog-Channel', 'photoCatalogChannelId', 'Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot braucht Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Eine Umgebungsvariable hat Vorrang.')}
             </ChannelGroup>
 
-            <ChannelGroup title="Decknamen & Clips">
+            <ChannelGroup title="Boards & Clips">
               {channelField('Decknamen-Board', 'codenameBoardChannelId', 'Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.')}
+              {channelField('Agent-der-Woche-Board', 'agentOfWeekBoardChannelId', 'Titelträger der Vorwoche und Live-Ranking der laufenden Woche. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.')}
               <div>
                 <Select
                     label="Clips-Channels: Kategorie"
@@ -812,6 +817,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {roleField('Human-Resources-Rolle', 'humanResourcesRoleId', 'Wird in Mitteilungen zu Sanktionen als Human Resources erwähnt.')}
               {roleField('Uprank-Sperre-Rolle', 'promotionBlockRoleId', 'Agents mit aktiver Uprank-Sperre erhalten diese Rolle automatisch und verlieren sie beim Aufheben.')}
+              {roleField('Agent-der-Woche-Rolle', 'agentOfWeekRoleId', 'Der Agent der Woche erhält diese Rolle beim Wochenwechsel automatisch, der Vorgänger verliert sie. Leer lassen, um keine Rolle zu vergeben.')}
               {roleField('Beurlaubungs-Rolle', 'leaveRoleId', 'Beurlaubte Agents erhalten diese Rolle automatisch und verlieren sie beim Aufheben der Beurlaubung.')}
               {roleField('Bodycam-Katalog: Lesezugriff', 'bodycamViewerRoleId', 'Gewährt Lesezugriff auf den gesamten Bodycam-Katalog. Akten bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.')}
               {roleField('Clips-Channels: Analysten-Rolle', 'clipsAnalystRoleId', 'Darf in allen Clips-Channels Videos hochladen und lesen. Ohne diese Rolle werden keine Clips-Channels angelegt; bei Kündigung wird der Channel samt Videos gelöscht. Der Bot braucht „Kanäle verwalten“ und „Rollen verwalten“.')}
@@ -951,9 +957,9 @@ export default function SettingsPage() {
 
 type ChannelField =
   | 'announcementsChannelId' | 'updateChannelId' | 'sanctionsChannelId' | 'investigationsChannelId'
-  | 'photoCatalogChannelId' | 'dutyStatusChannelId' | 'codenameBoardChannelId' | 'dutyAdminLogChannelId'
+  | 'photoCatalogChannelId' | 'dutyStatusChannelId' | 'codenameBoardChannelId' | 'agentOfWeekBoardChannelId' | 'dutyAdminLogChannelId'
   | 'absenceStatusChannelId' | 'weeklyReportChannelId' | 'hirePingChannelId' | 'desktopNewsChannelId'
-type RoleField = 'humanResourcesRoleId' | 'promotionBlockRoleId' | 'leaveRoleId' | 'bodycamViewerRoleId' | 'clipsAnalystRoleId'
+type RoleField = 'humanResourcesRoleId' | 'promotionBlockRoleId' | 'agentOfWeekRoleId' | 'leaveRoleId' | 'bodycamViewerRoleId' | 'clipsAnalystRoleId'
 
 function SettingsSection({ id, icon: Icon, iconClassName, title, description, action, children }: {
   id?: string

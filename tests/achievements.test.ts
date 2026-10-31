@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { computeAchievements, fullMonthsBetween } from '../src/lib/agents/achievements'
-import { isMonthKey, monthKey, monthKeyLabel, monthWinners, shiftMonthKey, voteRejection } from '../src/lib/agents/agent-of-month'
 
 const HOUR = 3_600_000
-const base = { hireDate: new Date(2026, 9, 3), totalDutyMs: 0, completedTrainings: 0, closedCasesLed: 0, agentOfMonthWins: [] }
+const base = { hireDate: new Date(2026, 9, 3), totalDutyMs: 0, completedTrainings: 0, closedCasesLed: 0, agentOfWeekWins: [] }
 
 test('Volle Monate zählen erst ab dem gleichen Kalendertag', () => {
   assert.equal(fullMonthsBetween(new Date(2026, 0, 31), new Date(2026, 1, 28)), 0)
@@ -30,33 +29,16 @@ test('Je Kategorie zählt nur die höchste erreichte Stufe', () => {
   assert.equal(list.find((item) => item.id === 'service-12')?.tier, 3)
 })
 
-test('Agent des Monats listet die Monate sortiert und steigert die Stufe', () => {
-  const [honor] = computeAchievements({ ...base, agentOfMonthWins: ['2026-09', '2026-07'], now: new Date(2026, 9, 3) })
-  assert.equal(honor.title, '2× Agent des Monats')
-  assert.equal(honor.description, 'Juli 2026, September 2026')
+test('Agent der Woche listet die Wochen sortiert und steigert die Stufe', () => {
+  const [honor] = computeAchievements({ ...base, agentOfWeekWins: ['2026-W44', '2026-W40'], now: new Date(2026, 9, 3) })
+  assert.equal(honor.id, 'agent-of-week')
+  assert.equal(honor.title, '2× Agent der Woche')
+  assert.equal(honor.description, 'KW 40, KW 44')
   assert.equal(honor.tier, 2)
 })
 
-test('Monatsschlüssel richten sich nach deutscher Zeit', () => {
-  // 31.10. 23:30 UTC ist in Berlin schon der 1. November.
-  assert.equal(monthKey(new Date('2026-10-31T23:30:00Z')), '2026-11')
-  assert.equal(monthKey(new Date('2026-10-31T22:30:00Z')), '2026-10')
-  assert.equal(shiftMonthKey('2026-01', -1), '2025-12')
-  assert.equal(shiftMonthKey('2026-12', 1), '2027-01')
-  assert.equal(monthKeyLabel('2026-03'), 'März 2026')
-  assert.ok(isMonthKey('2026-10'))
-  assert.ok(!isMonthKey('2026-13'))
-})
-
-test('Sieger: höchste Stimmenzahl, Gleichstand teilt den Titel', () => {
-  assert.deepEqual(monthWinners([]), [])
-  assert.deepEqual(monthWinners([{ agentId: 'a', votes: 3 }, { agentId: 'b', votes: 5 }]), [{ agentId: 'b', votes: 5 }])
-  assert.deepEqual(monthWinners([{ agentId: 'a', votes: 2 }, { agentId: 'b', votes: 2 }]).map((row) => row.agentId), ['a', 'b'])
-})
-
-test('Stimmen: nur mit eigenem Agent, nicht für sich selbst, nur für aktive Agents', () => {
-  assert.match(voteRejection({ voterAgentId: null, nomineeAgentId: 'a', nomineeActive: true }) ?? '', /verknüpftem Agent/)
-  assert.match(voteRejection({ voterAgentId: 'a', nomineeAgentId: 'a', nomineeActive: true }) ?? '', /selbst/)
-  assert.ok(voteRejection({ voterAgentId: 'a', nomineeAgentId: 'b', nomineeActive: false }))
-  assert.equal(voteRejection({ voterAgentId: 'a', nomineeAgentId: 'b', nomineeActive: true }), null)
+test('Agent der Woche nennt das Jahr, wenn Siege über mehrere Jahre gehen', () => {
+  const honor = computeAchievements({ ...base, agentOfWeekWins: ['2027-W01', '2026-W52'], now: new Date(2027, 0, 10) })
+    .find((item) => item.id === 'agent-of-week')
+  assert.equal(honor?.description, 'KW 52/2026, KW 1/2027')
 })

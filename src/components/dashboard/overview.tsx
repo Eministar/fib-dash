@@ -25,7 +25,6 @@ import { hasPermission, type Permission } from '@/lib/permissions'
 import { displayBadgeNumber } from '@/lib/agents/badge-number'
 import { notifyLiveUpdate } from '@/lib/core/live-updates'
 import { RecentItemsCard } from '@/components/dashboard/recent-items-card'
-import { AgentOfMonthCard } from '@/components/dashboard/agent-of-month-card'
 import { LiveNumber } from '@/components/ui/live-number'
 import { checklistProgress } from '@/lib/investigations/investigation-templates'
 import { INVESTIGATION_STATUS_LABELS } from '@/lib/investigations/investigations'
@@ -677,8 +676,6 @@ export default function DashboardPage() {
             </Panel>
           </div>
         </div>
-
-        <AgentOfMonthCard />
 
         <Modal open={absenceModalOpen} onClose={() => setAbsenceModalOpen(false)} title="Abmeldung eintragen" description="Trage eine Abwesenheit ein – sie endet automatisch zum gewählten Datum.">
           <div className="space-y-4">

@@ -10,7 +10,7 @@ import {
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Download, MonitorDown,
   FileText, FileSignature, Gavel, FolderSearch, Map,
-  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star, IdCard,
+  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star, IdCard, Trophy,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,7 @@ export const mainNav: NavItem[] = [
   { name: 'Dienstzeiten', href: '/duty-times', icon: Timer, permission: 'duty-times:view' },
   { name: 'Agents', href: '/agents', icon: Users, permission: 'agents:view' },
   { name: 'Decknamen', href: '/codenames', icon: KeyRound, permission: 'codenames:view' },
+  { name: 'Agent der Woche', href: '/agent-der-woche', icon: Trophy, permission: 'agent-of-week:view' },
   { name: 'Rangänderungen', href: '/promotions', icon: ArrowUpDown, permission: 'rank-changes:view' },
   { name: 'Kündigungen', href: '/terminations', icon: UserX, permission: 'terminations:view' },
   // Ohne `permission`: Sanktionen und Katalog sind für jeden eingeloggten Agent einsehbar.
@@ -227,7 +228,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
         )}
         {[
           { label: 'Arbeitsplatz', paths: ['/dashboard', '/duty-times', '/notes'] },
-          { label: 'Personal', paths: ['/agents', '/codenames', '/promotions', '/terminations', '/vertraege'] },
+          { label: 'Personal', paths: ['/agents', '/codenames', '/agent-der-woche', '/promotions', '/terminations', '/vertraege'] },
           { label: 'Ermittlungen & Disziplin', paths: ['/investigations', '/sanktionen', '/corruption-checks', '/quality-checks', '/map'] },
           { label: 'Unterlagen', paths: ['/ordnungen', '/publications', '/uploads'] },
         ].map(group => {

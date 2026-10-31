@@ -4,7 +4,7 @@
  * zurückdatiertes Einstellungsdatum) wirkt deshalb sofort.
  */
 
-import { monthKeyLabel } from '@/lib/agents/agent-of-month'
+import { weekKeyShort } from '@/lib/agents/agent-of-week'
 
 export type AchievementCategory = 'service' | 'duty' | 'training' | 'cases' | 'honor'
 
@@ -22,8 +22,8 @@ export type AchievementInput = {
   totalDutyMs: number
   completedTrainings: number
   closedCasesLed: number
-  /** Monate ("YYYY-MM"), in denen der Agent Agent des Monats war. */
-  agentOfMonthWins: string[]
+  /** ISO-Wochen ("YYYY-Www"), in denen der Agent Agent der Woche war. */
+  agentOfWeekWins: string[]
   now?: Date
 }
 
@@ -88,14 +88,16 @@ export function computeAchievements(input: AchievementInput): Achievement[] {
   const cases = reached(input.closedCasesLed, CASES)
   if (cases) result.push({ id: `cases-${cases.min}`, category: 'cases', title: cases.title, description: `${input.closedCasesLed} Ermittlungen als Fallführung abgeschlossen`, tier: cases.tier })
 
-  const wins = [...input.agentOfMonthWins].sort()
+  const wins = [...input.agentOfWeekWins].sort()
   if (wins.length > 0) {
+    // Jahr nur, wenn die Siege über mehrere Jahre gehen.
+    const multiYear = new Set(wins.map((week) => week.slice(0, 4))).size > 1
     result.push({
-      id: 'agent-of-month',
+      id: 'agent-of-week',
       category: 'honor',
-      title: wins.length === 1 ? 'Agent des Monats' : `${wins.length}× Agent des Monats`,
-      description: wins.map(monthKeyLabel).join(', '),
-      tier: wins.length >= 3 ? 3 : wins.length === 2 ? 2 : 1,
+      title: wins.length === 1 ? 'Agent der Woche' : `${wins.length}× Agent der Woche`,
+      description: wins.map((week) => multiYear ? `${weekKeyShort(week)}/${week.slice(0, 4)}` : weekKeyShort(week)).join(', '),
+      tier: wins.length >= 5 ? 3 : wins.length >= 2 ? 2 : 1,
     })
   }
 

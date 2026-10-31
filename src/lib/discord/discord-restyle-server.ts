@@ -13,6 +13,7 @@ import {
   getDiscordConfig,
   syncDiscordAbsenceStatusMessage,
   syncDiscordCodenameBoard,
+  syncDiscordAgentOfWeekBoard,
   syncDiscordDutyStatusMessage,
 } from './discord-integration'
 import { DISCORD_STYLE_VERSION, restyleComponents, restyleDiscordText } from './discord-restyle'
@@ -217,6 +218,7 @@ export async function restyleSentDiscordMessages() {
     syncDiscordDutyStatusMessage(),
     syncDiscordAbsenceStatusMessage(),
     syncDiscordCodenameBoard({ force: true }),
+    syncDiscordAgentOfWeekBoard({ force: true }),
     prisma.leadershipGroup.updateMany({ data: { nextSyncAt: new Date() } }),
   ])
   return stats

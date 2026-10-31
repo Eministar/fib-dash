@@ -314,6 +314,7 @@ model User {
   formResponsesReviewed      FormResponse[]            @relation("FormResponseReviewer")
   formTestSessions           FormTestSession[]         @relation("FormTestSessionUser")
   agentOfMonthVotes          AgentOfMonthVote[]        @relation("AgentOfMonthVoter")
+  agentWeeklyRatingsGiven    AgentWeeklyRating[]       @relation("AgentWeeklyRater")
   jobApplicationsSubmitted   JobApplication[]          @relation("JobApplicationApplicant")
   jobApplicationsReviewed    JobApplication[]          @relation("JobApplicationReviewer")
   pressReleasesCreated       PressRelease[]            @relation("PressReleaseCreator")
@@ -772,6 +773,8 @@ model Agent {
   bodycamClips             BodycamClip[]           @relation("BodycamClipRecorder")
   evidenceSeized           Evidence[]              @relation("EvidenceSeizedBy")
   agentOfMonthVotes        AgentOfMonthVote[]      @relation("AgentOfMonthNominee")
+  weeklyRatings            AgentWeeklyRating[]     @relation("AgentWeeklyRated")
+  weeklyResults            AgentWeeklyResult[]
   licenses                 AgentLicense[]
   licenseEvents            AgentLicenseEvent[]
 
@@ -2995,6 +2998,55 @@ model AgentOfMonthVote {
   @@unique([month, voterId])
   @@index([month, agentId])
   @@index([agentId])
+}
+
+/// Wochenbewertung für „Agent der Woche“: je Bewerter, Agent und ISO-Woche
+/// eine Bewertung mit vier Noten 1–10. Bis Wochenende änderbar.
+model AgentWeeklyRating {
+  id        String   @id @default(cuid())
+  /// ISO-Woche im Format "YYYY-Www" (Europe/Berlin).
+  week      String   @db.VarChar(8)
+  raterId   String
+  rater     User     @relation("AgentWeeklyRater", fields: [raterId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     Agent    @relation("AgentWeeklyRated", fields: [agentId], references: [id], onDelete: Cascade)
+  shooting  Int
+  work      Int
+  activity  Int
+  roleplay  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([week, raterId, agentId])
+  @@index([week, agentId])
+  @@index([agentId])
+}
+
+/// Eingefrorenes Wochenergebnis: beim Wochenwechsel einmal je bewertetem Agent
+/// geschrieben. Spätere Status- oder Namensänderungen verschieben alte Wochen nicht.
+model AgentWeeklyResult {
+  id          String   @id @default(cuid())
+  week        String   @db.VarChar(8)
+  /// Null, wenn der Agent später gelöscht wurde – Name bleibt als Momentaufnahme.
+  agentId     String?
+  agent       Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  firstName   String
+  lastName    String
+  badgeNumber String
+  place       Int
+  overall     Float
+  shooting    Float
+  work        Float
+  activity    Float
+  roleplay    Float
+  ratingCount Int
+  /// Agent der Woche (bei Gleichstand mehrere).
+  winner      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([week, agentId])
+  @@index([week, place])
+  @@index([agentId, winner])
 }
 
 /// Ein Lagervorgang aus dem Discord-Lagerlog (Webhook „Fraklager“). Je Embed

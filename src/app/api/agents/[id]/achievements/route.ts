@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/auth'
 import { success, error, unauthorized, notFound } from '@/lib/api-response'
 import { computeAchievements } from '@/lib/agents/achievements'
-import { getAgentOfMonthWins } from '@/lib/agents/agent-of-month-server'
+import { getAgentOfWeekWins } from '@/lib/agents/agent-of-week-server'
 import { getAgentAllTimePlaytimeMs } from '@/lib/duty/duty-times'
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,14 +15,14 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const agent = await prisma.agent.findUnique({ where: { id }, select: { hireDate: true } })
     if (!agent) return notFound('Agent')
 
-    const [totalDutyMs, completedTrainings, closedCasesLed, agentOfMonthWins] = await Promise.all([
+    const [totalDutyMs, completedTrainings, closedCasesLed, agentOfWeekWins] = await Promise.all([
       getAgentAllTimePlaytimeMs(id, now),
       prisma.agentTraining.count({ where: { agentId: id, completed: true } }),
       prisma.investigation.count({ where: { leadAgentId: id, status: { in: ['CLOSED', 'ARCHIVED'] } } }),
-      getAgentOfMonthWins(id, now),
+      getAgentOfWeekWins(id),
     ])
 
-    return success(computeAchievements({ hireDate: agent.hireDate, totalDutyMs, completedTrainings, closedCasesLed, agentOfMonthWins, now }))
+    return success(computeAchievements({ hireDate: agent.hireDate, totalDutyMs, completedTrainings, closedCasesLed, agentOfWeekWins, now }))
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Serverfehler'
     if (msg === 'Unauthorized') return unauthorized()

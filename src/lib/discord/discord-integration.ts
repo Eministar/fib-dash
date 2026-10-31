@@ -103,6 +103,11 @@ export type DiscordConfig = {
   photoCatalogChannelId: string
   codenameBoardChannelId: string
   codenameBoardMessageIds: string[]
+  /// Board „Agent der Woche“ (Ranking der laufenden Woche); leer = aus.
+  agentOfWeekBoardChannelId: string
+  agentOfWeekBoardMessageIds: string[]
+  /// Rolle für den aktuellen Agent der Woche; leer = keine Rolle.
+  agentOfWeekRoleId: string
   guildId: string
   applicationId: string
   announcementsChannelId: string
@@ -231,6 +236,9 @@ export const DISCORD_SETTING_KEYS = {
   photoCatalogChannelId: 'discord.photoCatalogChannelId',
   codenameBoardChannelId: 'discord.codenameBoardChannelId',
   codenameBoardMessageIds: 'discord.codenameBoardMessageIds',
+  agentOfWeekBoardChannelId: 'discord.agentOfWeekBoardChannelId',
+  agentOfWeekBoardMessageIds: 'discord.agentOfWeekBoardMessageIds',
+  agentOfWeekRoleId: 'discord.agentOfWeekRoleId',
   guildId: 'discord.guildId',
   applicationId: 'discord.applicationId',
   announcementsChannelId: 'discord.announcementsChannelId',
@@ -949,6 +957,9 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
     photoCatalogChannelId: envFirst(process.env.DISCORD_PHOTO_CATALOG_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.photoCatalogChannelId]),
     codenameBoardChannelId: envFirst(process.env.DISCORD_CODENAME_BOARD_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.codenameBoardChannelId]),
     codenameBoardMessageIds: cleanRoleIds(parseJson(map[DISCORD_SETTING_KEYS.codenameBoardMessageIds], [])),
+    agentOfWeekBoardChannelId: envFirst(process.env.DISCORD_AGENT_OF_WEEK_BOARD_CHANNEL_ID?.trim() || '', map[DISCORD_SETTING_KEYS.agentOfWeekBoardChannelId]),
+    agentOfWeekBoardMessageIds: cleanRoleIds(parseJson(map[DISCORD_SETTING_KEYS.agentOfWeekBoardMessageIds], [])),
+    agentOfWeekRoleId: envFirst(process.env.DISCORD_AGENT_OF_WEEK_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.agentOfWeekRoleId]),
     dutyStatusMessageId: map[DISCORD_SETTING_KEYS.dutyStatusMessageId] || '',
     absenceStatusChannelId: envFirst(envAbsenceStatusChannelId(), map[DISCORD_SETTING_KEYS.absenceStatusChannelId]),
     absenceStatusMessageId: map[DISCORD_SETTING_KEYS.absenceStatusMessageId] || '',
@@ -987,6 +998,9 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.bodycamViewerRoleId !== undefined) data[DISCORD_SETTING_KEYS.bodycamViewerRoleId] = input.bodycamViewerRoleId.trim()
   if (input.hirePingChannelId !== undefined) data[DISCORD_SETTING_KEYS.hirePingChannelId] = input.hirePingChannelId.trim()
   if (input.codenameBoardMessageIds !== undefined) data[DISCORD_SETTING_KEYS.codenameBoardMessageIds] = JSON.stringify(cleanRoleIds(input.codenameBoardMessageIds))
+  if (input.agentOfWeekBoardChannelId !== undefined) data[DISCORD_SETTING_KEYS.agentOfWeekBoardChannelId] = input.agentOfWeekBoardChannelId.trim()
+  if (input.agentOfWeekBoardMessageIds !== undefined) data[DISCORD_SETTING_KEYS.agentOfWeekBoardMessageIds] = JSON.stringify(cleanRoleIds(input.agentOfWeekBoardMessageIds))
+  if (input.agentOfWeekRoleId !== undefined) data[DISCORD_SETTING_KEYS.agentOfWeekRoleId] = input.agentOfWeekRoleId.trim()
   if (input.guildId !== undefined) data[DISCORD_SETTING_KEYS.guildId] = input.guildId.trim()
   if (input.applicationId !== undefined) data[DISCORD_SETTING_KEYS.applicationId] = input.applicationId.trim()
   if (input.announcementsChannelId !== undefined) data[DISCORD_SETTING_KEYS.announcementsChannelId] = input.announcementsChannelId.trim()
@@ -2660,6 +2674,140 @@ async function runCodenameBoardSync(options?: { force?: boolean }) {
   })
   await prisma.systemSetting.upsert({ where: { key: CODENAME_BOARD_FINGERPRINT_KEY }, create: { key: CODENAME_BOARD_FINGERPRINT_KEY, value: fingerprint }, update: { value: fingerprint } })
   return { skipped: false, messageIds: ids }
+}
+
+// ── Agent der Woche ────────────────────────────────────────────────
+
+// Eigene Queue wie beim Decknamen-Board: Bewertungen, Wochenwechsel und
+// manuelle Läufe schreiben nie gleichzeitig.
+let agentOfWeekBoardTail: Promise<unknown> = Promise.resolve()
+let agentOfWeekSchedulerStarted = false
+
+/** Fünf-Minuten-Takt: schließt vergangene Wochen ab, setzt die Rolle und hält das Board aktuell. */
+export function ensureAgentOfWeekScheduler() {
+  if (agentOfWeekSchedulerStarted) return
+  agentOfWeekSchedulerStarted = true
+  const tick = () => {
+    void (async () => {
+      const { closeFinishedWeeks } = await import('../agents/agent-of-week-server')
+      const closed = await closeFinishedWeeks()
+      if (closed.length) console.log(`[AgentOfWeek] Woche(n) abgeschlossen: ${closed.join(', ')}`)
+      await syncAgentOfWeekRole()
+      await syncDiscordAgentOfWeekBoard()
+    })().catch(cause => console.error('[AgentOfWeek] Wochenlauf fehlgeschlagen:', cause))
+  }
+  setTimeout(tick, 30_000).unref?.()
+  setInterval(tick, 300_000).unref?.()
+}
+
+/** `force` schreibt das Board neu, auch wenn sich der Stand nicht geändert hat. */
+export function syncDiscordAgentOfWeekBoard(options?: { force?: boolean }) {
+  const next = agentOfWeekBoardTail.then(() => runAgentOfWeekBoardSync(options))
+  agentOfWeekBoardTail = next.catch(() => undefined)
+  return next
+}
+
+export function queueAgentOfWeekBoardUpdate() {
+  void syncDiscordAgentOfWeekBoard().catch(cause => {
+    console.error('[DiscordIntegration] Agent-der-Woche-Board fehlgeschlagen:', cause)
+  })
+}
+
+const AGENT_OF_WEEK_BOARD_FINGERPRINT_KEY = 'discord.agentOfWeekBoardFingerprint'
+const AGENT_OF_WEEK_ROLE_HOLDERS_KEY = 'agentOfWeek.roleHolders'
+
+async function runAgentOfWeekBoardSync(options?: { force?: boolean }) {
+  const config = await getDiscordConfig()
+  if (!botToken()) return { skipped: true, messageIds: [] as string[] }
+  const channelId = config.agentOfWeekBoardChannelId
+  const channelKey = 'discord.agentOfWeekBoardStoredChannelId'
+  const previousChannel = await prisma.systemSetting.findUnique({ where: { key: channelKey } })
+  let ids = [...config.agentOfWeekBoardMessageIds]
+  const saveIds = async () => {
+    const value = JSON.stringify(ids)
+    await prisma.systemSetting.upsert({ where: { key: DISCORD_SETTING_KEYS.agentOfWeekBoardMessageIds }, create: { key: DISCORD_SETTING_KEYS.agentOfWeekBoardMessageIds, value }, update: { value } })
+  }
+  const isMissing = (cause: unknown) => cause instanceof DiscordApiError && cause.status === 404 && cause.code === 10008
+  const remove = async (channel: string, id: string) => {
+    try { await discordFetch(`/channels/${channel}/messages/${id}`, { method: 'DELETE' }) }
+    catch (cause) { if (!isMissing(cause)) throw cause }
+  }
+  if (previousChannel?.value && previousChannel.value !== channelId) {
+    while (ids.length) {
+      await remove(previousChannel.value, ids[ids.length - 1])
+      ids.pop()
+      await saveIds()
+    }
+  }
+  if (!channelId) return { skipped: true, messageIds: ids }
+  await prisma.systemSetting.upsert({ where: { key: channelKey }, create: { key: channelKey, value: channelId }, update: { value: channelId } })
+
+  const [{ agentOfWeekBoardMessages, agentOfWeekBoardFingerprint }, { reconcileCodenameMessages }, { getWeekRanking, getLatestWinners }, { weekKey }] = await Promise.all([
+    import('../agents/agent-of-week-board'),
+    import('../codenames/codename-board'),
+    import('../agents/agent-of-week-server'),
+    import('../agents/agent-of-week'),
+  ])
+  const week = weekKey()
+  const [live, winners] = await Promise.all([getWeekRanking(week), getLatestWinners()])
+  const base = resolveBaseUrl()
+  const input = {
+    week,
+    raterCount: live.raterCount,
+    ranking: live.ranking.map(row => ({ ...row, firstName: row.agent.firstName, lastName: row.agent.lastName, badgeNumber: row.agent.badgeNumber })),
+    winners,
+    url: base ? `${base}/agent-der-woche` : undefined,
+  }
+
+  const fingerprint = agentOfWeekBoardFingerprint(input, channelId)
+  const payloads = agentOfWeekBoardMessages(input, discordTimestamp(new Date(), 'f'))
+  const storedFingerprint = await prisma.systemSetting.findUnique({ where: { key: AGENT_OF_WEEK_BOARD_FINGERPRINT_KEY } })
+  if (!options?.force && storedFingerprint?.value === fingerprint && ids.length === payloads.length) {
+    const missing = await Promise.all(ids.map(async id => {
+      try { await discordFetch(`/channels/${channelId}/messages/${id}`); return false }
+      catch (cause) { if (isMissing(cause)) return true; throw cause }
+    }))
+    if (!missing.some(Boolean)) return { skipped: false, messageIds: ids }
+  }
+  ids = await reconcileCodenameMessages({
+    ids, pages: payloads,
+    patch: async (id, payload) => { await discordFetch(`/channels/${channelId}/messages/${id}`, { method: 'PATCH', body: JSON.stringify({ ...payload, content: null, embeds: [] }) }) },
+    post: async payload => (await postChannelMessage(channelId, payload)).id,
+    remove: id => remove(channelId, id),
+    save: async nextIds => { ids = nextIds; await saveIds() },
+    isMissing,
+  })
+  await prisma.systemSetting.upsert({ where: { key: AGENT_OF_WEEK_BOARD_FINGERPRINT_KEY }, create: { key: AGENT_OF_WEEK_BOARD_FINGERPRINT_KEY, value: fingerprint }, update: { value: fingerprint } })
+  return { skipped: false, messageIds: ids }
+}
+
+/**
+ * Gibt den Titelträgern der letzten abgeschlossenen Woche die Rolle und nimmt
+ * sie den vorherigen. Die Inhaber stehen als Setting, damit ein Neustart oder
+ * ein Rollenwechsel in den Einstellungen niemanden mit alter Rolle zurücklässt.
+ */
+export async function syncAgentOfWeekRole() {
+  const config = await getDiscordConfig()
+  if (!config.guildId || !botToken()) return
+  const row = await prisma.systemSetting.findUnique({ where: { key: AGENT_OF_WEEK_ROLE_HOLDERS_KEY } })
+  const stored = parseJson<{ roleId?: string; discordIds?: string[] }>(row?.value, {})
+  const previousRole = stored.roleId ?? ''
+  const previousHolders = cleanRoleIds(stored.discordIds ?? [])
+
+  const { getLatestWinners } = await import('../agents/agent-of-week-server')
+  const winners = config.agentOfWeekRoleId ? await getLatestWinners() : null
+  const holders = cleanRoleIds((winners?.agents ?? []).map(entry => entry.agent?.discordId ?? ''))
+  const roleId = config.agentOfWeekRoleId
+  if (previousRole === roleId && previousHolders.length === holders.length && previousHolders.every(id => holders.includes(id))) return
+
+  for (const discordId of previousHolders) {
+    if (previousRole && (previousRole !== roleId || !holders.includes(discordId))) await removeDiscordRoleFromMember(discordId, previousRole)
+  }
+  for (const discordId of holders) {
+    if (roleId && (previousRole !== roleId || !previousHolders.includes(discordId))) await addDiscordRoleToMember(discordId, roleId)
+  }
+  const value = JSON.stringify({ roleId, discordIds: holders })
+  await prisma.systemSetting.upsert({ where: { key: AGENT_OF_WEEK_ROLE_HOLDERS_KEY }, create: { key: AGENT_OF_WEEK_ROLE_HOLDERS_KEY, value }, update: { value } })
 }
 
 export type DiscordPhotoMessage = {
