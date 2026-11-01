@@ -57,34 +57,7 @@ async function updateAgentStatusSafely(input: {
   throw lastError
 }
 
-export function parseAbsenceDate(value: string, fallbackTime?: { hours: number; minutes: number }) {
-  const input = value.trim()
-  if (!input) return null
-
-  const dateOnly = input.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  if (dateOnly) {
-    const year = Number.parseInt(dateOnly[1], 10)
-    const month = Number.parseInt(dateOnly[2], 10) - 1
-    const day = Number.parseInt(dateOnly[3], 10)
-    const date = new Date(year, month, day, fallbackTime?.hours ?? 0, fallbackTime?.minutes ?? 0, 0, 0)
-    return Number.isNaN(date.getTime()) ? null : date
-  }
-
-  const iso = new Date(input)
-  if (!Number.isNaN(iso.getTime())) return iso
-
-  const match = input.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/)
-  if (!match) return null
-
-  const day = Number.parseInt(match[1], 10)
-  const month = Number.parseInt(match[2], 10) - 1
-  const year = Number.parseInt(match[3], 10)
-  const hours = match[4] ? Number.parseInt(match[4], 10) : fallbackTime?.hours ?? 0
-  const minutes = match[5] ? Number.parseInt(match[5], 10) : fallbackTime?.minutes ?? 0
-  const date = new Date(year, month, day, hours, minutes, 0, 0)
-
-  return Number.isNaN(date.getTime()) ? null : date
-}
+export { parseAbsenceDate } from '@/lib/agents/absence-dates'
 
 export function formatAbsenceDate(date: Date) {
   return date.toLocaleString('de-DE', {

@@ -25,6 +25,7 @@ import {
 } from '@/lib/discord/discord-integration'
 import { clockIn, clockOut, confirmDutyActivity, DutyClockError, findAgentForDiscord } from '@/lib/duty/manual-duty'
 import { cancelAbsenceNotice, createAbsenceNotice, formatAbsenceDate, parseAbsenceDate } from '@/lib/agents/absence-status'
+import { absenceUntilFromNow } from '@/lib/agents/absence-dates'
 import { isUniqueConstraintError } from '@/lib/core/prisma-errors'
 import { queueDiscordWebhookEvent } from '@/lib/discord/discord-webhook'
 import { DISCORD_COMMANDS } from '@/lib/discord/discord-commands'
@@ -781,15 +782,8 @@ function parseAbsenceUntil(value: string, now = new Date()) {
   if (!Number.isFinite(amount) || amount <= 0) return null
 
   const unit = match[2] ?? 'tage'
-  const end = new Date(now)
-  if (unit === 'h' || unit === 'std' || unit === 'stunde' || unit === 'stunden') {
-    end.setHours(end.getHours() + amount)
-    return end
-  }
-
-  end.setDate(end.getDate() + amount * (unit === 'w' || unit === 'woche' || unit === 'wochen' ? 7 : 1))
-  end.setHours(23, 59, 0, 0)
-  return end
+  if (unit === 'h' || unit === 'std' || unit === 'stunde' || unit === 'stunden') return absenceUntilFromNow(amount, 'hours', now)
+  return absenceUntilFromNow(amount, unit === 'w' || unit === 'woche' || unit === 'wochen' ? 'weeks' : 'days', now)
 }
 
 function absenceModal() {

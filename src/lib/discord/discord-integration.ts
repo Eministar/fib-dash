@@ -822,7 +822,13 @@ async function discordFetchRaw<T>(path: string, init?: RequestInit, attempt = 0)
   // Rate-Limit: warten und erneut versuchen
   if (res.status === 429 && attempt < MAX_RETRIES) {
     const body = await res.json().catch(() => ({ retry_after: 2 })) as { retry_after?: number }
-    const waitMs = Math.min((body.retry_after ?? 2) * 1000, 30000)
+    const waitMs = (body.retry_after ?? 2) * 1000
+    // Alle Bot-Aufrufe teilen eine Warteschlange: Ein früherer Retry als von
+    // Discord verlangt läuft garantiert wieder ins Limit und blockiert nur alle
+    // anderen Aufrufe. Lange Sperren deshalb sofort als Fehler melden.
+    if (waitMs > 30000) {
+      throw new DiscordApiError(429, undefined, `Rate-Limit auf ${path}, erneut möglich in ${Math.ceil(waitMs / 1000)}s`)
+    }
     console.warn(`[DiscordIntegration] Rate-Limited auf ${path}, warte ${Math.round(waitMs)}ms (Versuch ${attempt + 1}/${MAX_RETRIES})`)
     await wait(waitMs + 250)
     return discordFetchRaw<T>(path, init, attempt + 1)
@@ -1068,6 +1074,37 @@ function getAllDiscordGuildChannels(guildId: string) {
   return cachedGuildRequest('channels', guildChannelsCache, guildId, () => discordFetch<DiscordChannel[]>(`/guilds/${guildId}/channels`))
 }
 
+let botUserIdCache: Promise<{ id: string }> | null = null
+
+/**
+ * Request-Funktion für die Clips-Channels. Die Channel-Liste, Rollen und der
+ * Bot-User kommen aus dem Guild-Cache statt bei jedem Agent neu von Discord:
+ * `GET /guilds/{id}/channels` ist stark limitiert, und ungecachte Abrufe pro
+ * Agent haben die gemeinsame Warteschlange minutenlang blockiert.
+ */
+async function clipDiscordRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = (init?.method ?? 'GET').toUpperCase()
+  const guildPath = path.match(/^\/guilds\/(\d+)\/(channels|roles)$/)
+  if (method === 'GET' && guildPath) {
+    const [, guildId, kind] = guildPath
+    if (kind === 'channels') return getAllDiscordGuildChannels(guildId) as Promise<T>
+    return cachedGuildRequest('roles', guildRolesCache, guildId, () => discordFetch<DiscordRole[]>(`/guilds/${guildId}/roles`)) as Promise<T>
+  }
+  if (method === 'GET' && path === '/users/@me') {
+    botUserIdCache ??= discordFetch<{ id: string }>('/users/@me').catch((error) => {
+      botUserIdCache = null
+      throw error
+    })
+    return botUserIdCache as Promise<T>
+  }
+  try {
+    return await discordFetch<T>(path, init)
+  } finally {
+    // Jede Channel-Änderung macht die gemerkte Liste ungültig.
+    if (method !== 'GET' && (path.startsWith('/channels/') || guildPath?.[2] === 'channels')) guildChannelsCache.clear()
+  }
+}
+
 export async function getDiscordGuildChannels(guildId?: string) {
   const config = await getDiscordConfig()
   const id = guildId || config.guildId
@@ -1242,7 +1279,12 @@ async function fetchGuildMember(
 ): Promise<DiscordGuildMember | null> {
   const memberId = snowflake(discordId)
   if (!config.guildId || !memberId || !botToken()) return null
-  return discordFetchRaw<DiscordGuildMember>(`/guilds/${config.guildId}/members/${memberId}`).catch(() => null)
+  // Nur „nicht auf dem Server“ ist ein Überspringen; alles andere (Token,
+  // Rechte, Timeout) muss als Fehler sichtbar werden statt still zu verschwinden.
+  return discordFetchRaw<DiscordGuildMember>(`/guilds/${config.guildId}/members/${memberId}`).catch((error) => {
+    if (isUnknownDiscordMember(error)) return null
+    throw error
+  })
 }
 
 async function syncAgentDashboardGroupsForAgent(
@@ -1473,7 +1515,7 @@ export async function syncAgentDiscordRoles(agentId: string, mode: 'sync' | 'rem
   if (mode === 'sync' && !member) return
 
   await syncAgentDiscordMember(agent, config, mode, mode === 'remove-all' ? undefined : member)
-  await syncAgentClipChannel(discordFetch, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
+  await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
   // Neue Agents und Rangwechsel verschieben den Channel an seinen Platz in der Mitarbeiterliste.
   queueClipChannelOrder()
 }
@@ -1485,7 +1527,7 @@ export async function syncFormerAgentDiscordMember(agent: AgentForDiscord) {
   if (!config.guildId || !botToken()) return
 
   await syncAgentDiscordMember(agent, config, 'remove-all')
-  await syncAgentClipChannel(discordFetch, config.guildId, config.clipsAnalystRoleId, agent, true, config.clipsCategoryId)
+  await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, true, config.clipsCategoryId)
 }
 
 export async function syncAllAgentDiscordRoles(options?: {
@@ -1570,7 +1612,7 @@ export async function syncAllAgentDiscordRoles(options?: {
           mode === 'remove-all' ? undefined : member,
           options?.extraManagedRoleIds,
         )
-        await syncAgentClipChannel(discordFetch, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
+        await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
       }
       synced++
       await emitProgress('syncing', agentLabel, `Fertig: ${agentLabel}`)
@@ -1637,7 +1679,7 @@ async function rosterAgentIds() {
 
 async function orderClipChannelsByRoster(config: DiscordConfig) {
   if (!config.guildId || !config.clipsCategoryId || !config.clipsAnalystRoleId || !botToken()) return
-  await orderAgentClipChannels(discordFetch, config.guildId, config.clipsCategoryId, await rosterAgentIds())
+  await orderAgentClipChannels(clipDiscordRequest, config.guildId, config.clipsCategoryId, await rosterAgentIds())
 }
 
 let clipOrderTimer: ReturnType<typeof setTimeout> | null = null

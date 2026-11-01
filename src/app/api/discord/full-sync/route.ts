@@ -10,8 +10,16 @@ export async function POST() {
 
     const stream = new ReadableStream({
       async start(controller) {
+        // Schließt der Browser/Proxy die Verbindung, läuft der Sync trotzdem zu
+        // Ende – Fortschritt wird dann nur nicht mehr gesendet.
+        let open = true
         const send = (payload: unknown) => {
-          controller.enqueue(encoder.encode(`${JSON.stringify(payload)}\n`))
+          if (!open) return
+          try {
+            controller.enqueue(encoder.encode(`${JSON.stringify(payload)}\n`))
+          } catch {
+            open = false
+          }
         }
 
         try {
@@ -32,7 +40,11 @@ export async function POST() {
             error: e instanceof Error ? e.message : 'Serverfehler',
           })
         } finally {
-          controller.close()
+          try {
+            controller.close()
+          } catch {
+            // Verbindung war bereits geschlossen.
+          }
         }
       },
     })
