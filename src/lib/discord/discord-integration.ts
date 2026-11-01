@@ -1379,65 +1379,56 @@ async function syncAgentDiscordMember(
     : await discordFetchRaw<DiscordGuildMember>(`/guilds/${config.guildId}/members/${memberId}`).catch(() => null)
   if (!member) return { status: 'not-member' as const }
 
-  const currentRoles = new Set(member?.roles ?? [])
+  const currentRoleIds = member?.roles ?? []
+  const currentRoles = new Set(currentRoleIds)
   const desiredSet = new Set(desired)
+  const managedSet = new Set(allManaged)
   const toAdd = desired.filter((roleId) => !currentRoles.has(roleId))
   const toRemove = allManaged.filter((roleId) => currentRoles.has(roleId) && !desiredSet.has(roleId))
 
-  // Rollen sequentiell verarbeiten um Rate-Limits zu vermeiden
-  for (const roleId of toRemove) {
-    try {
-      await discordFetch<void>(`/guilds/${config.guildId}/members/${memberId}/roles/${roleId}`, { method: 'DELETE' })
-    } catch (err) {
-      if (isUnknownDiscordMember(err)) return { status: 'not-member' as const }
-      if (isMissingDiscordPermissions(err)) {
-        blockMemberPermissions(memberId)
-        console.warn(`[DiscordIntegration] Rollen-Sync für ${memberId} übersprungen: Bot-Rolle ist nicht hoch genug.`)
-        return { status: 'missing-permissions' as const }
-      }
-      console.error('[DiscordIntegration] Rolle entfernen fehlgeschlagen:', err)
-    }
+  // Rollen und Nickname in EINEM Request setzen: einzelne PUT/DELETE je Rolle
+  // laufen bei mehreren Änderungen sofort ins Discord-Limit pro Mitglied.
+  const body: { roles?: string[]; nick?: string | null } = {}
+  if (toAdd.length || toRemove.length) {
+    body.roles = Array.from(new Set([
+      ...currentRoleIds.filter((roleId) => !managedSet.has(roleId) || desiredSet.has(roleId)),
+      ...desired,
+    ]))
   }
-  for (const roleId of toAdd) {
-    try {
-      await discordFetch<void>(`/guilds/${config.guildId}/members/${memberId}/roles/${roleId}`, { method: 'PUT' })
-    } catch (err) {
-      if (isUnknownDiscordMember(err)) return { status: 'not-member' as const }
-      if (isMissingDiscordPermissions(err)) {
-        blockMemberPermissions(memberId)
-        console.warn(`[DiscordIntegration] Rollen-Sync für ${memberId} übersprungen: Bot-Rolle ist nicht hoch genug.`)
-        return { status: 'missing-permissions' as const }
-      }
-      console.error('[DiscordIntegration] Rolle hinzufügen fehlgeschlagen:', err)
-    }
-  }
-
-  if (mode === 'remove-all' && member?.nick !== null) {
-    await discordFetch<void>(`/guilds/${config.guildId}/members/${memberId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ nick: null }),
-    }).catch((error) => {
-      if (!isUnknownDiscordMember(error) && !isMissingDiscordPermissions(error)) {
-        console.error('[DiscordIntegration] Nickname-Entfernung fehlgeschlagen:', error)
-      }
-    })
-  }
-
+  if (mode === 'remove-all' && member?.nick) body.nick = null
   if (mode === 'sync' && agent.status !== 'TERMINATED') {
     const nick = desiredNickname(agent, await getBadgePrefix())
-    if (member?.nick !== nick) {
-      await discordFetch<void>(`/guilds/${config.guildId}/members/${memberId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ nick }),
-      }).catch((error) => {
-      if (isMissingDiscordPermissions(error)) {
-          blockMemberPermissions(memberId)
-          console.warn(`[DiscordIntegration] Nickname-Sync für ${memberId} übersprungen: Rollen-Hierarchie oder Serverinhaber.`)
-        } else if (!isUnknownDiscordMember(error)) {
-          console.error('[DiscordIntegration] Nickname-Sync fehlgeschlagen:', error)
-        }
-      })
+    if (member?.nick !== nick) body.nick = nick
+  }
+  if (body.roles === undefined && body.nick === undefined) return { status: 'synced' as const }
+
+  const patchMember = (payload: typeof body) => discordFetch<void>(`/guilds/${config.guildId}/members/${memberId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+
+  try {
+    await patchMember(body)
+  } catch (err) {
+    if (isUnknownDiscordMember(err)) return { status: 'not-member' as const }
+    if (!isMissingDiscordPermissions(err)) {
+      console.error('[DiscordIntegration] Mitglied aktualisieren fehlgeschlagen:', err)
+      throw err
     }
+    // Den Nickname von Serverinhaber oder Höhergestellten darf der Bot nicht
+    // ändern – die Rollen trotzdem setzen.
+    if (body.roles !== undefined && body.nick !== undefined) {
+      try {
+        await patchMember({ roles: body.roles })
+        console.warn(`[DiscordIntegration] Nickname für ${memberId} nicht gesetzt: Rollen-Hierarchie oder Serverinhaber.`)
+        return { status: 'synced' as const }
+      } catch (rolesError) {
+        if (!isMissingDiscordPermissions(rolesError)) throw rolesError
+      }
+    }
+    blockMemberPermissions(memberId)
+    console.warn(`[DiscordIntegration] Sync für ${memberId} übersprungen: Bot-Rolle ist nicht hoch genug oder Serverinhaber.`)
+    return { status: 'missing-permissions' as const }
   }
   return { status: 'synced' as const }
 }
