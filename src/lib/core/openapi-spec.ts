@@ -742,6 +742,51 @@ export const ENDPOINTS: EndpointSpec[] = [
     params: [{ name: 'id', in: 'path', required: true, description: 'Abwesenheits-ID', schema: { type: 'string' } }],
   },
 
+  // ============ Kummerkasten ============
+  {
+    id: 'submit-kummerkasten',
+    method: 'POST',
+    path: '/kummerkasten',
+    category: 'Kummerkasten',
+    summary: 'Einsendung einreichen (PD-Bot)',
+    description:
+      'Nimmt eine Kummerkasten-Einsendung als `multipart/form-data` an und legt im eingestellten Forum einen Beitrag an. Nur per API-Token, **ohne** `X-Discord-Id`. Bei `anonymous=true` werden alle Absenderfelder verworfen.',
+    scope: 'kummerkasten:submit',
+    body: {
+      description: 'multipart/form-data',
+      fields: [
+        { name: 'subject', type: 'string', required: true, description: 'Betreff (max. 120 Zeichen)', example: 'Umgang bei Verkehrskontrolle' },
+        { name: 'message', type: 'string', required: true, description: 'Text (max. 4000 Zeichen)' },
+        { name: 'anonymous', type: 'boolean', required: true, description: '`true` = anonym, Absenderfelder werden ignoriert' },
+        { name: 'authorName', type: 'string', required: false, description: 'Server-Nickname (nur wenn nicht anonym)', example: '[12] Max Muster' },
+        { name: 'authorDiscordId', type: 'string', required: false, description: 'Discord-ID (nur wenn nicht anonym)' },
+        { name: 'authorAvatarUrl', type: 'string', required: false, description: 'Avatar-URL von cdn.discordapp.com (optional)' },
+        { name: 'attachment', type: 'file', required: false, description: 'Ein Bild (JPG/PNG, max. 8 MB)' },
+      ],
+    },
+    responseExample: { success: true, data: { id: 42, number: 'KK-0042' } },
+    notes: ['Gibt 403 zurück, wenn der Request per Cookie oder mit `X-Discord-Id` kommt.'],
+  },
+  {
+    id: 'list-kummerkasten',
+    method: 'GET',
+    path: '/kummerkasten',
+    category: 'Kummerkasten',
+    summary: 'Einsendungen auflisten',
+    scope: 'kummerkasten:view',
+    params: [{ name: 'status', in: 'query', description: 'Status-Filter', schema: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'DONE'] } }],
+  },
+  {
+    id: 'update-kummerkasten',
+    method: 'PATCH',
+    path: '/kummerkasten/{id}',
+    category: 'Kummerkasten',
+    summary: 'Status einer Einsendung ändern',
+    scope: 'kummerkasten:manage',
+    params: [{ name: 'id', in: 'path', required: true, description: 'Laufende Nummer', schema: { type: 'integer' } }],
+    body: { description: 'JSON', fields: [{ name: 'status', type: 'string', required: true, description: 'Neuer Status', enumValues: ['OPEN', 'IN_PROGRESS', 'DONE'] }] },
+  },
+
   // ============ Notes ============
   {
     id: 'list-notes',

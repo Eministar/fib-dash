@@ -120,6 +120,8 @@ export type DiscordConfig = {
   /// Channel für Meldungen des Ermittlungssystems: Forum (ein Beitrag je Akte)
   /// oder normaler Text-Channel.
   investigationsChannelId: string
+  /// Forum für den Kummerkasten (ein Beitrag je Einsendung); leer = aus.
+  kummerkastenChannelId: string
   dutyStatusMessageId: string
   absenceStatusChannelId: string
   absenceStatusMessageId: string
@@ -248,6 +250,7 @@ export const DISCORD_SETTING_KEYS = {
   dutyAdminLogChannelId: 'discord.dutyAdminLogChannelId',
   contractsChannelId: 'discord.contractsChannelId',
   investigationsChannelId: 'discord.investigationsChannelId',
+  kummerkastenChannelId: 'discord.kummerkastenChannelId',
   dutyStatusMessageId: 'discord.dutyStatusMessageId',
   absenceStatusChannelId: 'discord.absenceStatusChannelId',
   absenceStatusMessageId: 'discord.absenceStatusMessageId',
@@ -956,6 +959,7 @@ export async function getDiscordConfig(): Promise<DiscordConfig> {
       envInvestigationsChannelId(),
       map[DISCORD_SETTING_KEYS.investigationsChannelId],
     ),
+    kummerkastenChannelId: map[DISCORD_SETTING_KEYS.kummerkastenChannelId] || '',
     clipsCategoryId: map[DISCORD_SETTING_KEYS.clipsCategoryId] || '',
     clipsAnalystRoleId: envFirst(process.env.DISCORD_CLIPS_ANALYST_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.clipsAnalystRoleId]),
     bodycamViewerRoleId: envFirst(process.env.DISCORD_BODYCAM_VIEWER_ROLE_ID?.trim() || '', map[DISCORD_SETTING_KEYS.bodycamViewerRoleId]),
@@ -1016,6 +1020,7 @@ export async function saveDiscordConfig(input: Partial<DiscordConfig>) {
   if (input.dutyAdminLogChannelId !== undefined) data[DISCORD_SETTING_KEYS.dutyAdminLogChannelId] = input.dutyAdminLogChannelId.trim()
   if (input.contractsChannelId !== undefined) data[DISCORD_SETTING_KEYS.contractsChannelId] = input.contractsChannelId.trim()
   if (input.investigationsChannelId !== undefined) data[DISCORD_SETTING_KEYS.investigationsChannelId] = input.investigationsChannelId.trim()
+  if (input.kummerkastenChannelId !== undefined) data[DISCORD_SETTING_KEYS.kummerkastenChannelId] = input.kummerkastenChannelId.trim()
   if (input.dutyStatusMessageId !== undefined) data[DISCORD_SETTING_KEYS.dutyStatusMessageId] = input.dutyStatusMessageId.trim()
   if (input.absenceStatusChannelId !== undefined) data[DISCORD_SETTING_KEYS.absenceStatusChannelId] = input.absenceStatusChannelId.trim()
   if (input.weeklyReportChannelId !== undefined) data[DISCORD_SETTING_KEYS.weeklyReportChannelId] = input.weeklyReportChannelId.trim()

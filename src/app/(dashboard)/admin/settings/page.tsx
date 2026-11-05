@@ -59,6 +59,7 @@ interface DiscordConfigResponse {
     updateChannelId: string
     sanctionsChannelId: string
     investigationsChannelId: string
+    kummerkastenChannelId: string
     photoCatalogChannelId: string
     dutyStatusChannelId: string
     codenameBoardChannelId: string
@@ -157,6 +158,7 @@ export default function SettingsPage() {
     updateChannelId: '',
     sanctionsChannelId: '',
     investigationsChannelId: '',
+    kummerkastenChannelId: '',
     photoCatalogChannelId: '',
     dutyStatusChannelId: '',
     codenameBoardChannelId: '',
@@ -440,6 +442,8 @@ export default function SettingsPage() {
   ]
   // Nur das Ermittlungs-Forum legt Beiträge an; alle anderen Meldungen posten direkt und brauchen einen Text-Channel.
   const textChannelOptions = channelOptions.filter((option) => !option.label.endsWith(' (Forum)'))
+  // Der Kummerkasten legt je Einsendung einen Beitrag an und braucht deshalb zwingend ein Forum.
+  const forumChannelOptions = channelOptions.filter((option) => !option.value || option.label.endsWith(' (Forum)'))
   const roleName = (roleId: string) => discordData?.roles.find((role) => role.id === roleId)?.name || roleId
   const syncPercent = fullSyncResult
     ? 100
@@ -791,6 +795,27 @@ export default function SettingsPage() {
               {channelField('Bildkatalog-Channel', 'photoCatalogChannelId', 'Bild-Uploads erscheinen automatisch unter Ermittlungen → Bildkatalog. Der Bot braucht Kanalzugriff, Nachrichtenverlauf und den Message Content Intent. Eine Umgebungsvariable hat Vorrang.')}
             </ChannelGroup>
 
+            <ChannelGroup title="Kummerkasten" single>
+              {channelField('Kummerkasten-Forum', 'kummerkastenChannelId', 'Nur Forum-Channels: Jede Einsendung aus dem PD-Discord bekommt einen eigenen Beitrag mit Tags (Anonym / Mit Namen, Status). Wer diesen Channel lesen kann, sieht alle Einsendungen inklusive Namen. Stell die Channel-Rechte in Discord so ein, dass nur FIB-01 Zugriff hat. Der Bot braucht dort „Beiträge erstellen“, „In Threads schreiben“, „Dateien anhängen“ und „Kanäle verwalten“.', forumChannelOptions, (
+                  <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-2"
+                      disabled={!discordForm.kummerkastenChannelId}
+                      onClick={async () => {
+                        try {
+                          await execute('/api/discord/kummerkasten-forum', { method: 'POST' })
+                          addToast({ type: 'success', title: 'Forum wird aufgebaut', message: 'Fehlende Beiträge für Einsendungen entstehen im Hintergrund.' })
+                        } catch (err) {
+                          addToast({ type: 'error', title: 'Forum nicht aufgebaut', message: err instanceof Error ? err.message : '' })
+                        }
+                      }}
+                  >
+                    Fehlende Beiträge anlegen
+                  </Button>
+              ))}
+            </ChannelGroup>
+
             <ChannelGroup title="Boards & Clips">
               {channelField('Decknamen-Board', 'codenameBoardChannelId', 'Aktuelle Belegung. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.')}
               {channelField('Agent-der-Woche-Board', 'agentOfWeekBoardChannelId', 'Titelträger der Vorwoche und Live-Ranking der laufenden Woche. Leer lassen, um das Board abzuschalten. Eine gesetzte Umgebungsvariable hat Vorrang.')}
@@ -956,7 +981,7 @@ export default function SettingsPage() {
 }
 
 type ChannelField =
-  | 'announcementsChannelId' | 'updateChannelId' | 'sanctionsChannelId' | 'investigationsChannelId'
+  | 'announcementsChannelId' | 'updateChannelId' | 'sanctionsChannelId' | 'investigationsChannelId' | 'kummerkastenChannelId'
   | 'photoCatalogChannelId' | 'dutyStatusChannelId' | 'codenameBoardChannelId' | 'agentOfWeekBoardChannelId' | 'dutyAdminLogChannelId'
   | 'absenceStatusChannelId' | 'weeklyReportChannelId' | 'hirePingChannelId' | 'desktopNewsChannelId'
 type RoleField = 'humanResourcesRoleId' | 'promotionBlockRoleId' | 'agentOfWeekRoleId' | 'leaveRoleId' | 'bodycamViewerRoleId' | 'clipsAnalystRoleId'

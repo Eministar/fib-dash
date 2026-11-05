@@ -42,6 +42,8 @@ const EXCLUDED_MODELS = new Set([
   'LeadershipGroupMember',
   'LeadershipGroupAgent',
   'LeadershipGroupEvent',
+  // Vertraulich: Kritik aus dem PD-Discord, nur für FIB-01 (keine Snapshots mit Inhalt/Absender).
+  'KummerkastenEntry',
   'AuditLog',
   'ChangeSet',
   'ChangeSetSnapshot',

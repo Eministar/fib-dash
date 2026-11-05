@@ -56,6 +56,9 @@ export const PERMISSIONS = [
   'investigations:delete',
   'investigations:templates',
   'investigations:external',
+  'kummerkasten:view',
+  'kummerkasten:manage',
+  'kummerkasten:submit',
   'storage-logs:view',
   'quality-checks:view',
   'quality-checks:manage',
@@ -143,6 +146,9 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'investigations:delete': 'Ermittlungsakten löschen',
   'investigations:templates': 'Aktenvorlagen verwalten',
   'investigations:external': 'Externer Ermittlungszugriff (ohne Personalakten)',
+  'kummerkasten:view': 'Kummerkasten – Einsendungen lesen (vertraulich)',
+  'kummerkasten:manage': 'Kummerkasten – Status ändern und Forum aufbauen',
+  'kummerkasten:submit': 'Kummerkasten – Einsendungen per API einreichen (nur für das PD-Bot-Token)',
   'storage-logs:view': 'Lagerlogs ansehen (Leadership)',
   'quality-checks:view': 'Qualitätskontrollen und LSPD-Beamtenakten ansehen',
   'quality-checks:manage': 'Qualitätskontrollen durchführen und Freigabelinks verwalten',
@@ -230,6 +236,7 @@ const IMPLIED_PERMISSIONS: Partial<Record<Permission, Permission[]>> = {
   // Das trägt nur, weil Implikationen eine Ebene tief aufgelöst werden: das
   // `agents:view` von `investigations:manage` kommt hier nicht mit (Test sichert das ab).
   'investigations:external': ['investigations:view', 'investigations:manage'],
+  'kummerkasten:manage': ['kummerkasten:view'],
   'quality-checks:manage': ['quality-checks:view'],
   'map:manage': ['map:view'],
   'notes:manage': ['notes:view', 'agents:view'],

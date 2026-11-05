@@ -3125,3 +3125,33 @@ model AiProposal {
 
   @@index([investigationId])
 }
+
+/// Kummerkasten: Kritik von PD-Mitarbeitern ans FIB, eingereicht über den PD-Bot
+/// (POST /api/kummerkasten). Bei `anonymous` bleiben alle Absenderfelder leer –
+/// die API verwirft sie, selbst wenn sie mitgeschickt werden.
+model KummerkastenEntry {
+  /// Fortlaufend; Anzeige als `KK-0001`.
+  id              Int                @id @default(autoincrement())
+  subject         String             @db.VarChar(120)
+  message         String             @db.Text
+  anonymous       Boolean
+  authorName      String?            @db.VarChar(120)
+  authorDiscordId String?            @db.VarChar(32)
+  authorAvatarUrl String?            @db.VarChar(512)
+  /// Dateiname unter uploads/kummerkasten (immer ein vom Bot komprimiertes Bild).
+  imageFilename   String?            @db.VarChar(80)
+  imageMimeType   String?            @db.VarChar(40)
+  status          KummerkastenStatus @default(OPEN)
+  /// Forum-Beitrag im FIB-Discord (Thread-ID = ID der Startnachricht).
+  discordThreadId String?            @db.VarChar(32)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([status, createdAt])
+}
+
+enum KummerkastenStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}

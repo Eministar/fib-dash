@@ -10,7 +10,7 @@ import {
   Shield, GraduationCap, UserCog, Settings, LogOut, Briefcase,
   Menu, X, KeyRound, Timer, Download, MonitorDown,
   FileText, FileSignature, Gavel, FolderSearch, Map,
-  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star, IdCard, Trophy,
+  History, FolderUp, PanelLeftClose, PanelLeftOpen, ChevronDown, Megaphone, ClipboardCheck, Star, IdCard, Trophy, MessageSquareWarning,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -55,6 +55,7 @@ export const mainNav: NavItem[] = [
   { name: 'Korruptionskontrollen', href: '/corruption-checks', icon: Shield },
   { name: 'Qualitätskontrollen', href: '/quality-checks', icon: ClipboardCheck, permission: 'quality-checks:view' },
   { name: 'Ermittlungen', href: '/investigations', icon: FolderSearch, permission: 'investigations:view' },
+  { name: 'Kummerkasten', href: '/kummerkasten', icon: MessageSquareWarning, permission: 'kummerkasten:view' },
   { name: 'Karte', href: '/map', icon: Map, permission: 'map:view' },
   { name: 'Notizen', href: '/notes', icon: StickyNote, permission: 'notes:view' },
   { name: 'Vereinbarungen', href: '/vertraege', icon: FileSignature, permission: 'agreements:view' },
@@ -229,7 +230,7 @@ function NavContent({ pathname, onNavigate, user, logout, compact = false }: Nav
         {[
           { label: 'Arbeitsplatz', paths: ['/dashboard', '/duty-times', '/notes'] },
           { label: 'Personal', paths: ['/agents', '/codenames', '/agent-der-woche', '/promotions', '/terminations', '/vertraege'] },
-          { label: 'Ermittlungen & Disziplin', paths: ['/investigations', '/sanktionen', '/corruption-checks', '/quality-checks', '/map'] },
+          { label: 'Ermittlungen & Disziplin', paths: ['/investigations', '/sanktionen', '/corruption-checks', '/quality-checks', '/kummerkasten', '/map'] },
           { label: 'Unterlagen', paths: ['/ordnungen', '/publications', '/uploads'] },
         ].map(group => {
           const items = mainNav.filter(item => group.paths.includes(item.href) && (!item.permission || hasPermission(user, item.permission)))
