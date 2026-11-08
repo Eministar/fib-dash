@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { usePageAction } from '@/hooks/use-page-action'
-import { FileVideo, FolderOpen, ListChecks, Plus, Users } from 'lucide-react'
+import { FileVideo, FolderOpen, ListChecks, Plus, ScanBarcode, Users } from 'lucide-react'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { UnauthorizedContent } from '@/components/layout/unauthorized-content'
@@ -31,6 +31,7 @@ import {
   labelOptions,
 } from '@/components/investigations/investigation-badges'
 import { AgentPicker } from '@/components/investigations/agent-picker'
+import { ImportCodeDialog } from '@/components/investigations/import-code-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FilterBar, SearchInput } from '@/components/ui/filter-bar'
 import { Wizard, type WizardStep } from '@/components/ui/wizard'
@@ -127,6 +128,7 @@ export function InvestigationsWorkspace() {
   const debouncedSearch = useDebouncedValue(search)
   const [createOpen, setCreateOpen] = useState(false)
   const [chooseType, setChooseType] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [dossierSearch, setDossierSearch] = useState('')
   const [form, setForm] = useState<CreateForm>(emptyForm)
   usePageAction('new', () => setCreateOpen(true), canManage)
@@ -432,14 +434,22 @@ export function InvestigationsWorkspace() {
         description="Ermittlungsakten mit Einsatzchronologie, beteiligten Personen und Bodycam-Aufnahmen."
         action={
           canManage ? (
-            <Button onClick={() => setChooseType(true)} title="Neue Akte (Taste N)" aria-keyshortcuts="n">
-              <Plus className="h-4 w-4" />
-              Neue Akte
-              <kbd className="ml-1 hidden rounded border border-white/30 px-1 font-mono text-[11px] text-white/80 lg:inline">N</kbd>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => setImportOpen(true)} title="FIB-Einsatzcode aus dem MDT importieren">
+                <ScanBarcode className="h-4 w-4" />
+                Einsatzcode importieren
+              </Button>
+              <Button onClick={() => setChooseType(true)} title="Neue Akte (Taste N)" aria-keyshortcuts="n">
+                <Plus className="h-4 w-4" />
+                Neue Akte
+                <kbd className="ml-1 hidden rounded border border-white/30 px-1 font-mono text-[11px] text-white/80 lg:inline">N</kbd>
+              </Button>
+            </div>
           ) : null
         }
       />
+
+      {canManage && <ImportCodeDialog open={importOpen} onClose={() => setImportOpen(false)} onCreated={() => void refetch()} />}
 
       {chooseType && <Modal open onClose={() => setChooseType(false)} title="Was möchtest du dokumentieren?" size="lg">
         <div className="space-y-3">

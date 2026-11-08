@@ -1878,6 +1878,10 @@ model Investigation {
   /// Beitrag im Ermittlungs-Forum auf Discord (Thread-ID = ID der Startnachricht).
   discordThreadId String? @db.VarChar(32)
 
+  /// Herkunft bei Import per FIB-Einsatzcode, z. B. "nerov:42" (MDT-Akte 42).
+  /// Eindeutig, damit derselbe Einsatz nicht doppelt als Akte angelegt wird.
+  sourceKey String? @unique @db.VarChar(80)
+
   /// Fallführender Agent.
   leadAgentId String?
   leadAgent   Agent?  @relation("InvestigationLeadAgent", fields: [leadAgentId], references: [id], onDelete: SetNull)
