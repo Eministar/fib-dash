@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       draft: buildImportDraft(payload),
       meta: {
         caseId: payload.src.caseId,
+        affiliation: payload.case.affiliation,
         issuedAt: new Date(payload.iat * 1000).toISOString(),
         issuerName: payload.issuer.name,
         issuerBadge: payload.issuer.badge,

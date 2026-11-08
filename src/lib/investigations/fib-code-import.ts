@@ -45,6 +45,8 @@ export interface ImportDraft {
   occurredTime: string
   location: string
   report: string
+  /** Optional: bestehende Familienakte, mit der die Akte verknüpft wird. */
+  dossierId: string
   persons: ImportPersonDraft[]
   vehicles: ImportVehicleDraft[]
   items: ImportItemDraft[]
@@ -100,6 +102,7 @@ export function buildImportDraft(payload: FibPayload): ImportDraft {
     occurredTime: c.time,
     location: c.plz ? `PLZ ${c.plz}` : '',
     report: c.report,
+    dossierId: '',
     persons: payload.persons.map((p) => ({
       firstName: p.first,
       lastName: p.last,
@@ -184,6 +187,7 @@ export function parseImportDraft(input: unknown): ImportDraft {
     occurredTime,
     location: text(d, 'location', IMPORT_LIMITS.location, 'Ort'),
     report: text(d, 'report', IMPORT_LIMITS.report, 'Einsatzbericht'),
+    dossierId: text(d, 'dossierId', 64, 'Familienakte'),
     persons: items(d, 'persons', IMPORT_LIMITS.persons, 'Personen', (p) => {
       const firstName = text(p, 'firstName', IMPORT_LIMITS.name, 'Vorname')
       const lastName = text(p, 'lastName', IMPORT_LIMITS.name, 'Nachname')

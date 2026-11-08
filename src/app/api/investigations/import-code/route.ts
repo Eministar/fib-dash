@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       return success(created, 201)
     } catch (cause) {
       if (cause instanceof DuplicateImportError) return error(cause.message, 409)
+      if (cause instanceof ImportDraftError) return error(cause.message, 422)
       throw cause
     }
   } catch (cause) {

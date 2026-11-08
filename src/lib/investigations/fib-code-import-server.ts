@@ -10,7 +10,7 @@ import {
   VEHICLE_NUMBER_PREFIX,
 } from '@/lib/investigations/investigations'
 import { FibCodeError, readFibCode, type FibPayload } from '@/lib/investigations/fib-code'
-import { draftOccurredAt, importSourceKey, type ImportDraft } from '@/lib/investigations/fib-code-import'
+import { ImportDraftError, draftOccurredAt, importSourceKey, type ImportDraft } from '@/lib/investigations/fib-code-import'
 
 /** Signatur-Schlüssel; muss mit `nerov_mdt_fibcode_secret` im FiveM-Server übereinstimmen. */
 export function fibCodeSecret() {
@@ -57,6 +57,10 @@ export async function createInvestigationFromImport(params: {
   const existing = await findImportedInvestigation(sourceKey)
   if (existing) throw new DuplicateImportError(existing)
 
+  if (draft.dossierId && !(await prisma.dossier.findUnique({ where: { id: draft.dossierId }, select: { id: true } }))) {
+    throw new ImportDraftError('Familienakte wurde nicht gefunden')
+  }
+
   const occurredAt = draftOccurredAt(draft)
   // Ohne Einsatzzeitpunkt gibt es keinen Chronologie-Eintrag (er braucht einen
   // Zeitpunkt, der nicht erfunden werden soll) – der Bericht steht dann in der Zusammenfassung.
@@ -81,6 +85,7 @@ export async function createInvestigationFromImport(params: {
           closedAt: closed ? new Date() : null,
           sourceKey,
           createdById: userId,
+          ...(draft.dossierId ? { dossiers: { connect: { id: draft.dossierId } } } : {}),
         },
         select: { id: true, caseNumber: true },
       })

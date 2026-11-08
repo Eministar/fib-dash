@@ -11,6 +11,8 @@ import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useApi } from '@/hooks/use-api'
+import { useFetch } from '@/hooks/use-fetch'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { INVESTIGATION_PERSON_ROLE_LABELS, INVESTIGATION_PRIORITY_LABELS, INVESTIGATION_STATUS_LABELS } from '@/lib/investigations/investigations'
 import { IMPORT_LIMITS, type ImportDraft, type ImportRole } from '@/lib/investigations/fib-code-import'
 import { labelOptions } from '@/components/investigations/investigation-badges'
@@ -21,6 +23,7 @@ interface PreviewResponse {
   draft: ImportDraft
   meta: {
     caseId: number
+    affiliation: string
     issuedAt: string
     issuerName: string
     issuerBadge: string
@@ -42,12 +45,18 @@ export function ImportCodeDialog({ open, onClose, onCreated }: { open: boolean; 
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewResponse | null>(null)
   const [draft, setDraft] = useState<ImportDraft | null>(null)
+  const [dossierSearch, setDossierSearch] = useState('')
+  const debouncedDossierSearch = useDebouncedValue(dossierSearch)
+  const dossiers = useFetch<{ items: { id: string; title: string }[] }>(
+    draft ? `/api/investigations/dossiers?search=${encodeURIComponent(debouncedDossierSearch)}` : null,
+  )
 
   const reset = () => {
     setCode('')
     setError(null)
     setPreview(null)
     setDraft(null)
+    setDossierSearch('')
   }
   const close = () => {
     reset()
@@ -65,6 +74,7 @@ export function ImportCodeDialog({ open, onClose, onCreated }: { open: boolean; 
       })) as PreviewResponse
       setPreview(result)
       setDraft(result.draft)
+      setDossierSearch(result.meta.affiliation)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Der Code konnte nicht gelesen werden.')
     }
@@ -173,6 +183,27 @@ export function ImportCodeDialog({ open, onClose, onCreated }: { open: boolean; 
                 ? 'Ohne Einsatzdatum wird der Bericht in die Zusammenfassung übernommen statt als Chronologie-Eintrag.'
                 : 'Wird als Einsatz-Eintrag in der Chronologie angelegt.'}
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Input
+              label="Familienakte zuordnen (optional)"
+              value={dossierSearch}
+              placeholder="Familienakte suchen …"
+              onChange={(e) => setDossierSearch(e.target.value)}
+            />
+            <Select
+              aria-label="Familienakte"
+              value={draft.dossierId}
+              onValueChange={(value) => patch({ dossierId: value })}
+              options={[
+                { value: '', label: dossiers.loading ? 'Familienakten werden geladen …' : 'Keine Familienakte' },
+                ...(dossiers.data?.items ?? []).map((item) => ({ value: item.id, label: item.title })),
+              ]}
+            />
+            {preview.meta.affiliation && (
+              <p className="text-xs text-[#98989d]">Zugehörigkeit laut MDT: {preview.meta.affiliation}. Es wird nichts automatisch zugeordnet.</p>
+            )}
           </div>
 
           <ListSection title="Personen" count={draft.persons.length}>

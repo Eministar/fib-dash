@@ -127,6 +127,7 @@ test('Entwurf übernimmt nur vorhandene Daten und erfindet nichts', () => {
   assert.equal(draft.persons[0].role, 'SUSPECT')
   assert.match(draft.persons[0].note, /§29 Drogenbesitz \(5\.000 \$, 3 Mo\. Haft\)/)
   assert.deepEqual(draft.items, [{ title: 'weed', quantity: 12 }])
+  assert.equal(draft.dossierId, '')
   assert.equal(importSourceKey(payload('x')), 'nerov:42')
 
   const empty = payload('')
