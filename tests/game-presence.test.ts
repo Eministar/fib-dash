@@ -29,6 +29,7 @@ test('höchstens eine Erinnerung pro Stunde, auch bei Neustart des Spiels', () =
   const tracker = new GameReminderTracker(60 * 60_000)
   const t0 = 1_000_000
   assert.equal(tracker.update('u', true, t0), true)
+  tracker.markReminded('u', t0)
   tracker.update('u', false, t0 + 60_000)
   assert.equal(tracker.update('u', true, t0 + 5 * 60_000), false)
   tracker.update('u', false, t0 + 50 * 60_000)
@@ -41,4 +42,15 @@ test('beim Verbindungsaufbau bereits laufende Spiele lösen keine Erinnerung aus
   assert.equal(tracker.update('u', true, 1_000), false)
   tracker.update('u', false, 2_000)
   assert.equal(tracker.update('u', true, 3_000), true)
+})
+
+test('ohne gesendete Erinnerung oder nach Einstempeln startet keine Pause', () => {
+  const tracker = new GameReminderTracker(60 * 60_000)
+  assert.equal(tracker.update('u', true, 0), true)
+  tracker.update('u', false, 1_000)
+  assert.equal(tracker.update('u', true, 2_000), true)
+  tracker.markReminded('u', 2_000)
+  tracker.resetCooldown('u')
+  tracker.update('u', false, 3_000)
+  assert.equal(tracker.update('u', true, 4_000), true)
 })

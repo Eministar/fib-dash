@@ -10,7 +10,7 @@ export const DUTY_MODE_SETTING_KEY = 'duty.mode'
 /** Nach so langer Dienstzeit (bzw. seit der letzten Bestätigung) fragt der Bot nach, ob man noch im Dienst ist. */
 export const DUTY_ACTIVITY_CHECK_AFTER_MS = 150 * 60_000 // 2,5 Stunden
 /** Ohne Antwort in dieser Zeit wird automatisch ausgestempelt. */
-export const DUTY_ACTIVITY_RESPONSE_MS = 60_000
+export const DUTY_ACTIVITY_RESPONSE_MS = 5 * 60_000
 
 export async function getDutyMode(): Promise<DutyMode> {
   const row = await prisma.systemSetting.findUnique({ where: { key: DUTY_MODE_SETTING_KEY } })

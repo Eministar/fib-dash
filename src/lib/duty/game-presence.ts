@@ -45,7 +45,16 @@ export class GameReminderTracker {
     if (!isPlaying || wasPlaying) return false
     const last = this.lastReminder.get(userId)
     if (last !== undefined && now - last < this.cooldownMs) return false
-    this.lastReminder.set(userId, now)
     return true
+  }
+
+  /** Erst nach tatsächlich gesendeter Erinnerung die Pause starten. */
+  markReminded(userId: string, now = Date.now()) {
+    this.lastReminder.set(userId, now)
+  }
+
+  /** Pause aufheben, z. B. wenn der User eingestempelt ist – beim nächsten Spielstart darf wieder erinnert werden. */
+  resetCooldown(userId: string) {
+    this.lastReminder.delete(userId)
   }
 }

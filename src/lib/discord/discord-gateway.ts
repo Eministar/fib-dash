@@ -71,8 +71,10 @@ async function remindIfNotClockedIn(discordId: string, gameName: string) {
     prisma.absenceNotice.findFirst({ where: { agentId: agent.id, startsAt: { lte: now }, endsAt: { gte: now } }, select: { id: true } }),
     getOpenDutySession(agent.id),
   ])
+  if (open) tracker.resetCooldown(discordId)
   if (details?.onLeave || absence || open) return
   await sendGameClockInReminder({ discordId, gameName })
+  tracker.markReminded(discordId)
   console.log(`${LOG} Einstempel-Erinnerung an ${agent.firstName} ${agent.lastName} gesendet (${gameName})`)
 }
 

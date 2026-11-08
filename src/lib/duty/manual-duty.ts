@@ -201,7 +201,7 @@ async function clockOutUnanswered(now: Date) {
   let changed = false
   for (const session of expired) {
     const sentAt = session.activityCheckSentAt!
-    // Die Dienstzeit endet mit der unbeantworteten Abfrage, nicht erst eine Minute später.
+    // Die Dienstzeit endet mit der unbeantworteten Abfrage, nicht erst nach der Wartezeit.
     const { count } = await prisma.dutyTimeSession.updateMany({
       where: { id: session.id, clockOutAt: null, activityCheckSentAt: sentAt },
       data: { clockOutAt: sentAt, clockOutSource: 'activity-check', autoClockedOut: true },

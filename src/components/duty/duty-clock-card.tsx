@@ -20,7 +20,7 @@ function formatElapsed(ms: number) {
 
 /** Nur im manuellen Modus sichtbar: eigener Stempelstatus samt Aktivitätsabfrage. */
 export function DutyClockCard({ onChange }: { onChange?: () => void }) {
-  // Kurzes Intervall, damit die einminütige Aktivitätsabfrage rechtzeitig auftaucht.
+  // Kurzes Intervall, damit die fünfminütige Aktivitätsabfrage rechtzeitig auftaucht.
   const { data, setData } = useFetch<OwnDutyState>('/api/duty-times/me', 10_000)
   const { execute, loading } = useApi<OwnDutyState>()
   const [failure, setFailure] = useState('')
