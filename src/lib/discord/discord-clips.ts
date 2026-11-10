@@ -5,11 +5,13 @@ type Agent = { id: string; lastName: string; discordId: string | null; status: s
 
 const VIEW = BigInt(1024)
 const ACCESS = (VIEW | BigInt(2048) | BigInt(16384) | BigInt(32768) | BigInt(65536)).toString()
+/** Mitarbeiter dürfen alle Clips-Channels sehen und den Verlauf lesen, aber nicht schreiben. */
+const READ = (VIEW | BigInt(65536)).toString()
 let pending: Promise<unknown> = Promise.resolve()
 
 /** Serialize provisioning so overlapping single/full syncs cannot create duplicates. */
-export function syncAgentClipChannel(request: Request, guildId: string, analystRoleId: string, agent: Agent, remove = false, categoryId = '') {
-  const result = pending.catch(() => undefined).then(() => reconcile(request, guildId, analystRoleId, agent, remove, categoryId))
+export function syncAgentClipChannel(request: Request, guildId: string, analystRoleId: string, agent: Agent, remove = false, categoryId = '', employeeRoleIds: string[] = []) {
+  const result = pending.catch(() => undefined).then(() => reconcile(request, guildId, analystRoleId, agent, remove, categoryId, employeeRoleIds))
   pending = result
   return result
 }
@@ -55,7 +57,38 @@ export function orderAgentClipChannels(request: Request, guildId: string, catego
   return result
 }
 
-async function reconcile(request: Request, guildId: string, analystRoleId: string, agent: Agent, remove: boolean, categoryId: string) {
+/**
+ * Einmal-Migration für bestehende Clips-Channels: ergänzt fehlende Leserechte der
+ * Mitarbeiter-Rollen, ohne andere Rechte anzufassen. Idempotent – Channels, die
+ * schon passen, werden nicht geschrieben. Gibt die Zahl der geänderten Channels zurück.
+ */
+export function grantEmployeeClipAccess(request: Request, guildId: string, analystRoleId: string, employeeRoleIds: string[]) {
+  const result = pending.catch(() => undefined).then(async () => {
+    if (!guildId || !employeeRoleIds.length) return 0
+    const roles = await request<{ id: string }[]>(`/guilds/${guildId}/roles`)
+    const roleIds = new Set(roles.map(role => role.id))
+    const employees = [...new Set(employeeRoleIds)].filter(id => id !== guildId && id !== analystRoleId && roleIds.has(id))
+    if (!employees.length) return 0
+    const channels = await request<Channel[]>(`/guilds/${guildId}/channels`)
+    let changed = 0
+    for (const channel of channels.filter(channel => channel.type === 0 && channel.topic?.startsWith(CLIP_TOPIC_PREFIX))) {
+      const current = channel.permission_overwrites ?? []
+      const missing = employees.filter(id => !current.some(item => item.id === id && item.allow === READ && item.deny === '0'))
+      if (!missing.length) continue
+      const permission_overwrites = [
+        ...current.filter(item => !missing.includes(item.id)),
+        ...missing.map(id => ({ id, type: 0, allow: READ, deny: '0' })),
+      ]
+      await request(`/channels/${channel.id}`, { method: 'PATCH', body: JSON.stringify({ permission_overwrites }) })
+      changed++
+    }
+    return changed
+  })
+  pending = result
+  return result
+}
+
+async function reconcile(request: Request, guildId: string, analystRoleId: string, agent: Agent, remove: boolean, categoryId: string, employeeRoleIds: string[]) {
   const topic = `fib-agent-clips:${agent.id}`
   // Termination cleanup must also work if the role/category was removed meanwhile.
   if (agent.status === 'TERMINATED') {
@@ -79,7 +112,10 @@ async function reconcile(request: Request, guildId: string, analystRoleId: strin
     { id: analystRoleId, type: 0, allow: ACCESS, deny: '0' },
     { id: bot.id, type: 1, allow: ACCESS, deny: '0' },
   ]
-  const overwrites = [...base]
+  const roleIds = new Set(roles.map(role => role.id))
+  // Nur existierende Rollen, sonst lehnt Discord das ganze Update ab; @everyone und die Analysten-Rolle nicht doppelt.
+  const employees = [...new Set(employeeRoleIds)].filter(id => id !== guildId && id !== analystRoleId && roleIds.has(id))
+  const overwrites = [...base, ...employees.map(id => ({ id, type: 0, allow: READ, deny: '0' }))]
   if (active && agent.discordId !== bot.id) overwrites.push({ id: agent.discordId!, type: 1, allow: ACCESS, deny: '0' })
   const parent = channels.find(channel => channel.id === categoryId && channel.type === 4)
   if (!parent) throw new Error('Bitte eine gültige Clips-Kategorie in den Einstellungen auswählen.')

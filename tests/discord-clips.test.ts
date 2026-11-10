@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { clipChannelPositions, syncAgentClipChannel } from '../src/lib/discord/discord-clips'
+import { clipChannelPositions, grantEmployeeClipAccess, syncAgentClipChannel } from '../src/lib/discord/discord-clips'
 
 function fixture() {
   const channels: Record<string, unknown>[] = [{ id: 'category', type: 4, name: 'Clips' }, { id: 'other', type: 4, name: 'Andere Kategorie' }]
@@ -20,13 +20,13 @@ function fixture() {
       else Object.assign(channels.find(channel => path === `/channels/${channel.id}`)!, payload)
       return channels.at(-1) as T
     }
-    if (path.endsWith('/roles')) return [{ id: 'analysts' }, { id: 'new-analysts' }] as T
+    if (path.endsWith('/roles')) return [{ id: 'guild' }, { id: 'analysts' }, { id: 'new-analysts' }, { id: 'employees' }] as T
     if (path === '/users/@me') return { id: 'bot' } as T
     return channels as T
   }
   const agent = { id: 'agent-1', lastName: 'Müller', discordId: 'member', status: 'ACTIVE' }
   const sync = (remove = false, category = 'category', role = 'analysts') => syncAgentClipChannel(request, 'guild', role, agent, remove, category)
-  return { channels, writes, agent, sync }
+  return { channels, writes, agent, sync, request }
 }
 
 test('creates a private upload channel in the selected category and avoids concurrent duplicates', async () => {
@@ -41,6 +41,17 @@ test('creates a private upload channel in the selected category and avoids concu
     const allow = BigInt(permissions.find(p => p.id === id)!.allow)
     assert.equal(allow & (BigInt(1024) | BigInt(2048) | BigInt(32768) | BigInt(65536)), BigInt(1024) | BigInt(2048) | BigInt(32768) | BigInt(65536))
   }
+})
+
+test('employee roles can read every clip channel but not post', async () => {
+  const f = fixture()
+  await syncAgentClipChannel(f.request, 'guild', 'analysts', f.agent, false, 'category', ['employees', 'analysts', 'guild', 'deleted-role'])
+  const permissions = f.writes[0].permission_overwrites as { id: string; allow: string; deny: string }[]
+  assert.deepEqual(permissions.map(p => p.id), ['guild', 'analysts', 'bot', 'employees', 'member'])
+  assert.equal(permissions.find(p => p.id === 'employees')?.allow, String(1024 + 65536))
+  // Ein Re-Sync mit unveränderten Rechten schreibt nichts.
+  await syncAgentClipChannel(f.request, 'guild', 'analysts', f.agent, false, 'category', ['employees'])
+  assert.equal(f.writes.length, 1)
 })
 
 test('moves existing channels, updates names and replaces outdated access without deleting clips', async () => {
@@ -103,4 +114,20 @@ test('clip order makes duplicate positions strictly ascending', () => {
   const positions = clipChannelPositions([clip('1', 'b'), clip('2', 'a')], 'category', ['a', 'b'])
   // „2“ behält Platz 5, nur „1“ rückt dahinter.
   assert.deepEqual(positions, [{ id: '1', position: 6 }])
+})
+
+test('migration grants employees read access on existing clip channels once and keeps other overwrites', async () => {
+  const f = fixture()
+  await f.sync()
+  f.channels.push({ id: 'unrelated', type: 0, name: 'chat', topic: 'anderes' })
+  assert.equal(await grantEmployeeClipAccess(f.request, 'guild', 'analysts', ['employees', 'missing-role']), 1)
+  const permissions = f.channels[2].permission_overwrites as { id: string; allow: string }[]
+  assert.deepEqual(permissions.map(p => p.id), ['guild', 'analysts', 'bot', 'member', 'employees'])
+  assert.equal(permissions.find(p => p.id === 'employees')?.allow, String(1024 + 65536))
+  assert.equal(f.channels[3].permission_overwrites, undefined)
+  // Zweiter Lauf ändert nichts; danach sieht der normale Sync keinen Unterschied.
+  assert.equal(await grantEmployeeClipAccess(f.request, 'guild', 'analysts', ['employees']), 0)
+  const writes = f.writes.length
+  await syncAgentClipChannel(f.request, 'guild', 'analysts', f.agent, false, 'category', ['employees'])
+  assert.equal(f.writes.length, writes)
 })

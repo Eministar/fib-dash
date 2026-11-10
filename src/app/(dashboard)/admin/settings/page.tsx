@@ -845,7 +845,7 @@ export default function SettingsPage() {
               {roleField('Agent-der-Woche-Rolle', 'agentOfWeekRoleId', 'Der Agent der Woche erhält diese Rolle beim Wochenwechsel automatisch, der Vorgänger verliert sie. Leer lassen, um keine Rolle zu vergeben.')}
               {roleField('Beurlaubungs-Rolle', 'leaveRoleId', 'Beurlaubte Agents erhalten diese Rolle automatisch und verlieren sie beim Aufheben der Beurlaubung.')}
               {roleField('Bodycam-Katalog: Lesezugriff', 'bodycamViewerRoleId', 'Gewährt Lesezugriff auf den gesamten Bodycam-Katalog. Akten bleiben gesperrt; bestehende Ermittlungsrechte gelten weiterhin.')}
-              {roleField('Clips-Channels: Analysten-Rolle', 'clipsAnalystRoleId', 'Darf in allen Clips-Channels Videos hochladen und lesen. Ohne diese Rolle werden keine Clips-Channels angelegt; bei Kündigung wird der Channel samt Videos gelöscht. Der Bot braucht „Kanäle verwalten“ und „Rollen verwalten“.')}
+              {roleField('Clips-Channels: Analysten-Rolle', 'clipsAnalystRoleId', 'Darf in allen Clips-Channels Videos hochladen und lesen. Alle Mitarbeiter-Rollen können die Clips-Channels lesen, aber nicht schreiben. Ohne diese Rolle werden keine Clips-Channels angelegt; bei Kündigung wird der Channel samt Videos gelöscht. Der Bot braucht „Kanäle verwalten“ und „Rollen verwalten“.')}
             </div>
 
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 border-t border-[#38383a]/50 pt-5">

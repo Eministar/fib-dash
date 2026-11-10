@@ -1,4 +1,4 @@
-import { orderAgentClipChannels, syncAgentClipChannel } from './discord-clips'
+import { grantEmployeeClipAccess, orderAgentClipChannels, syncAgentClipChannel } from './discord-clips'
 import { prisma } from '../prisma'
 import { compareBadgeNumbers } from '../utils'
 import { agentUnitKeys } from '../agents/agent-units'
@@ -1511,7 +1511,7 @@ export async function syncAgentDiscordRoles(agentId: string, mode: 'sync' | 'rem
   if (mode === 'sync' && !member) return
 
   await syncAgentDiscordMember(agent, config, mode, mode === 'remove-all' ? undefined : member)
-  await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
+  await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId, config.employeeRoleIds)
   // Neue Agents und Rangwechsel verschieben den Channel an seinen Platz in der Mitarbeiterliste.
   queueClipChannelOrder()
 }
@@ -1523,7 +1523,7 @@ export async function syncFormerAgentDiscordMember(agent: AgentForDiscord) {
   if (!config.guildId || !botToken()) return
 
   await syncAgentDiscordMember(agent, config, 'remove-all')
-  await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, true, config.clipsCategoryId)
+  await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, true, config.clipsCategoryId, config.employeeRoleIds)
 }
 
 export async function syncAllAgentDiscordRoles(options?: {
@@ -1608,7 +1608,7 @@ export async function syncAllAgentDiscordRoles(options?: {
           mode === 'remove-all' ? undefined : member,
           options?.extraManagedRoleIds,
         )
-        await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId)
+        await syncAgentClipChannel(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, agent, mode === 'remove-all', config.clipsCategoryId, config.employeeRoleIds)
       }
       synced++
       await emitProgress('syncing', agentLabel, `Fertig: ${agentLabel}`)
@@ -1671,6 +1671,13 @@ async function rosterAgentIds() {
   return agents
     .sort((a, b) => a.rank.sortOrder - b.rank.sortOrder || compareBadgeNumbers(a.badgeNumber, b.badgeNumber))
     .map((agent) => agent.id)
+}
+
+/** Start-Migration: bestehende Clips-Channels für alle Mitarbeiter-Rollen lesbar machen. */
+export async function migrateClipChannelEmployeeAccess() {
+  const config = await getDiscordConfig()
+  if (!config.guildId || !config.clipsCategoryId || !config.clipsAnalystRoleId || !botToken()) return 0
+  return grantEmployeeClipAccess(clipDiscordRequest, config.guildId, config.clipsAnalystRoleId, config.employeeRoleIds)
 }
 
 async function orderClipChannelsByRoster(config: DiscordConfig) {
