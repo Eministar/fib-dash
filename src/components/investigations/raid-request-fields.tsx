@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { FileText } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { FileText, RefreshCw, Scale } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -12,14 +12,69 @@ import { Textarea } from '@/components/ui/textarea'
 import { RAID_MEASURES, RAID_URGENCY, type RaidAttachment, type RaidMeasure, type RaidRequest, type RaidUrgency } from '@/lib/investigations/raid-request'
 import { raidRequestSchema } from '@/lib/investigations/raid-request-schema'
 import { RaidRequestDocument } from './raid-request-document'
+import type { ShareSelection } from '@/lib/investigations/record-share-kinds'
+import type { Charge } from '@/lib/investigations/charges'
+
+type Prefill = Pick<RaidRequest, 'target' | 'address' | 'suspects' | 'offenses' | 'facts'> & { charges: Charge[] }
+const PREFILL_FIELDS = ['target', 'address', 'suspects', 'offenses', 'facts'] as const
 
 /** Eingaben für den Razzia-Antrag. Der förmliche Text entsteht daraus automatisch. */
-export function RaidRequestFields({ value, onChange, attachments }: {
+export function RaidRequestFields({ value, onChange, attachments, items }: {
   value: RaidRequest
   onChange: (next: RaidRequest) => void
   attachments: RaidAttachment[]
+  /** Ausgewählte Akten – daraus wird der Antrag automatisch vorbefüllt. */
+  items: ShareSelection[]
 }) {
   const [preview, setPreview] = useState(false)
+  const [prefill, setPrefill] = useState<Prefill | null>(null)
+  const [prefillState, setPrefillState] = useState<'idle' | 'loading' | 'error'>('idle')
+  // Was zuletzt automatisch eingetragen wurde: solange der Nutzer es nicht ändert, darf es nachgezogen werden.
+  const lastAuto = useRef<Partial<Record<typeof PREFILL_FIELDS[number], string>>>({})
+  const valueRef = useRef(value)
+  useEffect(() => { valueRef.current = value }, [value])
+  const onChangeRef = useRef(onChange)
+  useEffect(() => { onChangeRef.current = onChange }, [onChange])
+  const itemsKey = items.map((item) => `${item.kind}:${item.recordId}`).sort().join('|')
+
+  const apply = (data: Prefill, force: boolean) => {
+    const current = valueRef.current
+    const next = { ...current }
+    for (const field of PREFILL_FIELDS) {
+      const untouched = !current[field].trim() || current[field] === lastAuto.current[field]
+      if ((force || untouched) && (data[field] || untouched)) {
+        next[field] = data[field]
+        lastAuto.current[field] = data[field]
+      }
+    }
+    onChangeRef.current(next)
+  }
+
+  useEffect(() => {
+    if (!itemsKey) return
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      setPrefillState('loading')
+      try {
+        const response = await fetch('/api/record-shares/raid-prefill', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ items: itemsKey.split('|').map((key) => { const [kind, recordId] = key.split(':'); return { kind, recordId } }) }),
+          signal: controller.signal,
+        })
+        const body = await response.json() as { success?: boolean; data?: Prefill }
+        if (!response.ok || !body.data) throw new Error('prefill')
+        setPrefill(body.data)
+        apply(body.data, false)
+        setPrefillState('idle')
+      } catch (cause) {
+        if (!controller.signal.aborted) setPrefillState('error')
+        void cause
+      }
+    }, 450)
+    return () => { window.clearTimeout(timer); controller.abort() }
+    // `apply` liest über Refs, die Auswahl ist der einzige Auslöser.
+  }, [itemsKey])
   const set = <K extends keyof RaidRequest>(key: K, next: RaidRequest[K]) => onChange({ ...value, [key]: next })
   const toggleMeasure = (measure: RaidMeasure, on: boolean) =>
     set('measures', on ? [...value.measures, measure] : value.measures.filter((item) => item !== measure))
@@ -34,13 +89,34 @@ export function RaidRequestFields({ value, onChange, attachments }: {
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#38383a] bg-[#0f0f10] px-3 py-2">
+        <p className="flex items-center gap-1.5 text-[12px] text-[#98989d]">
+          <Scale size={13} className="text-[#d4af37]" aria-hidden />
+          {!items.length
+            ? 'Akten unten auswählen – Tatvorwürfe, Betroffene, Objekt und Sachverhalt werden daraus automatisch übernommen.'
+            : prefillState === 'loading'
+              ? 'Übernehme Angaben aus den Akten …'
+              : prefillState === 'error'
+                ? 'Angaben aus den Akten konnten nicht geladen werden.'
+                : prefill
+                  ? `Aus den Akten übernommen · ${prefill.charges.length} Straftatbestände`
+                  : 'Angaben aus den Akten werden übernommen.'}
+        </p>
+        {prefill && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => apply(prefill, true)} title="Überschreibt Zielobjekt, Anschrift, Betroffene, Tatvorwürfe und Sachverhalt mit den Angaben aus den Akten">
+            <RefreshCw size={13} />
+            Neu aus Akten übernehmen
+          </Button>
+        )}
+      </div>
+
       <Input label="Empfänger" maxLength={200} value={value.recipient} onChange={(event) => set('recipient', event.target.value)} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Input label="Zielobjekt" required maxLength={200} value={value.target} onChange={(event) => set('target', event.target.value)} placeholder="z. B. Anwesen der Familie Moretti" />
         <Input label="Anschrift / Lage (optional)" maxLength={300} value={value.address} onChange={(event) => set('address', event.target.value)} placeholder="z. B. Vinewood Hills, North Sheldon Ave." />
       </div>
       <Textarea label="Betroffene Personen (optional)" rows={2} maxLength={2000} value={value.suspects} onChange={(event) => set('suspects', event.target.value)} placeholder="Namen, ggf. mit Personennummer" />
-      <Textarea label="Tatvorwürfe" required rows={2} maxLength={2000} value={value.offenses} onChange={(event) => set('offenses', event.target.value)} placeholder="z. B. Bandenmäßiger Handel mit Betäubungsmitteln, unerlaubter Waffenbesitz" />
+      <Textarea label="Tatvorwürfe" required rows={Math.min(6, Math.max(2, value.offenses.split('\n').length))} maxLength={2000} value={value.offenses} onChange={(event) => set('offenses', event.target.value)} placeholder="Kommt automatisch aus den Straftatbeständen der Akten – je Zeile ein Vorwurf, z. B. § 4 BtMG – Unerlaubter Umgang mit Betäubungsmitteln" />
       <Textarea label="Sachverhalt" required rows={7} maxLength={12000} value={value.facts} onChange={(event) => set('facts', event.target.value)} placeholder="Was wurde wann festgestellt? Absätze mit Leerzeile trennen." />
 
       <fieldset>

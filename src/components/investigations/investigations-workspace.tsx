@@ -21,6 +21,7 @@ import { useApi } from '@/hooks/use-api'
 import { useFetch } from '@/hooks/use-fetch'
 import { hasPermission } from '@/lib/permissions'
 import {
+  INVESTIGATION_ENTRY_KIND_LABELS,
   INVESTIGATION_PRIORITY_LABELS,
   INVESTIGATION_STATUS_LABELS,
 } from '@/lib/investigations/investigations'
@@ -46,6 +47,9 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { checklistProgress, composeTitle, templatePrefill, mergeTemplatePrefill, type InvestigationTemplateData } from '@/lib/investigations/investigation-templates'
 import { SavedViews } from '@/components/ui/saved-views'
 import { AiSuggest } from '@/components/ai/ai-suggest'
+import { ChargesPicker } from '@/components/investigations/charges-field'
+import { mergeCharges, type Charge } from '@/lib/investigations/charges'
+import type { DraftEntry } from '@/lib/investigations/draft-entries'
 import {
   defaultInvestigationFilters,
   readInvestigationViews,
@@ -85,6 +89,10 @@ type CreateForm = {
   assigneeIds: string[]
   mapSpots: PickedSpot[]
   photos: CatalogPhoto[]
+  /** Straftatbestände aus dem Gesetzbuch des FJD. */
+  charges: Charge[]
+  /** Erste Chronologie-Einträge, von der KI vorgeschlagen. */
+  entries: DraftEntry[]
 }
 
 function emptyForm(): CreateForm {
@@ -101,6 +109,8 @@ function emptyForm(): CreateForm {
     assigneeIds: [],
     mapSpots: [],
     photos: [],
+    charges: [],
+    entries: [],
   }
 }
 
@@ -195,6 +205,8 @@ export function InvestigationsWorkspace() {
           assigneeIds: form.assigneeIds,
           mapSpotIds: form.mapSpots.map((spot) => spot.id),
           photoIds: form.photos.map((photo) => photo.id),
+          charges: form.charges,
+          entries: form.entries,
         }),
       })
       toastSuccess('Akte angelegt', 'Die Ermittlungsakte wurde erstellt.')
@@ -297,8 +309,34 @@ export function InvestigationsWorkspace() {
           <AiSuggest
             kind="investigation"
             dossierId={form.affiliation === 'yes' ? form.dossierId : null}
-            onAccept={(suggestion) => setForm((prev) => ({ ...prev, title: suggestion.title, summary: suggestion.content }))}
+            onAccept={(suggestion) => setForm((prev) => ({
+              ...prev,
+              title: suggestion.title,
+              summary: suggestion.content,
+              charges: mergeCharges(prev.charges, suggestion.charges ?? []),
+              entries: suggestion.entries ?? [],
+            }))}
           />
+          {form.entries.length > 0 && (
+            <section className="rounded-[12px] border border-[#a78bfa]/25 bg-[#161225]/40 p-3.5">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h3 className="text-[12.5px] font-semibold text-[#ddd6fe]">Chronologie von der KI ({form.entries.length})</h3>
+                <button type="button" className="text-[11.5px] text-[#98989d] hover:text-white" onClick={() => setForm((prev) => ({ ...prev, entries: [] }))}>Alle entfernen</button>
+              </div>
+              <p className="mb-2 text-[11.5px] text-[#98989d]">Diese Einträge werden beim Anlegen direkt in die Chronologie geschrieben.</p>
+              <ol className="space-y-1.5">
+                {form.entries.map((entry, index) => (
+                  <li key={index} className="flex items-start gap-2 rounded-[8px] border border-[#2c2c2e] bg-[#0f0f10] p-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12.5px] font-medium text-white">{entry.title} <span className="font-normal text-[#8e8e93]">· {INVESTIGATION_ENTRY_KIND_LABELS[entry.kind]}</span></p>
+                      <p className="mt-0.5 whitespace-pre-wrap text-[12px] leading-relaxed text-[#c7c7cc]">{entry.content}</p>
+                    </div>
+                    <button type="button" aria-label={`Eintrag „${entry.title}“ entfernen`} className="shrink-0 px-1 text-[#8e8e93] hover:text-[#fca5a5]" onClick={() => setForm((prev) => ({ ...prev, entries: prev.entries.filter((_, i) => i !== index) }))}>×</button>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
           <CorruptionCheckSelect
             value={form.corruptionCheck}
             onChange={(corruptionCheck) =>
@@ -340,6 +378,19 @@ export function InvestigationsWorkspace() {
               onValueChange={(value) => setForm((prev) => ({ ...prev, priority: value }))}
             />
           </div>
+        </div>
+      ),
+    },
+    {
+      id: 'straftaten',
+      label: 'Straftatbestände',
+      optional: true,
+      content: (
+        <div className="space-y-3">
+          <p className="text-[12.5px] text-[#98989d]">
+            Gegen welche Gesetze wurde verstoßen? Die Normen kommen live aus dem Gesetzbuch des FJD und werden später im Razzia-Antrag automatisch übernommen.
+          </p>
+          <ChargesPicker value={form.charges} onChange={(charges) => setForm((prev) => ({ ...prev, charges }))} />
         </div>
       ),
     },
@@ -406,6 +457,8 @@ export function InvestigationsWorkspace() {
                   ['Offene Rollen', selectedTemplate.roles.length ? selectedTemplate.roles.map((role) => role.label).join(', ') : 'Keine'],
                 ]
               : []),
+            ['Straftatbestände', form.charges.length ? form.charges.map((charge) => charge.label).join(', ') : 'Keine angegeben'],
+            ['Chronologie', form.entries.length ? `${form.entries.length} Einträge von der KI` : 'Leer'],
             ['Anlass', form.corruptionCheck ? `Korruptionskontrolle · ${corruptionCheckTitle(form.corruptionCheck)}` : 'Kein besonderer Anlass'],
             ['Status', INVESTIGATION_STATUS_LABELS[form.status as keyof typeof INVESTIGATION_STATUS_LABELS] ?? form.status],
             ['Priorität', INVESTIGATION_PRIORITY_LABELS[form.priority as keyof typeof INVESTIGATION_PRIORITY_LABELS] ?? form.priority],

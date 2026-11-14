@@ -4,6 +4,7 @@ import {
   INVESTIGATION_PRIORITY_LABELS,
   INVESTIGATION_STATUS_LABELS,
 } from '../investigations/investigations'
+import type { Charge } from '../investigations/charges'
 
 /**
  * Was ein KI-Vorschlag aus dem Akten-Beitrag an der Akte ändert – Datenform
@@ -33,6 +34,8 @@ export type ProposalActions = {
   vehicles: Named[]
   /** Am Eintrag beteiligte Agents. */
   participants: Participant[]
+  /** Neue Straftatbestände aus dem Gesetzbuch des FJD. */
+  addCharges?: Charge[]
   attachments: { images: number; videos: number }
   /** Was die KI genannt hat, aber nicht eindeutig zugeordnet werden konnte. */
   unresolved: string[]
@@ -50,7 +53,8 @@ export function readActions(value: unknown): ProposalActions {
 
 export function hasChanges(actions: ProposalActions) {
   return Boolean(actions.status || actions.priority || actions.title || actions.leadAgent || actions.addAssignees.length
-    || actions.removePersons?.length || actions.removeAssignees.length || actions.persons.length || actions.vehicles.length)
+    || actions.removePersons?.length || actions.removeAssignees.length || actions.persons.length || actions.vehicles.length
+    || actions.addCharges?.length)
 }
 
 /** Zeilen für die Vorschlagsnachricht. Reine Funktion, damit sie testbar ist. */
@@ -67,6 +71,7 @@ export function describeActions(actions: ProposalActions) {
   }
   if (actions.removePersons?.length) lines.push(`Personen aus dieser Akte entfernen: ${actions.removePersons.map(person => person.name).join(', ')}`)
   if (actions.vehicles.length) lines.push(`Fahrzeuge: ${actions.vehicles.map((vehicle) => vehicle.name).join(', ')}`)
+  if (actions.addCharges?.length) lines.push(`Straftatbestände: ${actions.addCharges.map((charge) => charge.title ? `${charge.label} (${charge.title})` : charge.label).join(', ')}`)
   if (actions.participants?.length) lines.push(`Beteiligte Agents: ${actions.participants.map((agent) => agent.name).join(', ')}`)
   const { images, videos } = actions.attachments
   if (images || videos) lines.push(`Anhänge: ${[images ? `${images} ${images === 1 ? 'Bild' : 'Bilder'}` : '', videos ? `${videos} ${videos === 1 ? 'Video' : 'Videos'}` : ''].filter(Boolean).join(', ')}`)

@@ -1874,6 +1874,9 @@ model Investigation {
   summary    String?               @db.Text
   status     InvestigationStatus   @default(OPEN)
   priority   InvestigationPriority @default(NORMAL)
+  /// Straftatbestände, gegen die verstoßen wurde: `[{ ref: "stgb:p9", label: "§ 9 StGB", title: "Diebstahl" }]`.
+  /// Quelle ist das Gesetzbuch des FJD (siehe `src/lib/laws`).
+  charges    Json?
 
   /// Beitrag im Ermittlungs-Forum auf Discord (Thread-ID = ID der Startnachricht).
   discordThreadId String? @db.VarChar(32)

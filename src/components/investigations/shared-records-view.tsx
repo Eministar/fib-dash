@@ -1,54 +1,123 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
+import { useCallback, useMemo, useState } from 'react'
+import { Car, Clapperboard, FileText, Gavel, Search, User, Users } from 'lucide-react'
 import { useFetch } from '@/hooks/use-fetch'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { SHARE_KINDS, type ShareKind } from '@/lib/investigations/record-share-kinds'
 import { ListSkeleton } from '@/components/ui/loading'
-import { RaidRequestDocument } from './raid-request-document'
-import type { RaidRequest } from '@/lib/investigations/raid-request'
+import { SHARE_KINDS, type ShareKind } from '@/lib/investigations/record-share-kinds'
+import { RaidBinder, RAID_COLOR, type RaidShare } from './binder/raid-binder'
+import { KIND_COLORS, KIND_NAMES, RecordBinder, type SharedItem } from './binder/record-binder'
 
-type Item = { kind: ShareKind; recordId: string; title: string }
-type Detail = Item & { label: string; fields: { label: string; value: string }[]; entries: { title: string; content: string | null; occurredAt: string; kind: string }[]; photos: { id: string; title: string }[]; related: (Item & { label: string })[]; hasPhoto: boolean; hasVideo: boolean }
+type Overview = { title: string; expiresAt: string | null; items: SharedItem[]; raid: RaidShare | null }
+type Open = { type: 'raid' } | { type: 'record'; item: SharedItem } | null
+
+const KIND_ICONS: Record<ShareKind, typeof Users> = { DOSSIER: Users, CASE: FileText, PERSON: User, VEHICLE: Car, CLIP: Clapperboard }
+const KIND_ORDER: ShareKind[] = ['DOSSIER', 'CASE', 'PERSON', 'VEHICLE', 'CLIP']
+
+/**
+ * Öffentliche Leseansicht einer Freigabe: ein Aktenregal mit einem Ordner je
+ * Akte. Geöffnete Ordner zeigen echte DIN-A4-Seiten zum Durchblättern.
+ */
 export function SharedRecordsView({ token }: { token: string }) {
-  const { data, error, loading } = useFetch<{ title: string; expiresAt: string | null; items: Item[]; raid: { request: RaidRequest; reference: string; createdAt: string } | null }>(`/api/shared-records/${encodeURIComponent(token)}`)
-  const [selected, setSelected] = useState<Item | null>(null)
+  const { data, error, loading } = useFetch<Overview>(`/api/shared-records/${encodeURIComponent(token)}`)
+  const [open, setOpen] = useState<Open>(null)
   const [search, setSearch] = useState('')
-  // Hide stale data immediately when a refetch detects expiry or revocation.
-  if (error) return <main className="mx-auto max-w-xl px-5 py-20"><h1 className="text-xl font-semibold text-white">Freigabe nicht verfügbar</h1><p className="mt-3 text-sm text-[#98989d]">Der Link ist ungültig, deaktiviert, abgelaufen oder momentan nicht erreichbar.</p></main>
-  if (loading || !data) return <ListSkeleton compact />
-  const permitted = selected && data.items.some(i => i.kind === selected.kind && i.recordId === selected.recordId)
-  return <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">{data.raid && !permitted && <section className="mb-8">
-      <div className="contract-no-print mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs uppercase tracking-wider text-[#8e8e93]">FIB · Razzia-Antrag mit {data.items.length} Anlagen</p>
-        <Button variant="outline" size="sm" onClick={() => window.print()}>Drucken / als PDF speichern</Button>
+
+  const openItem = useCallback((item: SharedItem) => setOpen({ type: 'record', item }), [])
+  const close = useCallback(() => setOpen(null), [])
+
+  const shelves = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    const items = (data?.items ?? []).filter((item) => !term || item.title.toLowerCase().includes(term) || KIND_NAMES[item.kind].toLowerCase().includes(term))
+    return KIND_ORDER.map((kind) => ({ kind, items: items.filter((item) => item.kind === kind) })).filter((shelf) => shelf.items.length)
+  }, [data, search])
+
+  // Abgelaufene oder widerrufene Freigaben sofort verbergen.
+  if (error) {
+    return (
+      <main className="share-room">
+        <div className="mx-auto max-w-xl px-5 py-24 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/shield.webp" alt="" aria-hidden className="mx-auto mb-6 h-16 w-16 opacity-60" />
+          <h1 className="text-xl font-semibold text-white">Freigabe nicht verfügbar</h1>
+          <p className="mt-3 text-sm text-[#98989d]">Der Link ist ungültig, deaktiviert, abgelaufen oder momentan nicht erreichbar.</p>
+        </div>
+      </main>
+    )
+  }
+  if (loading || !data) return <main className="share-room"><div className="mx-auto max-w-6xl px-4 py-10"><ListSkeleton compact /></div></main>
+
+  const permitted = open?.type === 'record' && data.items.some((item) => item.kind === open.item.kind && item.recordId === open.item.recordId)
+
+  return (
+    <main className="share-room">
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-8">
+        <header className="share-head">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/shield.webp" alt="" aria-hidden className="share-crest" />
+          <div className="min-w-0">
+            <p className="share-eyebrow">Federal Investigation Bureau · {data.raid ? 'Antrag mit Anlagen' : 'Freigegebene Unterlagen'}</p>
+            <h1 className="share-title">{data.title}</h1>
+            <p className="share-sub">
+              {data.items.length} {data.items.length === 1 ? 'Akte' : 'Akten'} zur Einsicht
+              {data.expiresAt ? ` · Einsicht bis ${new Date(data.expiresAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}
+            </p>
+          </div>
+        </header>
+
+        {data.raid && (
+          <section className="mb-10" aria-label="Antrag">
+            <button type="button" className="raid-dossier" onClick={() => setOpen({ type: 'raid' })} style={{ ['--raid' as string]: RAID_COLOR }}>
+              <span className="raid-dossier-paper" aria-hidden />
+              <span className="raid-dossier-paper raid-dossier-paper-2" aria-hidden />
+              <span className="raid-dossier-front">
+                <span className="raid-dossier-icon"><Gavel size={22} /></span>
+                <span className="min-w-0 text-left">
+                  <span className="raid-dossier-kicker">Antrag auf richterliche Anordnung · {data.raid.reference}</span>
+                  <span className="raid-dossier-title">Durchsuchung und Beschlagnahme – {data.raid.request.target}</span>
+                  <span className="raid-dossier-meta">{data.items.length} Anlagen{data.raid.laws.length ? ` · ${data.raid.laws.length} Gesetzestexte` : ''} · zum Öffnen klicken</span>
+                </span>
+              </span>
+            </button>
+          </section>
+        )}
+
+        <div className="share-search">
+          <Search size={15} aria-hidden />
+          <input aria-label="Akten durchsuchen" placeholder="Akten durchsuchen …" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </div>
+
+        {shelves.map((shelf) => (
+          <section key={shelf.kind} className="shelf" aria-label={SHARE_KINDS[shelf.kind]}>
+            <h2 className="shelf-label">{SHARE_KINDS[shelf.kind]} <span>{shelf.items.length}</span></h2>
+            <div className="shelf-row">
+              {shelf.items.map((item) => <Binder key={`${item.kind}:${item.recordId}`} item={item} onOpen={() => openItem(item)} />)}
+            </div>
+            <div className="shelf-board" aria-hidden />
+          </section>
+        ))}
+        {!shelves.length && <p className="py-10 text-center text-sm text-[#8e8e93]">{search ? 'Keine passende Akte.' : 'Aktuell sind keine Akten verfügbar.'}</p>}
       </div>
-      <RaidRequestDocument request={data.raid.request} reference={data.raid.reference} createdAt={new Date(data.raid.createdAt)} attachments={data.items.map(item => ({ label: SHARE_KINDS[item.kind], title: item.title }))} />
-    </section>}
-    <header className="contract-no-print mb-7 border-b border-[#38383a] pb-5"><p className="mb-2 text-xs uppercase tracking-wider text-[#8e8e93]">{data.raid ? 'Anlagen zum Antrag' : 'FIB · Freigegebene Unterlagen'}</p><h1 className="text-2xl font-semibold text-white">{data.title}</h1><p className="mt-2 text-sm text-[#98989d]">Leseansicht · {data.items.length} freigegebene Einträge{data.expiresAt ? ` · Gültig bis ${new Date(data.expiresAt).toLocaleString('de-DE')}` : ''}</p></header>
-    <div className="contract-no-print">{permitted ? <><Button variant="outline" className="mb-5" onClick={() => setSelected(null)}>← Zur Übersicht</Button><SharedDetail key={`${selected.kind}:${selected.recordId}`} token={token} item={selected} onOpen={setSelected} /></> : <><Input aria-label="Freigegebene Akten durchsuchen" placeholder="Freigegebene Einträge suchen …" value={search} onChange={e => setSearch(e.target.value)} /><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{data.items.filter(i => i.title.toLowerCase().includes(search.toLowerCase())).map(item => <button key={`${item.kind}:${item.recordId}`} onClick={() => setSelected(item)} className="rounded-xl border border-[#38383a] bg-[#161617] p-5 text-left hover:border-[#a78bfa]"><p className="text-xs text-[#c4b5fd]">{SHARE_KINDS[item.kind]}</p><h2 className="mt-2 break-words font-semibold text-white">{item.title}</h2><p className="mt-4 text-xs text-[#8e8e93]">Eintrag öffnen →</p></button>)}</div>{!data.items.length && <p className="py-8 text-sm text-[#8e8e93]">Aktuell sind keine Einträge verfügbar.</p>}</>}</div>
-  </main>
+
+      {open?.type === 'raid' && data.raid && <RaidBinder raid={data.raid} items={data.items} onClose={close} onOpen={openItem} />}
+      {open?.type === 'record' && permitted && <RecordBinder key={`${open.item.kind}:${open.item.recordId}`} token={token} item={open.item} onClose={close} onOpen={openItem} />}
+    </main>
+  )
 }
-function SharedDetail({ token, item, onOpen }: { token: string; item: Item; onOpen: (item: Item) => void }) {
-  const url = `/api/shared-records/${encodeURIComponent(token)}/${item.kind}/${encodeURIComponent(item.recordId)}`
-  const { data, error, loading } = useFetch<Detail>(url)
-  const [videoError, setVideoError] = useState(false)
-  const clipUrl = (id: string) => `/api/shared-records/${encodeURIComponent(token)}/CLIP/${encodeURIComponent(id)}/media`
-  if (error) return <p role="alert" className="text-sm text-[#98989d]">Dieser Eintrag ist nicht mehr verfügbar oder nicht mehr freigegeben.</p>
-  if (loading || !data) return <ListSkeleton compact />
-  return <article className="space-y-5 rounded-xl border border-[#38383a] bg-[#161617] p-5 sm:p-7"><div><p className="text-xs text-[#c4b5fd]">{data.label}</p><h2 className="mt-2 text-xl font-semibold text-white">{data.title}</h2></div>
-    {data.photos.length > 0 && <Image unoptimized src={`${url}/media?photo=${encodeURIComponent(data.photos[0].id)}`} alt={data.photos[0].title || 'Aktenfoto'} width={1200} height={800} className="max-h-80 w-full rounded-lg object-contain" />}
-    {data.photos.length > 1 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{data.photos.slice(1).map(photo => <a key={photo.id} href={`${url}/media?photo=${encodeURIComponent(photo.id)}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-[#38383a] hover:border-[#a78bfa]"><Image unoptimized src={`${url}/media?photo=${encodeURIComponent(photo.id)}`} alt={photo.title || 'Galeriebild'} width={480} height={320} className="h-36 w-full object-cover" /></a>)}</div>}
-    {data.hasVideo && <><video controls playsInline preload="metadata" src={`${url}/media`} className="max-h-[65vh] w-full rounded-lg bg-black" onError={() => setVideoError(true)} />{videoError && <p className="text-sm text-[#98989d]">Video nicht verfügbar oder von diesem Browser nicht unterstützt.</p>}</>}
-    {data.related.some(rel => rel.kind === 'CLIP') && <section className="space-y-4"><h3 className="font-semibold text-white">Bodycam-Aufnahmen</h3>{data.related.filter(rel => rel.kind === 'CLIP').map(clip => <SharedClip key={clip.recordId} title={clip.title} src={clipUrl(clip.recordId)} />)}</section>}
-    <dl className="space-y-4">{data.fields.map(field => <div key={field.label}><dt className="mb-1 text-xs font-semibold text-[#8e8e93]">{field.label}</dt><dd className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#d4d4d4]">{field.value}</dd></div>)}</dl>
-    {!!data.entries.length && <section className="space-y-3 border-t border-[#38383a] pt-5"><h3 className="font-semibold text-white">Chronologie</h3>{data.entries.map((entry,index) => <div key={index} className="rounded-lg border border-[#38383a] p-4"><p className="text-xs text-[#8e8e93]">{entry.kind} · {new Date(entry.occurredAt).toLocaleString('de-DE')}</p><h4 className="mt-2 font-medium text-white">{entry.title}</h4><p className="mt-2 whitespace-pre-wrap break-words text-sm text-[#c7c7cc]">{entry.content}</p></div>)}</section>}
-    {!!data.related.length && <section className="space-y-3 border-t border-[#38383a] pt-5"><h3 className="font-semibold text-white">Verknüpfte Einträge</h3><div className="grid gap-3 sm:grid-cols-2">{data.related.map(rel => <button key={`${rel.kind}:${rel.recordId}`} onClick={() => onOpen(rel)} className="rounded-lg border border-[#38383a] p-4 text-left hover:border-[#a78bfa]"><p className="text-xs text-[#c4b5fd]">{rel.label}</p><p className="mt-1 break-words font-medium text-white">{rel.title}</p></button>)}</div></section>}
-  </article>
-}
-function SharedClip({ title, src }: { title: string; src: string }) {
-  const [failed, setFailed] = useState(false)
-  return <figure className="space-y-2"><video controls playsInline preload="metadata" src={src} className="max-h-[65vh] w-full rounded-lg bg-black" onError={() => setFailed(true)} /><figcaption className="break-words text-sm text-[#d4d4d4]">{title}</figcaption>{failed && <p className="text-sm text-[#98989d]">Video nicht verfügbar oder von diesem Browser nicht unterstützt.</p>}</figure>
+
+/** Ordnerrücken im Regal: Farbe je Aktenart, Rückenschild mit Aktenzeichen und Titel, Griffloch. */
+function Binder({ item, onOpen }: { item: SharedItem; onOpen: () => void }) {
+  const Icon = KIND_ICONS[item.kind]
+  const [reference, ...rest] = item.title.split(' · ')
+  const hasReference = rest.length > 0 && item.kind !== 'DOSSIER' && item.kind !== 'CLIP'
+  return (
+    <button type="button" className="binder" onClick={onOpen} style={{ ['--binder' as string]: KIND_COLORS[item.kind] }} aria-label={`${KIND_NAMES[item.kind]} ${item.title} öffnen`}>
+      <span className="binder-label">
+        <span className="binder-label-kind"><Icon size={12} aria-hidden />{KIND_NAMES[item.kind]}</span>
+        {hasReference && <span className="binder-label-ref">{reference}</span>}
+        <span className="binder-label-title">{hasReference ? rest.join(' · ') : item.title}</span>
+      </span>
+      <span className="binder-hole" aria-hidden />
+    </button>
+  )
 }

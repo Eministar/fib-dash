@@ -2,7 +2,9 @@ import { prisma } from '../prisma'
 import { ShareError } from './record-shares'
 import { SHARE_KINDS, type ShareKind } from './record-share-kinds'
 import type { Prisma } from '@/generated/prisma'
-import { INVESTIGATION_STATUS_LABELS, INVESTIGATION_ENTRY_KIND_LABELS, PERSON_LINK_TYPE_LABELS } from './investigations'
+import { INVESTIGATION_STATUS_LABELS, INVESTIGATION_ENTRY_KIND_LABELS, INVESTIGATION_PRIORITY_LABELS, PERSON_LINK_TYPE_LABELS } from './investigations'
+import { readCharges } from './charges'
+import { chargeTexts } from '../laws/charges-server'
 
 export type SharedItem = { kind: string; recordId: string }
 type PublicClient = Pick<Prisma.TransactionClient, 'dossier' | 'person' | 'vehicle' | 'investigation' | 'bodycamClip' | 'investigationPhoto'>
@@ -118,25 +120,36 @@ export async function publicRecord(item: SharedItem, client: PublicClient = pris
   const add = (label: string, value: string | boolean | Date | number | null | undefined) => {
     if (value !== null && value !== undefined && value !== '') fields.push({ label, value: value instanceof Date ? value.toISOString() : typeof value === 'boolean' ? value ? 'Ja' : 'Nein' : String(value) })
   }
-  let entries: { title: string; content: string | null; occurredAt: Date; kind: string }[] = []
+  let entries: { title: string; content: string | null; occurredAt: Date; kind: string; location: string | null }[] = []
+  let charges: Awaited<ReturnType<typeof chargeTexts>> = []
+  /** Aktenzeichen / Registernummer für Deckblatt und Kopfzeile. */
+  let reference: string | null = null
+  let createdAt: Date | null = null
   if (item.kind === 'DOSSIER') {
-    const d = await client.dossier.findUniqueOrThrow({ where: { id }, select: { description: true, address: true, leader: { select: { firstName: true, lastName: true } } } })
+    const d = await client.dossier.findUniqueOrThrow({ where: { id }, select: { description: true, address: true, createdAt: true, leader: { select: { firstName: true, lastName: true } } } })
+    createdAt = d.createdAt
     add('Fraktionsleiter', d.leader ? `${d.leader.firstName} ${d.leader.lastName}` : null); add('Anwesen', d.address); add('Informationen', d.description)
   } else if (item.kind === 'PERSON') {
-    const p = await client.person.findUniqueOrThrow({ where: { id }, select: { alias: true, identifier: true, dateOfBirth: true, phone: true, notes: true, wanted: true, dangerous: true } })
+    const p = await client.person.findUniqueOrThrow({ where: { id }, select: { personNumber: true, firstName: true, lastName: true, createdAt: true, alias: true, identifier: true, dateOfBirth: true, phone: true, notes: true, wanted: true, dangerous: true } })
+    reference = p.personNumber; createdAt = p.createdAt
+    add('Name', `${p.firstName} ${p.lastName}`)
     add('Alias', p.alias); add('Kennung', p.identifier); add('Geburtsdatum', p.dateOfBirth?.toISOString().slice(0,10)); add('Telefon', p.phone); add('Gesucht', p.wanted); add('Gefährlich', p.dangerous); add('Notizen', p.notes)
   } else if (item.kind === 'VEHICLE') {
-    const v = await client.vehicle.findUniqueOrThrow({ where: { id }, select: { model: true, color: true, plate: true, notes: true, stolen: true, wanted: true } })
+    const v = await client.vehicle.findUniqueOrThrow({ where: { id }, select: { vehicleNumber: true, createdAt: true, model: true, color: true, plate: true, notes: true, stolen: true, wanted: true } })
+    reference = v.vehicleNumber; createdAt = v.createdAt
     add('Modell', v.model); add('Kennzeichen', v.plate); add('Farbe', v.color); add('Gestohlen', v.stolen); add('Gesucht', v.wanted); add('Notizen', v.notes)
   } else if (item.kind === 'CASE') {
-    const c = await client.investigation.findUniqueOrThrow({ where: { id }, select: { summary: true, status: true, entries: { select: { title: true, content: true, occurredAt: true, kind: true }, orderBy: { occurredAt: 'desc' } } } })
-    add('Status', INVESTIGATION_STATUS_LABELS[c.status]); add('Zusammenfassung', c.summary)
-    entries = c.entries.map(e => ({ title: e.title, content: e.content, occurredAt: e.occurredAt, kind: INVESTIGATION_ENTRY_KIND_LABELS[e.kind] }))
+    const c = await client.investigation.findUniqueOrThrow({ where: { id }, select: { caseNumber: true, createdAt: true, summary: true, status: true, priority: true, charges: true, entries: { select: { title: true, content: true, occurredAt: true, kind: true, location: true }, orderBy: { occurredAt: 'desc' } } } })
+    reference = c.caseNumber; createdAt = c.createdAt
+    add('Status', INVESTIGATION_STATUS_LABELS[c.status]); add('Priorität', INVESTIGATION_PRIORITY_LABELS[c.priority]); add('Zusammenfassung', c.summary)
+    entries = c.entries.map(e => ({ title: e.title, content: e.content, occurredAt: e.occurredAt, kind: INVESTIGATION_ENTRY_KIND_LABELS[e.kind], location: e.location }))
+    charges = await chargeTexts(readCharges(c.charges))
   } else {
-    const c = await client.bodycamClip.findUniqueOrThrow({ where: { id }, select: { description: true, recordedAt: true, location: true, durationSeconds: true } })
+    const c = await client.bodycamClip.findUniqueOrThrow({ where: { id }, select: { description: true, recordedAt: true, location: true, durationSeconds: true, createdAt: true } })
+    createdAt = c.recordedAt ?? c.createdAt
     add('Beschreibung', c.description); add('Aufgenommen', c.recordedAt); add('Ort', c.location); add('Dauer (Sekunden)', c.durationSeconds)
   }
   const photos = (await sharedPhotos(item, client)).map(photo => ({ id: photo.id, title: photo.title }))
   const related = shared.length ? await sharedRelations(item, shared, client) : []
-  return { kind: item.kind, label: SHARE_KINDS[item.kind as ShareKind], recordId: id, title, fields, entries, photos, related, hasPhoto: photos.length > 0, hasVideo: item.kind === 'CLIP' }
+  return { kind: item.kind, label: SHARE_KINDS[item.kind as ShareKind], recordId: id, title, reference, createdAt, fields, entries, charges, photos, related, hasPhoto: photos.length > 0, hasVideo: item.kind === 'CLIP' }
 }

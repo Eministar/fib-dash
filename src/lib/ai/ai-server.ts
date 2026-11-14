@@ -6,15 +6,20 @@ import {
   buildUserPrompt,
   contextText,
   maxInputLength,
+  parseEntriesPlan,
   parseSuggestion,
   parseThreadPlan,
   reviewSuggestion,
   type AiFamilyContext,
   type AiInvestigationContext,
+  type AiEntriesPlan,
   type AiSuggestion,
   type AiSuggestionKind,
+  type AiSuggestionRaw,
   type AiThreadPlan,
 } from './ai-prompts'
+import { readCharges, type Charge } from '../investigations/charges'
+import { normalizeCharges, penalCatalogForPrompt } from '../laws/charges-server'
 
 /**
  * KI-Assistent über DeepSeek. Der API-Key steht in der Umgebung
@@ -61,7 +66,7 @@ function checkRateLimit(userId: string) {
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 
-async function completeJson(messages: ChatMessage[]) {
+async function completeJson(messages: ChatMessage[], maxTokens = 800) {
   const response = await fetch(DEEPSEEK_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.DEEPSEEK_API_KEY!.trim()}` },
@@ -71,7 +76,7 @@ async function completeJson(messages: ChatMessage[]) {
       response_format: { type: 'json_object' },
       // 0: wörtlich und wiederholbar statt kreativ.
       temperature: 0,
-      max_tokens: 800,
+      max_tokens: maxTokens,
     }),
     signal: AbortSignal.timeout(45_000),
   }).catch((error: unknown) => {
@@ -116,6 +121,7 @@ async function investigationContext(investigationId: string, user: CurrentUser) 
   const investigation = await prisma.investigation.findUnique({
     where: { id: investigationId },
     include: {
+      // Skalare wie `charges` kommen bei `include` automatisch mit.
       ...investigationAccessInclude,
       persons: { select: { person: { select: { firstName: true, lastName: true } } }, take: 20 },
       dossiers: { select: { id: true }, take: 1 },
@@ -128,15 +134,25 @@ async function investigationContext(investigationId: string, user: CurrentUser) 
     title: investigation.title,
     persons: investigation.persons.map((entry) => `${entry.person.firstName} ${entry.person.lastName}`),
   }
-  return { context, dossierId: investigation.dossiers[0]?.id ?? null }
+  return { context, dossierId: investigation.dossiers[0]?.id ?? null, charges: readCharges(investigation.charges) }
+}
+
+/** Gesetzbuch für den Prompt; ohne erreichbares Gesetzbuch arbeitet die KI einfach ohne Straftatbestände. */
+async function lawsForPrompt() {
+  try {
+    return await penalCatalogForPrompt()
+  } catch (error) {
+    console.warn('[AI] Gesetzbuch nicht verfügbar:', error)
+    return null
+  }
 }
 
 /**
  * Anfrage mit Prüfung: Beanstandet `review` den ersten Vorschlag, bekommt die KI
  * genau einen zweiten Versuch mit den konkreten Punkten.
  */
-async function generate<T>(messages: ChatMessage[], parse: (raw: string) => T, review: (result: T) => string[]) {
-  const raw = await completeJson(messages)
+async function generate<T>(messages: ChatMessage[], parse: (raw: string) => T, review: (result: T) => string[], maxTokens = 800) {
+  const raw = await completeJson(messages, maxTokens)
   const first = parse(raw)
   const problems = review(first)
   if (!problems.length) return first
@@ -145,7 +161,7 @@ async function generate<T>(messages: ChatMessage[], parse: (raw: string) => T, r
     ...messages,
     { role: 'assistant', content: raw },
     { role: 'user', content: `Überarbeite den Vorschlag: ${problems.join(' ')} Halte dich strikt an die Regeln.` },
-  ]))
+  ], maxTokens))
   // Erfundene Zahlen sind ein Ausschlussgrund; ein etwas zu langer Text nicht.
   if (review(retry).some((problem) => problem.startsWith('Die Zahlen'))) {
     throw new AiError('Die KI hat Angaben ergänzt, die nicht in der Eingabe stehen. Bitte noch einmal versuchen oder selbst formulieren.', 422)
@@ -173,12 +189,58 @@ export async function suggestText(input: SuggestInput, user: CurrentUser): Promi
   const dossierId = input.dossierId || investigation?.dossierId || null
   const family = dossierId ? await familyContext(dossierId) : null
 
-  const promptInput = { kind: input.kind, keywords, investigation: investigation?.context, family, agents: await agentRoster() }
-  return generate(
+  // Neue Akte: die KI schlägt auch Chronologie und Straftatbestände vor.
+  const multi = input.kind === 'investigation'
+  const promptInput = { kind: input.kind, keywords, investigation: investigation?.context, family, agents: await agentRoster(), laws: multi ? await lawsForPrompt() : null }
+  const review = { keywords, context: contextText(promptInput) }
+  const raw = await generate<AiSuggestionRaw>(
     [{ role: 'system', content: buildSystemPrompt(input.kind) }, { role: 'user', content: buildUserPrompt(promptInput) }],
     parseSuggestion,
-    (suggestion) => reviewSuggestion(suggestion, { keywords, context: contextText(promptInput) }),
+    (suggestion) => [...reviewSuggestion(suggestion, review), ...reviewEntries(suggestion.entries, review)],
+    multi ? 2000 : 800,
   )
+  return { ...raw, entries: multi ? raw.entries : [], charges: multi ? await normalizeCharges(raw.charges) : [] }
+}
+
+/** Mehrere Einträge: keine erfundenen Zahlen, insgesamt nicht ausgeschmückt. */
+function reviewEntries(entries: { title: string; content: string }[], input: { keywords: string; context?: string }) {
+  if (!entries.length) return []
+  const text = entries.map((entry) => `${entry.title}. ${entry.content}`).join(' ')
+  const problems = reviewSuggestion({ title: '', content: text }, input).filter((problem) => problem.startsWith('Die Zahlen'))
+  const limit = Math.max(400, Math.round(input.keywords.trim().length * 2.2))
+  const length = entries.reduce((sum, entry) => sum + entry.content.length, 0)
+  if (length > limit) problems.push(`Die Einträge sind zusammen zu lang (${length} Zeichen). Höchstens ${limit} Zeichen, nichts ausschmücken.`)
+  return problems
+}
+
+export type EntriesFromReport = Omit<AiEntriesPlan, 'charges'> & { charges: Charge[] }
+
+/**
+ * Bericht oder Stichwörter aus dem Dashboard → mehrere Chronologie-Einträge
+ * und neue Straftatbestände. Speichert nichts; das macht der Aufrufer.
+ */
+export async function entriesFromReport(input: { investigationId: string; report: string }, user: CurrentUser): Promise<EntriesFromReport> {
+  if (!await isAiEnabled()) throw new AiError('Der KI-Assistent ist ausgeschaltet.', 403)
+  const report = input.report.trim()
+  if (!report) throw new AiError('Bitte einen Bericht oder Stichwörter angeben.')
+  if (report.length > maxInputLength('report')) throw new AiError(`Höchstens ${maxInputLength('report')} Zeichen.`)
+  checkRateLimit(user.id)
+
+  const investigation = await investigationContext(input.investigationId, user)
+  const family = investigation.dossierId ? await familyContext(investigation.dossierId) : null
+  const promptInput = {
+    kind: 'entries' as const, source: 'report' as const, keywords: report, investigation: investigation.context, family,
+    agents: await agentRoster(), laws: await lawsForPrompt(), existingCharges: investigation.charges.map((charge) => `${charge.ref} (${charge.label})`),
+  }
+  const review = { keywords: report, context: contextText(promptInput) }
+  const plan = await generate(
+    [{ role: 'system', content: buildSystemPrompt('entries', 'report') }, { role: 'user', content: buildUserPrompt(promptInput) }],
+    parseEntriesPlan,
+    (result) => reviewEntries(result.entries, review),
+    3000,
+  )
+  const known = new Set(investigation.charges.map((charge) => charge.ref))
+  return { ...plan, charges: (await normalizeCharges(plan.charges)).filter((charge) => !known.has(charge.ref)) }
 }
 
 export type ThreadPlanInput = {
@@ -201,7 +263,7 @@ export async function planFromMessage(input: ThreadPlanInput, user: CurrentUser)
   const promptInput = {
     kind: 'entry' as const, source: 'message' as const, keywords: text,
     authorName: input.authorName, attachments: input.attachments, investigation: investigation.context, family,
-    agents: await agentRoster(),
+    agents: await agentRoster(), laws: await lawsForPrompt(), existingCharges: investigation.charges.map((charge) => `${charge.ref} (${charge.label})`),
   }
   return generate(
     [{ role: 'system', content: buildSystemPrompt('entry', 'message') }, { role: 'user', content: buildUserPrompt(promptInput) }],
@@ -210,5 +272,6 @@ export async function planFromMessage(input: ThreadPlanInput, user: CurrentUser)
       { title: [plan.title, plan.changes.title].filter(Boolean).join(' '), content: plan.content },
       { keywords: text, context: contextText(promptInput) },
     ),
+    1200,
   )
 }

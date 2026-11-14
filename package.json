@@ -37,6 +37,7 @@
     "db:fix-discord-server-switch": "npx tsx scripts/fix-discord-server-switch.ts",
     "clips:retry-compression": "npx tsx scripts/retry-clip-compression.ts",
     "test:sanction-catalog": "tsx --test tests/sanction-catalog.test.ts",
+    "laws:sync": "tsx scripts/sync-laws.ts",
     "release:sync": "tsx scripts/sync-commit-legend.ts",
     "db:studio": "npx prisma studio",
     "db:setup": "npm run db:backup && npx prisma db push && npx tsx prisma/seed.ts",

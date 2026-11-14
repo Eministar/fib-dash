@@ -9,14 +9,15 @@ import { describeActions, hasChanges, NO_ACTIONS, readActions, type ProposalActi
 import { AiError, isAiEnabled, planFromMessage, suggestText } from './ai-server'
 
 /**
- * KI-Vorschläge im Discord-Beitrag einer Akte. Zwei Wege:
- * - Jede Nachricht eines Agents im Beitrag bekommt automatisch eine Antwort
- *   mit dem Vorschlag: ausformulierter Eintrag, Änderungen an der Akte
- *   (Status, Priorität, Fallführung, Ermittler, Personen, Fahrzeuge, Titel)
- *   und die Anhänge.
- * - `/fib-ki stichworte:…` erzeugt einen Eintrag aus Stichwörtern.
- * „Übernehmen“ führt alles im Namen des Verfassers aus, beide Knöpfe löschen
- * die Vorschlagsnachricht.
+ * KI im Discord-Beitrag einer Akte. Zwei Wege:
+ * - Jede Nachricht eines Agents im Beitrag wird von der KI ausformuliert und
+ *   sofort als Chronologie-Eintrag gespeichert (samt Anhängen). Erkennt die KI
+ *   zusätzlich Änderungen an der Akte (Status, Priorität, Fallführung,
+ *   Ermittler, Personen, Fahrzeuge, Titel, Straftatbestände), kommen nur diese
+ *   als Vorschlag mit „Übernehmen“/„Verwerfen“.
+ * - `/fib-ki stichworte:…` legt aus Stichwörtern direkt einen Eintrag an.
+ * Ein Datensatz in `AiProposal` je Nachricht verhindert Doppeltes – auch ohne
+ * offene Änderungen (Status ACCEPTED).
  */
 
 export const AI_ACCEPT_PREFIX = 'fib_ai_accept:'
@@ -97,13 +98,26 @@ export async function createDiscordAiProposal(input: { channelId: string | null;
     throw error
   }
 
-  const proposal = await prisma.aiProposal.create({
-    data: { investigationId: investigation.id, channelId: input.channelId, requesterDiscordId: input.discordId!, title: suggestion.title, content: suggestion.content },
-    select: { id: true },
+  // Direkt eintragen: der Eintrag erscheint wie jeder andere im Beitrag.
+  const entry = await prisma.investigationEntry.create({
+    data: {
+      investigationId: investigation.id, kind: 'NOTE', title: suggestion.title, content: suggestion.content,
+      occurredAt: new Date(), participants: [], createdById: user.id,
+    },
+    select: { id: true, investigation: { select: { caseNumber: true, title: true } } },
   })
-  const message = await postChannelMessage(input.channelId, aiProposalMessage({ id: proposal.id, requesterDiscordId: input.discordId!, ...suggestion }))
-  await prisma.aiProposal.update({ where: { id: proposal.id }, data: { messageId: message.id }, select: { id: true } })
-  return '🤖 Der Vorschlag steht im Beitrag. Mit „Übernehmen“ wird er zum Chronologie-Eintrag.'
+  await prisma.investigation.update({ where: { id: investigation.id }, data: { updatedAt: new Date() }, select: { id: true } })
+  await createAuditLog({
+    action: 'INVESTIGATION_ENTRY_CREATED',
+    userId: user.id,
+    details: `Akte ${entry.investigation.caseNumber}: KI-Eintrag „${suggestion.title}“ per /fib-ki angelegt`,
+  })
+  queueDiscordInvestigationEvent({
+    type: 'entry', investigationId: investigation.id, entryId: entry.id,
+    caseNumber: entry.investigation.caseNumber, title: entry.investigation.title, actorName: user.displayName,
+  })
+  const missing = suggestion.missing.length ? `\n-# Fehlt: ${suggestion.missing.join(' · ')}` : ''
+  return `✅ In die Chronologie eingetragen: **${suggestion.title}**${missing}`
 }
 
 export type ThreadMessageForAi = {
@@ -153,32 +167,81 @@ async function formulate(message: ThreadMessageForAi, investigationId: string, u
   }
 }
 
+/** Eintrag aus der Nachricht anlegen oder – falls schon als Rohtext übernommen – ersetzen. */
+async function saveThreadEntry(message: ThreadMessageForAi, investigationId: string, suggestion: Formulated, user: CurrentUser) {
+  const participants = (suggestion.actions.participants ?? []).map((agent) => ({ agentId: agent.id, name: agent.name, badgeNumber: agent.badgeNumber, rank: agent.rank }))
+  const data = { kind: suggestion.actions.entryKind, title: suggestion.title, content: suggestion.content, participants }
+  try {
+    const entry = await prisma.investigationEntry.create({
+      data: { ...data, investigationId, occurredAt: message.timestamp, createdById: user.id, discordMessageId: message.id },
+      select: { id: true },
+    })
+    return entry.id
+  } catch (error) {
+    if (!isUniqueConstraintError(error)) throw error
+    const existing = await prisma.investigationEntry.findUnique({ where: { discordMessageId: message.id }, select: { id: true, investigationId: true } })
+    if (existing?.investigationId !== investigationId) throw error
+    await prisma.investigationEntry.update({ where: { id: existing.id }, data, select: { id: true } })
+    return existing.id
+  }
+}
+
 /**
- * Nachricht im Akten-Beitrag: als Antwort darauf einen Vorschlag posten.
- * `false` = KI aus, der Aufrufer übernimmt die Nachricht dann wie bisher direkt.
+ * Nachricht im Akten-Beitrag: die KI formuliert sie aus und trägt sie sofort
+ * in die Chronologie ein. Nur erkannte Änderungen an der Akte kommen als
+ * Vorschlag. `false` = KI aus, der Aufrufer übernimmt die Nachricht wie bisher roh.
  */
 export async function proposeThreadEntry(message: ThreadMessageForAi, investigationId: string, user: CurrentUser) {
   if (!await isAiEnabled()) return false
   if (await prisma.aiProposal.findUnique({ where: { sourceMessageId: message.id }, select: { id: true } })) return true
 
   const suggestion = await formulate(message, investigationId, user)
+  const changes = hasChanges(suggestion.actions)
+  // Anhänge werden gleich mit dem Eintrag übernommen, nicht erst beim Klick.
+  const pendingActions: ProposalActions = { ...suggestion.actions, attachments: { images: 0, videos: 0 } }
   let proposalId: string
   try {
+    // Erst den Merker anlegen: so kann dieselbe Nachricht nie doppelt eingetragen werden.
     const proposal = await prisma.aiProposal.create({
       data: {
         investigationId, channelId: message.channelId, requesterDiscordId: message.authorDiscordId, sourceMessageId: message.id,
-        title: suggestion.title, content: suggestion.content, occurredAt: message.timestamp, actions: suggestion.actions,
+        title: suggestion.title, content: '', occurredAt: message.timestamp, actions: pendingActions,
+        status: changes ? 'PENDING' : 'ACCEPTED', decidedAt: changes ? null : new Date(),
       },
       select: { id: true },
     })
     proposalId = proposal.id
   } catch (error) {
-    if (isUniqueConstraintError(error)) return true // gleichzeitig schon vorgeschlagen
+    if (isUniqueConstraintError(error)) return true // gleichzeitig schon verarbeitet
     throw error
   }
 
+  let entryId: string | null = null
+  try {
+    if (suggestion.content) entryId = await saveThreadEntry(message, investigationId, suggestion, user)
+  } catch (error) {
+    // Merker wieder entfernen, damit ein erneuter Versuch möglich ist.
+    await prisma.aiProposal.delete({ where: { id: proposalId } }).catch(() => undefined)
+    throw error
+  }
+  const files = await importSourceAttachments({ investigationId, channelId: message.channelId, sourceMessageId: message.id }, entryId, user.id)
+  const investigation = await prisma.investigation.update({ where: { id: investigationId }, data: { updatedAt: new Date() }, select: { caseNumber: true } })
+  if (entryId) {
+    await createAuditLog({
+      action: 'INVESTIGATION_ENTRY_CREATED',
+      userId: user.id,
+      details: `Akte ${investigation.caseNumber}: KI-Eintrag „${suggestion.title}“ aus Discord angelegt${files?.images ? ` · ${files.images} Bilder` : ''}${files?.videos ? ` · ${files.videos} Videos` : ''}`,
+    })
+  }
+  await react(message.channelId, message.id, files?.failed.length ? '⚠️' : '✅')
+
+  if (!changes) return true
   const posted = await postChannelMessage(message.channelId, {
-    ...aiProposalMessage({ id: proposalId, requesterDiscordId: message.authorDiscordId, ...suggestion }),
+    ...aiProposalMessage({
+      id: proposalId, requesterDiscordId: message.authorDiscordId, title: suggestion.title, content: '', missing: suggestion.missing,
+      note: [entryId ? `Eintrag „${suggestion.title}“ steht bereits in der Chronologie – hier geht es nur um die Änderungen an der Akte.` : '', suggestion.note ?? ''].filter(Boolean).join(' · ') || null,
+      actions: pendingActions,
+    }),
     message_reference: { message_id: message.id, fail_if_not_exists: false },
   })
   await prisma.aiProposal.update({ where: { id: proposalId }, data: { messageId: posted.id }, select: { id: true } })
@@ -186,20 +249,45 @@ export async function proposeThreadEntry(message: ThreadMessageForAi, investigat
 }
 
 /**
- * Die Ursprungsnachricht wurde bearbeitet. Offener Vorschlag → neu formulieren.
- * `true` = die Nachricht gehört zu einem KI-Vorschlag und ist damit erledigt;
- * ein übernommener Eintrag wird nicht mit dem Rohtext überschrieben.
+ * Die Ursprungsnachricht wurde bearbeitet: neu formulieren, den KI-Eintrag
+ * nachziehen und einen offenen Änderungsvorschlag aktualisieren.
+ * `true` = die Nachricht gehört zur KI und ist damit erledigt; ein KI-Eintrag
+ * wird nie mit dem Rohtext überschrieben.
  */
 export async function refreshThreadProposal(message: ThreadMessageForAi) {
   const proposal = await prisma.aiProposal.findUnique({
     where: { sourceMessageId: message.id },
-    select: { id: true, status: true, investigationId: true, messageId: true, channelId: true },
+    select: { id: true, status: true, investigationId: true, messageId: true, channelId: true, content: true },
   })
   if (!proposal) return false
-  if (proposal.status !== 'PENDING' || !proposal.messageId) return true
   const user = await managerFor(message.authorDiscordId)
   if (!user) return true
 
+  // Neuer Ablauf: der Eintrag steht schon (Vorschlag ohne eigenen Text) → Eintrag aktualisieren.
+  if (!proposal.content) {
+    if (!await isAiEnabled()) return false
+    const suggestion = await formulate(message, proposal.investigationId, user)
+    const entry = await prisma.investigationEntry.findUnique({ where: { discordMessageId: message.id }, select: { id: true, investigationId: true } })
+    if (entry?.investigationId === proposal.investigationId && suggestion.content) {
+      await prisma.investigationEntry.update({
+        where: { id: entry.id },
+        data: { title: suggestion.title, content: suggestion.content, kind: suggestion.actions.entryKind },
+        select: { id: true },
+      })
+    }
+    if (proposal.status !== 'PENDING' || !proposal.messageId) return true
+    const pendingActions: ProposalActions = { ...suggestion.actions, attachments: { images: 0, videos: 0 } }
+    const updated = await prisma.aiProposal.updateMany({ where: { id: proposal.id, status: 'PENDING' }, data: { title: suggestion.title, actions: pendingActions } })
+    if (!updated.count) return true
+    await discordFetch(`/channels/${proposal.channelId}/messages/${proposal.messageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(aiProposalMessage({ id: proposal.id, requesterDiscordId: message.authorDiscordId, title: suggestion.title, content: '', missing: suggestion.missing, actions: pendingActions })),
+    }).catch((error) => console.warn('[AI] Vorschlag konnte nicht aktualisiert werden:', error))
+    return true
+  }
+
+  // Alter Ablauf (Vorschlag mit Eintragstext, vor der Umstellung entstanden).
+  if (proposal.status !== 'PENDING' || !proposal.messageId) return true
   const suggestion = await formulate(message, proposal.investigationId, user)
   const updated = await prisma.aiProposal.updateMany({
     where: { id: proposal.id, status: 'PENDING' },
@@ -295,7 +383,8 @@ export async function acceptDiscordAiProposal(proposalId: string, discordId: str
     })
   }
 
-  const files = await importSourceAttachments(proposal, entryId, user.id)
+  // Beim direkten Eintragen sind die Anhänge schon übernommen (Zähler 0).
+  const files = actions.attachments.images || actions.attachments.videos ? await importSourceAttachments(proposal, entryId, user.id) : null
   const { applyActions } = await import('./ai-actions')
   const changed = await applyActions(proposal.investigationId, actions, user)
   if (!changed.length) await prisma.investigation.update({ where: { id: proposal.investigationId }, data: { updatedAt: new Date() }, select: { id: true } })

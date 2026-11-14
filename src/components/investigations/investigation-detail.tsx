@@ -76,6 +76,9 @@ import { OtherCasesNote } from '@/components/investigations/cross-hits'
 import { InvestigationTimeline } from '@/components/investigations/investigation-timeline'
 import { HandoverDialog } from '@/components/investigations/handover-dialog'
 import { AiSuggest } from '@/components/ai/ai-suggest'
+import { AiEntriesDialog, AiEntriesButton } from '@/components/ai/ai-entries'
+import { ChargesDialog, ChargesSummary } from '@/components/investigations/charges-field'
+import { readCharges, type Charge } from '@/lib/investigations/charges'
 
 function localDateTimeValue(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
@@ -123,6 +126,8 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
   const [activeClip, setActiveClip] = useState<BodycamClip | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [handoverOpen, setHandoverOpen] = useState(false)
+  const [chargesOpen, setChargesOpen] = useState(false)
+  const [aiEntriesOpen, setAiEntriesOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState<'spots' | 'photos' | null>(null)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
 
@@ -376,6 +381,8 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           </p>
         )}
 
+        <ChargesSummary charges={readCharges(investigation.charges)} canEdit={canManage} onEdit={() => setChargesOpen(true)} />
+
         {/* Beschriftetes Raster statt der früheren Fließtext-Zeile: wer die
             Fallführung sucht, soll nicht erst einen Satz lesen müssen. */}
         <dl className="mt-4 grid gap-x-6 gap-y-2.5 border-t border-[#2c2c2e] pt-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -401,10 +408,13 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
           empty="Noch keine Einträge in dieser Akte. Jeder Einsatz und jeder Ermittlungsschritt gehört hierher."
           action={
             canManage ? (
-              <Button variant="ghost" size="sm" onClick={() => setEntryOpen(true)}>
-                <Plus className="h-3.5 w-3.5" />
-                Eintrag
-              </Button>
+              <div className="flex items-center gap-1">
+                <AiEntriesButton onClick={() => setAiEntriesOpen(true)} />
+                <Button variant="ghost" size="sm" onClick={() => setEntryOpen(true)}>
+                  <Plus className="h-3.5 w-3.5" />
+                  Eintrag
+                </Button>
+              </div>
             ) : null
           }
         >
@@ -696,6 +706,31 @@ export function InvestigationDetail({ investigationId }: { investigationId: stri
         agents={agents ?? []}
         onUploaded={() => void refetch()}
       />
+
+      {chargesOpen && (
+        <ChargesDialog
+          initial={readCharges(investigation.charges)}
+          onClose={() => setChargesOpen(false)}
+          onSave={async (charges: Charge[]) => {
+            try {
+              await execute(`/api/investigations/${investigationId}`, { method: 'PATCH', body: JSON.stringify({ charges }) })
+              await refetch()
+              setChargesOpen(false)
+              toastSuccess('Straftatbestände gespeichert', charges.length ? `${charges.length} Normen in der Akte.` : 'Keine Straftatbestände mehr angegeben.')
+            } catch (cause) {
+              toastError('Speichern fehlgeschlagen', cause instanceof Error ? cause.message : 'Unbekannter Fehler')
+            }
+          }}
+        />
+      )}
+
+      {aiEntriesOpen && (
+        <AiEntriesDialog
+          investigationId={investigationId}
+          onClose={() => setAiEntriesOpen(false)}
+          onDone={(message) => { setAiEntriesOpen(false); void refetch(); toastSuccess('Von der KI eingetragen', message) }}
+        />
+      )}
 
       {/* Eintrag anlegen */}
       <Modal

@@ -13,6 +13,8 @@ import {
 import { nextPersonNumber } from '../investigations/investigations-server'
 import { buildAgentNameMatcher, normalizePersonName } from '../storage-logs/storage-logs'
 import type { AiChanges, AiThreadPlan } from './ai-prompts'
+import { mergeCharges, readCharges } from '../investigations/charges'
+import { normalizeCharges } from '../laws/charges-server'
 import { hasChanges, readActions, splitName, type Named, type Participant, type ProposalActions } from './ai-proposal-actions'
 
 /**
@@ -36,7 +38,7 @@ export async function resolvePlan(plan: Pick<AiThreadPlan, 'kind' | 'changes'>, 
   const investigation = await prisma.investigation.findUniqueOrThrow({
     where: { id: context.investigationId },
     select: {
-      status: true, priority: true, title: true, leadAgentId: true,
+      status: true, priority: true, title: true, leadAgentId: true, charges: true,
       assignees: { select: { agentId: true } },
       persons: { select: { personId: true, role: true } },
       vehicles: { select: { vehicleId: true } },
@@ -47,6 +49,10 @@ export async function resolvePlan(plan: Pick<AiThreadPlan, 'kind' | 'changes'>, 
   if (changes.status && changes.status !== investigation.status) actions.status = { from: investigation.status, to: changes.status }
   if (changes.priority && changes.priority !== investigation.priority) actions.priority = { from: investigation.priority, to: changes.priority }
   if (changes.title && changes.title !== investigation.title) actions.title = { from: investigation.title, to: changes.title }
+  if (changes.charges?.length) {
+    const known = new Set(readCharges(investigation.charges).map((charge) => charge.ref))
+    actions.addCharges = (await normalizeCharges(changes.charges)).filter((charge) => !known.has(charge.ref))
+  }
 
   // Agents: „ich“ ist der Verfasser, sonst Namensabgleich wie bei den Lagerlogs.
   // Auch für Personen nötig: ein Agent („Ben Geber“) ist nie eine Person der Akte.
@@ -157,7 +163,7 @@ export async function applyActions(investigationId: string, actions: ProposalAct
   if (!hasChanges(actions)) return []
   const before = await prisma.investigation.findUniqueOrThrow({
     where: { id: investigationId },
-    select: { status: true, closedAt: true, caseNumber: true },
+    select: { status: true, closedAt: true, caseNumber: true, charges: true },
   })
   const done: string[] = []
 
@@ -169,9 +175,11 @@ export async function applyActions(investigationId: string, actions: ProposalAct
       ...(actions.priority ? { priority: actions.priority.to } : {}),
       ...(actions.title ? { title: actions.title.to } : {}),
       ...(actions.leadAgent ? { leadAgent: { connect: { id: actions.leadAgent.id } } } : {}),
+      ...(actions.addCharges?.length ? { charges: mergeCharges(readCharges(before.charges), actions.addCharges) } : {}),
     },
     select: { id: true },
   })
+  if (actions.addCharges?.length) done.push(`Straftatbestände: ${actions.addCharges.map((charge) => charge.label).join(', ')}`)
   if (status) done.push(`Status ${INVESTIGATION_STATUS_LABELS[status]}`)
   if (actions.priority) done.push(`Priorität ${INVESTIGATION_PRIORITY_LABELS[actions.priority.to]}`)
   if (actions.title) done.push(`Titel „${actions.title.to}“`)

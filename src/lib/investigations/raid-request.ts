@@ -80,6 +80,14 @@ function paragraphs(value: string) {
   return value.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean)
 }
 
+/** Tatvorwürfe: je Zeile ein Vorwurf (so füllt sie der Antrag aus den Akten) → Aufzählung. */
+function offenseSection(offenses: string): RaidDocument['sections'][number] {
+  const intro = 'Die Betroffenen sind nach dem gegenwärtigen Stand der Ermittlungen folgender Straftaten dringend verdächtig:'
+  const lines = offenses.split('\n').map((line) => line.replace(/^[-•*]\s*/, '').trim()).filter(Boolean)
+  if (lines.length > 1 && !/\n\s*\n/.test(offenses)) return { heading: 'III. Tatvorwurf', paragraphs: [intro], list: lines }
+  return { heading: 'III. Tatvorwurf', paragraphs: [intro, ...paragraphs(offenses)] }
+}
+
 const dateFormat = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })
 
 /** Der förmliche Antragstext. Die Formulierungen sind bewusst getragen und hoheitlich. */
@@ -101,13 +109,7 @@ export function raidDocument(request: RaidRequest, meta: { reference: string; cr
       heading: 'II. Betroffene',
       paragraphs: request.suspects ? paragraphs(request.suspects) : ['Die Maßnahme richtet sich gegen die Verfügungsberechtigten des bezeichneten Objekts sowie gegen dort angetroffene Tatverdächtige.'],
     },
-    {
-      heading: 'III. Tatvorwurf',
-      paragraphs: [
-        'Die Betroffenen sind nach dem gegenwärtigen Stand der Ermittlungen folgender Straftaten dringend verdächtig:',
-        ...paragraphs(request.offenses),
-      ],
-    },
+    offenseSection(request.offenses),
     {
       heading: 'IV. Sachverhalt',
       paragraphs: paragraphs(request.facts),

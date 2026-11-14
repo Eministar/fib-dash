@@ -205,6 +205,8 @@ export type InvestigationListItem = {
 export type InvestigationDetail = Omit<InvestigationListItem, '_count' | 'assignees'> & {
   template: { id: string; name: string } | null
   openRoles: unknown
+  /** Straftatbestände: `Charge[]` (siehe `lib/investigations/charges`). */
+  charges: unknown
   assignees: InvestigationAssignee[]
   entries: InvestigationEntry[]
   persons: InvestigationPersonLink[]

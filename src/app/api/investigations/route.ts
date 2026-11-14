@@ -25,6 +25,8 @@ import {
   validateAgentIds,
 } from '@/lib/investigations/investigations-server'
 import type { Prisma } from '@/generated/prisma'
+import { normalizeCharges } from '@/lib/laws/charges-server'
+import { readDraftEntries } from '@/lib/investigations/draft-entries'
 import { tokenizedWhere } from '@/lib/core/search-match'
 import { checklistFromTemplate, openRolesFromTemplate, toTemplateData } from '@/lib/investigations/investigation-templates'
 
@@ -143,6 +145,10 @@ export async function POST(req: NextRequest) {
       templateCopy = { checklist: checklistFromTemplate(data.checklist), openRoles: openRolesFromTemplate(data.roles) }
     }
 
+    // Straftatbestände und Chronologie-Einträge (z. B. von der KI beim Anlegen vorgeschlagen).
+    const charges = await normalizeCharges(body.charges)
+    const draftEntries = readDraftEntries(body.entries)
+
     const caseNumber = await nextInvestigationCaseNumber()
 
     const investigation = await prisma.investigation.create({
@@ -155,6 +161,15 @@ export async function POST(req: NextRequest) {
         leadAgentId,
         corruptionCheckId,
         createdById: user.id,
+        ...(charges.length ? { charges } : {}),
+        ...(draftEntries.length ? {
+          entries: {
+            create: draftEntries.map((entry) => ({
+              kind: entry.kind, title: entry.title, content: entry.content,
+              occurredAt: new Date(), participants: [], createdById: user.id,
+            })),
+          },
+        } : {}),
         ...(templateCopy ? { templateId, checklist: templateCopy.checklist, openRoles: templateCopy.openRoles } : {}),
         ...(dossierId ? { dossiers: { connect: { id: dossierId } } } : {}),
         assignees: { create: assigneeIds.map((agentId) => ({ agentId, addedById: user.id })) },

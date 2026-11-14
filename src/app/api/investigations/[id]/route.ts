@@ -27,6 +27,7 @@ import {
   validateAgentIds,
 } from '@/lib/investigations/investigations-server'
 import type { Prisma } from '@/generated/prisma'
+import { normalizeCharges } from '@/lib/laws/charges-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -80,6 +81,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (body.summary !== undefined) {
       data.summary = cleanText(body.summary) || null
+    }
+
+    if (body.charges !== undefined) {
+      if (!Array.isArray(body.charges)) return error('Straftatbestände müssen eine Liste sein')
+      data.charges = await normalizeCharges(body.charges)
     }
 
     if (body.status !== undefined) {
