@@ -7,6 +7,7 @@ import { ListSkeleton } from '@/components/ui/loading'
 import { SHARE_KINDS, type ShareKind } from '@/lib/investigations/record-share-kinds'
 import { RaidBinder, RAID_COLOR, type RaidShare } from './binder/raid-binder'
 import { KIND_COLORS, KIND_NAMES, RecordBinder, type SharedItem } from './binder/record-binder'
+import './binder/binder.css'
 
 type Overview = { title: string; expiresAt: string | null; items: SharedItem[]; raid: RaidShare | null }
 type Open = { type: 'raid' } | { type: 'record'; item: SharedItem } | null
